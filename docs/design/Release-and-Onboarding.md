@@ -22,11 +22,9 @@ gamepilot-v0.x.y/
   gamepilot                  # OCaml CLI + local control-plane hub (zero runtime deps)
   bin/
     gamepilot_daemon         # C++ daemon (CoreLib compiled in; OpenCV static or bundled beside it)
-  share/gamepilot/
-    plans/                   # src/games/**/programs/*/plans/*.plan.json, places, fragments
-    assets/                  # src/games/**/assets/* (templates, seed tables, mart stocks, icons)
-    maps/                    # runtime subset of PokemonSimulation maps
-    packages/                # runtime OCR/resource subset from third_party/Packages
+  data/
+    src/games/...            # plans, assets, places, fragments
+    third_party/...          # runtime subset of PokemonSimulation maps
   README.txt
 ```
 
@@ -37,9 +35,9 @@ extracting it at runtime triggers macOS Gatekeeper and Windows Defender warnings
 `<exe_dir>/bin/gamepilot_daemon` before falling back to `$GAMEPILOT_DAEMON` or the dev build path.
 
 **Locating bundled data.** `Repo_io.Repo_files.locate` currently walks up from `cwd` looking for
-`src/...` and `third_party/...`. Adding a fallback to `<exe_dir>/share/gamepilot/...` (and
-`$GAMEPILOT_SHARE`) makes the extracted archive work from any working directory with no git repo,
-opam switch, or CMake build.
+`src/...` and `third_party/...`. Adding a fallback to `<exe_dir>/data/...` (and `$GAMEPILOT_DATA`)
+makes the extracted archive work from any working directory with no git repo, opam switch, or CMake
+build.
 
 ## 2. Controller firmware (`Arduino-Source`)
 

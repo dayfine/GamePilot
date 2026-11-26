@@ -5,17 +5,18 @@ let locate_in ~roots path =
       if Sys.file_exists candidate then Some candidate else None)
     roots
 
-let share_roots () =
+let data_roots () =
   let env_root =
-    match Sys.getenv_opt "GAMEPILOT_SHARE" with
+    match Sys.getenv_opt "GAMEPILOT_DATA" with
     | Some dir when dir <> "" -> [ dir ]
     | _ -> []
   in
   let exe_dir = Filename.dirname Sys.executable_name in
-  let share_under base =
-    List.fold_left Filename.concat base [ "share"; "gamepilot" ]
-  in
-  env_root @ [ share_under exe_dir; share_under (Filename.dirname exe_dir) ]
+  env_root
+  @ [
+      Filename.concat exe_dir "data";
+      Filename.concat (Filename.dirname exe_dir) "data";
+    ]
 
 let locate path =
   let rec up dir =
@@ -27,7 +28,7 @@ let locate path =
   in
   match up (Sys.getcwd ()) with
   | Some _ as found -> found
-  | None -> locate_in ~roots:(share_roots ()) path
+  | None -> locate_in ~roots:(data_roots ()) path
 
 let daemon_basename =
   if Sys.win32 then "gamepilot_daemon.exe" else "gamepilot_daemon"

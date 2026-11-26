@@ -9,8 +9,8 @@ val locate_in : roots:string list -> string -> string option
 
 val locate : string -> string option
 (** The first [dir/path] that exists, trying the working directory and each
-    parent, then [$GAMEPILOT_SHARE], then [<exe_dir>/share/gamepilot] and
-    [<parent_of_exe_dir>/share/gamepilot] (packaged release layouts). *)
+    parent, then [$GAMEPILOT_DATA], then [<exe_dir>/data] and
+    [<parent_of_exe_dir>/data] (packaged release layouts). *)
 
 val default_daemon : unit -> string
 (** The default path to [gamepilot_daemon]: [$GAMEPILOT_DAEMON] when non-empty,

@@ -44,7 +44,7 @@ if [ ! -f "$GAMEPILOT_BIN" ]; then
 fi
 
 rm -rf "$OUT_DIR"
-mkdir -p "$OUT_DIR/bin" "$OUT_DIR/share/gamepilot"
+mkdir -p "$OUT_DIR/bin" "$OUT_DIR/data"
 
 case "$(uname -s 2>/dev/null || echo unknown)" in
   MINGW*|MSYS*|CYGWIN*)
@@ -68,7 +68,7 @@ fi
 copy_tree() {
   rel=$1
   if [ -e "$rel" ]; then
-    dst="$OUT_DIR/share/gamepilot/$(dirname "$rel")"
+    dst="$OUT_DIR/data/$(dirname "$rel")"
     mkdir -p "$dst"
     cp -R "$rel" "$dst/"
   fi
@@ -83,8 +83,8 @@ done
 find src/games \( -name assets -o -name places -o -name fragments \) -type d | sort | while IFS= read -r dir; do
   copy_tree "$dir"
 done
-find "$OUT_DIR/share/gamepilot" -type d -name extract -exec rm -rf {} + 2>/dev/null || true
-find "$OUT_DIR/share/gamepilot" -type f \( -name '*.ml' -o -name '*.mli' -o -name 'dune' \) -delete 2>/dev/null || true
+find "$OUT_DIR/data" -type d -name extract -exec rm -rf {} + 2>/dev/null || true
+find "$OUT_DIR/data" -type f \( -name '*.ml' -o -name '*.mli' -o -name 'dune' \) -delete 2>/dev/null || true
 
 # Runtime maps from PokemonSimulation
 if [ -d "third_party/PokemonSimulation/data/games/frlg/maps" ]; then
@@ -102,7 +102,7 @@ Quick start:
 Bundled files:
   gamepilot             Main CLI executable
   bin/gamepilot_daemon  Capture/controller daemon (CoreLib compiled in)
-  share/gamepilot/      Plans, assets, places, and maps
+  data/                 Plans, assets, places, and maps
 
 Switch controller firmware:
   If you already use Pokemon Automation / SerialPrograms (PA/CC), your

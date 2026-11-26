@@ -26,7 +26,7 @@ trap 'rm -rf "$TMPDIR_TEST"' EXIT
 
 (
   cd "$TMPDIR_TEST"
-  unset GAMEPILOT_SHARE GAMEPILOT_DAEMON
+  unset GAMEPILOT_DATA GAMEPILOT_DAEMON
 
   echo "[smoke] gamepilot usage"
   "$GP" 2>&1 | grep -q "usage:" || {
