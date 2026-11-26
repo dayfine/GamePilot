@@ -2,44 +2,47 @@ module OW = Bdsp_actions.Bdsp_overworld
 module US = Bdsp_readers.Underground_screen
 module MS = Bdsp_readers.Minimap_sparkles
 module P = Switch_home.Switch_presses
+module D = Grid_geometry.Direction
+module L = Grid_planning.Leg
 open Bdsp_underground
 
 let ( let* ) = Result.bind
-let step_hold_ms = 320
-let step_cooldown_ms = 110
-let sprint_burst_ms = 260
-let max_sprint_bursts = 12
-let bucket_probe_steps = 3
+let mech = Corridor_nav.bdsp_move_mechanics
 let step_probe_timeout_ms = 350
-let north_hug_ms = 450
-let east_align_ms = 2000
-let north_run_ms = 2800
-let south_return_ms = 3000
-let south_hug_ms = 500
-let west_return_ms = 2600
+let wall_margin_ms = 350
+let wall_hug_ms = 450
+let probe_tiles_around_stop = 4
 
 let subscribe_screen ~picture =
   ignore (Effects.subscribe (US.probes ~picture) : string list)
 
-let reached_bucket corridor target_bucket scr =
-  match scr.US.sparkles.player with
-  | Some p -> p.corridor = corridor && p.bucket >= target_bucket
-  | None -> false
+let nav_dir_of_grid = function
+  | D.North -> Corridor_nav.North
+  | D.South -> Corridor_nav.South
+  | D.East -> Corridor_nav.East
+  | D.West -> Corridor_nav.West
 
-let sprint_to_bucket ~picture ~corridor ~dir ~target_bucket =
-  subscribe_screen ~picture;
-  let rec loop left =
-    if left <= 0 then ()
-    else
-      match Effects.await ~timeout_ms:step_probe_timeout_ms (fun _ -> true) with
-      | Effects.Holds m when reached_bucket corridor target_bucket (US.read m)
-        ->
-          ()
-      | _ ->
-          OW.run_hold dir ~hold_ms:sprint_burst_ms;
-          loop (left - 1)
-  in
-  loop max_sprint_bursts
+let segment_of_corridor = function
+  | MS.Bottom_east -> Ring_grid.Bottom_east
+  | MS.East_vertical -> Ring_grid.East_vertical
+  | MS.Top_east -> Ring_grid.Top_east
+
+let execute_leg ~log (leg : _ L.t) =
+  let dir = nav_dir_of_grid leg.direction in
+  match leg.kind with
+  | L.Face -> OW.turn dir
+  | L.Special_step _ -> ()
+  | L.Walk { tiles; to_wall } ->
+      let per_tile =
+        if D.is_across leg.direction then mech.run_across_ms
+        else mech.run_up_down_ms
+      in
+      let base_ms = mech.start_delay_ms + (tiles * per_tile) in
+      let hold_ms = if to_wall then base_ms + wall_margin_ms else base_ms in
+      log
+        (Printf.sprintf "Leg: %s %d tiles (to_wall=%b, %dms)"
+           (D.name leg.direction) tiles to_wall hold_ms);
+      OW.run_hold dir ~hold_ms
 
 let handle_step ~picture ~on_prompt ~on_battle cur =
   match Effects.await ~timeout_ms:step_probe_timeout_ms (fun _ -> true) with
@@ -56,113 +59,77 @@ let handle_step ~picture ~on_prompt ~on_battle cur =
       else Ok (cur, false)
   | Effects.Timeout -> Ok (cur, false)
 
-let opposite_dir = function
-  | Corridor_nav.North -> Corridor_nav.South
-  | South -> North
-  | East -> West
-  | West -> East
-
-let check_one_wall ~picture ~on_prompt ~on_battle ~face_dir cur =
-  OW.turn face_dir;
+let check_wall_dir ~picture ~on_prompt ~on_battle dir cur =
+  OW.run_hold dir ~hold_ms:wall_hug_ms;
   OW.interact ();
   handle_step ~picture ~on_prompt ~on_battle cur
 
-let check_both_walls ~picture ~on_prompt ~on_battle ~face_dir cur =
-  let* cur, dug = check_one_wall ~picture ~on_prompt ~on_battle ~face_dir cur in
-  if dug then Ok (cur, true)
-  else
-    let opp = opposite_dir face_dir in
-    OW.run_hold opp ~hold_ms:south_hug_ms;
-    let* cur, dug2 =
-      check_one_wall ~picture ~on_prompt ~on_battle ~face_dir:opp cur
-    in
-    if dug2 then Ok (cur, true)
-    else (
-      OW.run_hold face_dir ~hold_ms:north_hug_ms;
-      Ok (cur, false))
+let check_walls_at_tile ~picture ~on_prompt ~on_battle dirs cur =
+  let rec loop acc = function
+    | [] -> Ok (acc, false)
+    | d :: rest ->
+        let* next, dug = check_wall_dir ~picture ~on_prompt ~on_battle d acc in
+        if dug then Ok (next, true) else loop next rest
+  in
+  loop cur dirs
 
-let probe_bucket_walls ~picture ~on_prompt ~on_battle ~move_dir ~face_dir cur =
+let probe_stop_walls ~picture ~on_prompt ~on_battle ~along_dir ~wall_dirs cur =
   subscribe_screen ~picture;
-  let move_btn = OW.button_of_dir move_dir in
+  let dirs =
+    match wall_dirs with
+    | [] -> [ Corridor_nav.North; Corridor_nav.South ]
+    | xs -> List.map nav_dir_of_grid xs
+  in
   let rec loop left acc =
     if left <= 0 then Ok acc
     else
       let* next, dug =
-        check_both_walls ~picture ~on_prompt ~on_battle ~face_dir acc
+        check_walls_at_tile ~picture ~on_prompt ~on_battle dirs acc
       in
       if dug then Ok next
       else (
-        P.press ~hold_ms:step_hold_ms ~cooldown_ms:step_cooldown_ms move_btn;
+        OW.step_tap along_dir 1;
         loop (left - 1) next)
   in
-  loop bucket_probe_steps cur
+  loop probe_tiles_around_stop cur
 
-let targets_in corridor targets =
-  List.filter (fun (t : MS.target) -> t.corridor = corridor) targets
+let along_dir_of_legs = function
+  | [] -> Corridor_nav.East
+  | legs ->
+      let last = List.hd (List.rev legs) in
+      nav_dir_of_grid last.L.direction
 
-let visit_list ~log ~picture ~on_prompt ~on_battle ~corridor ~move_dir ~face_dir
-    ts init =
-  List.fold_left
-    (fun acc (t : MS.target) ->
-      let* cur = acc in
-      log (Printf.sprintf "Sprinting to sparkle bucket %d..." t.bucket);
-      sprint_to_bucket ~picture ~corridor ~dir:move_dir ~target_bucket:t.bucket;
-      probe_bucket_walls ~picture ~on_prompt ~on_battle ~move_dir ~face_dir cur)
-    (Ok init) ts
-
-let visit_bottom_east ~log ~picture ~on_prompt ~on_battle targets cur =
-  let ts = targets_in MS.Bottom_east targets in
-  if ts = [] then Ok cur
-  else (
-    log "Targeting bottom-East sparkles...";
-    OW.run_hold Corridor_nav.North ~hold_ms:north_hug_ms;
-    visit_list ~log ~picture ~on_prompt ~on_battle ~corridor:MS.Bottom_east
-      ~move_dir:Corridor_nav.East ~face_dir:Corridor_nav.North ts cur)
-
-let visit_east_leg ~log ~picture ~on_prompt ~on_battle ev cur =
-  if ev <> [] then (
-    log "Targeting East-vertical sparkles...";
-    visit_list ~log ~picture ~on_prompt ~on_battle ~corridor:MS.East_vertical
-      ~move_dir:Corridor_nav.North ~face_dir:Corridor_nav.East ev cur)
-  else (
-    log "Sprinting North past empty East corridor to NE corner...";
-    OW.run_hold Corridor_nav.North ~hold_ms:north_run_ms;
-    Ok cur)
-
-let visit_top_leg ~log ~picture ~on_prompt ~on_battle te cur =
-  if te = [] then Ok cur
-  else (
-    log "Targeting top-East sparkles...";
-    OW.run_hold Corridor_nav.North ~hold_ms:north_hug_ms;
-    let* next =
-      visit_list ~log ~picture ~on_prompt ~on_battle ~corridor:MS.Top_east
-        ~move_dir:Corridor_nav.West ~face_dir:Corridor_nav.North te cur
-    in
-    OW.run_hold Corridor_nav.East ~hold_ms:east_align_ms;
-    Ok next)
-
-let visit_east_and_top ~log ~picture ~on_prompt ~on_battle targets cur =
-  let ev = targets_in MS.East_vertical targets in
-  let te = targets_in MS.Top_east targets in
-  if ev = [] && te = [] then Ok cur
-  else (
-    log "Sprinting East to SE corner...";
-    OW.run_hold Corridor_nav.East ~hold_ms:east_align_ms;
-    let* cur = visit_east_leg ~log ~picture ~on_prompt ~on_battle ev cur in
-    let* cur = visit_top_leg ~log ~picture ~on_prompt ~on_battle te cur in
-    log "Returning South to SE corner...";
-    OW.run_hold Corridor_nav.South ~hold_ms:south_return_ms;
-    Ok cur)
+let run_stop ~log ~picture ~on_prompt ~on_battle acc (st : Ring_grid.stop) =
+  let* c = acc in
+  log
+    (Printf.sprintf "Walking to stop %s (%d legs)..."
+       (Grid_geometry.Tile_pos.to_string st.tile)
+       (List.length st.legs));
+  List.iter (execute_leg ~log) st.legs;
+  let along_dir = along_dir_of_legs st.legs in
+  probe_stop_walls ~picture ~on_prompt ~on_battle ~along_dir
+    ~wall_dirs:st.wall_dirs c
 
 let visit_targets ~log ~picture ~(sparkles : MS.nearby) ~on_prompt ~on_battle
     cur =
-  let* cur =
-    visit_bottom_east ~log ~picture ~on_prompt ~on_battle sparkles.targets cur
+  let waypoints =
+    List.map
+      (fun (t : MS.target) ->
+        Ring_grid.waypoint_of_bucket
+          ~segment:(segment_of_corridor t.corridor)
+          ~bucket:t.bucket)
+      sparkles.targets
   in
+  let route = Ring_grid.plan_route ~start:Ring_grid.south_door ~waypoints in
+  log
+    (Printf.sprintf "Planned tile route: %d stop(s) -> return %s"
+       (List.length route.stops)
+       (Grid_geometry.Tile_pos.to_string route.return_door));
   let* cur =
-    visit_east_and_top ~log ~picture ~on_prompt ~on_battle sparkles.targets cur
+    List.fold_left
+      (run_stop ~log ~picture ~on_prompt ~on_battle)
+      (Ok cur) route.stops
   in
-  log "Hugging South wall & returning West to South Hideaway doorway...";
-  OW.run_hold Corridor_nav.South ~hold_ms:south_hug_ms;
-  OW.run_hold Corridor_nav.West ~hold_ms:west_return_ms;
+  log "Executing planned return legs to doorway...";
+  List.iter (execute_leg ~log) route.return_legs;
   Ok cur

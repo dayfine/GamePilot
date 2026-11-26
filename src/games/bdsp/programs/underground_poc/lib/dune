@@ -8,6 +8,8 @@
   gamepilot.screen_state
   gamepilot.watch_report
   gamepilot.switch_home
+  gamepilot.grid_geometry
+  gamepilot.grid_planning
   gamepilot.bdsp_readers
   gamepilot.bdsp_underground
   gamepilot.bdsp_actions))
