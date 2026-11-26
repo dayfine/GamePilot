@@ -1,9 +1,9 @@
 (** PLZA's Mystery Gift catalog: the gifts [plza.claim-gifts] claims and
-    [plza.bank-home] banks in Pokémon HOME, as [gifts.json] beside this library
-    lists them ({!Gift_catalog_decode} reads it): the one place each gift's box
-    slot and HOME boxes are written. Pure: the gifts, the date a run compares
-    their expiry with, and the lines that print them. Ours: the fork has no
-    Mystery Gift program. *)
+    [pokemon_home.bank-plza] banks in Pokémon HOME, as [gifts.json] beside this
+    library lists them ({!Gift_catalog_decode} reads it): the one place each
+    gift's box slot and HOME boxes are written. Pure: the gifts, the date a run
+    compares their expiry with, and the lines that print them. Ours: the fork
+    has no Mystery Gift program. *)
 
 type date = { year : int; month : int; day : int }
 (** A calendar day, as ISO writes it (2026-11-25). *)
@@ -36,8 +36,8 @@ type pokemon = {
           gift then moved from party slot 6) and Box 1 empty, the gifts claimed
           in the catalog's order. *)
   home_boxes : int list;
-      (** The Pokémon HOME boxes it is banked in later (plza.bank-home), tried
-          in order: the first with an empty slot takes it. *)
+      (** The Pokémon HOME boxes it is banked in later (pokemon_home.bank-plza),
+          tried in order: the first with an empty slot takes it. *)
   home_order : Pokemon_home.Box_view.order;
       (** How each of them is searched for its first empty slot: bank-home's
           scan order, so the catalog names the reader's type, not a copy. *)

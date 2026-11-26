@@ -1,4 +1,4 @@
-(** What plza.bank-home moves: each Pokémon gift of PLZA's gift catalog
+(** What pokemon_home.bank-plza moves: each Pokémon gift of PLZA's gift catalog
     ({!Plza_gift_catalog.Gift_catalog}) that has not expired, from its slot in
     the game's Box 1 to the first empty slot of its HOME boxes, in the catalog's
     order ({!Pokemon_home.Box_moves.t}). The catalog is the one place a gift's
