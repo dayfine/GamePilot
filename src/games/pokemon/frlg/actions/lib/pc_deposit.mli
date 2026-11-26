@@ -6,7 +6,10 @@
     [frlg/lean]): A and B held 160 ms then 640 ms, the D-pad 160 then 320, a
     wait 500. A frame that reads as the overworld is looked at again 800 ms
     later, as the fork's [read_view()] does. Never releases: see
-    {!Pc_deposit_steps}. *)
+    {!Pc_deposit_steps}.
+
+    Language: PC menu labels, messages and species names are matched as English
+    text; non-English ROMs need localized candidate strings. *)
 
 val max_presses : int -> int
 (** For this many members: the fork's 80, and 40 more for each after the first.

@@ -18,8 +18,8 @@ let dialog_ms = 3000
 let menu_ms = 5000
 
 let held ~timeout_ms read =
-  Switch_home.Held_screen.wait_for ~timeout_ms
-    (Switch_home.Held_screen.held hold_ms read)
+  Screen_graph.Held_screen.wait_for ~timeout_ms
+    (Screen_graph.Held_screen.held hold_ms read)
 
 (* The dialog held 1 s with its "Last Saved" read, and the last frame's
    reading: the hold is on the reading being there, not on its shares, which

@@ -4,18 +4,22 @@ module B = Pokemon_home.Box_view
 
 type t = { moves : M.t list; skipped : string list }
 
+let slots_per_box = B.columns * B.slot_rows
+
 let move (g : C.gift) (p : C.pokemon) : (M.t, string) result =
-  if p.box_slot.box <> 1 || p.box_slot.slot > B.columns then
+  let slot = p.box_slot.slot in
+  if p.box_slot.box <> 1 || slot < 1 || slot > slots_per_box then
     Error
-      (Printf.sprintf "%s: Box %d slot %d is not in Box 1's first row (1 to %d)"
-         g.id p.box_slot.box p.box_slot.slot B.columns)
+      (Printf.sprintf "%s: Box %d slot %d is not in Box 1 (slots 1 to %d)" g.id
+         p.box_slot.box slot slots_per_box)
   else
+    let index = slot - 1 in
     Ok
       {
         name = g.name;
-        game_col = p.box_slot.slot - 1;
-        boxes = p.home_boxes;
-        order = p.home_order;
+        source = { box = 1; row = index / B.columns; col = index mod B.columns };
+        destination =
+          { boxes = p.home_boxes; fallback = []; order = p.home_order };
       }
 
 let all_ok results =

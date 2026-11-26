@@ -107,6 +107,15 @@ let decode_cases =
         walk_args
           {|{"legs": [[-66, 600]], "style": "steer", "end": "talk_after_legs"}|})
       "w: walk [-66, 600] steer into a talk after the legs";
+    case "the walk to the starter: Chikorita's legs, or the starter's own"
+      (fun () ->
+        walk_args
+          {|{"legs": [[-66, 600]], "style": "steer", "end": "talk_after_legs", "to_starter": true}|})
+      "w: walk [-66, 600] steer or the starter's own into a talk after the legs";
+    case "to_starter needs legs"
+      (fun () -> walk_args {|{"legs": [], "to_starter": true}|})
+      "01.02-platform-to-plaza.plan.json: checkpoint.events[0].args.to_starter \
+       needs the legs of the starter with no walk of its own.";
     case "an unknown walk arg"
       (fun () -> walk_args {|{"legs": [[0, 1]], "tiles": 3}|})
       "01.02-platform-to-plaza.plan.json: checkpoint.events[0].args.tiles is \

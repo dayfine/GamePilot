@@ -23,8 +23,8 @@ let card_boxes_ms = 5000
 let cell_ms = 2000
 
 let held ~timeout_ms read =
-  Switch_home.Held_screen.wait_for ~timeout_ms
-    (Switch_home.Held_screen.held hold_ms read)
+  Screen_graph.Held_screen.wait_for ~timeout_ms
+    (Screen_graph.Held_screen.held hold_ms read)
 
 let boxes_shown ~timeout_ms =
   held ~timeout_ms (fun m ->

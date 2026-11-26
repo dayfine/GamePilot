@@ -35,7 +35,7 @@ let read_ms = 1500
 let rounds = 25
 
 let held check =
-  Switch_home.Held_screen.held hold_ms (fun m ->
+  Screen_graph.Held_screen.held hold_ms (fun m ->
       if check m then Some () else None)
 
 let a_answers m = S.text_up m || not (S.list_shown m)
@@ -53,7 +53,7 @@ let watch check =
 let until_pressing ~what check =
   let rec go n =
     match
-      Switch_home.Held_screen.wait_for ~timeout_ms:read_ms (watch check)
+      Screen_graph.Held_screen.wait_for ~timeout_ms:read_ms (watch check)
     with
     | Some Ready -> Ok ()
     | (Some Answer | None) when n >= rounds ->
@@ -78,7 +78,7 @@ let open_gifts ~log =
     S.gift_menu m
   in
   match
-    Switch_home.Held_screen.wait_for ~timeout_ms:menu_read_ms (held watch)
+    Screen_graph.Held_screen.wait_for ~timeout_ms:menu_read_ms (held watch)
   with
   | Some () ->
       log "Mystery Gift.";
@@ -108,7 +108,7 @@ let read_list () =
     S.list_active m
   in
   let read =
-    Switch_home.Held_screen.wait_for ~timeout_ms:list_read_ms (held shown)
+    Screen_graph.Held_screen.wait_for ~timeout_ms:list_read_ms (held shown)
   in
   match (read, !last) with
   | Some (), Some m -> Ok m

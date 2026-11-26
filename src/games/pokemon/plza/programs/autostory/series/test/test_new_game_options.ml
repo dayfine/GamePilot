@@ -35,6 +35,9 @@ let cases =
     case "language=zh-Hant: the language"
       (played language [ ("language", "zh-Hant") ])
       "zh-Hant";
+    case "language=zh-Hans: the language"
+      (played language [ ("language", "zh-Hans") ])
+      "zh-Hans";
     case "look=5: the look" (played look [ ("look", "5") ]) "5";
     case "look=5: the language stays en"
       (played language [ ("look", "5") ])
@@ -44,10 +47,35 @@ let cases =
     case "language=ko: not one it types a name in"
       (played language [ ("language", "ko") ])
       "error: --options language=ko: language is en | es-ES | es-419 | fr | de \
-       | it | ja | zh-Hant";
+       | it | ja | zh-Hans | zh-Hant";
     case "look=9: out of range"
       (played look [ ("look", "9") ])
       "error: --options look=9: look is 1 to 8";
   ]
 
+(* The starter option, read through the registry's whole declaration. *)
+let starter pairs () =
+  match
+    Result.bind
+      (Run_options.check (Choices.decls @ Plza_story.Starter.decls) pairs)
+      Plza_autostory.Starter_option.of_run_options
+  with
+  | Ok (Some s) -> Plza_story.Starter.name s
+  | Ok None -> "none"
+  | Error e -> "error: " ^ e
+
+let starter_cases =
+  [
+    case "no starter option: none (the plan's walk, Chikorita's)" (starter [])
+      "none";
+    case "starter=water: Totodile" (starter [ ("starter", "water") ]) "Totodile";
+    case "starter=fire with a language: Tepig"
+      (starter [ ("language", "fr"); ("starter", "fire") ])
+      "Tepig";
+    case "starter=totodile: not a value"
+      (starter [ ("starter", "totodile") ])
+      "error: --options starter=totodile: starter is grass | fire | water";
+  ]
+
+let cases = cases @ starter_cases
 let () = Table_test.run "plza_new_game_options" cases

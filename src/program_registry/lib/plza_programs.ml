@@ -23,7 +23,7 @@ let autostory =
     backends = [ Switch ];
     viewport = Native;
     rules = Plza_story;
-    options = Plza_story.New_game_choices.decls;
+    options = Plza_story.New_game_choices.decls @ Plza_story.Starter.decls;
   }
 
 let claim_gifts =

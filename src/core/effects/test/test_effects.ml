@@ -1,3 +1,7 @@
+(* Effects: virtual clock (Effects.now) and frame saving (Effects.save_run_frame)
+   tested with an in-memory OCaml effect handler that fakes the daemon clock and
+   records (or refuses) frame-save requests. *)
+
 let () =
   let t =
     Effect.Deep.match_with Effects.now ()

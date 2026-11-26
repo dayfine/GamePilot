@@ -1,4 +1,4 @@
-(** [plza.bank-home]'s checkpoints as a game of the checkpoint engine
+(** [pokemon_home.bank-plza]'s checkpoints as a game of the checkpoint engine
     ({!Plza_engine}): one game action, [bank_in_home], which opens Pokémon HOME
     on Legends: Z-A from the Switch's HOME menu, moves the gift catalog's
     Pokémon ({!Catalog_moves}) from the game's box to their HOME boxes, saves
