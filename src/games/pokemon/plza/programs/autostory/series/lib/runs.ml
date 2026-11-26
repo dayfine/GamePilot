@@ -23,6 +23,8 @@ type setup = {
   policy : Checkpoint_trials.policy;
   info : Run_record.info;
   daemons : Live_run.Series_daemons.t;
+  new_game : Story.New_game_options.t;
+      (* 00-new-game's choices, from the program's options. *)
 }
 
 let load_plan ~plan_dir id =
@@ -154,7 +156,7 @@ let run_in setup plan n ~attempt ~reload (run : Run_record.run) =
   log ("[Run] " ^ name ^ if reload then " (after a reload)" else "");
   let outcome =
     Live_run.Series_daemons.with_daemon setup.daemons ~failed:of_runner run ~n
-      (live ~options:setup.flags.game ~log ~reload run.record plan)
+      (live ~options:setup.new_game ~log ~reload run.record plan)
   in
   close ();
   let ending : Run_record.ending =
@@ -224,21 +226,6 @@ let rec chain setup ~chained = function
       if runs_of setup plan ~chained then chain setup ~chained:true rest
       else Ok 1
 
-(* Every plan of the series, loaded and checked (Plan_check), and 00-new-game's
-   new-game choices (Series_check), before the console moves. *)
-let load_checked ~plan_dir ~options ids =
-  let* plans =
-    List.fold_left
-      (fun plans id ->
-        let* plans = plans in
-        let* plan = load_plan ~plan_dir id in
-        let* () = Story.Plan_check.check plan in
-        Ok (plans @ [ plan ]))
-      (Ok []) ids
-  in
-  let* () = Series_check.check ~options plans in
-  Ok plans
-
 let checkpoint_order = String.compare
 
 (* Each run's daemon: the program's viewport, the right stick's keep-awake,
@@ -253,8 +240,8 @@ let daemons (f : Flags.t) backend ~viewport series =
          f.watch)
     series
 
-let setup_of (f : Flags.t) ~program ~options ~from_id ~to_id ~ids ~backend
-    ~viewport policy =
+let setup_of (f : Flags.t) ~program ~options ~new_game ~from_id ~to_id ~ids
+    ~backend ~viewport policy =
   let info : Run_record.info =
     {
       kind = Checkpoints;
@@ -271,6 +258,7 @@ let setup_of (f : Flags.t) ~program ~options ~from_id ~to_id ~ids ~backend
     policy;
     info;
     daemons = daemons f backend ~viewport { info; mode; checkpoints = ids };
+    new_game;
   }
 
 let switch_only : Live_run.Daemon_process.backend -> _ = function
@@ -297,9 +285,13 @@ let run_series ~program ~options ~viewport plan_dir args =
   let* policy =
     Checkpoint_trials.policy ?runs:f.runs Checkpoint_trials.Testing
   in
-  let* plans = load_checked ~plan_dir ~options:f.game ids in
+  let* new_game = Story.New_game_options.of_run_options options in
+  let* plans =
+    Series_check.load_checked (load_plan ~plan_dir) ~options:new_game ids
+  in
   let setup =
-    setup_of f ~program ~options ~from_id ~to_id ~ids ~backend ~viewport policy
+    setup_of f ~program ~options ~new_game ~from_id ~to_id ~ids ~backend
+      ~viewport policy
   in
   let* code = chain setup ~chained:false plans in
   Live_run.Series_daemons.finished setup.daemons ~passed:(code = 0);

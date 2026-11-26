@@ -5,4 +5,5 @@
   gamepilot.wire
   gamepilot.switch_home
   gamepilot.engine_run
-  gamepilot.plza_walk))
+  gamepilot.plza_walk
+  gamepilot.run_options))

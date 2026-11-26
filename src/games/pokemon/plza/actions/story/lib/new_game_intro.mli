@@ -43,6 +43,7 @@ type game_steps = {
           launch's black. *)
   now : unit -> float;  (** The daemon's clock, in ms. *)
   log : string -> unit;
+      (** A line for the story log: each screen reached and each choice made. *)
 }
 (** What 00-new-game reads and does on the console. *)
 

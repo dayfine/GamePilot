@@ -864,7 +864,7 @@ let lab_elevator ?(lost = false) c =
           | Some _ -> party c))
   | _ -> party c
 
-let cases_01_00a =
+let cases_00_new_game =
   [
     case "00-new-game: the plan's choices reach the new game" new_game_given
       "passed: en, look 1, \"Kosmos\"";
@@ -886,11 +886,6 @@ let cases_01_00a =
     case "01.01 to 01.02, no options: no new game"
       (choices_of [ "01.01"; "01.02" ])
       "ok: ";
-    case "01.01 to 01.02 with options: refused, no new game to take them"
-      (choices_of ~options:french_5 [ "01.01"; "01.02" ])
-      "error: --options language, look and name are 00-new-game's new-game \
-       choices, and this series has no new game: start it at 00-new-game, or \
-       drop them";
     case
       "00-new-game with a name its language cannot take: refused before the \
        console"
@@ -1649,7 +1644,7 @@ let cases_03_07_to_03_11 =
 
 let () =
   Table_test.run "plza_story_game"
-    (cases_01_00a @ cases @ cases_actions @ cases_02_01 @ cases_02_02
+    (cases_00_new_game @ cases @ cases_actions @ cases_02_01 @ cases_02_02
    @ cases_02_03 @ cases_02_04 @ cases_02_05 @ cases_02_06 @ cases_02_07
    @ cases_03_01 @ cases_03_02 @ cases_03_02b @ cases_03_03 @ cases_03_04
    @ cases_signatures @ cases_03_07_to_03_11)

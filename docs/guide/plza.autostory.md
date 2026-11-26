@@ -23,18 +23,21 @@ The Switch's capture must be the whole 1920x1080 picture (the daemon's `--viewpo
 ### The new game's choices
 
 00-new-game's choices are the program's options, one `--options KEY=VALUE` each; repeat the flag
-for more. A key not given keeps the default in 00-new-game's plan (its `new_game` event's args).
-Pass them on the command line rather than editing the plan:
+for more. Pass them on the command line rather than editing the plan:
 
-- `language`: `en` (the default), `es-ES`, `es-419`, `fr`, `de`, `it`, `ja` or `zh-Hant`.
-  Korean (`ko`) and Simplified Chinese (`zh-Hans`) are refused: their keyboards are not typed on.
-- `look`: 1 (the default) to 8, left to right along the top row, then the bottom one.
-- `name`: `Kosmos` (the default); at most 12 characters (6 in Japanese and Chinese), only
-  letters, digits and `- / : ' , . ? !`.
+<!-- generated:options -->
+Give each as `--options KEY=VALUE`:
 
-Any other key, a key given twice, a choice 00-new-game cannot play, and options on a series that
-does not start at 00-new-game are refused before the console moves. The run prints the choices it
-plays. In French with look 5, for example:
+| Key | Values | When not given | What it chooses |
+|---|---|---|---|
+| `language` | en \| es-ES \| es-419 \| fr \| de \| it \| ja \| zh-Hant | default `en` | the new game's language (00-new-game) |
+| `look` | 1 to 8 | default `1` | the new game's look, left to right along the top row, then the bottom |
+| `name` | text | default `Kosmos` | the player's name: at most 12 characters (6 in Japanese and Chinese), letters, digits and - / : ' , . ? ! |
+<!-- /generated -->
+
+Any other key, a key given twice, a value its key does not take, and a name its language cannot
+take are refused before the console moves. The run prints the choices it plays, and its run.json
+and watch page show the options. In French with look 5, for example:
 
 ```sh
 cd src && opam exec -- dune exec -- gamepilot run plza.autostory --from 00-new-game --to 03.11 --mode testing --backend switch --serial PORT --capture DEVICE \

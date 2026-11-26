@@ -7,7 +7,6 @@ type t = {
 }
 
 let none = { language = None; look = None; name = None }
-let given t = t <> none
 
 let over t (c : Choices.t) =
   {
@@ -16,33 +15,30 @@ let over t (c : Choices.t) =
     name = Option.value t.name ~default:c.name;
   }
 
-(* The languages 00-new-game types a name in. *)
-let typed_tags =
-  List.filter
-    (fun tag ->
-      match Choices.of_tag tag with
-      | Some l -> (Choices.info l).typed
-      | None -> false)
-    Choices.tags
+let ( let* ) = Result.bind
 
-let language t tag =
-  match Choices.of_tag tag with
-  | Some l -> Ok { t with language = Some l }
-  | None ->
-      Error
-        ("language is one of " ^ String.concat ", " typed_tags ^ ", not " ^ tag)
-
-let look t v =
-  match int_of_string_opt v with
-  | Some n when n >= 1 && n <= Choices.looks -> Ok { t with look = Some n }
-  | _ -> Error (Printf.sprintf "look is 1 to %d, not %s" Choices.looks v)
-
-let name t v = Ok { t with name = Some v }
+let language options =
+  match Option.map Choices.of_tag (Run_options.find options "language") with
+  | None -> Ok None
+  | Some (Some l) -> Ok (Some l)
+  | Some None -> Error "--options language: not a language tag"
 
 let check t =
   match Choices.problem (over t Choices.default) with
   | None -> Ok ()
   | Some why -> Error why
+
+let of_run_options options =
+  let* language = language options in
+  let t =
+    {
+      language;
+      look = Run_options.int options "look";
+      name = Run_options.find options "name";
+    }
+  in
+  let* () = check t in
+  Ok t
 
 let describe (c : Choices.t) =
   Printf.sprintf "%s, look %d, \"%s\"" (Choices.info c.language).tag c.look

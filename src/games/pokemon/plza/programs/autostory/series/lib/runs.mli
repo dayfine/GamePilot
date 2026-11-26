@@ -37,6 +37,9 @@ val run_series :
     --from to --to of the plan folder, in order, each run until the policy
     decides; every plan loaded and checked ({!Plza_autostory.Plan_check}) before
     the console moves. [program] is run.json's program fields, [options] the
-    program's options, checked (Program_registry.check_options), for run.json,
-    [viewport] the Switch daemons' (the registry's check of --viewport). [Ok 0]
-    when every one passed, [Ok 1] when one stopped; the Switch only, testing. *)
+    program's options, checked (Program_registry.check_options), for run.json
+    and 00-new-game's choices
+    ({!Plza_autostory.New_game_options.of_run_options}: [Error] before the
+    console moves on choices it cannot play), [viewport] the Switch daemons'
+    (the registry's check of --viewport). [Ok 0] when every one passed, [Ok 1]
+    when one stopped; the Switch only, testing. *)

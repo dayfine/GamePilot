@@ -187,14 +187,36 @@ let steps k : I.game_steps =
 
 let opt = function Some n -> string_of_int n | None -> "none"
 
-let played ?(choices = C.default) k () =
+(* What a run ends with: its outcome, the language entry and look picked, the
+   name typed, the presses. *)
+type play = {
+  outcome : string;
+  entry : string;
+  look : string;
+  name : string;
+  presses : string;
+}
+
+let played part ?(choices = C.default) k () =
   let outcome =
     match I.run (steps k) choices with
     | Ok () -> "passed"
     | Error c -> Engine_run.Failure.cause_to_string c
   in
-  Printf.sprintf "%s; language %s, look %s, name \"%s\", %d presses" outcome
-    (opt k.language) (opt k.look) k.text k.presses
+  part
+    {
+      outcome;
+      entry = opt k.language;
+      look = opt k.look;
+      name = k.text;
+      presses = string_of_int k.presses;
+    }
+
+let outcome p = p.outcome
+let entry p = p.entry
+let look p = p.look
+let name p = p.name
+let presses p = p.presses
 
 let refused choices () =
   match C.problem choices with Some p -> p | None -> "no problem"
@@ -202,45 +224,75 @@ let refused choices () =
 let case name input expectation : Table_test.case = { name; input; expectation }
 let hint = C.by_hand_hint
 let with_name name = { C.default with name }
+let japanese_7 : C.t = { language = Japanese; look = 7; name = "1" }
+let chinese_8 : C.t = { language = Chinese_traditional; look = 8; name = "q" }
 
 let runs =
   [
-    case "the defaults: English, look 1, Kosmos"
-      (played (console ()))
-      "passed; language 0, look 1, name \"Kosmos\", 44 presses";
-    case "a dimmed HOME: B wakes it"
-      (played (console ~dimmed:true ()))
-      "passed; language 0, look 1, name \"Kosmos\", 45 presses";
-    case "Japanese, look 7, the first tilt on 7"
-      (played
-         ~choices:{ language = Japanese; look = 7; name = "1" }
-         (console ~first_look:7 ()))
-      "passed; language 6, look 7, name \"1\", 7 presses";
+    case "the defaults: passed" (played outcome (console ())) "passed";
+    case "the defaults: English, the first entry"
+      (played entry (console ()))
+      "0";
+    case "the defaults: look 1" (played look (console ())) "1";
+    case "the defaults: Kosmos typed" (played name (console ())) "Kosmos";
+    case "the defaults: 44 presses" (played presses (console ())) "44";
+    case "a dimmed HOME: passed"
+      (played outcome (console ~dimmed:true ()))
+      "passed";
+    case "a dimmed HOME: one B more"
+      (played presses (console ~dimmed:true ()))
+      "45";
+    case "Japanese, look 7: passed"
+      (played outcome ~choices:japanese_7 (console ~first_look:7 ()))
+      "passed";
+    case "Japanese: the seventh entry"
+      (played entry ~choices:japanese_7 (console ~first_look:7 ()))
+      "6";
+    case "Japanese, the first tilt on 7: look 7"
+      (played look ~choices:japanese_7 (console ~first_look:7 ()))
+      "7";
+    case "Japanese: 1 typed"
+      (played name ~choices:japanese_7 (console ~first_look:7 ()))
+      "1";
     case "Traditional Chinese: two + to Confirm Choices"
-      (played
-         ~choices:{ language = Chinese_traditional; look = 8; name = "q" }
-         (console ~accept_pluses:2 ()))
-      "passed; language 9, look 8, name \"q\", 14 presses";
-    case "not on HOME: one B, refused"
-      (played (console ~home:false ()))
+      (played outcome ~choices:chinese_8 (console ~accept_pluses:2 ()))
+      "passed";
+    case "Traditional Chinese: the tenth entry"
+      (played entry ~choices:chinese_8 (console ~accept_pluses:2 ()))
+      "9";
+    case "Traditional Chinese: look 8"
+      (played look ~choices:chinese_8 (console ~accept_pluses:2 ()))
+      "8";
+    case "not on HOME: refused"
+      (played outcome (console ~home:false ()))
       ("new_game_refused: AutoStory: 00-new-game starts a new game (no save) \
         from the Switch HOME. It is not on screen; pressed B once to wake the \
-        screen, nothing else was pressed. " ^ hint
-     ^ "; language none, look none, name \"\", 1 presses");
+        screen, nothing else was pressed. " ^ hint);
+    case "not on HOME: one B" (played presses (console ~home:false ())) "1";
     case "the launch fails"
-      (played (console ~launches:false ()))
+      (played outcome (console ~launches:false ()))
       ("new_game_failed: AutoStory intro: the launch from HOME failed: PLZA's \
-        tile did not start " ^ hint
-     ^ "; language none, look none, name \"\", 0 presses");
-    case "the picker never lights: six tilts left, then fails"
-      (played (console ~picker_lights:false ()))
+        tile did not start " ^ hint);
+    case "the launch fails: nothing pressed"
+      (played presses (console ~launches:false ()))
+      "0";
+    case "the picker never lights: fails"
+      (played outcome (console ~picker_lights:false ()))
       ("new_game_failed: AutoStory intro: the look picker's highlight was not \
-        read on look 1. " ^ hint
-     ^ "; language 0, look none, name \"\", 8 presses");
-    case "look 9: refused before any press"
-      (played ~choices:{ C.default with look = 9 } (console ()))
+        read on look 1. " ^ hint);
+    case "the picker never lights: the language, then six tilts left"
+      (played presses (console ~picker_lights:false ()))
+      "8";
+    case "the picker never lights: no look picked"
+      (played look (console ~picker_lights:false ()))
+      "none";
+    case "look 9: refused"
+      (played outcome ~choices:{ C.default with look = 9 } (console ()))
       ("new_game_refused: AutoStory: the player look must be 1 to 8, not 9. "
-     ^ hint ^ "; language none, look none, name \"\", 0 presses");
+     ^ hint);
+    case "look 9: nothing pressed"
+      (played presses ~choices:{ C.default with look = 9 } (console ()))
+      "0";
   ]
 
 let hangul_6 =

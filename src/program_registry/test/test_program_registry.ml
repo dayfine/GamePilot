@@ -184,6 +184,13 @@ let () =
       case "options: refused by a program that takes none"
         (fun () -> options_for (Some "frlg.mail_glitch") [ ("item", "x") ])
         "error: --options item: this program takes no options";
+      case "options: plza.autostory's defaults"
+        (fun () -> options_for (Some "plza.autostory") [])
+        "ok language=en look=1 name=Kosmos";
+      case "options: plza.autostory refuses Korean"
+        (fun () -> options_for (Some "plza.autostory") [ ("language", "ko") ])
+        "error: --options language=ko: language is en | es-ES | es-419 | fr | \
+         de | it | ja | zh-Hant";
       case "options: refused for a plan folder no program registers"
         (fun () -> options_for None [ ("item", "x") ])
         "error: --options item: this program takes no options";

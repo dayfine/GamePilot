@@ -138,8 +138,8 @@ let main plan_dir args =
    plan file alone. *)
 let usage = Grid.Plan_command.usage
 
-(* gamepilot run's usage: the grid rules' flags, then PLZA's --options. *)
-let run_usage = Pokemon_flags.usage ^ Plza_series.Flags.usage
+(* gamepilot run's usage: the grid rules' flags. *)
+let run_usage = Pokemon_flags.usage
 let of_plan_file plan = of_program (R.of_plan_dir (Filename.dirname plan))
 let checkpoint plan args = (of_plan_file plan).run_checkpoint plan args
 

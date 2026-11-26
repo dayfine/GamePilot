@@ -1,7 +1,7 @@
 (test
- (name test_flags)
+ (name test_new_game_options)
  (libraries
   gamepilot.table_test
+  gamepilot.run_options
   gamepilot.plza_story
-  gamepilot.plza_autostory
-  gamepilot.plza_series))
+  gamepilot.plza_autostory))

@@ -84,14 +84,24 @@ let steps k : T.game_steps =
     log = ignore;
   }
 
-let typed ?(row = 0) ?(col = 0) ?(drop = 0) ?(dead = false) name () =
+(* What a typing ends with: its outcome, the field, the presses. *)
+type typing = { outcome : string; field : string; pressed : string }
+
+let typed part ?(row = 0) ?(col = 0) ?(drop = 0) ?(dead = false) name () =
   let k = { row; col; text = ""; shift = false; drop; presses = []; dead } in
   let outcome =
     match T.type_text (steps k) name with Ok () -> "ok" | Error e -> e
   in
-  Printf.sprintf "%s; field \"%s\"; pressed %s" outcome k.text
-    (String.concat " " (List.rev k.presses))
+  part
+    {
+      outcome;
+      field = k.text;
+      pressed = String.concat " " (List.rev k.presses);
+    }
 
+let outcome t = t.outcome
+let field t = t.field
+let pressed t = t.pressed
 let case name input expectation : Table_test.case = { name; input; expectation }
 
 let () =
@@ -103,29 +113,43 @@ let () =
       case "A to !: left round the side twice" (path 'A' '!') "D L* L";
       case "! to Z: right round the side" (path '!' 'Z') "R R*";
       case "the same key: no move" (path 'k' 'K') "";
-      case "Kosmos from 1: Shift for K only" (typed "Kosmos")
-        "ok; field \"Kosmos\"; pressed Down Down Left Left Left Left Left \
-         LStick A Up Right A Down Right Right Right Right Right A Down Right \
-         Right Right Right Right A Up Up Right Right A Down Right Right Right \
-         Right Right A";
+      case "Kosmos from 1: typed" (typed field "Kosmos") "Kosmos";
+      case "Kosmos from 1: Shift for K only" (typed pressed "Kosmos")
+        "Down Down Left Left Left Left Left LStick A Up Right A Down Right \
+         Right Right Right Right A Down Right Right Right Right Right A Up Up \
+         Right Right A Down Right Right Right Right Right A";
+      case "Kosmos with two moves dropped: typed"
+        (typed field ~drop:2 "Kosmos")
+        "Kosmos";
       case "Kosmos with two moves dropped: read and moved again"
-        (typed ~drop:2 "Kosmos")
-        "ok; field \"Kosmos\"; pressed Down Down Left Left Left Left Left Down \
-         Down LStick A Up Right A Down Right Right Right Right Right A Down \
-         Right Right Right Right Right A Up Up Right Right A Down Right Right \
-         Right Right Right A";
-      case "a1-/:',.?! from 1" (typed "a1-/:',.?!")
-        "ok; field \"a1-/:',.?!\"; pressed Down Down A Up Up A Left Left A \
-         Down A Down Left A Right A Down Left Left Left A Right A Right A \
-         Right A";
+        (typed pressed ~drop:2 "Kosmos")
+        "Down Down Left Left Left Left Left Down Down LStick A Up Right A Down \
+         Right Right Right Right Right A Down Right Right Right Right Right A \
+         Up Up Right Right A Down Right Right Right Right Right A";
+      case "a1-/:',.?! from 1: typed" (typed field "a1-/:',.?!") "a1-/:',.?!";
+      case "a1-/:',.?! from 1: the presses"
+        (typed pressed "a1-/:',.?!")
+        "Down Down A Up Up A Left Left A Down A Down Left A Right A Down Left \
+         Left Left A Right A Right A Right A";
       case "the cursor on the right column: no read, ten tries"
-        (typed ~col:11 "q")
+        (typed outcome ~col:11 "q")
         "System keyboard: the cursor could not be read while moving to 'q' at \
-         (1, 0), after 10 tries.; field \"\"; pressed ";
-      case "a key the field does not take" (typed ~dead:true "q")
+         (1, 0), after 10 tries.";
+      case "the cursor on the right column: nothing pressed"
+        (typed pressed ~col:11 "q")
+        "";
+      case "a key the field does not take"
+        (typed outcome ~dead:true "q")
         "System keyboard: pressed 'q', but the text field did not change (0 -> \
-         0 white pixels).; field \"\"; pressed Down A";
-      case "an accented letter: refused, nothing pressed" (typed "Jos\xc3\xa9")
+         0 white pixels).";
+      case "a key the field does not take: the field stays empty"
+        (typed field ~dead:true "q")
+        "";
+      case "an accented letter: refused"
+        (typed outcome "Jos\xc3\xa9")
         "System keyboard: \"Jos\xc3\xa9\" has characters with no key on the \
-         keyboard: \"\xc3\xa9\".; field \"\"; pressed ";
+         keyboard: \"\xc3\xa9\".";
+      case "an accented letter: nothing pressed"
+        (typed pressed "Jos\xc3\xa9")
+        "";
     ]

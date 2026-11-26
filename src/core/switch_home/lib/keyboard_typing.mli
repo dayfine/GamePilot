@@ -37,6 +37,8 @@ type game_steps = {
   submit : Wire.command list -> unit;
       (** Send inputs and return once they are done. *)
   log : string -> unit;
+      (** A line for the run's log: each move toward a key (the cursor read, the
+          key, the moves, the try) and each read with no cursor. *)
 }
 (** What the typer reads and does on the keyboard. *)
 

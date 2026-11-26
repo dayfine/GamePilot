@@ -65,3 +65,12 @@ val problem : t -> string option
 val by_hand_hint : string
 (** What every refusal and failure of 00-new-game ends with: make the choices by
     hand up to Confirm Choices, then start at 01.00b. *)
+
+val typed_tags : string list
+(** The language tags 00-new-game types a name in. *)
+
+val decls : Run_options.decl list
+(** plza.autostory's options, the choices given on the command line
+    ([gamepilot run --options], Program_registry): [language] (one of
+    {!typed_tags}), [look] (1 to {!looks}) and [name] (text), each defaulting to
+    {!default}'s. *)

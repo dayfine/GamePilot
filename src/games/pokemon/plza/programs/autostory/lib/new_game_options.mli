@@ -1,41 +1,31 @@
-(** 00-new-game's choices given as the program's options (the keys [language],
-    [look] and [name] of [gamepilot run --options]), each replacing the matching
-    arg of 00-new-game's [new_game] event; the plan's args stay the defaults.
-    The fork too reads the new game's choices from the program's options
-    (PokemonLZA_AutoStoryNewGame.h). *)
+(** 00-new-game's choices as the program's options: the keys [language], [look]
+    and [name] ({!Plza_story.New_game_choices.decls}, which plza.autostory's
+    registry entry declares for [gamepilot run --options]), each replacing the
+    matching arg of 00-new-game's [new_game] event. The fork too reads the new
+    game's choices from the program's options (PokemonLZA_AutoStoryNewGame.h).
+*)
 
 type t = {
   language : Plza_story.New_game_choices.language option;
   look : int option;
   name : string option;
 }
-(** The options given, each [None] when not given. *)
+(** The options, each [None] when the run has none. *)
 
 val none : t
-(** No option given: the plan's choices. *)
-
-val given : t -> bool
-(** Whether any option is given. *)
+(** No option: the plan's choices. *)
 
 val over : t -> Plza_story.New_game_choices.t -> Plza_story.New_game_choices.t
-(** The choices with each option given in place of the plan's. *)
-
-val language : t -> string -> (t, string) result
-(** The [language] option: a tag of {!Plza_story.New_game_choices.tags}; [Error]
-    on one it does not know, listing those 00-new-game types a name in. *)
-
-val look : t -> string -> (t, string) result
-(** The [look] option: a whole number from 1 to 8; [Error] otherwise. *)
-
-val name : t -> string -> (t, string) result
-(** The [name] option, any text: {!check} refuses one 00-new-game cannot type.
-*)
+(** The choices with each option in place of the plan's. *)
 
 val check : t -> (unit, string) result
-(** The options against {!Plza_story.New_game_choices.problem}, over the fork's
-    defaults (English when no [language]), whatever their order; [Error] is the
-    refusal 00-new-game would make. The plan's language is checked too when the
-    series loads it. *)
+(** The rules across keys ({!Plza_story.New_game_choices.problem}: the name's
+    length in the language, its characters on the keyboard), over the fork's
+    defaults; [Error] is the refusal 00-new-game would make. *)
+
+val of_run_options : Run_options.t -> (t, string) result
+(** A run's checked options (each key's own values already checked by the
+    registry), read and {!check}ed. *)
 
 val describe : Plza_story.New_game_choices.t -> string
 (** For the log: [fr, look 5, "Kosmos"]. *)
