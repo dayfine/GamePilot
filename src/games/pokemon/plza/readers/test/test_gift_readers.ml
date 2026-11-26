@@ -4,15 +4,14 @@
    Pokémon and an empty sixth card) reads its row and cards; console B's
    Internet gift list (images/mystery-gift, 2026-11-25: four gifts, the cursor
    on the first, Vivillon the 4th) reads as the active list with its gift on
-   item 4; its two cards (Vivillon's, the shiny Xerneas's) read as a card;
+   item 4; Vivillon's card reads as a card;
    all also shifted (fixtures/gifts/gifts.shifted.probes.jsonl). The French list
    (console B, 2026-11-25: the same four gifts, Vivillon the 4th as
    "Prismillon (Motif Poké Ball)") reads as the list with no gift under the
    English name, as the console's run failed; under the French name
    (fixtures/gifts/gifts.fr.probes.jsonl, every Mystery Gift frame and its nine
    shifts) its gift is item 4 and the English list has none. The white fade
-   before a card, the receive animation and the code keyboard read as
-   nothing. The same
+   before a card reads as nothing. The same
    list dimmed by the Switch after an idle (gift-list-dimmed, about 30%
    brightness) must read as nothing: a dim screen is no screen we know. No
    other capture reads as the menu, the list or a gift's card. The Boxes and
@@ -24,7 +23,9 @@
    every shift. So does a copy with its date and time where the French game
    shows them (synthetic-save-dialog-fr-layout-..., console B, 2026-11-25:
    no French frame was captured; placed where that run's reading of the old
-   time box shows them), whose old box read only the date. *)
+   time box shows them), whose old box read only the date. Every capture is
+   redacted to what its reader probes (images/mystery-gift/README.md,
+   images/switch/box-cells/README.md). *)
 
 open Plza_readers
 module R = Main_menu_row
@@ -69,12 +70,7 @@ let save_text m =
   if Save_dialog.shown m then "save dialog" else "no save dialog"
 
 let same a b = Filename.remove_extension a = Filename.remove_extension b
-
-let cards_shown =
-  [
-    "./mystery-gift/card-vivillon.png"; "./mystery-gift/card-shiny-xerneas.png";
-  ]
-
+let cards_shown = [ "./mystery-gift/card-vivillon.png" ]
 let boxes = "./mystery-gift/boxes-xerneas-in-box-1.png"
 
 (* The fork's captures of the Boxes (box-cells/: CommandLineTests'

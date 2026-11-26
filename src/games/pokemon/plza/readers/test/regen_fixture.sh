@@ -144,7 +144,7 @@ Image.open(sys.argv[1]).convert("RGB").save(sys.argv[2])
         "$work/gifts/shifted" ./*/*.png)
     (cd "$work/gifts/frames" && "$PROBE_IMAGES" \
         --spec "$work/spec/gifts.en.probes.json" --viewport native \
-        ./*/*.jpg ./mystery-gift/*.png) >"$FIXTURES/gifts/gifts.probes.jsonl"
+        ./*/*.jpg ./*/*.png) >"$FIXTURES/gifts/gifts.probes.jsonl"
     (cd "$work/gifts/shifted" && "$PROBE_IMAGES" \
         --spec "$work/spec/gifts.en.probes.json" --viewport native \
         ./*/*/*.png) >"$FIXTURES/gifts/gifts.shifted.probes.jsonl"

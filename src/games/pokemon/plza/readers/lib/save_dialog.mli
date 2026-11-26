@@ -2,9 +2,12 @@
     Ours, measured on console B's capture (2026-11-25, Last Saved 18:16):
 
     - the dialog: a strip of its white panel (260, 280, 1400, 14), every channel
-      200 or over, 1.00 there and 0.67 at most elsewhere (a gift's card), with
-      its dark "Save Progress" button (640, 722, 640, 56), every channel 90 or
-      under, 0.93 there and 0.35 at most elsewhere (the Boxes);
+      200 or over, 1.00 there and 0.67 at most on the other Mystery Gift
+      captures (a gift's card), with its dark "Save Progress" button (640, 722,
+      640, 56), every channel 110 or under, 0.94 there. The button alone is no
+      proof (a black fade or the dimmed gift list fill it); no capture but the
+      dialog has both: where the panel strip is white (a white fade, a text box,
+      the settings) the button's share is 0.05 at most;
     - "Last Saved": its line (258, 856, 1000, 32), the label, the date and the
       time, short of the Cancel button (1545), dark text on white, as the share
       of each column's (and row's) pixels with every channel under 120. Two
