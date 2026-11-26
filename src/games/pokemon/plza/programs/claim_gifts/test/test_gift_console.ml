@@ -38,6 +38,7 @@ module Gc = Plza_claim_gifts.Gift_claim
 module G = Plza_claim_gifts.Mystery_gift
 module Sp = Plza_claim_gifts.Save_progress
 module L = Plza_claim_gifts.Leave_gifts
+module Rb = Plza_readers.Received_before
 
 let gift =
   List.hd
@@ -64,6 +65,8 @@ let gift_menu = capture "./mystery-gift/gift-menu-ja-360p.png"
 let question = capture "./mystery-gift/gift-menu-ja-report-question-360p.png"
 let message = capture "./mystery-gift/gift-menu-ja-connected-message-360p.png"
 let before_save = capture "./mystery-gift/save-dialog-last-saved-1816.png"
+let received_before = capture "./mystery-gift/gift-received-before-ja-360p.png"
+let code_used = capture "./mystery-gift/code-used-before-ja-360p.png"
 
 let after_save =
   capture "./mystery-gift/synthetic-save-dialog-last-saved-1818.png"
@@ -85,6 +88,7 @@ type screen =
   | Disconnected
   | Save_dialog of int
   | Saving of int
+  | Code_used
 
 let rows = 6
 let last_item = 3
@@ -116,6 +120,7 @@ let next screen (button : Wire.button) =
   | Stop_receiving (c, _), Up -> Stop_receiving (c, Yes)
   | Stop_receiving (c, _), Down -> Stop_receiving (c, No)
   | Card, B -> Gift_list 0
+  | Code_used, (A | B) -> Gift_menu
   | Disconnect Yes, A -> Disconnected
   | Disconnect No, A | Disconnect _, B -> Gift_menu
   | Disconnect _, Up -> Disconnect Yes
@@ -162,6 +167,7 @@ let probes ~list ~card ~saved seq = function
   | Disconnect Yes -> question
   | Disconnect No -> no_lit question
   | Disconnected -> message
+  | Code_used -> code_used
   | Link_play | Battle_club | Connecting | Saving _ -> other_frame
 
 let frame_ms = 50.
@@ -283,7 +289,7 @@ let claim ?card ?battle ?after_connect ?latency_ms ~list () =
         Gc.claim
           ~log:(fun l -> log := !log @ [ l ])
           ~picture ~assets:Plza_readers.Blob_assets.file_names
-          ~gift_name:(Some "name") gift)
+          ~gift_name:(Some "name") ~received_before:Rb.none gift)
   in
   (claim, c, !log)
 
@@ -300,7 +306,7 @@ let screen_text = function
   | Card -> "card"
   | Prompt | Fading _ -> "choose a gift"
   | Link_play | Battle_club | Gift_menu | Connecting | Disconnect _
-  | Disconnected | Save_dialog _ | Saving _ ->
+  | Disconnected | Save_dialog _ | Saving _ | Code_used ->
       "other"
 
 (* How often the list's screen came back from "stop receiving?". *)
@@ -355,6 +361,21 @@ let save () =
   | Ok () -> String.concat "; " !log ^ " -> " ^ screen_text c.screen
   | Error e -> "error: " ^ e
 
+(* Mystery_gift.after_code from [screen]: what it read, the A presses and
+   where it ended. *)
+let after_code screen =
+  let c = start screen in
+  let r =
+    on_console ~list:english_list c (fun () ->
+        Effects.with_probes [] (fun () -> G.after_code ~log:ignore "CODE"))
+  in
+  let a = List.length (List.filter (fun (_, b) -> b = Wire.A) c.presses) in
+  (match r with
+  | Ok Listed -> "listed"
+  | Ok Used_before -> "used before"
+  | Error e -> "error: " ^ e)
+  ^ Printf.sprintf "; %d A; %s" a (screen_text c.screen)
+
 let case name input expectation : Table_test.case = { name; input; expectation }
 
 let () =
@@ -373,6 +394,17 @@ let () =
           let r, c, _ = claim ~card:japanese_card ~list:english_list () in
           claim_text r ^ "; " ^ screen_text c.screen ^ "; " ^ claims c)
         "received; main menu, row 5; claimed [4], 1 A on the list";
+      case "an Internet gift received before: already received"
+        (fun () ->
+          let r, c, _ = claim ~card:received_before ~list:english_list () in
+          claim_text r ^ "; " ^ screen_text c.screen ^ "; " ^ claims c)
+        "already received; main menu, row 5; claimed [4], 1 A on the list";
+      case "a code used before: no A on its message"
+        (fun () -> after_code Code_used)
+        "used before; 0 A; other";
+      case "a code's gift listed: A claims it"
+        (fun () -> after_code (Gift_list 0))
+        "listed; 1 A; card";
       case "an item's card, no text box: received"
         (fun () ->
           let r, c, _ = claim ~card:item_card ~list:english_list () in

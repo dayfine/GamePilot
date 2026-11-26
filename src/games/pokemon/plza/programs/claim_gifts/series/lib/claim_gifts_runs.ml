@@ -6,13 +6,14 @@ type inputs = {
   catalog : Plza_gift_catalog.Gift_catalog.t;
   today : Plza_gift_catalog.Gift_catalog.date;
   name_templates : (string * string) list;
+  message_templates : (string * string) list;
 }
 
 let run_checkpoint inputs ~log ~picture ~assets report (plan : P.Plan.t) =
   let game =
     Plza_claim_gifts.Live_gift_steps.game ~catalog:inputs.catalog
-      ~today:inputs.today ~name_templates:inputs.name_templates ~log ~picture
-      ~assets
+      ~today:inputs.today ~name_templates:inputs.name_templates
+      ~message_templates:inputs.message_templates ~log ~picture ~assets
   in
   (* A console idle before the run dims its screen; nothing reads on it. *)
   Switch_home.Stick_wake.run ();

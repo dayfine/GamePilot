@@ -16,6 +16,10 @@ type inputs = {
   name_templates : (string * string) list;
       (** Each Internet gift's name template in the run's language, as PNG
           bytes, by gift id. *)
+  message_templates : (string * string) list;
+      (** The "received before" messages' templates in the run's language, as
+          PNG bytes, by name
+          ({!Plza_claim_gifts.Live_gift_steps.message_names}). *)
 }
 (** What a run is given, read before it starts: the program reads no clock and
     no file. *)

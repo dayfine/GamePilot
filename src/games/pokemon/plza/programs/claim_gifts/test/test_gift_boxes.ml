@@ -1,20 +1,19 @@
-(* Gift_boxes.arrange on a scripted console: the main menu and the Boxes as
+(* Gift_boxes.settle on a scripted console: the main menu and the Boxes as
    console B showed them (2026-11-20 to 26), each frame the probes of a real
    capture (../../../readers/test/fixtures/gifts/gifts.probes.jsonl): the
    menu tutorial-cards' it-menu-no-card (five cards, an empty sixth; the
    first card's bar copied to the sixth for a Pokémon in party slot 6), the
    Boxes with a Pokémon under the cursor console B's Box 8 with Xerneas
    (mystery-gift/boxes-box-8-ja-360p), an empty cell the fork's
-   box-cells/empty-2-5-360p. The box title's columns are made for the box
-   shown: "Box N" inked as wide as the fork's English captures read (64 px
-   for one digit, 80 for two, a last "1" 4 px short on the right), centred.
+   box-cells/empty-2-5-360p. The box title's band is console B's: Box 1's
+   from mystery-gift/boxes-box-1-ja-360p, every other box's Box 8's.
 
-   The console keeps 32 boxes of 30 cells and the party's slot 6; the Boxes
-   open on the box last looked at, the cursor on its first slot; the d-pad
-   moves the cursor (rows 0, the party, to 5), L and R the box, round from
-   Box 1 to Box 32 and back (or not, for a console whose L stops at Box 1); Y
-   picks a Pokémon up, drops it on an empty cell or swaps it with the one
-   there; B leaves to the menu. Nothing reaches a daemon. *)
+   The console keeps console B's 8 boxes of 30 cells and the party's slot 6;
+   the Boxes open on the box last looked at, the cursor on its first slot;
+   the d-pad moves the cursor (rows 0, the party, to 5), L and R the box,
+   round from Box 1 to Box 8 and back; Y picks a Pokémon up, drops it on an
+   empty cell or swaps it with the one there; B leaves to the menu. Nothing
+   reaches a daemon. *)
 
 module Gb = Plza_claim_gifts.Gift_boxes
 module C = Plza_gift_catalog.Gift_catalog
@@ -27,7 +26,10 @@ let capture path = List.assoc path captures
 let menu_frame = capture "./tutorial-cards/it-menu-no-card.jpg"
 let filled_frame = capture "./mystery-gift/boxes-box-8-ja-360p.png"
 let empty_frame = capture "./box-cells/empty-2-5-360p.png"
-let box_count = 32
+let band frame = List.assoc "box_title.band" frame
+let box_one_band = band (capture "./mystery-gift/boxes-box-1-ja-360p.png")
+let other_band = band filled_frame
+let box_count = 8
 let cells = 30
 
 type screen = Menu of int | Boxes
@@ -40,7 +42,7 @@ type console = {
   mutable held : bool;
   mutable party_six : bool;
   boxes : bool array array;
-  wraps : bool;
+  named_one : bool;  (** Box 1's title reads as Box 1 (not renamed). *)
   mutable t_ms : float;
   mutable seq : int;
   mutable presses : string list;
@@ -53,21 +55,9 @@ let set shares probes =
     (fun (id, p) -> (id, Option.value ~default:p (List.assoc_opt id shares)))
     probes
 
-(* The title band (320, 336, 290, 34) as 97 columns of a 360p frame, inked
-   from [left] to [right]. *)
-let title_columns number =
-  let one_digit = number < 10 in
-  let width = if one_digit then 64 else 80 in
-  let left = 442 - (width / 2) in
-  let right = left + width - if number mod 10 = 1 then 4 else 0 in
-  List.init 97 (fun i ->
-      let x = 320 + (i * 290 / 97) in
-      if x >= left && x <= right then 0.5 else 0.)
-
-let title number =
+let title c =
   ( "box_title.band",
-    Wire.Line_shares
-      { rows = List.init 12 (fun _ -> 0.3); columns = title_columns number } )
+    if c.box = 0 && c.named_one then box_one_band else other_band )
 
 let cell_filled c =
   if c.row = 0 then c.col < 5 || c.party_six
@@ -89,9 +79,7 @@ let frame c : Effects.measurements =
     match c.screen with
     | Menu r -> menu_probes c r
     | Boxes ->
-        set
-          [ title (c.box + 1) ]
-          (if cell_filled c then filled_frame else empty_frame)
+        set [ title c ] (if cell_filled c then filled_frame else empty_frame)
   in
   { seq = c.seq; t_ms = c.t_ms; probes }
 
@@ -100,11 +88,7 @@ let set_cell c v =
   else c.boxes.(c.box).(((c.row - 1) * 6) + c.col) <- v
 
 let clamp lo hi v = max lo (min hi v)
-
-let page c step =
-  let next = c.box + step in
-  if next >= 0 && next < box_count then c.box <- next
-  else if c.wraps then c.box <- (next + box_count) mod box_count
+let page c step = c.box <- (c.box + step + box_count) mod box_count
 
 (* Y: pick up, drop on an empty cell, or swap (the hand stays full). *)
 let y c =
@@ -179,7 +163,7 @@ let on_console c f =
 
 (* A console on the main menu's row 3, the Boxes last left on [last_box],
    with Pokémon in the (box, slot) cells given. *)
-let console ?(wraps = true) ?(party_six = false) ~last_box filled =
+let console ?(named_one = true) ?(party_six = false) ~last_box filled =
   let boxes = Array.init box_count (fun _ -> Array.make cells false) in
   List.iter (fun (b, s) -> boxes.(b - 1).(s - 1) <- true) filled;
   {
@@ -190,7 +174,7 @@ let console ?(wraps = true) ?(party_six = false) ~last_box filled =
     held = false;
     party_six;
     boxes;
-    wraps;
+    named_one;
     t_ms = 0.;
     seq = 0;
     presses = [];
@@ -224,12 +208,12 @@ let where c =
      :: (if c.party_six then [ "party 6" ] else [])
     @ others)
 
-let arrange c slots =
+let settle c slots =
   match
-    on_console c (fun () -> Gb.arrange ~log:ignore (List.map slot slots))
+    on_console c (fun () -> Gb.settle ~log:ignore (List.map slot slots))
   with
   | Ok { reads; moved } ->
-      Printf.sprintf "%s | moved %d | %s | %s" (where c) moved
+      Printf.sprintf "%s | moved %b | %s | %s" (where c) moved
         (String.concat ", "
            (List.map
               (fun ((s : C.box_slot), r) ->
@@ -238,67 +222,58 @@ let arrange c slots =
         (match c.screen with Menu _ -> "main menu" | Boxes -> "Boxes")
   | Error e -> "error: " ^ e
 
-let count b c = List.length (List.filter (( = ) b) c.presses)
-
-let ys c () =
-  ignore (arrange c [ 2; 1 ]);
-  Printf.sprintf "%d Y, %d L, %d R" (count "Y" c) (count "L" c) (count "R" c)
+(* The presses, run together ("A Down Down L L"). *)
+let presses c () =
+  ignore (settle c [ 1; 2 ]);
+  String.concat " " c.presses
 
 let case name input expectation : Table_test.case = { name; input; expectation }
-
-(* Console B after the runs of 2026-11-25 and -26: Vivillon in party slot 6,
-   Xerneas in Box 8 slot 1, the Boxes last on Box 8. *)
-let console_b () = console ~party_six:true ~last_box:8 [ (8, 1) ]
 
 let () =
   Table_test.run "gift_boxes"
     [
-      case "console B: Vivillon from party slot 6, Xerneas from Box 8"
-        (fun () -> arrange (console_b ()) [ 2; 1 ])
-        "Box 1: 1 2 | moved 2 | slot 2 filled, slot 1 filled | main menu";
-      case "console B: Box 8 and party slot 6 emptied"
+      case "party of five, Boxes last on Box 8: nothing to move"
+        (fun () -> settle (console ~last_box:8 []) [ 1; 2 ])
+        "Box 1: - | moved false | slot 1 empty, slot 2 empty | main menu";
+      case "party of five, Boxes last on Box 8: the presses"
+        (presses (console ~last_box:8 []))
+        "Down Down Down A Down L L L L L L L Up Right B";
+      case "a gift in party slot 6: moved to the first empty slot"
+        (fun () -> settle (console ~party_six:true ~last_box:8 []) [ 1; 2 ])
+        "Box 1: 1 | moved true | slot 1 filled, slot 2 empty | main menu";
+      case "a gift in party slot 6, the first slot taken: to the second"
         (fun () ->
-          let c = console_b () in
-          ignore (arrange c [ 2; 1 ]);
-          string_of_bool (c.party_six || c.boxes.(7).(0)))
-        "false";
-      case "console B: the presses' count" (ys (console_b ())) "6 Y, 15 L, 8 R";
-      case "a gift landed in the last-viewed Box 8, party slot 6 empty"
-        (fun () -> arrange (console ~last_box:8 [ (8, 1) ]) [ 1 ])
-        "Box 1: 1 | moved 1 | slot 1 filled | main menu";
-      case "a gift in party slot 6 from an earlier run"
-        (fun () -> arrange (console ~party_six:true ~last_box:1 []) [ 2 ])
-        "Box 1: 2 | moved 1 | slot 2 filled | main menu";
-      case "already in place: nothing moved"
-        (fun () -> arrange (console ~last_box:8 [ (1, 1); (1, 2) ]) [ 2; 1 ])
-        "Box 1: 1 2 | moved 0 | slot 2 filled, slot 1 filled | main menu";
-      case "already in place: no Y"
-        (ys (console ~last_box:8 [ (1, 1); (1, 2) ]))
-        "0 Y, 8 L, 1 R";
-      case "the Boxes open on Box 1: found in place"
-        (fun () -> arrange (console ~last_box:1 [ (1, 1) ]) [ 1 ])
-        "Box 1: 1 | moved 0 | slot 1 filled | main menu";
-      case "the Boxes open on Box 12: back over the two-digit boxes"
-        (fun () -> arrange (console ~last_box:12 [ (12, 3) ]) [ 1 ])
-        "Box 1: 1 | moved 1 | slot 1 filled | main menu";
-      case "not found anywhere: its slot reads empty"
-        (fun () -> arrange (console ~last_box:8 []) [ 1 ])
-        "Box 1: - | moved 0 | slot 1 empty | main menu";
-      case "the open box holds a Pokémon of the player's too: none moved"
-        (fun () -> arrange (console ~last_box:8 [ (8, 1); (8, 5) ]) [ 1 ])
-        "Box 1: -; Box 8: 1 5 | moved 0 | slot 1 empty | main menu";
-      case "L stops at Box 1: no box title widens"
-        (fun () -> arrange (console ~wraps:false ~last_box:8 [ (8, 1) ]) [ 1 ])
-        "error: no box title widened in 40 L";
-      case "a slot outside Box 1 is not arranged"
+          settle (console ~party_six:true ~last_box:8 [ (1, 1) ]) [ 1; 2 ])
+        "Box 1: 1 2 | moved true | slot 1 filled, slot 2 filled | main menu";
+      case "a gift in party slot 6: the presses"
+        (presses (console ~party_six:true ~last_box:8 []))
+        "Down Down Down A Down L L L L L L L Up Right Up Right Right Right \
+         Right Y Down Left Left Left Left Left Y Right B";
+      case "the Boxes open on Box 1: no L"
+        (presses (console ~last_box:1 [ (1, 1); (1, 2) ]))
+        "Down Down Down A Down Up Right B";
+      case "party slot 6 and both slots full: not moved"
+        (fun () ->
+          settle
+            (console ~party_six:true ~last_box:3 [ (1, 1); (1, 2) ])
+            [ 1; 2 ])
+        "Box 1: 1 2; party 6 | moved false | slot 1 filled, slot 2 filled | \
+         main menu";
+      case "no box titled Box 1: nothing moved"
+        (fun () ->
+          let c = console ~named_one:false ~party_six:true ~last_box:8 [] in
+          let r = settle c [ 1 ] in
+          r ^ " | " ^ string_of_bool c.party_six)
+        "error: no Box 1 title after 32 L (glyphs 6 3 6 3 15 24 25 15) | true";
+      case "a slot outside Box 1 is not read"
         (fun () ->
           let c = console ~last_box:1 [] in
           match
             on_console c (fun () ->
-                Gb.arrange ~log:ignore [ { box = 2; slot = 1 } ])
+                Gb.settle ~log:ignore [ { box = 2; slot = 1 } ])
           with
           | Ok { reads = [ (_, r) ]; _ } -> read_text r
           | Ok _ -> "other reads"
           | Error e -> "error: " ^ e)
-        "not read: only Box 1 is arranged";
+        "not read: only Box 1 is read";
     ]

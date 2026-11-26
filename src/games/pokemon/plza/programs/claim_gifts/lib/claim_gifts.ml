@@ -1,6 +1,8 @@
 module C = Plza_gift_catalog.Gift_catalog
 module Failure = Engine_run.Failure
 
+let ( let* ) = Result.bind
+
 type party = Full | Room_for_one
 type party_read = Party of party | No_menu of string | Not_ready of string
 
@@ -15,7 +17,7 @@ type outcome =
 type game_steps = {
   read_party : unit -> party_read;
   claim : C.gift -> Gift_claim.claim;
-  arrange_slots : C.box_slot list -> (Gift_boxes.arranged, string) result;
+  settle_boxes : C.box_slot list -> (Gift_boxes.settled, string) result;
   save : unit -> (unit, string) result;
   log : string -> unit;
 }
@@ -24,7 +26,7 @@ type run = {
   catalog : C.t;
   today : C.date;
   mutable outcomes : (C.gift * outcome) list;
-  mutable moved : int;
+  mutable moved : bool;
 }
 
 let start catalog ~today =
@@ -32,7 +34,7 @@ let start catalog ~today =
     catalog;
     today;
     outcomes = List.map (fun g -> (g, Not_tried)) catalog;
-    moved = 0;
+    moved = false;
   }
 
 let outcomes run = run.outcomes
@@ -55,8 +57,8 @@ let fail code detail = Error (Failure.cause ~repeats:true code detail)
 
 let party_text = function
   | Full ->
-      "Party of six: every gift lands in a box; slot 6 is taken for a gift an \
-       earlier run left there."
+      "Party of six: slot 6 is taken for a gift an earlier run left there, \
+       moved to Box 1 before the claims."
   | Room_for_one -> "Party of five: the first gift lands in party slot 6."
 
 let gifts_start steps run =
@@ -101,58 +103,75 @@ let claim_gifts steps run =
   in
   go run.catalog
 
-(* A Pokémon gift that may be in the save: received now, said to be by the
-   game, or failed (an earlier run's gift shows an unknown screen today). *)
-let may_have = function
-  | Claimed | Already_received | Failed _ -> true
-  | Expired | Not_supported _ | Not_tried -> false
-
-(* Those gifts, the ones received now first, each in the catalog's order:
-   the order the game put them in party slot 6 and the boxes. *)
-let boxed_gifts run =
-  let pokemon =
-    List.filter_map
-      (fun ((g : C.gift), o) ->
-        match g.pokemon with
-        | Some p when may_have o -> Some ((g, o), p)
-        | _ -> None)
-      run.outcomes
-  in
-  let now, before = List.partition (fun ((_, o), _) -> o = Claimed) pokemon in
-  now @ before
-
 let slot_name (s : C.box_slot) = Printf.sprintf "Box %d slot %d" s.box s.slot
 
-(* A gift received now or said to be must read in its slot; a failed one
-   keeps its failure. *)
-let judge run (((gift : C.gift), outcome), (p : C.pokemon)) reads =
-  let fail why = set run gift (Failed (slot_name p.box_slot ^ why)) in
-  match (outcome, List.assoc_opt p.box_slot reads) with
-  | (Failed _ | Expired | Not_supported _ | Not_tried), _
-  | _, Some Gift_boxes.Filled ->
-      ()
-  | _, Some Empty -> fail " is empty"
-  | _, Some (Not_read why) -> fail (" not read: " ^ why)
-  | _, None -> fail " not read"
+let read_text = function
+  | Gift_boxes.Filled -> "holds a Pokémon"
+  | Empty -> "is empty"
+  | Not_read why -> "not read: " ^ why
 
-let arrange steps run gifts =
-  let slots = List.map (fun (_, (p : C.pokemon)) -> p.box_slot) gifts in
-  match steps.arrange_slots slots with
+(* Settled, each slot's reading logged; whether party slot 6 moved. *)
+let settle steps run slots =
+  match steps.settle_boxes slots with
   | Ok { reads; moved } ->
-      run.moved <- moved;
-      List.iter (fun g -> judge run g reads) gifts;
-      Ok ()
+      List.iter
+        (fun (s, r) -> steps.log (slot_name s ^ " " ^ read_text r ^ "."))
+        reads;
+      run.moved <- run.moved || moved;
+      Ok reads
   | Error why -> fail "boxes_not_read" why
 
-let check_gift_slots steps run =
-  match boxed_gifts run with
+(* The Pokémon gifts with an [outcome] that [keep] keeps, in the catalog's
+   order: the order they are received in. *)
+let pokemon_gifts run keep =
+  List.filter_map
+    (fun ((g : C.gift), o) ->
+      match g.pokemon with Some p when keep o -> Some (g, p) | _ -> None)
+    run.outcomes
+
+let slots gifts = List.map (fun (_, (p : C.pokemon)) -> p.box_slot) gifts
+
+(* Before the claims: the Pokémon gifts not expired nor received in HOME. *)
+let settle_boxes steps run =
+  let due ((g : C.gift), _) =
+    g.how <> Home && not (C.expired ~today:run.today g)
+  in
+  match List.filter due (pokemon_gifts run (fun _ -> true)) with
   | [] ->
-      steps.log "No Pokémon gift in the save: no box slot to arrange.";
+      steps.log "No Pokémon gift due: the Boxes not opened.";
       Ok ()
-  | gifts -> arrange steps run gifts
+  | gifts -> Result.map ignore (settle steps run (slots gifts))
+
+let not_in_place reads ((g : C.gift), (p : C.pokemon)) =
+  match List.assoc_opt p.box_slot reads with
+  | Some Gift_boxes.Filled -> None
+  | Some r -> Some (g, slot_name p.box_slot ^ " " ^ read_text r)
+  | None -> Some (g, slot_name p.box_slot ^ " not read")
+
+let missing_text missing =
+  String.concat "; "
+    (List.map (fun ((g : C.gift), why) -> g.id ^ ": " ^ why) missing)
+
+(* The gifts read out of place failed, the run stopped. *)
+let check_in_place run reads gifts =
+  match List.filter_map (not_in_place reads) gifts with
+  | [] -> Ok ()
+  | missing ->
+      List.iter (fun (g, why) -> set run g (Failed why)) missing;
+      fail "gifts_not_in_place" (missing_text missing)
+
+(* After the claims: each Pokémon gift received now in its slot. *)
+let check_gift_slots steps run =
+  match pokemon_gifts run (fun o -> o = Claimed) with
+  | [] ->
+      steps.log "No Pokémon received: no box slot to check.";
+      Ok ()
+  | gifts ->
+      let* reads = settle steps run (slots gifts) in
+      check_in_place run reads gifts
 
 let save_progress steps run =
-  if List.exists (fun (_, o) -> o = Claimed) run.outcomes || run.moved > 0 then
+  if List.exists (fun (_, o) -> o = Claimed) run.outcomes || run.moved then
     Result.map_error (Failure.cause ~repeats:true "not_saved") (steps.save ())
   else (
     steps.log "Nothing received or moved: not saved.";
@@ -180,6 +199,7 @@ let no_args action steps run (event : Plza_engine.Plan.event) = function
 let actions =
   [
     ("gifts_start", gifts_start);
+    ("settle_boxes", settle_boxes);
     ("claim_gifts", claim_gifts);
     ("check_gift_slots", check_gift_slots);
     ("save_progress", save_progress);

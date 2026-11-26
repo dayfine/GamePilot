@@ -4,21 +4,24 @@
 
     - [gifts_start]: today's date (UTC, the run's input) and the catalog
       printed; the main menu opened and the party read ({!party}). A party of
-      five or six with full HP is needed: with five, the first gift's Pokémon
-      lands in party slot 6, with fewer more than one would.
+      five or six with full HP is needed.
+    - [settle_boxes]: the Boxes opened on Box 1 and closed there
+      ({!Gift_boxes.settle}), with the slots of the Pokémon gifts not past their
+      last day nor received in HOME: a gift an earlier run left in party slot 6
+      is moved to the first of them that is empty, and each is read and logged.
+      Box 1 is then the box the game puts a gift in when the party is full; with
+      five, the first gift received lands in party slot 6.
     - [claim_gifts]: each gift in the catalog's order. A gift whose last day is
       before today is skipped, with a log line; a HOME gift is not supported
-      yet; any other is claimed ({!Gift_claim.claim}). A gift not received is
+      yet; any other is claimed ({!Gift_claim.claim}). One the game says was
+      received or its code used before is already received; one not received is
       failed and the run goes on to the next one, unless the main menu is lost
       ([screen_lost]: the gifts after it are not tried).
-    - [check_gift_slots]: the Pokémon gifts that may be in the save (received
-      now, said by the game to be, or failed: a gift an earlier run received
-      fails as an unknown screen today) put in their catalog box slots and read
-      there ({!Gift_boxes.arrange}), the ones received now first; a gift
-      received now or said to be whose slot does not read as holding a Pokémon
-      fails. A run is so rerun: the gifts an earlier one left in party slot 6 or
-      another box are moved, and gifts already in place are only read.
-    - [save_progress]: saved when any gift was received or any Pokémon moved
+    - [check_gift_slots]: the Boxes settled again with the slots of the Pokémon
+      gifts received now, the one in party slot 6 moved to the first empty one;
+      each must then hold a Pokémon, else [gifts_not_in_place] names each gift
+      that does not (it fails) and the run stops before the save.
+    - [save_progress]: saved when any gift was received or a Pokémon moved
       ({!Save_progress}).
     - [report_gifts]: one line a gift (id, name, how, last day, outcome);
       [gifts_failed] naming each gift that failed.
@@ -42,7 +45,9 @@ type party_read =
 (** How one gift came out. *)
 type outcome =
   | Claimed  (** Received, and (a Pokémon) read in its box slot. *)
-  | Already_received  (** The game says the save has it: done. *)
+  | Already_received
+      (** The game says it was received, or its code used, before (it may be in
+          HOME by now): done. *)
   | Expired  (** Its last day is before today: not tried. *)
   | Not_supported of string  (** Claimed some way the program cannot yet. *)
   | Failed of string  (** Not received, or not in its box slot; why. *)
@@ -53,11 +58,12 @@ type game_steps = {
       (** Open the main menu (X from the overworld) and read its party cards. *)
   claim : Plza_gift_catalog.Gift_catalog.gift -> Gift_claim.claim;
       (** Claim one gift, from the main menu back to it. *)
-  arrange_slots :
+  settle_boxes :
     Plza_gift_catalog.Gift_catalog.box_slot list ->
-    (Gift_boxes.arranged, string) result;
-      (** Put the gifts in these box slots (in the order received) and read each
-          slot, from the main menu back to it. *)
+    (Gift_boxes.settled, string) result;
+      (** Open the Boxes on Box 1, move party slot 6's Pokémon to the first of
+          these slots (in the order received) that is empty and read each, from
+          the main menu back to it. *)
   save : unit -> (unit, string) result;  (** Save from the main menu. *)
   log : string -> unit;  (** A line for the log and the watch page. *)
 }
@@ -80,8 +86,8 @@ val outcome_text : outcome -> string
 
 val game_actions :
   game_steps -> run -> (string * Plza_engine.Game.game_action) list
-(** The five actions above, by the names the plan gives them. Each takes no
-    args. *)
+(** The six actions above, by the names the plan gives them. Each takes no args.
+*)
 
 val check_plan : Plza_engine.Plan.t -> (unit, string) result
 (** Before the console moves: the plan's events are all these game actions, and

@@ -6,7 +6,7 @@ module Cur = Box_cursor
 let ( let* ) = Result.bind
 
 type slot_read = Cur.cell = Filled | Empty | Not_read of string
-type arranged = { reads : (C.box_slot * slot_read) list; moved : int }
+type settled = { reads : (C.box_slot * slot_read) list; moved : bool }
 
 let boxes_row = 0
 let sixth = 5
@@ -67,31 +67,49 @@ let in_box_one (s : C.box_slot) =
   s.box = 1 && s.slot >= 1 && s.slot <= Cur.box_rows * Cur.columns
 
 let read_slot cur (s : C.box_slot) =
-  if not (in_box_one s) then (s, Not_read "only Box 1 is arranged")
+  if not (in_box_one s) then (s, Not_read "only Box 1 is read")
   else
     let row, col = Cur.of_slot s.slot in
     (s, Cur.read cur ~row ~col)
 
-let leave ~log ~moved reads =
+(* Off the box's first row, where the name tag covers the title. *)
+let title_row = 2
+let party_six = (Cur.party_row, sixth)
+
+let leave ~moved reads =
   T.press leave_boxes;
   let* () =
     cards_hold ~what:"no main menu after the Boxes" (fun m ->
         R.highlighted m <> None)
   in
-  log (Printf.sprintf "%d Pokémon moved into the gifts' slots." moved);
   Ok { reads; moved }
 
-let arrange ~log slots =
+(* Party slot 6's Pokémon carried onto [s]: whether it landed. *)
+let carry_six ~log cur (s : C.box_slot) =
+  match Cur.carry cur ~from:party_six ~onto:(Cur.of_slot s.slot) with
+  | Filled ->
+      log (Printf.sprintf "Party slot 6 moved to Box 1 slot %d." s.slot);
+      true
+  | Empty -> false
+  | Not_read why ->
+      log (Printf.sprintf "Party slot 6 not moved: %s." why);
+      false
+
+(* Party slot 6's Pokémon to the first slot read empty. *)
+let move_party_gift ~log cur reads =
+  match List.find_opt (fun (_, r) -> r = Empty) reads with
+  | None ->
+      log "Party slot 6 holds a Pokémon, but no gift slot is empty: not moved.";
+      false
+  | Some (s, _) -> carry_six ~log cur s
+
+let settle ~log slots =
   let* () = Menu_rows.goto ~log boxes_row in
   let* in_party = sixth_filled () in
   let* () = into_boxes ~log in
   let cur = Cur.opened () in
-  Cur.go cur ~row:Gift_moves.title_row ~col:0;
-  let* paging = Box_paging.to_box_one ~log in
-  let missing =
-    List.filter_map
-      (fun s -> match read_slot cur s with s, Empty -> Some s | _ -> None)
-      slots
-  in
-  let* moved = Gift_moves.fill ~log cur paging ~in_party missing in
-  leave ~log ~moved (List.map (read_slot cur) slots)
+  Cur.go cur ~row:title_row ~col:0;
+  let* () = Box_paging.to_box_one ~log in
+  let reads = List.map (read_slot cur) slots in
+  let moved = in_party && move_party_gift ~log cur reads in
+  leave ~moved (if moved then List.map (read_slot cur) slots else reads)

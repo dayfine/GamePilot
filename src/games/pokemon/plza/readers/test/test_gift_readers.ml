@@ -24,9 +24,12 @@
    the SAVE dialog (console B, 2026-11-25) read as themselves and nothing else
    does; on the Boxes (console B's, Xerneas under the cursor, and the fork's
    box-cells captures) the cursor's cell reads as holding a Pokémon or empty,
-   a Pokémon held over an empty cell empty, and the box title inks where it
-   is (console B's Japanese "ボックス8" of 2026-11-26, the same in every shift;
-   the fork's "Box 9" and "Box 24", a digit wider); the dialog's "Last Saved" reads the same as itself and not as a copy
+   a Pokémon held over an empty cell empty, and the box title reads as Box 1
+   on console B's Japanese "ボックス1" of 2026-11-26 alone, in every shift (not
+   on its "ボックス3" and "ボックス8", nor the fork's "Box 9" and "Box 24").
+   Console B's Japanese "received before" messages of 2026-11-26 (an Internet
+   gift's, a code's) read as themselves by their templates, in every shift,
+   and nothing else does. The dialog's "Last Saved" reads the same as itself and not as a copy
    with its 18:16 made 18:18 (synthetic-..., no second save captured), in
    every shift. So does a copy with its date and time where the French game
    shows them (synthetic-save-dialog-fr-layout-..., console B, 2026-11-25:
@@ -124,6 +127,8 @@ let gift_menus =
 let messages = [ mg "gift-menu-ja-connected-message-360p" ]
 let boxes = "./mystery-gift/boxes-xerneas-in-box-1.png"
 let box_8 = "./mystery-gift/boxes-box-8-ja-360p.png"
+let box_1 = "./mystery-gift/boxes-box-1-ja-360p.png"
+let box_3 = "./mystery-gift/boxes-box-3-ja-360p.png"
 let box_9 = "./box-cells/pokemon-magikarp-2-0-360p.png"
 let box_24 = "./box-cells/empty-2-5-360p.png"
 
@@ -221,6 +226,7 @@ let expected_message path =
 
 let expected_boxes path =
   if same path boxes || same path box_8 then pokemon_cell
+  else if same path box_1 || same path box_3 then "boxes, an empty cell"
   else
     match box_cell path with
     | Some true -> pokemon_cell
@@ -229,6 +235,40 @@ let expected_boxes path =
 
 let expected_save path =
   if List.exists (same path) saves then "save dialog" else "no save dialog"
+
+(* The box titles read as Box 1 or not, as their frames' boxes are. *)
+let box_titles =
+  [
+    (mg "boxes-box-1-ja-360p", "Box 1");
+    (mg "boxes-box-3-ja-360p", "another box");
+    (box_8, "another box");
+    (box_9, "another box");
+    (box_24, "another box");
+  ]
+
+let title_text m =
+  if not (Boxes_screen.shown m) then "no boxes"
+  else
+    match Box_title.read m with
+    | None -> "no title"
+    | Some t -> if Box_title.box_one t then "Box 1" else "another box"
+
+let expected_title path =
+  match List.find_opt (fun (f, _) -> same path f) box_titles with
+  | Some (_, text) -> text
+  | None -> if expected_boxes path = "no boxes" then "no boxes" else "no title"
+
+let received_before_text m =
+  match (Received_before.gift_received m, Received_before.code_used m) with
+  | true, false -> "gift received before"
+  | false, true -> "code used before"
+  | false, false -> "neither message"
+  | true, true -> "both messages"
+
+let expected_received_before path =
+  if same path (mg "gift-received-before-ja-360p") then "gift received before"
+  else if same path (mg "code-used-before-ja-360p") then "code used before"
+  else "neither message"
 
 let readers ~name =
   [
@@ -240,6 +280,8 @@ let readers ~name =
     ("message", message_text, expected_message);
     ("boxes", boxes_text, expected_boxes);
     ("save dialog", save_text, expected_save);
+    ("box title", title_text, expected_title);
+    ("received before", received_before_text, expected_received_before);
   ]
 
 (* The readers read only once the Mystery Gift screens show: on the story's
@@ -251,8 +293,15 @@ let in_gifts path =
   | [ _; "mystery-gift"; _ ] -> true
   | _ -> false
 
+(* The "received before" messages' white box covers the gift menu's row and
+   items, which read white as on the menu (some shifts read it so): the
+   messages are told by their templates, read first. *)
+let messages =
+  [ mg "gift-received-before-ja-360p"; mg "code-used-before-ja-360p" ]
+
 let applies path (reader, _, _) =
-  in_gifts path || not (List.mem reader gift_screens_only)
+  (in_gifts path || not (List.mem reader gift_screens_only))
+  && not (reader = "gift menu" && List.exists (same (unshifted path)) messages)
 
 (* One case per reader per frame, [label] before the frame's path. *)
 let frame_cases ?(name = "en") ~label frames =
@@ -282,59 +331,6 @@ let gift_item_cases ~name ~label frames =
         (List.find_opt (fun (_, list) -> same (unshifted path) list) lists))
     frames
 
-(* The box titles: where each inks as captured, the two-digit one a digit
-   wider than the one-digit one, and console B's Japanese one read the same
-   in every shift. *)
-let title_of all path =
-  List.find_map
-    (fun (p, probes) ->
-      if same p path then Box_title.read (measurements probes) else None)
-    all
-
-let ink = function
-  | Some ({ left; right } : Box_title.t) -> Printf.sprintf "%d to %d" left right
-  | None -> "no title"
-
-let wider before after () =
-  match (title_of frames before, title_of frames after) with
-  | Some before, Some after ->
-      string_of_bool (Box_title.one_more_digit ~before ~after)
-  | _ -> "no title"
-
-let title_cases =
-  [
-    case "box title ink, Box 9"
-      (fun () -> ink (title_of frames box_9))
-      "410 to 474";
-    case "box title ink, Box 24"
-      (fun () -> ink (title_of frames box_24))
-      "401 to 480";
-    case "box title ink, Japanese Box 8"
-      (fun () -> ink (title_of frames box_8))
-      "380 to 501";
-    case "box title ink, a frame with the band redacted"
-      (fun () -> ink (title_of frames boxes))
-      "no title";
-    case "Box 24 after Box 9: a digit wider" (wider box_9 box_24) "true";
-    case "Box 9 after Box 24: not wider" (wider box_24 box_9) "false";
-    case "Box 24 after itself: not wider" (wider box_24 box_24) "false";
-  ]
-  @ List.filter_map
-      (fun (path, probes) ->
-        if same (unshifted path) box_8 then
-          Some
-            (case
-               ("Japanese Box 8 reads as captured: " ^ path)
-               (fun () ->
-                 match
-                   (Box_title.read (measurements probes), title_of frames box_8)
-                 with
-                 | Some a, Some b -> string_of_bool (Box_title.same a b)
-                 | _ -> "no title")
-               "true")
-        else None)
-      shifted
-
 let () =
   Table_test.run "gift_readers"
     (frame_cases ~label:"" frames
@@ -344,7 +340,6 @@ let () =
     @ gift_item_cases ~name:"en" ~label:"" (frames @ shifted)
     @ gift_item_cases ~name:"fr" ~label:"French name, " french
     @ gift_item_cases ~name:"ja" ~label:"Japanese name, " japanese
-    @ title_cases
     @ last_saved_cases
         (List.filter
            (fun (p, _) -> List.exists (same (unshifted p)) saves)

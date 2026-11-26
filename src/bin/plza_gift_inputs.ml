@@ -2,7 +2,8 @@
    or a file itself: the gift catalog (gifts.json, Plza_gift_catalog), today's
    date (the host's, UTC), which plza.claim-gifts and plza.bank-home both
    compare each gift's last day with, and the Internet gifts' name templates
-   in the run's language. Claim-gifts gets all three
+   in the run's language, and the "received before" messages' templates in
+   it. Claim-gifts gets them all
    (Plza_claim_gifts_series.Claim_gifts_runs.inputs), bank-home the catalog
    and the date (Plza_bank_home.Catalog_moves); the guide's gifts block is
    the catalog's table. *)
@@ -37,6 +38,17 @@ let name_templates ~language catalog =
       | _ -> None)
     catalog
 
+(* The "received before" messages' templates that exist in [language], as
+   PNG bytes, by name. *)
+let message_templates ~language =
+  List.filter_map
+    (fun name ->
+      Option.map
+        (fun file -> (name, read_file file))
+        (Repo_io.Repo_files.locate
+           (Plza_claim_gifts.Live_gift_steps.message_template ~name ~language)))
+    Plza_claim_gifts.Live_gift_steps.message_names
+
 let default_language = "en"
 
 let inputs options :
@@ -50,6 +62,7 @@ let inputs options :
       Plza_claim_gifts_series.Claim_gifts_runs.catalog;
       today = today ();
       name_templates = name_templates ~language catalog;
+      message_templates = message_templates ~language;
     }
 
 let gifts_block () = Result.map C.guide_table (catalog ())

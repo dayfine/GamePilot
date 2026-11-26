@@ -22,11 +22,13 @@
       it, then A (8 s).
     - {!open_keyboard}: Down, A (2 s); A (2 s) until the keyboard opens, 25 at
       most.
-    - {!enter_code}: the code typed; + (5 s); the list again; A (8 s) on the
-      code's gift. Which item is selected is not read: no code gift has a name
-      template, no list after a code was captured, and an unselected item reads
-      as an empty row (0.00 white), so "the only new item" cannot be counted
-      either.
+    - {!enter_code}: the code typed; + (5 s); the list again, or the message
+      that the code was used before ({!Plza_readers.Received_before}, read as
+      the list is, A pressed past other screens as above); A (8 s) on the code's
+      gift, none on the message. Which item is selected is not read: no code
+      gift has a name template, no list after a code was captured, and an
+      unselected item reads as an empty row (0.00 white), so "the only new item"
+      cannot be counted either.
     - leaving the gifts, read-driven: {!Leave_gifts}.
 
     The list and the keyboard count once they have read so for 1 s (a white fade
@@ -37,6 +39,7 @@ val probes :
   picture:Wire.box ->
   assets:Plza_readers.Blob_assets.t ->
   gift_name:string option ->
+  received_before:Plza_readers.Received_before.templates ->
   Wire.probe_spec list
 (** The main menu's, the gift screens', the keyboard's, the Boxes' (their
     cursor's cell's, their box title's and the first-time card's) and the SAVE
@@ -60,10 +63,20 @@ val open_keyboard : log:(string -> unit) -> (unit, string) result
 (** Down and A on the Mystery Gift menu; the code keyboard must show, A pressed
     while it does not. *)
 
+(** What a code brought up. *)
+type entered =
+  | Listed  (** Its gift was listed and claimed (A). *)
+  | Used_before  (** The game says the code was used before: no A. *)
+
+val after_code : log:(string -> unit) -> string -> (entered, string) result
+(** {!enter_code} after its +: the list, then A, or the "used before" message,
+    with no A; [Error] when neither shows after 25 reads. *)
+
 val enter_code :
-  log:(string -> unit) -> picture:Wire.box -> string -> (unit, string) result
+  log:(string -> unit) -> picture:Wire.box -> string -> (entered, string) result
 (** Types the code ({!Switch_home.Code_keyboard.type_code}), + (5 s); the gift
-    list must show, then A claims the code's gift. *)
+    list must show, then A claims the code's gift, or the "used before" message
+    show. *)
 
 val card_shown : Effects.measurements -> bool
 (** A gift's card: the gift was received. *)
