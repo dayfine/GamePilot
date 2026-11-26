@@ -1,4 +1,9 @@
 (library
  (name frlg_readers)
  (public_name gamepilot.frlg_readers)
- (libraries yojson gamepilot.wire gamepilot.effects gamepilot.screen_state))
+ (libraries
+  yojson
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.screen_state
+  gamepilot.switch_home))
