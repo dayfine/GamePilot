@@ -37,7 +37,7 @@ let advance_yield_frame ~log ~quiet ~in_spot acc m =
   let active = saw_item || scr.dialog || scr.fade <> No_fade in
   if (not active) && quiet + 1 >= cfg.quiet_limit then None
   else (
-    if scr.dialog || saw_item then Bdsp_overworld.interact ();
+    if scr.dialog || saw_item then Overworld_actions.interact ();
     P.wait cfg.advance_wait_ms;
     Some (acc, (if active then 0 else quiet + 1), saw_item))
 

@@ -85,7 +85,7 @@ let tap_repeat btn n =
 
 let fly_to_coords ~log ~picture ~town (right_taps, down_taps) =
   log ("Opening Town Map to fly to " ^ town ^ "...");
-  let* () = Bdsp_overworld.open_menu ~log ~picture () in
+  let* () = Overworld_actions.open_menu ~log ~picture () in
   P.press ~hold_ms:press_t.btn_hold_ms ~cooldown_ms:press_t.map_open_wait_ms
     Wire.Plus;
   P.press ~hold_ms:press_t.clamp_hold_ms ~cooldown_ms:press_t.clamp_wait_ms
