@@ -1,13 +1,13 @@
   :root {
     --bg: #f6f7f9; --panel: #ffffff; --text: #1c2026; --muted: #69707a;
     --line: #dfe3e8; --ok: #1f8a4c; --bad: #c62f2f; --cur: #1f6fd1;
-    --skip: #8a8f98; --box: #ffcc00;
+    --skip: #8a8f98; --box: #ffcc00; --rng: #0e7490; --shiny: #b45309;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --bg: #14171b; --panel: #1c2026; --text: #e6e9ed; --muted: #9aa3ad;
       --line: #2d333b; --ok: #4cc27f; --bad: #ff6b6b; --cur: #6aa8ff;
-      --skip: #7d848e; --box: #ffd84d;
+      --skip: #7d848e; --box: #ffd84d; --rng: #38bdf8; --shiny: #ffd84d;
     }
   }
   * { box-sizing: border-box; }
@@ -24,6 +24,13 @@
   #conn.down { color: var(--bad); font-weight: 600; }
   #source-state { font-size: 13px; font-weight: 600; color: var(--ok); }
   #source-state.warn { color: var(--bad); }
+  #attempt-badge {
+    font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums;
+    color: var(--rng); border: 1px solid color-mix(in srgb, var(--rng) 45%, var(--line));
+    background: color-mix(in srgb, var(--rng) 12%, transparent);
+    border-radius: 999px; padding: 2px 9px; white-space: nowrap;
+  }
+  #attempt-badge[hidden] { display: none; }
   #stop {
     margin-left: auto; background: var(--bad); color: #fff; border: 0;
     border-radius: 6px; padding: 8px 18px; font-size: 14px; font-weight: 600;
@@ -94,6 +101,7 @@
            grid-template-areas: "frame" "run" "plan" "health" "log"; }
     main.has-counters {
            grid-template-areas: "frame" "run" "counters" "plan" "health" "log"; }
+    #log-wrap { min-height: 360px; }
   }
   section {
     background: var(--panel); border: 1px solid var(--line);
@@ -116,7 +124,7 @@
   .counter dd { margin: 2px 0 0; font-size: 16px; font-weight: 600;
                 font-variant-numeric: tabular-nums; }
   #plan-panel { grid-area: plan; }
-  #log-panel { grid-area: log; }
+  #log-panel { grid-area: log; display: flex; flex-direction: column; min-height: 360px; }
   #health-panel { grid-area: health; }
   #frame-body { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; }
   #stage-wrap { flex: 1 1 320px; min-width: 0; }
@@ -185,9 +193,35 @@
   li.current .mark, li.current .id { color: var(--cur); font-weight: 600; }
   li.failed .mark, li.failed .detail { color: var(--bad); }
   li.skipped .mark, li.skipped .id { color: var(--skip); }
-  #log { font: 12px/1.45 ui-monospace, Menlo, Consolas, monospace;
-         height: 320px; overflow: auto; white-space: pre-wrap;
-         overflow-wrap: anywhere; margin: 0; }
+  #log-head { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px;
+              margin-bottom: 8px; flex: 0 0 auto; }
+  #log-head h2 { margin: 0; }
+  #log-count { color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+  #log-count[hidden] { display: none; }
+  .log-modes { display: inline-flex; border: 1px solid var(--line); border-radius: 6px;
+               overflow: hidden; margin-left: auto; }
+  .log-modes button { background: var(--panel); color: var(--text); border: 0;
+                      padding: 2px 8px; font: inherit; font-size: 12px; cursor: pointer; }
+  .log-modes button + button { border-left: 1px solid var(--line); }
+  .log-modes button[aria-pressed="true"] { background: var(--cur); color: #fff; }
+  #log-filter { width: 130px; max-width: 100%; font: inherit; font-size: 12px; padding: 2px 6px;
+                border: 1px solid var(--line); border-radius: 6px;
+                background: var(--panel); color: var(--text); }
+  /* Positioned inner box lets #log fill the full height of the adjacent
+     plan + health column without expanding those grid rows as lines arrive. */
+  #log-wrap { position: relative; flex: 1 1 auto; min-height: 300px; }
+  #log { position: absolute; inset: 0; overflow: auto;
+         font: 12px/1.45 ui-monospace, Menlo, Consolas, monospace;
+         white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; }
+  .log-line { padding: 1px 0; }
+  .log-line[hidden] { display: none; }
+  .log-line.log-error { color: var(--bad); font-weight: 600; }
+  .log-line.log-shiny { color: var(--shiny); font-weight: 700;
+                        background: color-mix(in srgb, var(--shiny) 14%, transparent);
+                        border-radius: 3px; padding: 1px 4px; margin: 0 -4px; }
+  .log-line.log-success { color: var(--ok); font-weight: 600; }
+  .log-line.log-rng { color: var(--rng); }
+  .log-line.log-dim { color: var(--muted); opacity: 0.72; }
   table { border-collapse: collapse; width: 100%; font-size: 13px; }
   td, th { text-align: left; padding: 3px 6px 3px 0;
            border-bottom: 1px solid var(--line); }
