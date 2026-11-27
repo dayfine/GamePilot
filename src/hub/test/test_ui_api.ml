@@ -94,7 +94,68 @@ let rec rm_rf path =
       Sys.rmdir path)
     else Sys.remove path
 
-let run_history_merge_test () =
+let check_eq ~fmt name ~expected ~actual =
+  Table_test.report name
+    (if actual = expected then Ok ()
+     else
+       Error (Printf.sprintf "expected %s, got %s" (fmt expected) (fmt actual)))
+
+let check_str = check_eq ~fmt:(Printf.sprintf "%S")
+let check_bool = check_eq ~fmt:string_of_bool
+
+let check_parse_tsv () =
+  let tsv =
+    "time\trun\tcheckpoint\tmode\tresult\tat\treason\n\
+     2026-11-26T01:00:00\trun-1\t01.02-platform-to-plaza\ttesting\tpass\t\t\n\
+     2026-11-26T02:00:00\trun-2\tbdsp.underground\trun\tfail\t#1\tbad fade\n"
+  in
+  match Run_history.parse_tsv ~limit:2 tsv with
+  | [ first; second ] ->
+      check_str "run_history parse_tsv newest game" ~expected:"bdsp"
+        ~actual:first.game;
+      check_str "run_history parse_tsv newest checkpoint"
+        ~expected:"bdsp.underground" ~actual:first.checkpoint;
+      check_str "run_history parse_tsv newest result" ~expected:"fail"
+        ~actual:first.result;
+      check_str "run_history parse_tsv older game" ~expected:"plza"
+        ~actual:second.game;
+      check_str "run_history parse_tsv older checkpoint"
+        ~expected:"01.02-platform-to-plaza" ~actual:second.checkpoint;
+      check_str "run_history parse_tsv older result" ~expected:"pass"
+        ~actual:second.result
+  | entries ->
+      Table_test.report "run_history parse_tsv returns two entries"
+        (Error
+           (Printf.sprintf "expected 2 entries, got %d" (List.length entries)))
+
+let check_merged_daemon_entry (e : Run_history.entry) =
+  check_str "run_history merge daemon-only run id"
+    ~expected:"2026-11-26-02.99-unknown-testing-1" ~actual:e.run;
+  check_str "run_history merge daemon-only game" ~expected:"" ~actual:e.game;
+  check_str "run_history merge daemon-only program" ~expected:""
+    ~actual:e.program;
+  check_str "run_history merge daemon-only from" ~expected:"02.99-unknown"
+    ~actual:e.from;
+  check_str "run_history merge daemon-only to" ~expected:"02.99-unknown"
+    ~actual:e.to_;
+  check_str "run_history merge daemon-only backend" ~expected:"mgba"
+    ~actual:e.backend;
+  check_bool "run_history merge daemon-only recorded" ~expected:false
+    ~actual:e.recorded
+
+let check_merged_full_entry (e : Run_history.entry) =
+  check_str "run_history merge full run id"
+    ~expected:"2026-11-26-su-01-testing-1" ~actual:e.run;
+  check_str "run_history merge full game" ~expected:"frlg" ~actual:e.game;
+  check_str "run_history merge full program" ~expected:"frlg.supplies"
+    ~actual:e.program;
+  check_str "run_history merge full from" ~expected:"su-01" ~actual:e.from;
+  check_str "run_history merge full to" ~expected:"su-02" ~actual:e.to_;
+  check_str "run_history merge full backend" ~expected:"switch"
+    ~actual:e.backend;
+  check_bool "run_history merge full recorded" ~expected:true ~actual:e.recorded
+
+let check_run_history_merge () =
   let dir = Filename.temp_file "ui_hub_hist_" "" in
   Sys.remove dir;
   Unix.mkdir dir 0o755;
@@ -118,25 +179,29 @@ let run_history_merge_test () =
     {|{"backend":"mgba","clock_zero_unix_ms":1700000100000}|};
   let entries = Run_history.load ~runs_dir:dir () in
   let json = Run_history.to_json ~runs_dir:dir entries in
-  let port =
-    match json with
-    | `Assoc fs -> (
-        match List.assoc_opt "watch_hub_port" fs with
-        | Some (`Int p) -> p
-        | _ -> 0)
-    | _ -> 0
-  in
   rm_rf dir;
-  let summary =
-    List.map
-      (fun (e : Run_history.entry) ->
-        Printf.sprintf "%s:%s:%s:%s:%s:%s:%b" e.run e.game e.program e.from
-          e.to_ e.backend e.recorded)
-      entries
+  let watch_hub_port =
+    match json with
+    | `Assoc fs -> List.assoc_opt "watch_hub_port" fs
+    | _ -> None
   in
-  Printf.sprintf "port=%d | %s" port (String.concat " | " summary)
+  check_eq
+    ~fmt:(Option.fold ~none:"None" ~some:Yojson.Safe.to_string)
+    "run_history to_json includes watch_hub_port"
+    ~expected:(Some (`Int Run_history.watch_hub_port))
+    ~actual:watch_hub_port;
+  match entries with
+  | [ daemon_entry; full_entry ] ->
+      check_merged_daemon_entry daemon_entry;
+      check_merged_full_entry full_entry
+  | _ ->
+      Table_test.report "run_history merge returns two entries"
+        (Error
+           (Printf.sprintf "expected 2 entries, got %d" (List.length entries)))
 
 let () =
+  check_parse_tsv ();
+  check_run_history_merge ();
   Table_test.run "ui_api"
     [
       case "programs_json includes frlg.supplies" programs_has_supplies "true";
@@ -183,27 +248,4 @@ let () =
         router_console_roundtrip "200:200:200:200:200:true";
       case "http_router returns expected 400/404 status codes"
         router_error_codes "400:404:404:404";
-      case
-        "run_history parses RESULTS.tsv newest-first and ignores numeric \
-         prefixes"
-        (fun () ->
-          let tsv =
-            "time\trun\tcheckpoint\tmode\tresult\tat\treason\n\
-             2026-11-26T01:00:00\trun-1\t01.02-platform-to-plaza\ttesting\tpass\t\t\n\
-             2026-11-26T02:00:00\trun-2\tbdsp.underground\trun\tfail\t#1\tbad \
-             fade\n"
-          in
-          let entries = Run_history.parse_tsv ~limit:2 tsv in
-          String.concat " | "
-            (List.map
-               (fun (e : Run_history.entry) ->
-                 Printf.sprintf "%s:%s:%s" e.game e.checkpoint e.result)
-               entries))
-        "bdsp:bdsp.underground:fail | plza:01.02-platform-to-plaza:pass";
-      case "run_history merges run.json, daemon.json, frames, and RESULTS.tsv"
-        run_history_merge_test
-        "port=47901 | \
-         2026-11-26-02.99-unknown-testing-1:::02.99-unknown:02.99-unknown:mgba:false \
-         | \
-         2026-11-26-su-01-testing-1:frlg:frlg.supplies:su-01:su-02:switch:true";
     ]
