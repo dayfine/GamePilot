@@ -1,7 +1,7 @@
 module G = Screen_graph.Graph
 module S = Plza_readers.Mystery_gift_screen
 module R = Plza_readers.Main_menu_row
-module K = Switch_home.Code_keyboard
+module K = Switch.Code_keyboard
 
 type answer = S.answer
 

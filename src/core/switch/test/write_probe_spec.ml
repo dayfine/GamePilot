@@ -8,12 +8,12 @@
 
 let home_probes () =
   let picture = Fire_red_spec.nso_gba_picture in
-  Switch_home.Home_screen.probes ~picture Fire_red_spec.tile
-  @ Switch_home.Close_game_popup.probes ~picture
-  @ Switch_home.Black_screen.probes ~picture
+  Switch.Home_screen.probes ~picture Fire_red_spec.tile
+  @ Switch.Close_game_popup.probes ~picture
+  @ Switch.Black_screen.probes ~picture
 
 let delete_save_probes () =
-  let module S = Switch_home.Delete_save_screen in
+  let module S = Switch.Delete_save_screen in
   List.map
     (fun key -> S.icon_probe { key; icon = key ^ "-icon.png" })
     [ "plza"; "firered" ]
@@ -23,7 +23,7 @@ let () =
   let probes =
     match Sys.argv with
     | [| _; "delete-save" |] -> delete_save_probes ()
-    | [| _; "code-keyboard" |] -> Switch_home.Code_keyboard.probes
+    | [| _; "code-keyboard" |] -> Switch.Code_keyboard.probes
     | _ -> home_probes ()
   in
   let request =

@@ -4,7 +4,7 @@
  (libraries
   gamepilot.wire
   gamepilot.effects
-  gamepilot.switch_home
+  gamepilot.switch
   gamepilot.pokemon_home
   gamepilot.engine_run
   gamepilot.plza_readers

@@ -4,7 +4,7 @@ type t = {
   look_picker : bool;
   look : int option;
   name_keyboard : bool;
-  keyboard_cursor : Switch_home.Code_keyboard.key option;
+  keyboard_cursor : Switch.Code_keyboard.key option;
   text_pixels : int;
   confirm_choices : bool;
 }

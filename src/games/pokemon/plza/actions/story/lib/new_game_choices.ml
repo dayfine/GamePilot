@@ -103,7 +103,7 @@ let typing_problem c =
       (Printf.sprintf
          "AutoStory: the program cannot type a name on the %s keyboard (%s)."
          i.tag (keyboard_name c.language))
-  else if Switch_home.Keyboard_typing.missing c.name <> "" then
+  else if Switch.Keyboard_typing.missing c.name <> "" then
     Some
       (Printf.sprintf
          "AutoStory: the player name \"%s\" has a character that is not on the \

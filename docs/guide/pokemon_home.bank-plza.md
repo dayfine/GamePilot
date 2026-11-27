@@ -79,7 +79,7 @@ the box number and HOME's box, moving nothing (close HOME by hand afterwards, wi
 `Plza_checkpoint_series.Checkpoint_series` runs each checkpoint in its own daemon and run folder,
 with the watch page, as it runs AutoStory's; `Plza_bank_home_series.Bank_home_runs` gives it
 bank-home's attempt. `Plza_bank_home.Bank_home_game` checks the start (it
-walks HOME's tile row to Legends: Z-A's title, `Switch_home.Home_title`) and gives the engine one
+walks HOME's tile row to Legends: Z-A's title, `Switch.Home_title`) and gives the engine one
 game action, `bank_in_home`.
 
 Its moves come from the gift catalog (`Plza_gift_catalog`), turned into `Pokemon_home.Box_moves`

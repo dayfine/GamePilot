@@ -1,6 +1,6 @@
-module K = Switch_home.Code_keyboard
+module K = Switch.Code_keyboard
 
-type game_steps = Switch_home.Keyboard_typing.game_steps
+type game_steps = Switch.Keyboard_typing.game_steps
 
 let english_key_column = 3
 let bottom_character_row = 3

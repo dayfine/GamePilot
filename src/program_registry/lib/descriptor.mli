@@ -37,9 +37,9 @@ type category =
   | Gifts  (** Mystery Gift claiming. *)
   | Storage  (** Pokémon HOME box transfers. *)
 
-type switch_home = {
+type switch = {
   title : string;  (** As the ctl usage names it: ["FireRed"]. *)
-  home_tile : Switch_home.Home_screen.tile_color;
+  home_tile : Switch.Home_screen.tile_color;
       (** Colour bounds of the game's tile on the Switch HOME menu. *)
   lab_panel : string;  (** ["PokemonFRLG:AutoStory"]. *)
 }
@@ -54,9 +54,9 @@ type game = {
   game_name : string;  (** Full display name of the game. *)
   delete_save_icons : (string * string) list;
       (** Its Switch titles' icons on their "Delete Save Data for <user>" page
-          (Switch_home.Delete_save), each a repo path, by the key
+          (Switch.Delete_save), each a repo path, by the key
           [gamepilot ctl delete-save] takes: [firered] for FRLG. *)
-  switch_home : switch_home option;
+  switch : switch option;
       (** [None] while none of its HOME tiles was measured. *)
 }
 (** A game known to GamePilot. *)

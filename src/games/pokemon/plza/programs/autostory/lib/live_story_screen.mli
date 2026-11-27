@@ -1,7 +1,7 @@
 (** The story screen read live, in the effect context: the PLZA readers' probes
     over the game picture, and each read turned into a {!Plza_story.Look.t}, as
     the screen read of PokemonLZA_AutoStoryConsoleBackend.cpp fills its look:
-    the HOME menu first ({!Switch_home.Home_screen}), else
+    the HOME menu first ({!Switch.Home_screen}), else
     {!Plza_readers.Story_screen}, the Confirm Choices row
     ({!Plza_readers.Confirm_choices}), and whether the frame is the last read's
     ({!Plza_readers.Frame_cells}). The probes also serve the reload

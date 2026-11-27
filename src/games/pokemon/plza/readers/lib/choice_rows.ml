@@ -131,7 +131,7 @@ let slot_of (s : Box_color.stats) =
     && m.b <= panel_max_blue
     && m.b >= m.r +. panel_blue_over_red
   in
-  if Switch_home.Solid_color.sum s.stddev > max_stddev_sum then Other
+  if Switch.Solid_color.sum s.stddev > max_stddev_sum then Other
   else if m.r >= highlight_min && m.g >= highlight_min && m.b >= highlight_min
   then Highlighted
   else if panel then Panel

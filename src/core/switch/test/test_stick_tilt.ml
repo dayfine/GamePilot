@@ -10,14 +10,11 @@ let xy (s : Wire.stick) =
   Printf.sprintf "(%s, %s)" (two x) (two y)
 
 let toward degrees () =
-  match Switch_home.Stick_tilt.toward ~degrees with
-  | Ok s -> xy s
-  | Error e -> e
+  match Switch.Stick_tilt.toward ~degrees with Ok s -> xy s | Error e -> e
 
 let tilt ?run duration_ms () =
   match
-    Switch_home.Stick_tilt.tilt ?run ~degrees:90.0 ~duration_ms ~release_ms:100
-      ()
+    Switch.Stick_tilt.tilt ?run ~degrees:90.0 ~duration_ms ~release_ms:100 ()
   with
   | Ok (Press { buttons; left_stick = Some s; hold_ms; cooldown_ms; _ }) ->
       Printf.sprintf "%s%s %d/%d"
@@ -27,7 +24,7 @@ let tilt ?run duration_ms () =
   | Ok _ -> "not a stick press"
   | Error e -> e
 
-let run = { Switch_home.Stick_tilt.button = Wire.B; speedup = 2.0 }
+let run = { Switch.Stick_tilt.button = Wire.B; speedup = 2.0 }
 
 let () =
   Table_test.run "stick_tilt"

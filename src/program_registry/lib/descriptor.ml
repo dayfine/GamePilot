@@ -12,9 +12,9 @@ type category =
   | Gifts
   | Storage
 
-type switch_home = {
+type switch = {
   title : string;
-  home_tile : Switch_home.Home_screen.tile_color;
+  home_tile : Switch.Home_screen.tile_color;
   lab_panel : string;
 }
 
@@ -22,7 +22,7 @@ type game = {
   game_id : string;
   game_name : string;
   delete_save_icons : (string * string) list;
-  switch_home : switch_home option;
+  switch : switch option;
 }
 
 type t = {

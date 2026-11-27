@@ -1,5 +1,5 @@
-module T = Switch_home.Timed_press
-module G = Switch_home.Game_entry
+module T = Switch.Timed_press
+module G = Switch.Game_entry
 module M = Home_menus
 
 let ( let* ) = Result.bind
@@ -7,7 +7,7 @@ let read_ms = 3000
 
 (* The scan: HOME to the first tile, then Right along the row,
    reading each tile's title for 1.5 s; up to 8 tiles. *)
-let walk : Switch_home.Home_title.walk =
+let walk : Switch.Home_title.walk =
   {
     first = { button = Home; hold_ms = 100; cooldown_ms = 1000 };
     next = { button = Right; hold_ms = 80; cooldown_ms = 600 };
@@ -22,7 +22,7 @@ let title_shows () =
   | Timeout -> false
 
 let scan ~log =
-  Switch_home.Home_title.find_tile
+  Switch.Home_title.find_tile
     { title_shows; press = T.press; log }
     walk ~name:"Pokémon HOME"
 
@@ -30,7 +30,7 @@ let find_tile ~log ~picture ~home_art ~home_title =
   let art = Effects.upload_template home_art in
   let title = Effects.upload_template home_title in
   let probes =
-    Switch_home.Home_screen.probes ~picture Home_tile.tile_color
+    Switch.Home_screen.probes ~picture Home_tile.tile_color
     @ Home_tile.probes ~art ~title
   in
   Effects.with_probes probes (fun () -> scan ~log)

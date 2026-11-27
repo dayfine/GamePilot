@@ -103,7 +103,7 @@ let new_watch () =
 let wait steps walk =
   let watch = new_watch () in
   match
-    Switch_home.Screen_poll.until
+    Switch.Screen_poll.until
       { read_screen = steps.read_screen; wait = steps.wait }
       ~at_ms:(fun (s : Walk_screen.t) -> s.at_ms)
       ~home_menu:(fun (s : Walk_screen.t) -> s.home_menu)
@@ -113,6 +113,6 @@ let wait steps walk =
   | Home_menu ->
       Error
         (Failure.cause ~repeats:true "game_not_running"
-           Switch_home.Screen_poll.not_running)
+           Switch.Screen_poll.not_running)
   | Holds _ -> Ok ()
   | Timed_out _ -> Error (not_free walk watch.last_busy)

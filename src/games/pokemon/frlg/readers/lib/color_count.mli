@@ -12,7 +12,7 @@ val probe : id:string -> Wire.box -> range -> Wire.probe_spec
 
 val share : Effects.measurements -> string -> float option
 (** The share of the box's pixels in range; [None] when the probe is missing or
-    of another kind ({!Switch_home.Color_share.read}). *)
+    of another kind ({!Switch.Color_share.read}). *)
 
 val mean : Effects.measurements -> string -> Wire.rgb option
 (** The mean color of the box's pixels in range; [None] when none is, or the

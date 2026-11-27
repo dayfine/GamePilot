@@ -7,8 +7,8 @@
     read, and a choice box counts as a dialogue box. The autosave badge,
     controls hint, advance chevron and tutorial card read through a fade.
 
-    Not read here: the Switch HOME menu ({!Switch_home.Home_screen}); whether
-    the screen is still ({!Frame_cells}, which the live screen compares between
+    Not read here: the Switch HOME menu ({!Switch.Home_screen}); whether the
+    screen is still ({!Frame_cells}, which the live screen compares between
     reads). *)
 
 type t = {

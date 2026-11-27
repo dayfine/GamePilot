@@ -1,6 +1,6 @@
 (** The Mystery Gift screens' presses and waits, as run on console B
     (2026-11-20). The screens are read by {!Plza_readers.Mystery_gift_screen}
-    and the code keyboard by {!Switch_home.Code_keyboard}; their probes must be
+    and the code keyboard by {!Switch.Code_keyboard}; their probes must be
     subscribed ({!probes}).
 
     - {!open_gifts}: from the main menu, row 5 (Link Play), A (2 s); Right,
@@ -73,9 +73,9 @@ val after_code : log:(string -> unit) -> string -> (entered, string) result
 
 val enter_code :
   log:(string -> unit) -> picture:Wire.box -> string -> (entered, string) result
-(** Types the code ({!Switch_home.Code_keyboard.type_code}), + (5 s); the gift
-    list must show, then A claims the code's gift, or the "used before" message
-    show. *)
+(** Types the code ({!Switch.Code_keyboard.type_code}), + (5 s); the gift list
+    must show, then A claims the code's gift, or the "used before" message show.
+*)
 
 val card_shown : Effects.measurements -> bool
 (** A gift's card: the gift was received. *)

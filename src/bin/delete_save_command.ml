@@ -1,7 +1,7 @@
 (* gamepilot ctl [--port N] [--owner LABEL] delete-save GAME | delete-save --confirm
 
    Deletes one game's save data on the Switch from System Settings, in two
-   steps (Switch_home.Delete_save): [delete-save
+   steps (Switch.Delete_save): [delete-save
    GAME] closes the running game and stops on the Caution screen with the red
    Delete Save Data button selected, deleting nothing; after a look at the
    screen, [delete-save --confirm] presses it, OK on the success popup, and
@@ -36,7 +36,7 @@ let to_caution ~port ~owner key =
   Result.map
     (fun icon_png ->
       Console_park_command.on_port ~port ~owner
-        (`Delete_save { Switch_home.Delete_save.key; icon_png }))
+        (`Delete_save { Switch.Delete_save.key; icon_png }))
     (read_icon key)
 
 let main ~port ~owner = function
