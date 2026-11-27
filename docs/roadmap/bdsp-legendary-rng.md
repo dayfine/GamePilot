@@ -28,27 +28,36 @@ W3 still needs the cropped ring and BDSP timestamp and latency measurements. W4 
 `status`. Per-gap notifications and fidelity-based thread priority are W5 work. Absolute-time
 `submit` with `start_at_t_ms` is W6 work. W7–W8 supply the shared recovery flow and readers.
 
-Use W10's gap-aware solve for both workflows. Keep reliable blink timing with an unknown type if
-only the second dip may be missing. A gap long enough to hide the shortest blink leaves that span
-unknown. Omit equations that rely on missing or mistimed observations, including inferred
-non-blinks. Replay stalls that hide the first dip, the second dip, and an entire blink. Use capture
-timestamps and frame sequence gaps so the tests cover a dropped frame at 30 fps and longer stalls.
+Use W10's gap-aware solve for both workflows. Give `State_solver.blink_sample` an explicit third
+per-tick observation state (blinked with optional type, did not blink, or unknown span) so
+`verify_samples` skips missing or mistimed ticks rather than rejecting them. Keep reliable blink
+timing with an unknown type if only the second dip may be missing. A gap long enough to hide the
+shortest blink leaves that span unknown. Omit equations that rely on missing or mistimed
+observations, including inferred non-blinks. Replay stalls that hide the first dip, the second dip,
+and an entire blink. Use capture timestamps and frame sequence gaps so the tests cover a dropped
+frame at 30 fps and longer stalls.
 
-Keep the input lease active throughout read-only waits, including the Munchlax intro. The live
-runner needs to renew the lease during those waits. Verify this with a run that exceeds both the
-default 60-second lease and the Switch daemon's 180-second keep-awake interval. Check the wire log
-that the daemon's default `B` press stays suppressed.
+Keep the input lease active throughout read-only waits, including the Munchlax intro. Add an
+`Effects` lease-renewal op wired through `Session` so the live runner can renew the lease during
+those waits. Verify this with a run that exceeds both the default 60-second lease and the Switch
+daemon's 180-second keep-awake interval. Check the wire log that the daemon's default `B` press
+stays suppressed.
 
 ## Program integration
 
 Register the static RNG as a Switch checkpoint program. Use the checkpoint runner (`engine/run`)
-and have its BDSP actions call the game effects. Add BDSP to the registry and the OCaml lint
-family when wiring the first checkpoint. Use the engine's
+and have its BDSP actions call the game effects. Add BDSP to `Program_registry` (with
+`Descriptor.rules`, `Native` viewport, and `Descriptor.game.switch_home` carrying a measured
+`home_tile` color for HOME resets) and to the OCaml lint family when wiring the first checkpoint.
+Express player settings through `Run_options` and per-user files under `Repo_io.Repo_files.data_dir`
+(using `One_of`/`Text` + per-user JSON config, or extending `Run_options` for toggles and target
+filter tables). Use the engine's
 [`Roll` and `Console_start` contracts](../design/Engine-Boundary.md#3-new-engine-concepts)
 for observed misses and retries from a verified in-game save. Wiring those planned contracts or
 equivalent shared runner support is part of the integration work. Unreadable screens, failed
 recovery, and input faults follow the runner's fault path. Share Munchlax recovery as a boot step
-in the encounter attempt. A standalone seed finder can be considered separately after v1.
+in the encounter attempt. Any post-v1 standalone seed finder would run as a single-checkpoint
+program under `engine/run` or as a `gamepilot ctl` command (one-shot runners were retired).
 
 ## Encounter workflows
 
@@ -82,12 +91,16 @@ Coverage expands by verified encounter and game version.
 4. Add the static trigger scheduler and BDSP readers. Start with template and shape probes for
    digit glyphs, slash-separated HP, two- and three-digit stats, and the 25 nature labels. Commit
    the assets and replay fixtures for all nine supported languages in GamePilot. Use the fixtures
-   to decide if a shared asynchronous OCR probe is needed. Add battle shiny detection, catch
-   handling, and post-catch Summary readers for both a free party slot and a full party that sends
-   the catch to the Box. Verify Summary reads at each calibrated encounter's level and pass
+   to decide if a shared asynchronous OCR probe is needed. Add visual-only battle shiny detection
+   (audio capture is deferred), verifying `WILD_ANIMATION` dialog boundaries against opening
+   ability and weather banners (`Pressure`, `Drizzle`, `Drought`, `Air Lock`, `Slow Start`). Add
+   catch handling and post-catch Summary readers for both a free party slot and a full party that
+   sends the catch to the Box. Verify Summary reads at each calibrated encounter's level and pass
    Synchronize through search and hit identification.
-5. Validate one post-slate Ramanas Park encounter on the Switch, then one Dialga or Palkia encounter
-   for workflow A. Measure the hit offset and whether each blink timer runs during the cry dialog.
+5. Validate one post-slate Ramanas Park encounter on the Switch, then one post-E4 (or
+   post-Commanders) Dialga or Palkia encounter for workflow A. Measure the hit offset, check
+   whether each blink timer runs during the cry dialog (including whether pre-slate Ramanas spawns
+   the 3D model before the cry box), and verify `+1` alignment on `DirectNoPokemonModel` / Rotom.
    Replay each workflow end to end before expanding coverage. For later encounters, verify the
    key item is registered and its prompt preserves readable blinks. Check the effects of Lake
    Acuity's snow, Turnback Cave's layout and fog, and Stark Mountain's particles. Measure Arceus's
