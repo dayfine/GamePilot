@@ -22,6 +22,11 @@ type function_binding = {
 val parse : path:string -> string -> (t, Finding.t) result
 (** A file that does not parse is a finding ([parse]), never a silent pass. *)
 
+val parse_interface :
+  path:string -> string -> (Parsetree.signature, Finding.t) result
+(** Parses an [.mli] file with the compiler's own parser. A file that does not
+    parse is a finding ([parse]), never a silent pass. *)
+
 val function_bindings : t -> function_binding list
 (** Every [let] whose right-hand side is a function, at top level and inside
     submodules, in source order. Local [let ... in] functions belong to their

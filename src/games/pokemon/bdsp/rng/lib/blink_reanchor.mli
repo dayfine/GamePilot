@@ -3,11 +3,12 @@
     between the anchor watcher's newest blinks are matched against the rolls
     near where the clock says they were.
 
-    Port of [reanchor_absolute] in the fork's
+    Port of [reanchor_absolute] in
     [PokemonBDSP/Programs/RngManipulation/PokemonBDSP_BlinkRecovery.{h,cpp}]
-    (R21: same run of blinks, same rounding, same search window). The C++
-    updates the clock in place and returns [false]; this port returns the new
-    clock or why not, and the drift it logs as numbers. *)
+    (https://github.com/PokemonAutomation/Arduino-Source; R21: same run of
+    blinks, same rounding, same search window). The C++ updates the clock in
+    place and returns [false]; this port returns the new clock or why not, and
+    the drift it logs as numbers. *)
 
 type reanchored = {
   clock : Advance_clock.t;  (** Anchored on the newest blink. *)

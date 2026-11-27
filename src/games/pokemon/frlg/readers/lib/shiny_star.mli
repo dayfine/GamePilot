@@ -1,6 +1,7 @@
 (** Reader: the shiny star on the summary screen's first page (POKéMON INFO),
-    left of the Pokémon's picture. Port of the fork's
-    [PokemonFRLG/Inference/PokemonFRLG_ShinySymbolDetector.cpp]: the same box
+    left of the Pokémon's picture. Port of
+    [PokemonFRLG/Inference/PokemonFRLG_ShinySymbolDetector.cpp]
+    (https://github.com/PokemonAutomation/Arduino-Source): the same box
     (fractions of the game picture), the same color range, and its test: the
     pixels in range average more than 20 redder than blue. A box with no pixel
     in range reads not shiny, as the C++'s zero average does.

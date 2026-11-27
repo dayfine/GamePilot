@@ -4,12 +4,13 @@
     press.
 
     Port of the fork's
-    [PokemonBDSP/Programs/RngManipulation/PokemonBDSP_RngCalibration.{h,cpp}],
-    with the two stat formulas it calls from [Pokemon/Pokemon_StatsCalculation]
-    (R21: same 16-bit integer arithmetic, same order, same messages). Readings
-    that were not taken are [None] where the C++ uses -1 or a [*_known] flag.
-    The C++'s observed nature is a [NatureCheckerValue], which maps one to one
-    onto the game's nature index; this port keeps the index. *)
+    [PokemonBDSP/Programs/RngManipulation/PokemonBDSP_RngCalibration.{h,cpp}]
+    (https://github.com/dayfine/Arduino-Source), with the two stat formulas it
+    calls from [Pokemon/Pokemon_StatsCalculation] (R21: same 16-bit integer
+    arithmetic, same order, same messages). Readings that were not taken are
+    [None] where the C++ uses -1 or a [*_known] flag. The C++'s observed nature
+    is a [NatureCheckerValue], which maps one to one onto the game's nature
+    index; this port keeps the index. *)
 
 type adjustment =
   | Neutral

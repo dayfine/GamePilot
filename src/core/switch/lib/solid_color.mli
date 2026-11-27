@@ -1,6 +1,7 @@
-(** A box's colour statistics and the fork's tests for a solid colour on them:
-    white and grey as CommonTools/Images/SolidColorTest.cpp tests them, with
-    their default stddev limit. *)
+(** A box's colour statistics and the tests for a solid colour on them: white
+    and grey as CommonTools/Images/SolidColorTest.cpp
+    (https://github.com/PokemonAutomation/Arduino-Source) tests them, with their
+    default stddev limit. *)
 
 type stats = { mean : Wire.rgb; stddev : Wire.rgb }
 (** A box's mean colour and the stddev of each channel, 0 to 255. *)

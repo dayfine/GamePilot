@@ -85,8 +85,9 @@ struct ProbeSpec {
   std::string kind;
   Box box;
   std::string delivery;  // "every" or "latest"
-  // core.template_match@1 only: the hash probe.upload_template returned, and
-  // the optional ink range that makes it compare masks; with ink, skip_seams
+  // core.template_match@1 and core.template_ncc@1: the hash
+  // probe.upload_template returned. For core.template_match@1 only: the
+  // optional ink range that makes it compare masks; with ink, skip_seams
   // leaves the scaled mask's seam pixels out of the comparison.
   std::string template_hash;
   std::optional<ColorRange> ink;
@@ -110,6 +111,8 @@ struct UnsubscribeParams {
 struct SubmitParams {
   std::string batch_id;
   std::vector<InputCommand> commands;
+  // Optional absolute start time on the daemon clock (v1.21).
+  std::optional<double> start_at_t_ms;
 };
 
 // `then` (v1.15): a batch that replaces the queued commands with no release.
@@ -204,6 +207,11 @@ pa::JsonObject probe_results_json(
 // `probes`: {id: result} for the results this frame carries (SentResults).
 pa::JsonValue frame_notification(std::int64_t seq, std::int64_t load,
                                  double t_ms, pa::JsonObject probes);
+// Sent before the next frame when seq skips while an `every` probe is
+// subscribed (v1.21): missed sequence range [from_seq, to_seq] and the capture
+// timestamps before and after the gap.
+pa::JsonValue gap_notification(std::int64_t from_seq, std::int64_t to_seq,
+                               double from_t_ms, double to_t_ms);
 pa::JsonValue batch_done_notification(const std::string& batch_id,
                                       std::int64_t seq, double t_ms);
 // Tells the program someone pressed Stop on the watch page (contract v1.6).

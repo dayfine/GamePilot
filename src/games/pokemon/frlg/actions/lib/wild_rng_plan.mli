@@ -1,12 +1,12 @@
 (** The ["wild_rng"] game action's plan: the shiny wild Pokémon to aim at, the
     trainer's IDs, the seed table and frame model to time it with, and the
-    catch. The options of the fork's
-    [PokemonFRLG/Programs/RngManipulation/PokemonFRLG_WildRng.cpp] (the target,
-    location, species, trainer IDs, seed table and advances) as plan args; the
-    seed and advance are searched for ({!Frlg_rng.Wild_target}) instead of
-    given. Sweet Scent targets only, on a grass location, with the game's sound
-    on Mono and its button mode on Help (the seed column ["Mono / Help / A"]).
-*)
+    catch. The options of
+    [PokemonFRLG/Programs/RngManipulation/PokemonFRLG_WildRng.cpp]
+    (https://github.com/PokemonAutomation/Arduino-Source; the target, location,
+    species, trainer IDs, seed table and advances) as plan args; the seed and
+    advance are searched for ({!Frlg_rng.Wild_target}) instead of given. Sweet
+    Scent targets only, on a grass location, with the game's sound on Mono and
+    its button mode on Help (the seed column ["Mono / Help / A"]). *)
 
 type t = {
   species : string;  (** The species to catch shiny: ["ekans"]. *)

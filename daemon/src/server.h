@@ -91,6 +91,9 @@ struct ClientConnection {
   // Results sent since its last subscribe or a load: a frame sends only the
   // ones that changed, the first frame after either sends all.
   SentResults sent_results;
+  // Last frame delivered while this client had an `every` probe subscribed,
+  // to emit a `gap` notification when seq skips.
+  std::optional<FrameStamp> last_every_frame;
   TemplateStore templates;
 };
 
