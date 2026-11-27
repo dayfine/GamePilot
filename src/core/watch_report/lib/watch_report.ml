@@ -93,3 +93,5 @@ let end_run t ~passed =
 let log base line =
   base line;
   Effects.show_log line
+
+let counters items = Effects.show_counters items
