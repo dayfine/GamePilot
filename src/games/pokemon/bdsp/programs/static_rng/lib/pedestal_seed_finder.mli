@@ -26,6 +26,11 @@ type outcome = {
       (** Confirmed 128-bit [Xorshift128] state before the first watched roll.
       *)
   events : int;  (** Number of player blinks in the confirming solve. *)
+  anchor_time_ms : float;
+      (** Daemon clock timestamp in ms of the newest blink anchoring the clock.
+      *)
+  anchor_advance : int;
+      (** Advance index of the newest blink relative to [state]. *)
   tick_seconds : float;  (** Fitted player blink tick period in seconds. *)
   elapsed_seconds : float;  (** Wall-clock seconds taken to confirm. *)
 }

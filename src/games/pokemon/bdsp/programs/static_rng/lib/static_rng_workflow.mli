@@ -1,21 +1,21 @@
-(** Workflow A state machine for BDSP Ramanas Park static legendary RNG
-    manipulation.
+(** Location-aware state machine for BDSP static legendary RNG manipulation.
 
-    Implements the pedestal-first [0PK -> 1PK] soft-reset loop verified on live
-    Switch hardware: 1. Freeze the player facing South at the empty [0PK]
-    pedestal using a registered Bike key-item dialog and recover the 128-bit
-    [Xorshift128] seed from ~40 player eye blinks. 2. Insert the slate, enter
-    the Mystery Space, walk up to the legendary, face South, and re-freeze with
-    the Bike dialog. 3. Re-identify the exact [1PK] advance anchor in the
-    chamber (~10–15 player blinks). 4. Dismiss the dialog, turn North to face
-    the legendary, search forward for the earliest matching shiny advance, and
-    fire the timed confirm press via [submit_at]. 5. Detect shininess visually
-    at battle start: stop parked on the shiny battle screen, or soft-reset via
-    Switch HOME back to the saved pedestal and retry up to [max_attempts].
+    Driven by {!Bdsp_rng.Static_targets.entry_mode} on the selected target:
+    - {!Bdsp_rng.Static_targets.Ramanas_slate_chamber} (Kyogre, Groudon,
+      Rayquaza, Ho-Oh, Lugia, Mewtwo, Regis, Birds, Beasts, Latis): recovers the
+      128-bit [Xorshift128] seed from [0PK] player blinks at the empty pedestal,
+      pre-checks for a nearby shiny advance, inserts the slate to warp into the
+      Mystery Space, re-identifies under [1PK], and fires the timed confirm.
+    - {!Bdsp_rng.Static_targets.Standing_at_encounter} (Dialga, Palkia, Uxie,
+      Azelf, Giratina, Heatran, Regigigas, Darkrai, Arceus, Rotom): recovers the
+      128-bit seed in place and feeds the anchored clock straight into
+      {!game_steps.trigger_encounter}, skipping slate insertion and chamber
+      re-identification.
 
-    GamePilot's own workflow orchestrator over {!Bdsp_actions} and {!Bdsp_rng};
-    every game interaction is injected through {!game_steps} for deterministic
-    scripted testing. *)
+    Adding a new static location only requires adding its descriptor to
+    {!Bdsp_rng.Static_targets.all} (and, if it has a new entry sequence, adding
+    an {!Bdsp_rng.Static_targets.entry_mode} variant). Every game interaction is
+    injected through {!game_steps} for deterministic scripted testing. *)
 
 (** Final result of a Workflow A static RNG hunt. *)
 type outcome =

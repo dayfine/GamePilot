@@ -1,5 +1,13 @@
-(** Checkpoint program [bdsp.static_rng] for BDSP Ramanas Park static legendary
-    RNG manipulation (Workflow A) on the Switch.
+(** Checkpoint program [bdsp.static_rng] for BDSP static legendary RNG
+    manipulation on the Switch.
+
+    Supports both Ramanas Park slate-chamber legendaries
+    ({!Bdsp_rng.Static_targets.Ramanas_slate_chamber}, running the [0PK -> 1PK]
+    pedestal-to-chamber workflow) and Sinnoh standing static encounters
+    ({!Bdsp_rng.Static_targets.Standing_at_encounter}, skipping slate insertion
+    and chamber re-identification to trigger directly from the saved spot). New
+    static targets and locations plug in through {!Bdsp_rng.Static_targets.all}
+    and {!Static_rng_workflow} without changing this program entry point.
 
     GamePilot's own program wiring {!Static_rng_options},
     {!Static_rng_workflow}, {!Pedestal_seed_finder},
@@ -35,3 +43,12 @@ val run :
   bool * string
 (** Runs [bdsp.static_rng] in the active effect session over [picture] with
     [templates] and checked [options]. Returns [(passed, summary_line)]. *)
+
+val run_action :
+  log:(string -> unit) ->
+  picture:Wire.box ->
+  options:Run_options.t ->
+  (unit, Engine_run.Failure.cause) result
+(** Loads eye templates via {!Bdsp_checkpoint_series.Static_rng_templates.load}
+    and runs [bdsp.static_rng] as a checkpoint action, returning an
+    {!Engine_run.Failure.cause} on missing templates or an exhausted hunt. *)

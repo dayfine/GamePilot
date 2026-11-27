@@ -27,9 +27,8 @@ Give each as `--options KEY=VALUE`:
 | Key | Values | When not given | What it chooses |
 |---|---|---|---|
 | `target` | kyogre \| groudon \| rayquaza \| ho-oh \| lugia \| mewtwo \| regirock \| regice \| registeel \| articuno \| zapdos \| moltres \| raikou \| entei \| suicune \| latios \| latias \| dialga \| palkia \| uxie \| azelf \| giratina \| heatran \| regigigas \| darkrai \| arceus \| rotom | default `kyogre` | Static legendary target species slug from Static_targets.all. |
-| `shiny` | any \| star \| square \| all | default `any` | Required shiny class: any, star, square, or all (accept non-shiny for calibration). |
+| `shiny` | any \| star \| square \| include_non_shiny | default `any` | Required shiny class: any, star, square, or include_non_shiny (accept non-shiny for calibration). |
 | `delay_ms` | -5000 to 5000 | default `200` | Calibration offset in ms added to the timed encounter confirm press. |
-| `sync` | hardy \| lonely \| brave \| adamant \| naughty \| bold \| docile \| relaxed \| impish \| lax \| timid \| hasty \| serious \| jolly \| naive \| modest \| mild \| quiet \| bashful \| rash \| calm \| gentle \| sassy \| careful \| quirky | optional | Optional Synchronize lead nature (omit if not using Synchronize). |
 | `max_attempts` | 1 to 999 | default `20` | Maximum soft-reset attempts before stopping. |
 | `seed_timeout_s` | 60 to 3600 | default `600` | Maximum seconds to wait for 0PK pedestal seed recovery per attempt. |
 <!-- /generated -->
@@ -71,7 +70,7 @@ cd src && opam exec -- dune exec -- gamepilot run bdsp.static_rng \
    under the 1-player + 1-Pokémon-model timeline to lock the exact advance anchor (~60–90 seconds).
 4. **Target search and timed trigger:** Dismisses the dialog, turns North to face the legendary,
    searches forward with `Static_rng_trigger` for the earliest reachable shiny advance matching
-   `target`, `shiny`, and `sync`, opens the cry dialog, and fires the final confirm press at the
+   `target` and `shiny`, opens the cry dialog, and fires the final confirm press at the
    exact daemon timestamp via `submit_at`.
 5. **Visual shiny detection and retry:** Watches battle-dialog timing with
    `Shiny_encounter_detector` (waiting through weather banners such as Drizzle and Drought). On a

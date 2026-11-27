@@ -225,3 +225,24 @@ let run ~picture ~templates ?(options = Run_options.none) () =
   match Opts.of_run_options options with
   | Error e -> (false, "bdsp.static_rng: invalid options: " ^ e)
   | Ok cfg -> run_checked ~picture ~templates cfg
+
+let run_with_loaded ~log ~picture ~options
+    (loaded : Bdsp_checkpoint_series.Static_rng_templates.loaded) =
+  let templates =
+    {
+      player_eye_png = loaded.player_eye_png;
+      chamber_eye_png = loaded.chamber_eye_png;
+      player_eye_box = default_player_eye_box;
+      frame_dir = loaded.frame_dir;
+    }
+  in
+  let passed, line = run ~picture ~templates ~options () in
+  log line;
+  if passed then Ok ()
+  else Error (Engine_run.Failure.cause ~repeats:true "static_rng_failed" line)
+
+let run_action ~log ~picture ~options =
+  match Bdsp_checkpoint_series.Static_rng_templates.load () with
+  | Error msg ->
+      Error (Engine_run.Failure.cause ~repeats:false "static_rng_templates" msg)
+  | Ok loaded -> run_with_loaded ~log ~picture ~options loaded

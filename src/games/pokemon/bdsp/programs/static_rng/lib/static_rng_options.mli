@@ -2,15 +2,16 @@
     program.
 
     GamePilot's own option decoder over {!Run_options}, mapping CLI keys
-    ([target], [shiny], [delay_ms], [sync], [max_attempts], [seed_timeout_s])
-    into typed parameters for {!Static_rng_workflow}. *)
+    ([target], [shiny], [delay_ms], [max_attempts], [seed_timeout_s]) into typed
+    parameters for {!Static_rng_workflow}. *)
 
 (** Which shiny class a target advance must satisfy. *)
 type shiny_filter =
   | Any  (** Accept either star or square shiny. *)
   | Star  (** Accept only star shiny. *)
   | Square  (** Accept only square shiny. *)
-  | All  (** Accept any advance (including non-shiny) for calibration. *)
+  | Include_non_shiny
+      (** Accept any advance (including non-shiny) for calibration. *)
 
 type t = {
   target : Bdsp_rng.Static_targets.t;
@@ -19,13 +20,11 @@ type t = {
   delay_ms : int;
       (** Calibration offset in ms added to the timed confirm press (default
           200). *)
-  sync_nature : int option;
-      (** Optional Synchronize lead nature index (0..24), or [None]. *)
   max_attempts : int;
       (** Maximum soft-reset attempts before stopping (default 20). *)
   seed_timeout_s : int;
-      (** Maximum seconds to wait for [0PK] pedestal seed recovery per attempt
-          (default 600). *)
+      (** Maximum seconds to wait for [0PK] seed recovery per attempt (default
+          600). *)
 }
 (** Decoded and validated configuration for one [bdsp.static_rng] run. *)
 

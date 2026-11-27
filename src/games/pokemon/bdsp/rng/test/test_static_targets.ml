@@ -138,9 +138,16 @@ let test_table_invariants () =
          t.template.level = 70 && t.template.ability_kind = 2)
        regis);
   let rotom = Option.get (Static_targets.find "rotom") in
-  check "rotom uses Direct_no_pokemon_model"
+  check "rotom uses Direct_no_pokemon_model and Standing_at_encounter"
     (rotom.default_trigger = Static_targets.Direct_no_pokemon_model
-    && rotom.template.guaranteed_ivs = 0)
+    && rotom.entry_mode = Static_targets.Standing_at_encounter
+    && rotom.template.guaranteed_ivs = 0);
+  let kyogre = Option.get (Static_targets.find "kyogre") in
+  let dialga = Option.get (Static_targets.find "dialga") in
+  check "ramanas vs sinnoh entry modes"
+    (kyogre.entry_mode = Static_targets.Ramanas_slate_chamber
+    && dialga.entry_mode = Static_targets.Standing_at_encounter
+    && giratina.entry_mode = Static_targets.Standing_at_encounter)
 
 let test_synchronize_calibration () =
   let seed =

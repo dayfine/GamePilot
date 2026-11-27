@@ -80,7 +80,6 @@ let underground =
   }
 
 type static_rng_bounds = {
-  nature_count : int;
   delay_min_ms : int;
   delay_max_ms : int;
   max_attempts : int;
@@ -90,7 +89,6 @@ type static_rng_bounds = {
 
 let static_bounds =
   {
-    nature_count = 25;
     delay_min_ms = -5000;
     delay_max_ms = 5000;
     max_attempts = 999;
@@ -103,10 +101,6 @@ let static_target_values =
     (fun (t : Bdsp_rng.Static_targets.t) -> t.id)
     Bdsp_rng.Static_targets.all
 
-let static_nature_values =
-  List.init static_bounds.nature_count (fun i ->
-      String.lowercase_ascii (Bdsp_rng.Static_encounter.nature_name i))
-
 let static_rng_options : Run_options.declared list =
   [
     {
@@ -117,11 +111,12 @@ let static_rng_options : Run_options.declared list =
     };
     {
       key = "shiny";
-      value = Run_options.One_of [ "any"; "star"; "square"; "all" ];
+      value =
+        Run_options.One_of [ "any"; "star"; "square"; "include_non_shiny" ];
       presence = Run_options.Default "any";
       doc =
-        "Required shiny class: any, star, square, or all (accept non-shiny for \
-         calibration).";
+        "Required shiny class: any, star, square, or include_non_shiny (accept \
+         non-shiny for calibration).";
     };
     {
       key = "delay_ms";
@@ -131,12 +126,6 @@ let static_rng_options : Run_options.declared list =
       presence = Run_options.Default "200";
       doc =
         "Calibration offset in ms added to the timed encounter confirm press.";
-    };
-    {
-      key = "sync";
-      value = Run_options.One_of static_nature_values;
-      presence = Run_options.Optional;
-      doc = "Optional Synchronize lead nature (omit if not using Synchronize).";
     };
     {
       key = "max_attempts";

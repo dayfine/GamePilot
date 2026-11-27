@@ -32,11 +32,7 @@ let trigger_config_of_options (opts : Opts.t) =
     Trigger.default_config ~target:opts.target
       ~accept:(Opts.accept_pokemon opts.shiny)
   in
-  {
-    base with
-    search = { base.search with synchronize_nature = opts.sync_nature };
-    aim_offset_ms = float_of_int opts.delay_ms;
-  }
+  { base with aim_offset_ms = float_of_int opts.delay_ms }
 
 let log_phase ~steps ~attempt ~(opts : Opts.t) phase msg =
   steps.update_counters ~attempt ~max_attempts:opts.max_attempts ~phase;
@@ -50,8 +46,7 @@ let precheck_cfg = { min_advances = 400; max_advances = 3500 }
 
 let check_seed_early_hit ~(opts : Opts.t) state =
   let searcher =
-    E.searcher state opts.target.template ~tsv:0
-      ~synchronize_nature:opts.sync_nature
+    E.searcher state opts.target.template ~tsv:0 ~synchronize_nature:None
   in
   match
     E.scan searcher ~min_advances:precheck_cfg.min_advances
@@ -65,23 +60,62 @@ let check_seed_early_hit ~(opts : Opts.t) state =
            "no matching shiny in adv=[%d..%d] (pre-chamber seed check)"
            precheck_cfg.min_advances precheck_cfg.max_advances)
 
+let anchor_of_seed (seed : Pedestal_seed_finder.outcome) :
+    Bdsp_blink_rng.In_chamber_reidentifier.anchor =
+  {
+    base_state = seed.state;
+    anchor_time_ms = seed.anchor_time_ms;
+    advances_to_first_blink = 0;
+    advances_to_last_blink = seed.anchor_advance;
+    next_pokemon_blink_min_seconds = 0.0;
+    next_pokemon_blink_max_seconds = 0.0;
+    fitted_tick_seconds = seed.tick_seconds;
+    gaps = [];
+  }
+
+let enter_and_reidentify ~steps ~attempt ~opts ~seed_hex
+    (seed : Pedestal_seed_finder.outcome) (preview : E.hit) =
+  let msg =
+    Printf.sprintf
+      "Seed confirmed %s (%d blinks, %.1fs, tick=%.4fs; earliest hit adv=%d). \
+       Inserting slate..."
+      seed_hex seed.events seed.elapsed_seconds seed.tick_seconds
+      preview.advances
+  in
+  log_phase ~steps ~attempt ~opts "enter_chamber" msg;
+  let* () = steps.enter_chamber () in
+  log_phase ~steps ~attempt ~opts "reidentify_1pk"
+    "Re-identifying in-chamber 1PK advance anchor...";
+  steps.reidentify_in_chamber ~base_state:seed.state
+
+let lock_in_place ~steps ~attempt ~opts ~seed_hex
+    (seed : Pedestal_seed_finder.outcome) (preview : E.hit) =
+  let msg =
+    Printf.sprintf
+      "Seed confirmed in place %s (%d blinks, %.1fs, tick=%.4fs; earliest hit \
+       adv=%d)."
+      seed_hex seed.events seed.elapsed_seconds seed.tick_seconds
+      preview.advances
+  in
+  log_phase ~steps ~attempt ~opts "seed_locked" msg;
+  Ok (anchor_of_seed seed)
+
+let acquire_anchor ~steps ~attempt ~(opts : Opts.t) =
+  steps.freeze_player ();
+  let* seed = steps.recover_pedestal_seed ~timeout_s:opts.seed_timeout_s in
+  let* preview = check_seed_early_hit ~opts seed.state in
+  let seed_hex = Bdsp_rng.Xorshift128.state_to_string seed.state in
+  match opts.target.entry_mode with
+  | Bdsp_rng.Static_targets.Ramanas_slate_chamber ->
+      enter_and_reidentify ~steps ~attempt ~opts ~seed_hex seed preview
+  | Bdsp_rng.Static_targets.Standing_at_encounter ->
+      lock_in_place ~steps ~attempt ~opts ~seed_hex seed preview
+
 let run_attempt ~steps ~attempt ~(opts : Opts.t) =
   log_phase ~steps ~attempt ~opts "pedestal_seed"
-    "Freezing player and recovering 128-bit seed from 0PK pedestal blinks...";
+    "Freezing player and recovering 128-bit seed from player eye blinks...";
   let res =
-    steps.freeze_player ();
-    let* seed = steps.recover_pedestal_seed ~timeout_s:opts.seed_timeout_s in
-    let* preview = check_seed_early_hit ~opts seed.state in
-    log_phase ~steps ~attempt ~opts "enter_chamber"
-      (Printf.sprintf
-         "Seed confirmed %s (%d blinks, %.1fs, tick=%.4fs; earliest hit \
-          adv=%d). Inserting slate..."
-         (Bdsp_rng.Xorshift128.state_to_string seed.state)
-         seed.events seed.elapsed_seconds seed.tick_seconds preview.advances);
-    let* () = steps.enter_chamber () in
-    log_phase ~steps ~attempt ~opts "reidentify_1pk"
-      "Re-identifying in-chamber 1PK advance anchor...";
-    let* anchor = steps.reidentify_in_chamber ~base_state:seed.state in
+    let* anchor = acquire_anchor ~steps ~attempt ~opts in
     log_phase ~steps ~attempt ~opts "trigger"
       (Printf.sprintf "Anchor locked at adv=%d. Scheduling %s encounter..."
          anchor.advances_to_last_blink opts.target.template.species);

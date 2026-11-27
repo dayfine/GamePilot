@@ -14,6 +14,8 @@ type config = {
 type outcome = {
   state : XS.state;
   events : int;
+  anchor_time_ms : float;
+  anchor_advance : int;
   tick_seconds : float;
   elapsed_seconds : float;
 }
@@ -117,6 +119,8 @@ let outcome_of_recovery watch now_s (r : BR.recovery) =
   {
     state = r.state;
     events = r.events;
+    anchor_time_ms = r.clock.anchor_time *. defaults.ms_per_s;
+    anchor_advance = r.clock.anchor_advance;
     tick_seconds = r.clock.tick_seconds;
     elapsed_seconds = now_s -. watch.start_s;
   }
