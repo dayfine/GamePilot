@@ -1,0 +1,39 @@
+(** Live Switch execution of the BDSP 13x10 Grand Underground mining minigame,
+    connecting {!Bdsp_readers.Mining_grid} to
+    {!Bdsp_underground.Mining_solver.decide}. *)
+
+open Bdsp_underground
+
+val toggle_mining_tool : unit -> unit
+(** Press R in the mining minigame to switch between Pickaxe and Hammer. *)
+
+val mining_move_cursor : dx:int -> dy:int -> unit
+(** Move the 13x10 mining grid cursor by [(dx, dy)] tiles. *)
+
+val mining_strike : unit -> unit
+(** Strike the current mining grid tile with A and wait for the hit animation.
+*)
+
+val dig_wall_smart :
+  ?announced_items:int ->
+  log:(string -> unit) ->
+  picture:Wire.box ->
+  goal:Mining_goal.goal ->
+  tally:Mining_goal.tally ->
+  unit ->
+  (int * bool, string) result
+(** Play an open 13x10 mining wall live using {!Bdsp_readers.Mining_grid} and
+    {!Bdsp_underground.Mining_solver.decide} until the wall collapses or
+    finishes. When [announced_items] is omitted, reads the opening announcement
+    digit via {!Bdsp_readers.Mining_announce_reader} if visible, falling back to
+    [3]. Fuses live wall-crack gauge readings with local integrity tracking.
+    Returns [(moves_taken, bailed)]. *)
+
+val collect_dig_yields :
+  log:(string -> unit) ->
+  picture:Wire.box ->
+  unit ->
+  Mining_counters.treasure list
+(** Step through post-dig collapse and item-reward ([獲得了 ...！]) screens,
+    classifying every uncovered treasure via {!Bdsp_readers.Dig_result_reader}
+    until returning to the overworld. *)
