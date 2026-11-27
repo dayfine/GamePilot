@@ -118,6 +118,9 @@ let pocket_index : Bag_screen.pocket -> int = function
 
 let pocket_ready m = Option.is_some (Bag_screen.pocket m)
 
+let other_pocket now m =
+  match Bag_screen.pocket m with Some p -> p <> now | None -> false
+
 (* Step one pocket at a time so both 2-pocket and 3-pocket bag layouts work
    without overshooting, after waiting for the bag's pocket arrow to fade in. *)
 let turn_to pocket =
@@ -130,7 +133,7 @@ let turn_to pocket =
           else Wire.Left
         in
         tap_all [ dir ];
-        ignore (shows (fun m -> Bag_screen.pocket m <> Some now) : bool);
+        ignore (shows (other_pocket now) : bool);
         step (tries - 1)
     | _ -> false
   in
