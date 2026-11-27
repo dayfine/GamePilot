@@ -84,7 +84,8 @@ let take_notification t = function
   | Wire.Stop reason ->
       if t.stop = None then t.stop <- Some reason;
       None
-  | Wire.Watch_plan _ | Wire.Watch_log _ | Wire.Watch_run _ ->
+  | Wire.Watch_plan _ | Wire.Watch_log _ | Wire.Watch_run _
+  | Wire.Watch_counters _ ->
       protocol_error "daemon sent a program's watch notification"
   | Wire.Keepawake _ -> protocol_error "daemon sent its own wire log line"
 

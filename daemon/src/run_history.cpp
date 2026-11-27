@@ -592,8 +592,8 @@ std::string run_rows_json(const std::vector<RunRow>& rows) {
 bool servable_run_file(std::string_view path) {
   for (const std::string_view name :
        {"run.json", "daemon.json", "watch_plan.json", "watch_run.json",
-        "watch_log.jsonl", "story.log", "summary.txt", "failure.png",
-        "frames/index.jsonl"}) {
+        "watch_counters.json", "watch_log.jsonl", "story.log", "summary.txt",
+        "failure.png", "frames/index.jsonl"}) {
     if (path == name) {
       return true;
     }

@@ -340,6 +340,9 @@ type notification = Jsonrpc.notification =
   | Watch_run of Watch_run.t
       (** From the program: the chain of checkpoints it runs and the current
           one's trials, for the watch page; off the wire log too. *)
+  | Watch_counters of Watch.counter list
+      (** From the program: live key-value counters for the watch page (v1.21);
+          off the wire log too. *)
   | Stop of string
       (** From the daemon: someone pressed Stop on the watch page (the reason).
           The daemon has already cancelled the queued commands and released

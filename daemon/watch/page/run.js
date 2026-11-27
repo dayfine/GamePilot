@@ -10,13 +10,21 @@ async function load() {
     $("verdict").textContent = "no record of this run";
     return;
   }
-  const [plan, logText, storyText, daemon, framesText] = await Promise.all([
+  const [plan, counters, logText, storyText, daemon, framesText] = await Promise.all([
     getJson("files/watch_plan.json").catch(() => null),
+    getJson("files/watch_counters.json").catch(() => null),
     getText("files/watch_log.jsonl").catch(() => ""),
     getText("files/story.log").catch(() => ""),
     getJson("files/daemon.json").catch(() => null),
     getText("files/frames/index.jsonl").catch(() => ""),
   ]);
+  const counterItems = counters && Array.isArray(counters.items) ? counters.items : [];
+  $("counters-panel").hidden = counterItems.length === 0;
+  $("counters").replaceChildren(...counterItems.map((item) => {
+    const box = el("div", "counter");
+    box.append(el("dt", "", item.label), el("dd", "", item.value));
+    return box;
+  }));
   const timed = logText.trim() ? jsonLines(logText) : [];
   data.timedLog = timed.length > 0;
   data.log = data.timedLog ? timed :
