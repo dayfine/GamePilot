@@ -4,12 +4,17 @@
 type t
 (** Mutable hub run table bound to one [consoles.json] path. *)
 
-val create : config_path:string -> ?listen:string -> unit -> t
-(** Creates an empty run manager for [config_path] and optional [listen] address
-    forwarded to [--watch] runs. *)
+val create :
+  config_path:string -> ?runs_dir:string -> ?listen:string -> unit -> t
+(** Creates an empty run manager for [config_path], [runs_dir] (default
+    [GAMEPILOT_RUNS] / [~/.local/share/gamepilot/runs]), and optional [listen]
+    address forwarded to [--watch] runs. *)
 
 val config_path : t -> string
 (** Returns the [consoles.json] path configured on the manager. *)
+
+val runs_dir : t -> string
+(** Returns the runs directory used for [RESULTS.tsv] history lookups. *)
 
 val reap_all : t -> unit
 (** Drains stdout/stderr pipes and reaps any exited child processes. *)

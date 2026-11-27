@@ -18,15 +18,20 @@ type run_entry = {
 
 type t = {
   config_path : string;
+  runs_dir : string;
   listen : string option;
   mutable next_id : int;
   mutable runs : run_entry list;
 }
 
-let create ~config_path ?listen () =
-  { config_path; listen; next_id = 0; runs = [] }
+let default_runs_dir () = Repo_io.Repo_files.data_dir "GAMEPILOT_RUNS" "runs"
+
+let create ~config_path ?runs_dir ?listen () =
+  let runs_dir = Option.value runs_dir ~default:(default_runs_dir ()) in
+  { config_path; runs_dir; listen; next_id = 0; runs = [] }
 
 let config_path st = st.config_path
+let runs_dir st = st.runs_dir
 
 let append_log entry line =
   (if entry.watch_url = None then

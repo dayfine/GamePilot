@@ -71,13 +71,11 @@ function(embed_page page function header)
     VERBATIM)
 endfunction()
 embed_page(watch.html watch_page watch_server.h)
-embed_page(hub.html hub_page watch_hub.h)
 embed_page(run.html run_page watch_hub.h)
 
 # The pages' scripts and styles, compiled in the same way into one lookup
 # (watch_assets.h), each served beside the page that loads it.
 set(WATCH_ASSETS
-  hub.css hub_live.js hub_history.js hub.js
   run.css run_record.js run_plan.js run_log.js run_frames.js run_probes.js
   run.js
   watch.css watch_state.js watch_frame.js watch_plan.js watch_run.js
@@ -97,7 +95,6 @@ add_custom_command(
 
 add_library(gamepilot_core STATIC
   "${CMAKE_CURRENT_BINARY_DIR}/watch_page.cpp"
-  "${CMAKE_CURRENT_BINARY_DIR}/hub_page.cpp"
   "${CMAKE_CURRENT_BINARY_DIR}/run_page.cpp"
   "${CMAKE_CURRENT_BINARY_DIR}/watch_assets.cpp"
   src/base64.cpp

@@ -40,7 +40,7 @@ let with_temp_router f =
   let dir = Filename.temp_file "ui_hub_test_" "" in
   Sys.remove dir;
   let path = Filename.concat dir "consoles.json" in
-  let mgr = Run_manager.create ~config_path:path () in
+  let mgr = Run_manager.create ~config_path:path ~runs_dir:dir () in
   let res = f mgr in
   if Sys.file_exists path then Sys.remove path;
   if Sys.file_exists dir then Sys.rmdir dir;
@@ -82,7 +82,189 @@ let router_error_codes () =
       Printf.sprintf "%d:%d:%d:%d" c_bad_json c_missing_console c_missing_stop
         c_404)
 
+let write_file path content =
+  Out_channel.with_open_text path (fun oc -> output_string oc content)
+
+let rec rm_rf path =
+  if Sys.file_exists path then
+    if Sys.is_directory path then (
+      Array.iter
+        (fun name -> rm_rf (Filename.concat path name))
+        (Sys.readdir path);
+      Sys.rmdir path)
+    else Sys.remove path
+
+let check_eq ~fmt name ~expected ~actual =
+  Table_test.report name
+    (if actual = expected then Ok ()
+     else
+       Error (Printf.sprintf "expected %s, got %s" (fmt expected) (fmt actual)))
+
+let check_str = check_eq ~fmt:(Printf.sprintf "%S")
+let check_bool = check_eq ~fmt:string_of_bool
+
+let check_parse_tsv () =
+  let tsv =
+    "time\trun\tcheckpoint\tmode\tresult\tat\treason\n\
+     2026-11-26T01:00:00\trun-1\t01.02-platform-to-plaza\ttesting\tpass\t\t\n\
+     2026-11-26T02:00:00\trun-2\tbdsp.underground\trun\tfail\t#1\tbad fade\n"
+  in
+  match Run_history.parse_tsv ~limit:2 tsv with
+  | [ first; second ] ->
+      check_str "run_history parse_tsv newest game" ~expected:"bdsp"
+        ~actual:first.game;
+      check_str "run_history parse_tsv newest checkpoint"
+        ~expected:"bdsp.underground" ~actual:first.checkpoint;
+      check_str "run_history parse_tsv newest result" ~expected:"fail"
+        ~actual:first.result;
+      check_str "run_history parse_tsv older game" ~expected:"plza"
+        ~actual:second.game;
+      check_str "run_history parse_tsv older checkpoint"
+        ~expected:"01.02-platform-to-plaza" ~actual:second.checkpoint;
+      check_str "run_history parse_tsv older result" ~expected:"pass"
+        ~actual:second.result
+  | entries ->
+      Table_test.report "run_history parse_tsv returns two entries"
+        (Error
+           (Printf.sprintf "expected 2 entries, got %d" (List.length entries)))
+
+let check_merged_daemon_entry (e : Run_history.entry) =
+  check_str "run_history merge daemon-only run id"
+    ~expected:"2026-11-26-02.99-unknown-testing-1" ~actual:e.run;
+  check_str "run_history merge daemon-only game" ~expected:"" ~actual:e.game;
+  check_str "run_history merge daemon-only program" ~expected:""
+    ~actual:e.program;
+  check_str "run_history merge daemon-only from" ~expected:"02.99-unknown"
+    ~actual:e.from;
+  check_str "run_history merge daemon-only to" ~expected:"02.99-unknown"
+    ~actual:e.to_;
+  check_str "run_history merge daemon-only backend" ~expected:"mgba"
+    ~actual:e.backend;
+  check_bool "run_history merge daemon-only recorded" ~expected:false
+    ~actual:e.recorded
+
+let check_merged_full_entry (e : Run_history.entry) =
+  check_str "run_history merge full run id"
+    ~expected:"2026-11-26-su-01-testing-1" ~actual:e.run;
+  check_str "run_history merge full game" ~expected:"frlg" ~actual:e.game;
+  check_str "run_history merge full program" ~expected:"frlg.supplies"
+    ~actual:e.program;
+  check_str "run_history merge full from" ~expected:"su-01" ~actual:e.from;
+  check_str "run_history merge full to" ~expected:"su-02" ~actual:e.to_;
+  check_str "run_history merge full backend" ~expected:"switch"
+    ~actual:e.backend;
+  check_bool "run_history merge full recorded" ~expected:true ~actual:e.recorded
+
+let check_run_history_merge () =
+  let dir = Filename.temp_file "ui_hub_hist_" "" in
+  Sys.remove dir;
+  Unix.mkdir dir 0o755;
+  let r1 = Filename.concat dir "2026-11-26-su-01-testing-1" in
+  let r2 = Filename.concat dir "2026-11-26-02.99-unknown-testing-1" in
+  Unix.mkdir r1 0o755;
+  Unix.mkdir (Filename.concat r1 "frames") 0o755;
+  Unix.mkdir r2 0o755;
+  write_file
+    (Filename.concat dir "RESULTS.tsv")
+    "time\trun\tcheckpoint\tmode\tresult\tat\treason\n\
+     2026-11-26T10:00:00\t2026-11-26-su-01-testing-1\tsu-01\ttesting\tpass\t\t\n\
+     2026-11-26T11:00:00\t2026-11-26-02.99-unknown-testing-1\t02.99-unknown\ttesting\tfail\t#2\tbad \
+     fade\n";
+  write_file
+    (Filename.concat r1 "run.json")
+    {|{"game":"frlg","game_name":"Pokemon FireRed / LeafGreen","program":"frlg.supplies","program_name":"Supplies","group":"Farming","from":"su-01","to":"su-02","checkpoint":"su-01","backend":"switch","mode":"testing","result":"pass","started_ms":1700000000000,"ended_ms":1700000060000}|};
+  write_file (Filename.concat (Filename.concat r1 "frames") "index.jsonl") "";
+  write_file
+    (Filename.concat r2 "daemon.json")
+    {|{"backend":"mgba","clock_zero_unix_ms":1700000100000}|};
+  let entries = Run_history.load ~runs_dir:dir () in
+  let json = Run_history.to_json ~runs_dir:dir entries in
+  rm_rf dir;
+  let watch_hub_port =
+    match json with
+    | `Assoc fs -> List.assoc_opt "watch_hub_port" fs
+    | _ -> None
+  in
+  check_eq
+    ~fmt:(Option.fold ~none:"None" ~some:Yojson.Safe.to_string)
+    "run_history to_json includes watch_hub_port"
+    ~expected:(Some (`Int Run_history.watch_hub_port))
+    ~actual:watch_hub_port;
+  match entries with
+  | [ daemon_entry; full_entry ] ->
+      check_merged_daemon_entry daemon_entry;
+      check_merged_full_entry full_entry
+  | _ ->
+      Table_test.report "run_history merge returns two entries"
+        (Error
+           (Printf.sprintf "expected 2 entries, got %d" (List.length entries)))
+
+let check_series_entry (e : Run_history.entry) =
+  check_str "run_history series kind" ~expected:"series" ~actual:e.kind;
+  check_str "run_history series run id" ~expected:"2026-11-26-su-01-su-02-42"
+    ~actual:e.run;
+  check_str "run_history series game" ~expected:"frlg" ~actual:e.game;
+  check_str "run_history series program" ~expected:"frlg.supplies"
+    ~actual:e.program;
+  check_str "run_history series from" ~expected:"su-01" ~actual:e.from;
+  check_str "run_history series to" ~expected:"su-02" ~actual:e.to_;
+  check_str "run_history series focus checkpoint" ~expected:"su-02"
+    ~actual:e.checkpoint;
+  check_str "run_history series result" ~expected:"fail" ~actual:e.result;
+  check_str "run_history series failure at" ~expected:"#3 mart" ~actual:e.at;
+  check_str "run_history series failure reason" ~expected:"menu timed out"
+    ~actual:e.reason;
+  check_bool "run_history series recorded from child" ~expected:true
+    ~actual:e.recorded
+
+let check_run_history_series () =
+  let dir = Filename.temp_file "ui_hub_series_" "" in
+  Sys.remove dir;
+  Unix.mkdir dir 0o755;
+  let watch_dir = Filename.concat dir ".watch" in
+  let series_dir = Filename.concat watch_dir "series" in
+  Unix.mkdir watch_dir 0o755;
+  Unix.mkdir series_dir 0o755;
+  let c1 = Filename.concat dir "2026-11-26-su-01-testing-1" in
+  let c2 = Filename.concat dir "2026-11-26-su-02-testing-1" in
+  let solo = Filename.concat dir "2026-11-26-bdsp.underground-run-1" in
+  Unix.mkdir c1 0o755;
+  Unix.mkdir (Filename.concat c1 "frames") 0o755;
+  Unix.mkdir c2 0o755;
+  Unix.mkdir solo 0o755;
+  write_file (Filename.concat (Filename.concat c1 "frames") "index.jsonl") "";
+  write_file
+    (Filename.concat solo "run.json")
+    {|{"game":"bdsp","program":"bdsp.underground","checkpoint":"bdsp.underground","backend":"switch","mode":"run","result":"pass","started_ms":1700000000000,"ended_ms":1700000010000}|};
+  write_file
+    (Filename.concat dir "RESULTS.tsv")
+    "time\trun\tcheckpoint\tmode\tresult\tat\treason\n\
+     2026-11-26T10:00:00\t2026-11-26-su-01-testing-1\tsu-01\ttesting\tpass\t\t\n\
+     2026-11-26T10:05:00\t2026-11-26-su-02-testing-1\tsu-02\ttesting\tfail\t#3 \
+     mart\tmenu timed out\n\
+     2026-11-26T10:06:00\t2026-11-26-su-02-testing-tsv-only\tsu-02\ttesting\tfail\t#4\ttsv \
+     child\n";
+  write_file
+    (Filename.concat series_dir "2026-11-26-su-01-su-02-42.json")
+    {|{"series":"2026-11-26-su-01-su-02-42","pid":42,"game":"frlg","game_name":"Pokemon FireRed / LeafGreen","program":"frlg.supplies","program_name":"Supplies","group":"Farming","from":"su-01","to":"su-02","mode":"testing","backend":"switch","started_ms":1700000200000,"ended_ms":1700000260000,"result":"fail","checkpoints":[{"id":"su-01","state":"passed","runs":[{"run":"2026-11-26-su-01-testing-1","result":"pass"}]},{"id":"su-02","state":"failed","runs":[{"run":"2026-11-26-su-02-testing-1","result":"fail","at":"#3 mart","reason":"menu timed out"},{"run":"2026-11-26-su-02-testing-tsv-only","result":"fail","at":"#4","reason":"tsv child"}]}]}|};
+  let entries = Run_history.load ~runs_dir:dir () in
+  rm_rf dir;
+  match entries with
+  | [ series_entry; solo_entry ] ->
+      check_series_entry series_entry;
+      check_str "run_history series leaves standalone run intact"
+        ~expected:"2026-11-26-bdsp.underground-run-1" ~actual:solo_entry.run;
+      check_str "run_history standalone run kind" ~expected:"checkpoints"
+        ~actual:solo_entry.kind
+  | _ ->
+      Table_test.report "run_history series collapses child runs into 1 row"
+        (Error
+           (Printf.sprintf "expected 2 entries, got %d" (List.length entries)))
+
 let () =
+  check_parse_tsv ();
+  check_run_history_merge ();
+  check_run_history_series ();
   Table_test.run "ui_api"
     [
       case "programs_json includes frlg.supplies" programs_has_supplies "true";
