@@ -139,7 +139,9 @@ let post_intro_frames = { count = 15; interval_s = 2; ms_per_s = 1000 }
 
 let save_one_frame ~dir ~tag i =
   let sec = i * post_intro_frames.interval_s in
-  let path = Filename.concat dir (Printf.sprintf "battle_%d_%02ds.png" tag sec) in
+  let path =
+    Filename.concat dir (Printf.sprintf "battle_%d_%02ds.png" tag sec)
+  in
   ignore (Effects.save_frame path : int);
   if i + 1 < post_intro_frames.count then
     Switch.Switch_presses.wait

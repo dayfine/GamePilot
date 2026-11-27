@@ -48,8 +48,8 @@ let parse_shiny_filter s =
   | "all" -> Ok All
   | other ->
       Error
-        (Printf.sprintf
-           "unknown shiny filter %S (expected any|star|square|all)" other)
+        (Printf.sprintf "unknown shiny filter %S (expected any|star|square|all)"
+           other)
 
 let shiny_filter_to_string = function
   | Any -> "any"
