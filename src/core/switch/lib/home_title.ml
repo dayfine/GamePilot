@@ -28,11 +28,7 @@ let probe id template =
 let score m id =
   match Effects.probe m id with
   | Some (Wire.Template_match { score; _ }) -> Some score
-  | Some
-      ( Wire.Color_stats _ | Wire.Template_ncc _ | Wire.Color_count _
-      | Wire.Line_shares _ | Wire.Find _ | Wire.Other _ )
-  | None ->
-      None
+  | _ -> None
 
 let max_score = 0.08
 
