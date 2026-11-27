@@ -1,3 +1,6 @@
 (test
  (name test_bdsp_series)
- (libraries gamepilot.bdsp_checkpoint_series gamepilot.engine_series))
+ (libraries
+  gamepilot.bdsp_checkpoint_series
+  gamepilot.engine_series
+  gamepilot.run_flags))

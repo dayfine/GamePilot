@@ -6,5 +6,6 @@
  (libraries
   gamepilot.repo_io
   gamepilot.live_run
+  gamepilot.run_record
   gamepilot.engine_run
   gamepilot.run_options))

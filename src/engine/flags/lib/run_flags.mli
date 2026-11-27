@@ -83,3 +83,29 @@ val daemon_backend :
   (Daemon_process.backend, string) result
 (** The daemon's backend from the flags: mGBA, or the Switch (testing mode only)
     on --serial and --capture, or a dry run on --replay alone. *)
+
+val no_game_flags : unit game_flags
+(** Hooks for a game with no extra command-line flags of its own. *)
+
+val parse_no_game_flags : string list -> (unit flags, string) result
+(** Parses [args] over {!defaults} using {!no_game_flags}. *)
+
+val require_testing_only : game:string -> 'game flags -> (unit, string) result
+(** Refuses flags unsupported by a testing-only whole-checkpoint runner
+    ([--mode] other than [testing], [--preflight], [--from-event], [--to-event],
+    [--max-rounds]), naming [game] in the error. *)
+
+val require_switch :
+  game:string -> Daemon_process.backend -> (unit, string) result
+(** Refuses non-Switch backends, naming [game] in the error. *)
+
+val run_info :
+  ?kind:Run_record.kind ->
+  program:(string * string) list ->
+  from_id:string ->
+  to_id:string ->
+  options:Run_options.t ->
+  'game flags ->
+  Run_record.info
+(** Builds {!Run_record.info} for [run.json] from the parsed flags and program
+    metadata ([kind] defaults to {!Run_record.Checkpoints}). *)

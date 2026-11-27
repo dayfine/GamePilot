@@ -80,3 +80,16 @@ let run ~mode ~policy ~now_ms ~log ?after ?override hooks entries =
   in
   Series_chain.run_chain ?after entries
     (run_one ~policy ~now_ms ~log ?override hooks chain)
+
+let run_testing ~policy ~now_ms ~log ~entry_id ~run_trial ~trial_of plans =
+  let hooks =
+    {
+      entry_id;
+      prepare = (fun plan ~next:_ -> Ok plan);
+      run_trial = (fun plan t ~progress:_ -> run_trial plan t);
+      trial_of;
+      verdict_note = (fun _ -> "");
+      on_pass = (fun _ ~next:_ _ -> ());
+    }
+  in
+  run ~mode:Checkpoint_trials.Testing ~policy ~now_ms ~log hooks plans

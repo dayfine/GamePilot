@@ -31,3 +31,9 @@
  (flags
   (:standard -open Live_run))
  (libraries gamepilot.table_test gamepilot.live_run gamepilot.run_record))
+
+(test
+ (name test_switch_series)
+ (flags
+  (:standard -open Live_run))
+ (libraries gamepilot.table_test gamepilot.live_run gamepilot.run_record))

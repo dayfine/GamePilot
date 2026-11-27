@@ -63,3 +63,15 @@ let previous ids id =
     | x :: rest -> if x = id then prev else go (Some x) rest
   in
   go None ids
+
+let load_all ~load ~plan_dir ids =
+  let ( let* ) = Result.bind in
+  let* rev =
+    List.fold_left
+      (fun acc id ->
+        let* acc = acc in
+        let* plan = load ~plan_dir id in
+        Ok (plan :: acc))
+      (Ok []) ids
+  in
+  Ok (List.rev rev)

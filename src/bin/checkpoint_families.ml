@@ -80,7 +80,7 @@ let grid =
   }
 
 let plza_series plan_dir args =
-  let* f = Plza_checkpoint_series.Flags.parse args in
+  let* f = Run_flags.parse_no_game_flags args in
   let* options = program_options plan_dir f in
   Plza.run_series ~program:(program_fields plan_dir) ~options
     ~viewport:(viewport plan_dir f) plan_dir args
@@ -111,7 +111,7 @@ let plza =
   }
 
 let plza_home_series plan_dir args =
-  let* f = Plza_checkpoint_series.Flags.parse args in
+  let* f = Run_flags.parse_no_game_flags args in
   let* options = program_options plan_dir f in
   let* catalog = Plza_gift_inputs.catalog () in
   let* moves =
@@ -137,7 +137,7 @@ let plza_home =
   }
 
 let plza_gifts_series plan_dir args =
-  let* f = Plza_checkpoint_series.Flags.parse args in
+  let* f = Run_flags.parse_no_game_flags args in
   let* options = program_options plan_dir f in
   let* inputs = Plza_gift_inputs.inputs options in
   Plza_claim_gifts_series.Claim_gifts_runs.run_series inputs
@@ -170,7 +170,7 @@ let run_bdsp_action ~log ~picture ~options:_ = function
           Error (Engine_run.Failure.cause ~repeats:true "save_game_failed" msg))
 
 let bdsp_series plan_dir args =
-  let* f = Bdsp_checkpoint_series.Flags.parse args in
+  let* f = Run_flags.parse_no_game_flags args in
   let* options = program_options plan_dir f in
   Bdsp_checkpoint_series.Checkpoint_series.run_series
     {

@@ -24,7 +24,7 @@ type program = {
 }
 
 type setup = {
-  flags : Flags.t;
+  flags : unit Run_flags.flags;
   options : Run_options.t;
   daemons : Series_daemons.t;
   initial_screen : B.Plan.t -> Switch.Initial_screen.expectation;
@@ -34,10 +34,11 @@ type setup = {
 let load_plan ~plan_dir id =
   B.Plan_decode.load (Plan_folder.plan_file ~plan_dir id)
 
-let failed ?(repeats = false) at reason = Failed { at; reason; repeats }
+let failed ~repeats ~at ~reason = Failed { at; reason; repeats }
 
-let of_runner ({ at; reason; repeats } : Daemon_run.failed) =
-  failed ~repeats at reason
+let result_of = function
+  | Passed -> Ok ()
+  | Failed { at; reason; _ } -> Error (at, reason)
 
 let of_engine_failure (f : B.Failure.t) =
   Failed
@@ -86,63 +87,21 @@ let run_checkpoint setup ~log ~picture report (plan : B.Plan.t) =
   | Ok () -> Passed
   | Error f -> of_engine_failure f
 
-let run_guarded setup ~log ~picture ~already_at_start report plan =
-  let end_failed () = Watch_report.end_run report ~passed:false in
-  match
-    Switch.Initial_screen.check_unless_chained ~already_at_start ~log ~picture
-      (setup.initial_screen plan)
-  with
-  | Error reason ->
-      end_failed ();
-      failed ~repeats:true "start" reason
-  | Ok () ->
-      Daemon_run.guard_session
-        ~on_stop:(fun reason ->
-          end_failed ();
-          failed ~repeats:true "stopped" reason)
-        ~on_raised:(fun e ->
-          end_failed ();
-          failed "raised" (Printexc.to_string e))
-        (fun () -> run_checkpoint setup ~log ~picture report plan)
-
-let in_session setup ~already_at_start plan ~log record (backend : Wire.backend)
-    =
-  let picture = backend.viewport in
-  let log = Watch_report.log log in
-  let report = B.Plan_watch.create plan.B.Plan.checkpoint in
-  let outcome = run_guarded setup ~log ~picture ~already_at_start report plan in
-  (match outcome with
-  | Failed _ -> Daemon_run.save_failure ~log record ~save_states:false
-  | Passed -> ());
-  outcome
-
-let ending_of name = function
-  | Passed -> Series_daemons.format_ending ~name (Ok ())
-  | Failed { at; reason; _ } ->
-      Series_daemons.format_ending ~name (Error (at, reason))
-
-let run_trial setup (plan : B.Plan.t) (t : Chain.trial) ~progress:_ =
-  let id = plan.checkpoint.checkpoint_id in
-  let name = Series_daemons.run_name ~id ~n:t.number ~attempt:1 () in
+let run_trial setup (plan : B.Plan.t) (t : Chain.trial) =
+  let checkpoint_id = plan.checkpoint.checkpoint_id in
   let already_at_start = Chain.trial_already_at_start t ~attempt:1 in
-  match
-    Series_daemons.start_and_run setup.daemons ~runs_dir:setup.flags.runs_dir
-      ~checkpoint:id ~mode:"testing" ~n:t.number ~failed:of_runner
-      ~ending:(ending_of name) ~banner:("[Run] " ^ name)
-      (in_session setup ~already_at_start plan)
-  with
-  | Error reason -> Ok (failed ~repeats:true "run folder" reason)
-  | Ok (_, outcome) -> Ok outcome
+  Ok
+    (Switch_series.run_attempt ~daemons:setup.daemons
+       ~runs_dir:setup.flags.runs_dir ~checkpoint_id ~n:t.number ~attempt:1
+       ~already_at_start
+       ~expectation:(setup.initial_screen plan)
+       ~create_report:(fun () -> B.Plan_watch.create plan.B.Plan.checkpoint)
+       ~failed ~result_of
+       (fun ~log ~picture report ->
+         run_checkpoint setup ~log ~picture report plan))
 
 let load_checked program ~plan_dir ids =
-  let* plans =
-    List.fold_left
-      (fun acc id ->
-        let* acc = acc in
-        let* plan = load_plan ~plan_dir id in
-        Ok (acc @ [ plan ]))
-      (Ok []) ids
-  in
+  let* plans = Plan_folder.load_all ~load:load_plan ~plan_dir ids in
   let* () = program.check_plans plans in
   Ok plans
 
@@ -151,7 +110,7 @@ let rec last_item = function
   | [ x ] -> Some x
   | _ :: rest -> last_item rest
 
-let select_range ~plan_dir (f : Flags.t) =
+let select_range ~plan_dir (f : unit Run_flags.flags) =
   let* all = Plan_folder.checkpoint_ids plan_dir in
   match (f.from_id, f.to_id, all) with
   | Some from_id, Some to_id, _ ->
@@ -165,62 +124,36 @@ let select_range ~plan_dir (f : Flags.t) =
       Plan_folder.select_range ~plan_dir ~from_id:first ~to_id
   | None, _, [] -> Error ("no *.plan.json in " ^ plan_dir)
 
-let switch_only : Daemon_process.backend -> _ = function
-  | Mgba _ -> Error "BDSP runs on the Switch only: --backend switch"
-  | Switch _ -> Ok ()
-
-let setup_of program (f : Flags.t) ~program_fields ~options ~from_id ~to_id ~ids
-    ~backend ~viewport =
-  let info : Run_record.info =
+let run_plans (program : program) flags ~options ~policy plans daemons =
+  let setup =
     {
-      kind = Checkpoints;
-      program = program_fields;
-      from_id;
-      to_id;
-      backend = f.backend;
-      options = Run_options.pairs options;
+      flags;
+      options;
+      daemons;
+      initial_screen = program.initial_screen;
+      run_action = program.run_action;
     }
   in
-  let mode = Checkpoint_trials.mode_to_string Testing in
-  {
-    flags = f;
-    options;
-    daemons =
-      Series_daemons.create_for_runs ~daemon:f.daemon ~runs_dir:f.runs_dir
-        ~backend ~viewport ~program_flags:program.daemon_flags
-        ~daemon_flags:f.daemon_flags ~port:f.port ~watch:f.watch
-        { info; mode; checkpoints = ids };
-    initial_screen = program.initial_screen;
-    run_action = program.run_action;
-  }
+  Series_runner.run_testing ~policy ~now_ms:Run_record.now_ms ~log:print_endline
+    ~entry_id:(fun (p : B.Plan.t) -> p.checkpoint.checkpoint_id)
+    ~run_trial:(run_trial setup) ~trial_of plans
 
 let run_series program ~program_fields ~options ~viewport plan_dir args =
-  let* f = Flags.parse args in
-  let* () = Flags.takes f in
+  let* f = Run_flags.parse_no_game_flags args in
+  let* () = Run_flags.require_testing_only ~game:"BDSP" f in
   let* range = select_range ~plan_dir f in
   let* backend = Run_flags.daemon_backend f Testing in
-  let* () = switch_only backend in
+  let* () = Run_flags.require_switch ~game:"BDSP" backend in
   let* viewport = viewport in
   let* policy = Checkpoint_trials.policy ?runs:f.runs Testing in
   let* plans = load_checked program ~plan_dir range.selected in
-  let setup =
-    setup_of program f ~program_fields ~options ~from_id:range.from_id
-      ~to_id:range.to_id ~ids:range.selected ~backend ~viewport
-  in
-  let hooks : (B.Plan.t, B.Plan.t, outcome) Series_runner.hooks =
-    {
-      entry_id = (fun (p : B.Plan.t) -> p.checkpoint.checkpoint_id);
-      prepare = (fun plan ~next:_ -> Ok plan);
-      run_trial = run_trial setup;
-      trial_of;
-      verdict_note = (fun _ -> "");
-      on_pass = (fun _ ~next:_ _ -> ());
-    }
-  in
-  let passed =
-    Series_runner.run ~mode:Testing ~policy ~now_ms:Run_record.now_ms
-      ~log:print_endline hooks plans
+  let info =
+    Run_flags.run_info ~program:program_fields ~from_id:range.from_id
+      ~to_id:range.to_id ~options f
   in
   Ok
-    (Series_daemons.finish_series setup.daemons ~close_game:f.close_game ~passed
-       ())
+    (Switch_series.run_series ~daemon:f.daemon ~runs_dir:f.runs_dir ~backend
+       ~viewport ~program_flags:program.daemon_flags
+       ~daemon_flags:f.daemon_flags ~port:f.port ~watch:f.watch
+       ~close_game:f.close_game ~info ~checkpoints:range.selected
+       (run_plans program f ~options ~policy plans))
