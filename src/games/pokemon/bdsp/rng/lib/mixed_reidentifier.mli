@@ -8,8 +8,8 @@
     Implements the [1PK] re-identification design in
     [docs/design/BDSP-Static-Legendary-RNG.md] (§1.3, carried over from
     [https://github.com/dayfine/Arduino-Source/pull/782]), extending
-    {!State_reidentifier} (ported from
-    [https://github.com/dayfine/Arduino-Source]
+    {!State_reidentifier} (ported from upstream
+    [https://github.com/PokemonAutomation/Arduino-Source]
     [SerialPrograms/Source/PokemonBDSP/Programs/RngManipulation/PokemonBDSP_StateReidentifier.{h,cpp}]).
     Handles player tick period drift (fitting the period from the blinks when
     omitted), arbitrary initial Pokemon blink phases, order-swap branching when
