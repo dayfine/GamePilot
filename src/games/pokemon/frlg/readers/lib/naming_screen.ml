@@ -5,50 +5,37 @@ let rows = 4
 
 (* sPageColumnXPos: the letters in groups of three and four 12 apart, the
    full stop and comma column apart; the others 22 apart. *)
-type grid_geom = {
-  letter_pitch : int;
-  letter_first_group : int;
-  letter_second_group : int;
-  letter_second_x : int;
-  letter_last_x : int;
-  others_pitch : int;
-  others_count : int;
-  cursor_left : int;
-  cursor_top : int;
-  row_pitch : int;
-  edge_dx : int;
-  edge_dy : int;
-  edge_width : int;
-  edge_height : int;
+type letter_layout = {
+  pitch : int;
+  first_group : int;
+  second_group : int;
+  second_x : int;
+  last_x : int;
 }
 
-let grid =
-  {
-    letter_pitch = 12;
-    letter_first_group = 3;
-    letter_second_group = 4;
-    letter_second_x = 56;
-    letter_last_x = 123;
-    others_pitch = 22;
-    others_count = 6;
-    cursor_left = 38;
-    cursor_top = 88;
-    row_pitch = 16;
-    edge_dx = 6;
-    edge_dy = 6;
-    edge_width = 3;
-    edge_height = 5;
-  }
+let letters =
+  { pitch = 12; first_group = 3; second_group = 4; second_x = 56; last_x = 123 }
+
+type others_layout = { pitch : int; count : int }
+
+let others = { pitch = 22; count = 6 }
+
+type cursor_grid = { left : int; top : int; row_pitch : int }
+
+let cursor = { left = 38; top = 88; row_pitch = 16 }
+
+type cursor_edge = { dx : int; dy : int; width : int; height : int }
+
+let edge = { dx = 6; dy = 6; width = 3; height = 5 }
 
 let letter_columns =
   Array.of_list
-    (List.init grid.letter_first_group (fun i -> grid.letter_pitch * i)
-    @ List.init grid.letter_second_group (fun i ->
-          grid.letter_second_x + (grid.letter_pitch * i))
-    @ [ grid.letter_last_x ])
+    (List.init letters.first_group (fun i -> letters.pitch * i)
+    @ List.init letters.second_group (fun i ->
+          letters.second_x + (letters.pitch * i))
+    @ [ letters.last_x ])
 
-let others_columns =
-  Array.init grid.others_count (fun i -> grid.others_pitch * i)
+let others_columns = Array.init others.count (fun i -> others.pitch * i)
 
 let columns_x = function
   | Upper | Lower -> letter_columns
@@ -58,8 +45,8 @@ let columns page = Array.length (columns_x page)
 let column_x page col = (columns_x page).(col)
 
 (* SetCursorPos: the cursor sprite's centre. *)
-let centre_x page col = column_x page col + grid.cursor_left
-let centre_y row = grid.cursor_top + (grid.row_pitch * row)
+let centre_x page col = column_x page col + cursor.left
+let centre_y row = cursor.top + (cursor.row_pitch * row)
 
 (* Boxes here are stated in whole game pixels. *)
 let box ~x ~y ~w ~h =
@@ -73,9 +60,9 @@ let edge_id page k =
 
 let edge_box page k =
   box
-    ~x:(centre_x page k.col - grid.edge_dx)
-    ~y:(centre_y k.row - grid.edge_dy)
-    ~w:grid.edge_width ~h:grid.edge_height
+    ~x:(centre_x page k.col - edge.dx)
+    ~y:(centre_y k.row - edge.dy)
+    ~w:edge.width ~h:edge.height
 
 let keys page =
   List.concat_map

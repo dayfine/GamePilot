@@ -15,7 +15,7 @@ let read_all m ids =
   if List.length stats = List.length ids then Some stats else None
 
 (* The language list. *)
-type language_geom = {
+type language_grid = {
   rows : int;
   left_column : float;
   right_column : float;
@@ -23,14 +23,9 @@ type language_geom = {
   row_step : float;
   strip_width : float;
   strip_height : float;
-  gap_max_brightness : float;
-  highlight_min : float;
-  highlight_max_spread : float;
-  slate_blue_over_red : float;
-  slate_max_spread : float;
 }
 
-let lang =
+let lang_grid =
   {
     rows = 5;
     left_column = 0.2005;
@@ -39,6 +34,18 @@ let lang =
     row_step = 0.1;
     strip_width = 0.034;
     strip_height = 0.05;
+  }
+
+type language_colors = {
+  gap_max_brightness : float;
+  highlight_min : float;
+  highlight_max_spread : float;
+  slate_blue_over_red : float;
+  slate_max_spread : float;
+}
+
+let lang_colors =
+  {
     gap_max_brightness = 70.0;
     highlight_min = 200.0;
     highlight_max_spread = 30.0;
@@ -46,13 +53,15 @@ let lang =
     slate_max_spread = 20.0;
   }
 
-let language_entries = 2 * lang.rows
+let language_entries = 2 * lang_grid.rows
 
 let language_strip i =
   fractions
-    (if i < lang.rows then lang.left_column else lang.right_column)
-    (lang.first_row +. (lang.row_step *. float_of_int (i mod lang.rows)))
-    lang.strip_width lang.strip_height
+    (if i < lang_grid.rows then lang_grid.left_column
+     else lang_grid.right_column)
+    (lang_grid.first_row
+    +. (lang_grid.row_step *. float_of_int (i mod lang_grid.rows)))
+    lang_grid.strip_width lang_grid.strip_height
 
 let column_gap =
   box { left = 0.4896; top = 0.331; width = 0.0208; height = 0.447 }
@@ -73,14 +82,15 @@ let slate_blue = { lo = 65.0; hi = 140.0 }
 let classify (s : Box_color.stats) =
   let m = s.mean in
   if
-    m.r >= lang.highlight_min && m.g >= lang.highlight_min
-    && m.b >= lang.highlight_min
-    && spread s <= lang.highlight_max_spread
+    m.r >= lang_colors.highlight_min
+    && m.g >= lang_colors.highlight_min
+    && m.b >= lang_colors.highlight_min
+    && spread s <= lang_colors.highlight_max_spread
   then Highlighted
   else if
     between slate_red m.r && between slate_green m.g && between slate_blue m.b
-    && m.b >= m.r +. lang.slate_blue_over_red
-    && spread s <= lang.slate_max_spread
+    && m.b >= m.r +. lang_colors.slate_blue_over_red
+    && spread s <= lang_colors.slate_max_spread
   then Plain
   else Other
 
@@ -96,83 +106,81 @@ let highlighted_row strips =
 
 let language_entry m =
   match (Box_color.read m gap_id, read_all m strip_ids) with
-  | Some gap, Some strips when brightness gap < lang.gap_max_brightness ->
+  | Some gap, Some strips when brightness gap < lang_colors.gap_max_brightness
+    ->
       highlighted_row strips
   | _ -> None
 
 (* The look picker. *)
-type look_geom = {
+type look_grid = {
   columns : int;
   first_tile_left : int;
   tile_step : int;
   top_row_top : int;
   bottom_row_top : int;
-  patch_in : int;
-  far_patch_in : int;
-  patch : int;
-  face_dx : int;
-  face_dy : int;
-  face_size : int;
-  corners : int;
-  white_min : float;
-  white_max_spread : float;
-  dark_max_brightness : float;
-  dark_max_red : float;
-  dark_blue_over_red : float;
-  dark_max_spread : float;
-  face_min_brightness : float;
-  face_min_spread : float;
 }
 
-let lk =
+let lk_grid =
   {
     columns = 4;
     first_tile_left = 373;
     tile_step = 312;
     top_row_top = 324;
     bottom_row_top = 609;
-    patch_in = 10;
-    far_patch_in = 218;
-    patch = 12;
-    face_dx = 90;
-    face_dy = 100;
-    face_size = 60;
-    corners = 4;
+  }
+
+type corner_patch = { corners : int; near_in : int; far_in : int; size : int }
+
+let patch = { corners = 4; near_in = 10; far_in = 218; size = 12 }
+let face_offset : Native_box.t = { x = 90; y = 100; w = 60; h = 60 }
+
+type corner_colors = {
+  white_min : float;
+  white_max_spread : float;
+  dark_max_brightness : float;
+  dark_max_red : float;
+  dark_blue_over_red : float;
+  dark_max_spread : float;
+}
+
+let corner_col =
+  {
     white_min = 200.0;
     white_max_spread = 40.0;
     dark_max_brightness = 90.0;
     dark_max_red = 50.0;
     dark_blue_over_red = 20.0;
     dark_max_spread = 50.0;
-    face_min_brightness = 80.0;
-    face_min_spread = 60.0;
   }
 
-let looks = 2 * lk.columns
+type face_thresholds = { min_brightness : float; min_spread : float }
+
+let face_th = { min_brightness = 80.0; min_spread = 60.0 }
+let looks = 2 * lk_grid.columns
 
 let tile_left look =
-  lk.first_tile_left + (lk.tile_step * ((look - 1) mod lk.columns))
+  lk_grid.first_tile_left
+  + (lk_grid.tile_step * ((look - 1) mod lk_grid.columns))
 
 let tile_top look =
-  if look <= lk.columns then lk.top_row_top else lk.bottom_row_top
+  if look <= lk_grid.columns then lk_grid.top_row_top
+  else lk_grid.bottom_row_top
 
 (* Corners 0 top left, 1 top right, 2 bottom left, 3 bottom right. *)
 let corner_box look corner : Native_box.t =
   {
     x =
-      (tile_left look
-      + if corner mod 2 = 0 then lk.patch_in else lk.far_patch_in);
-    y = (tile_top look + if corner < 2 then lk.patch_in else lk.far_patch_in);
-    w = lk.patch;
-    h = lk.patch;
+      (tile_left look + if corner mod 2 = 0 then patch.near_in else patch.far_in);
+    y = (tile_top look + if corner < 2 then patch.near_in else patch.far_in);
+    w = patch.size;
+    h = patch.size;
   }
 
 let face_box look : Native_box.t =
   {
-    x = tile_left look + lk.face_dx;
-    y = tile_top look + lk.face_dy;
-    w = lk.face_size;
-    h = lk.face_size;
+    face_offset with
+    x = tile_left look + face_offset.x;
+    y = tile_top look + face_offset.y;
   }
 
 let all_looks = List.init looks (fun i -> i + 1)
@@ -185,26 +193,28 @@ type corner = White | Dark | Neither
 let classify_corner (s : Box_color.stats) =
   let m = s.mean in
   if
-    m.r >= lk.white_min && m.g >= lk.white_min && m.b >= lk.white_min
-    && spread s <= lk.white_max_spread
+    m.r >= corner_col.white_min
+    && m.g >= corner_col.white_min
+    && m.b >= corner_col.white_min
+    && spread s <= corner_col.white_max_spread
   then White
   else if
-    brightness s < lk.dark_max_brightness
-    && m.r <= lk.dark_max_red
-    && m.b >= m.r +. lk.dark_blue_over_red
-    && spread s <= lk.dark_max_spread
+    brightness s < corner_col.dark_max_brightness
+    && m.r <= corner_col.dark_max_red
+    && m.b >= m.r +. corner_col.dark_blue_over_red
+    && spread s <= corner_col.dark_max_spread
   then Dark
   else Neither
 
 let face_shows m look =
   match Box_color.read m (face_id look) with
   | Some s ->
-      brightness s >= lk.face_min_brightness && spread s >= lk.face_min_spread
+      brightness s >= face_th.min_brightness && spread s >= face_th.min_spread
   | None -> false
 
 (* look_white_corners: [None] when a corner is neither or no face shows. *)
 let white_corners m look =
-  let ids = List.init lk.corners (corner_id look) in
+  let ids = List.init patch.corners (corner_id look) in
   match read_all m ids with
   | Some stats when face_shows m look ->
       let classes = List.map classify_corner stats in
@@ -222,7 +232,7 @@ let look_picker_shown m = Option.is_some (look_corners m)
 (* The one look with white corners, when it has four. *)
 let card counts =
   let lit = List.filter (fun (_, n) -> n > 0) (List.combine all_looks counts) in
-  match lit with [ (look, n) ] when n = lk.corners -> Some look | _ -> None
+  match lit with [ (look, n) ] when n = patch.corners -> Some look | _ -> None
 
 let highlighted_look m = Option.bind (look_corners m) card
 
@@ -266,7 +276,7 @@ let language_probes ~picture =
 let look_probes ~picture look =
   Box_color.probe ~picture ~id:(face_id look) (face_box look)
   @ List.concat
-      (List.init lk.corners (fun c ->
+      (List.init patch.corners (fun c ->
            Box_color.probe ~picture ~id:(corner_id look c) (corner_box look c)))
 
 let keyboard_probes ~picture =

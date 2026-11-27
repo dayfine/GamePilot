@@ -71,13 +71,19 @@ let bar_tests =
   @ [ trough ]
 
 (* The markers' five slots, one probe across them. *)
-type marker_geom = {
-  slot_count : int;
+type marker_slots = {
+  count : int;
   first_centre : int;
   spacing : int;
   w : int;
   h : int;
   top : int;
+}
+
+let mk_slots =
+  { count = 5; first_centre = 405; spacing = 27; w = 16; h = 12; top = 800 }
+
+type marker_thresholds = {
   triangle_share : float;
   no_triangle_share : float;
   dot_share_min : float;
@@ -86,14 +92,8 @@ type marker_geom = {
   dot_spread : int;
 }
 
-let mk =
+let mk_th =
   {
-    slot_count = 5;
-    first_centre = 405;
-    spacing = 27;
-    w = 16;
-    h = 12;
-    top = 800;
     triangle_share = 0.2;
     no_triangle_share = 0.05;
     dot_share_min = 0.06;
@@ -103,17 +103,18 @@ let mk =
   }
 
 let slot_centres =
-  List.init mk.slot_count (fun i -> mk.first_centre + (mk.spacing * i))
+  List.init mk_slots.count (fun i ->
+      mk_slots.first_centre + (mk_slots.spacing * i))
 
-let first_slot_left = mk.first_centre - (mk.w / 2)
+let first_slot_left = mk_slots.first_centre - (mk_slots.w / 2)
 
 let markers_span =
   px
     {
       x = float_of_int first_slot_left;
-      y = float_of_int mk.top;
-      w = float_of_int ((mk.spacing * (mk.slot_count - 1)) + mk.w);
-      h = float_of_int mk.h;
+      y = float_of_int mk_slots.top;
+      w = float_of_int ((mk_slots.spacing * (mk_slots.count - 1)) + mk_slots.w);
+      h = float_of_int mk_slots.h;
     }
 
 let triangle_id = "battle_hud.markers.triangle"
@@ -197,7 +198,7 @@ let probes ~picture ~assets =
       bar_probes ~picture;
       Pixel_shares.probe ~picture ~id:triangle_id markers_span triangle;
       Pixel_shares.probe ~picture ~id:dot_id markers_span
-        (white_within mk.dot_spread);
+        (white_within mk_th.dot_spread);
       Pixel_shares.probe ~picture ~id:ball_top_id ball_tops coral;
       Pixel_shares.probe ~picture ~id:ball_bottom_id ball_bottoms
         (white_within bl.white_spread);
@@ -267,20 +268,21 @@ let column_share m id ~first ~count =
 type slot = Triangle | Dot | Neither
 
 let slot m centre =
-  let first = centre - (mk.w / 2) - first_slot_left in
-  let share id = column_share m id ~first ~count:mk.w in
+  let first = centre - (mk_slots.w / 2) - first_slot_left in
+  let share id = column_share m id ~first ~count:mk_slots.w in
   match (share triangle_id, share dot_id) with
-  | Some blue, _ when blue >= mk.triangle_share -> Triangle
+  | Some blue, _ when blue >= mk_th.triangle_share -> Triangle
   | Some blue, Some white
-    when blue < mk.no_triangle_share
-         && white >= mk.dot_share_min && white <= mk.dot_share_max ->
+    when blue < mk_th.no_triangle_share
+         && white >= mk_th.dot_share_min
+         && white <= mk_th.dot_share_max ->
       Dot
   | _ -> Neither
 
 let markers_shown m =
   let slots = List.map (slot m) slot_centres in
   let count kind = List.length (List.filter (( = ) kind) slots) in
-  count Triangle = 1 && count Dot >= mk.dots_min
+  count Triangle = 1 && count Dot >= mk_th.dots_min
 
 let ball_shown m i =
   let first = bl.spacing * i in

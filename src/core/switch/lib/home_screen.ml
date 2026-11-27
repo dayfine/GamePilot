@@ -135,25 +135,16 @@ let probes ~picture color =
 
 let fraction m id = Option.value ~default:0. (Color_share.read m id)
 
-type thresholds = {
+type home_limits = {
   dark_max_sum : float;
   max_flat_stddev : float;
   min_icons_stddev : float;
   min_detail_stddev : float;
   max_same_color : float;
   min_user_icons_stddev : float;
-  dark_lit_sum : float;
-  dimmed_min_sum : float;
-  dimmed_max_sum : float;
-  user_grey_min : float;
-  user_grey_max : float;
-  min_cursor_fraction : float;
-  min_art_fraction : float;
-  black_max_sum : float;
-  black_max_stddev : float;
 }
 
-let th =
+let home_lim =
   {
     dark_max_sum = 200.;
     max_flat_stddev = 20.;
@@ -161,23 +152,24 @@ let th =
     min_detail_stddev = 50.;
     max_same_color = 20.;
     min_user_icons_stddev = 40.;
-    dark_lit_sum = 153.;
-    dimmed_min_sum = 8.;
-    dimmed_max_sum = 100.;
-    user_grey_min = 50.;
-    user_grey_max = 300.;
-    min_cursor_fraction = 0.15;
-    min_art_fraction = 0.2;
-    black_max_sum = 80.;
-    black_max_stddev = 24.;
   }
+
+type dimmed_limits = { lit_sum : float; min_sum : float; max_sum : float }
+type grey_band = { grey_min : float; grey_max : float }
+type tile_limits = { min_cursor : float; min_art : float }
+type black_limits = { max_sum : float; max_stddev : float }
+
+let dimmed = { lit_sum = 153.; min_sum = 8.; max_sum = 100. }
+let user_grey = { grey_min = 50.; grey_max = 300. }
+let tile_lim = { min_cursor = 0.15; min_art = 0.2 }
+let black_lim = { max_sum = 80.; max_stddev = 24. }
 
 (* HomeMenuDetector::detect_only, its boxes clipped to the picture and the
    user icons read only when probed (whole in the picture). *)
 let home_theme g =
   let row = g "home.bottom_row" in
   let total = sum row.mean in
-  if total < th.dark_max_sum then Some false
+  if total < home_lim.dark_max_sum then Some false
   else if total > white_min_sum then Some true
   else None
 
@@ -185,23 +177,24 @@ let home_theme g =
 let home_detail ~scale ~icons g =
   let at_least id limit = sum (g id).stddev >= limit *. scale in
   let icons_detailed (s : stats) =
-    sum s.stddev >= th.min_user_icons_stddev *. scale
+    sum s.stddev >= home_lim.min_user_icons_stddev *. scale
   in
   Option.fold ~none:true ~some:icons_detailed icons
-  && at_least "home.close_game_top" th.min_detail_stddev
-  && sum (g "home.top").stddev <= th.max_flat_stddev *. scale
-  && at_least "home.bottom_icons" th.min_icons_stddev
-  && at_least "home.iconrow_icons" th.min_detail_stddev
-  && at_least "home.game_slot" th.min_detail_stddev
+  && at_least "home.close_game_top" home_lim.min_detail_stddev
+  && sum (g "home.top").stddev <= home_lim.max_flat_stddev *. scale
+  && at_least "home.bottom_icons" home_lim.min_icons_stddev
+  && at_least "home.iconrow_icons" home_lim.min_detail_stddev
+  && at_least "home.game_slot" home_lim.min_detail_stddev
 
 let home_flat g white =
   let row = g "home.bottom_row" and right = g "home.iconrow_right" in
   let solid s =
-    if white then is_white s else is_grey ~min_sum:0. ~max_sum:th.dark_max_sum s
+    if white then is_white s
+    else is_grey ~min_sum:0. ~max_sum:home_lim.dark_max_sum s
   in
   solid row && solid right
-  && distance row.mean right.mean <= th.max_same_color
-  && distance (g "home.top").mean row.mean <= th.max_same_color
+  && distance row.mean right.mean <= home_lim.max_same_color
+  && distance (g "home.top").mean row.mean <= home_lim.max_same_color
 
 let is_home ~icons g =
   match home_theme g with
@@ -220,24 +213,24 @@ let is_home ~icons g =
    both. *)
 let is_home_dimmed ~icons g =
   let total = sum (g "home.bottom_row").mean in
-  total >= th.dimmed_min_sum && total < th.dimmed_max_sum && home_flat g false
-  && home_detail ~scale:(total /. th.dark_lit_sum) ~icons g
+  total >= dimmed.min_sum && total < dimmed.max_sum && home_flat g false
+  && home_detail ~scale:(total /. dimmed.lit_sum) ~icons g
 
 (* StartGameUserSelectDetector_Switch1::detect. *)
 let is_user_select g =
   let row = g "user.top_row" and mid = g "user.mid_row" in
   let bottom = g "home.bottom_row" in
-  let grey = is_grey ~min_sum:th.user_grey_min ~max_sum:th.user_grey_max in
+  let grey = is_grey ~min_sum:user_grey.grey_min ~max_sum:user_grey.grey_max in
   let white = (not (grey bottom)) && sum bottom.mean > white_min_sum in
   let solid s = if white then is_white s else grey s in
   sum bottom.stddev <= solid_max_stddev
   && (grey bottom || white)
-  && sum (g "home.bottom_icons").stddev >= th.min_detail_stddev
+  && sum (g "home.bottom_icons").stddev >= home_lim.min_detail_stddev
   && sum row.stddev <= solid_max_stddev
   && sum mid.stddev <= solid_max_stddev
   && solid row && solid mid
-  && distance bottom.mean row.mean <= th.max_same_color
-  && sum (g "user.user_slot").stddev >= th.min_detail_stddev
+  && distance bottom.mean row.mean <= home_lim.max_same_color
+  && sum (g "user.user_slot").stddev >= home_lim.min_detail_stddev
 
 (* The cursor's cyan covers 0.40 to 0.47 of the strip above its tile, none
    above the others; the FireRed tile's orange 0.41, the others' 0.09 at
@@ -249,9 +242,9 @@ let home m =
   Home
     {
       cursor =
-        first_tile (fun k -> fraction m (cursor_id k) >= th.min_cursor_fraction);
+        first_tile (fun k -> fraction m (cursor_id k) >= tile_lim.min_cursor);
       game_tile =
-        first_tile (fun k -> fraction m (art_id k) >= th.min_art_fraction);
+        first_tile (fun k -> fraction m (art_id k) >= tile_lim.min_art);
     }
 
 let classify m g =
@@ -276,7 +269,7 @@ let read m =
 let black m =
   match stats m picture_id with
   | Some s ->
-      sum s.mean < th.black_max_sum && sum s.stddev < th.black_max_stddev
+      sum s.mean < black_lim.max_sum && sum s.stddev < black_lim.max_stddev
   | None -> false
 
 let tile = function None -> "none" | Some k -> string_of_int k
