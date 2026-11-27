@@ -206,7 +206,7 @@ async function loadRuns() {
         </div>
       </div>
       <div class="muted">$ ${esc(run.command)}</div>
-      <pre>${esc((run.logs || []).join('\n'))}</pre>
+      ${(run.logs || []).length ? `<pre>${esc(run.logs.join('\n'))}</pre>` : ''}
     </div>`)
     .join('');
 }
@@ -224,11 +224,11 @@ async function loadHistory() {
   }
   el.innerHTML = `<table><thead><tr><th>Time</th><th>Program / Checkpoint</th><th>Mode</th><th>Result</th><th>Detail</th></tr></thead><tbody>${entries.map((e) => `
     <tr>
-      <td class="muted">${esc(e.time)}</td>
-      <td><strong>${esc(e.checkpoint)}</strong><div class="muted">${esc(e.run)}</div></td>
-      <td class="muted">${esc(e.mode)}</td>
-      <td><span class="pill ${esc(e.result)}">${esc(e.result)}</span></td>
-      <td class="muted">${esc([e.at, e.reason].filter(Boolean).join(' — '))}</td>
+      <td class="muted nowrap">${esc(e.time.replace('T', ' '))}</td>
+      <td class="nowrap"><strong>${esc(e.checkpoint)}</strong><div class="muted">${esc(e.run)}</div></td>
+      <td class="muted nowrap">${esc(e.mode)}</td>
+      <td class="nowrap"><span class="pill ${esc(e.result)}">${esc(e.result)}</span></td>
+      <td class="muted detail">${esc([e.at, e.reason].filter(Boolean).join(' — '))}</td>
     </tr>`).join('')}</tbody></table>`;
 }
 

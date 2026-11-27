@@ -91,11 +91,13 @@ section h2 {
 .card-title { font-weight: 600; font-size: 15px; }
 
 .pill {
+  display: inline-block;
   font-size: 11px;
   font-weight: 600;
   padding: 2px 8px;
   border-radius: 99px;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .pill.ready, .pill.passed, .pill.pass { background: rgba(58, 210, 159, .15); color: var(--ok); }
@@ -106,12 +108,13 @@ section h2 {
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
 th, td {
   text-align: left;
-  padding: 7px 8px;
+  padding: 8px 10px;
   border-bottom: 1px solid var(--border);
   vertical-align: top;
-  word-break: break-word;
 }
-th { color: var(--muted); font-weight: 600; font-size: 12px; }
+th { color: var(--muted); font-weight: 600; font-size: 12px; white-space: nowrap; }
+td.nowrap { white-space: nowrap; }
+td.detail { width: 100%; overflow-wrap: anywhere; }
 
 .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
 
