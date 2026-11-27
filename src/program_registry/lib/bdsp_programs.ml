@@ -140,6 +140,12 @@ let battle_catch_options : Run_options.declared list =
       "1-based party slot of False Swipe user (0 disables).";
     int_opt "false_swipe_move" 1 catch_b.max_move "2"
       "1-based move slot of False Swipe.";
+    int_opt "setup_slot" 0 catch_b.max_slot "0"
+      "Optional 1-based party slot for stat-boosting setup (0 disables).";
+    int_opt "setup_move" 1 catch_b.max_move "4"
+      "1-based move slot of the setup move (e.g. Swords Dance).";
+    int_opt "setup_uses" 1 catch_b.max_slot "2"
+      "Number of setup turns to execute during the foe's first sleep.";
     int_opt "chipper_slot" 0 catch_b.max_slot "0"
       "Optional 1-based party slot of tank/bruiser heavy-chipper (0 disables).";
     int_opt "chipper_move" 1 catch_b.max_move "1"

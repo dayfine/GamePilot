@@ -131,6 +131,8 @@ let read_action_state cfg tr m : CS.t =
     foe_status = sample_foe_asleep cfg m;
     balls_thrown = tr.balls_thrown;
     fainted = [];
+    setup_uses_done = 0;
+    wall_move_heals_done = 0;
   }
 
 let is_not_black m = if not (B.shown m) then Some () else None
@@ -277,7 +279,7 @@ let build_policy ~ball_name ~max_balls ~max_turns ~foe_hp_rechip ~heavy_chipper
     { slot = s.wall; heal_move_slot = s.wall_heal_move; hp_floor = defaults.wall_floor }
   in
   {
-    status_setter = Some status_setter; heavy_chipper;
+    status_setter = Some status_setter; setup = None; heavy_chipper;
     false_swiper = Some false_swiper; wall = Some wall;
     ball_name; max_balls; foe_hp_target = defaults.foe_target;
     foe_hp_rechip; reapply_status = true; max_turns;

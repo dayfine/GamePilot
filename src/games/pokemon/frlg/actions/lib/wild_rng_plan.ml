@@ -66,6 +66,7 @@ let default_catch_config : Battle_catch_steps.config =
 let throw_only_policy (capture : Capture_plan.t) : CS.policy =
   {
     status_setter = None;
+    setup = None;
     heavy_chipper = None;
     false_swiper = None;
     wall = None;

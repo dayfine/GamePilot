@@ -40,6 +40,7 @@ let fake_game_steps events =
 let kyogre_policy : Catch_state.policy =
   {
     status_setter = Some { slot = 2; move_slot = 1; hp_floor = 0.35 };
+    setup = None;
     heavy_chipper = None;
     false_swiper =
       Some { slot = 5; move_slot = 2; require_status = true; hp_floor = 0.40 };
@@ -56,6 +57,7 @@ let kyogre_policy : Catch_state.policy =
 let groudon_policy : Catch_state.policy =
   {
     status_setter = Some { slot = 2; move_slot = 1; hp_floor = 0.35 };
+    setup = None;
     heavy_chipper = None;
     false_swiper =
       Some { slot = 5; move_slot = 2; require_status = true; hp_floor = 0.40 };
@@ -72,6 +74,7 @@ let groudon_policy : Catch_state.policy =
 let dex_policy : Catch_state.policy =
   {
     status_setter = None;
+    setup = None;
     heavy_chipper = None;
     false_swiper = None;
     wall = None;
@@ -94,6 +97,8 @@ let menu ?(fainted = []) ~active_slot ~active_hp ~foe_hp ~foe_status () =
       foe_status;
       balls_thrown = 0;
       fainted;
+      setup_uses_done = 0;
+      wall_move_heals_done = 0;
     }
 
 let full_menu ~active_slot ~active_hp ~foe_hp ~foe_status =
@@ -328,6 +333,7 @@ let test_lead_tank_chip_then_false_swipe_and_balls () =
   let policy : Catch_state.policy =
     {
       status_setter = Some { slot = 1; move_slot = 3; hp_floor = 0.35 };
+      setup = None;
       heavy_chipper =
         Some
           {

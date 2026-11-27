@@ -29,6 +29,9 @@ Give each as `--options KEY=VALUE`:
 | `sleep_move` | 1 to 4 | default `3` | 1-based move slot of the Sleep move. |
 | `false_swipe_slot` | 0 to 6 | default `1` | 1-based party slot of False Swipe user (0 disables). |
 | `false_swipe_move` | 1 to 4 | default `2` | 1-based move slot of False Swipe. |
+| `setup_slot` | 0 to 6 | default `0` | Optional 1-based party slot for stat-boosting setup (0 disables). |
+| `setup_move` | 1 to 4 | default `4` | 1-based move slot of the setup move (e.g. Swords Dance). |
+| `setup_uses` | 1 to 6 | default `2` | Number of setup turns to execute during the foe's first sleep. |
 | `chipper_slot` | 0 to 6 | default `0` | Optional 1-based party slot of tank/bruiser heavy-chipper (0 disables). |
 | `chipper_move` | 1 to 4 | default `1` | 1-based move slot of the heavy-chipper's safe neutral attack. |
 | `chipper_floor_pct` | 15 to 80 | default `30` | Stop heavy-chipping once foe HP is at or below this percent. |

@@ -31,8 +31,24 @@ type t = {
   fainted : int list;
       (** 1-based party slots known to have fainted in this battle; the policy
           never switches to a slot listed here. *)
+  setup_uses_done : int;
+      (** Number of setup-move turns completed so far (e.g. Swords Dance). *)
+  wall_move_heals_done : int;
+      (** Number of times the wall's self-healing move (e.g. Synthesis, 5 PP)
+          has been used so far; once exhausted, survival falls back to
+          {!Heal_active}. *)
 }
 (** Observed battle state at an action menu. *)
+
+type setup_config = {
+  slot : int;  (** 1-based party slot that uses the setup move. *)
+  move_slot : int;  (** 1-based move slot of the setup move (e.g. Swords Dance). *)
+  uses : int;  (** Number of setup turns to execute before chipping. *)
+  require_status : bool;
+      (** When [true], apply status (e.g. Sleep) before setting up. *)
+}
+(** Configuration for an optional stat-boosting setup phase during the foe's
+    first sleep (e.g. 2× Swords Dance before False Swiping). *)
 
 type role_config = {
   slot : int;  (** 1-based party slot fulfilling this role. *)
@@ -83,6 +99,9 @@ type policy = {
   status_setter : role_config option;
       (** Optional party member that applies a status condition (e.g. Sleep
           Powder or Thunder Wave). *)
+  setup : setup_config option;
+      (** Optional stat-boosting setup phase (e.g. Swords Dance) executed during
+          the foe's first sleep before chipping. *)
   heavy_chipper : heavy_chipper_config option;
       (** Optional bruiser/tank that winds the foe down to [foe_hp_floor] (e.g.
           20%–30%) before handing off to [false_swiper]. Only runs before the

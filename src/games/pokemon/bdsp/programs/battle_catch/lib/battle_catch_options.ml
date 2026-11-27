@@ -98,6 +98,9 @@ type raw_slots = {
   sleep_move : int;
   false_swipe_slot : int;
   false_swipe_move : int;
+  setup_slot : int;
+  setup_move : int;
+  setup_uses : int;
   chipper_slot : int;
   chipper_move : int;
   chipper_floor_pct : int;
@@ -125,10 +128,24 @@ let parse_primary opts =
   in
   Ok (lead_slot, sleep_slot, sleep_move, false_swipe_slot, false_swipe_move)
 
+let parse_setup opts =
+  let* setup_slot =
+    int_opt ~key:"setup_slot" ~default:0 ~min:0 ~max:lim.max_slot opts
+  in
+  let* setup_move =
+    int_opt ~key:"setup_move" ~default:lim.max_move ~min:1 ~max:lim.max_move
+      opts
+  in
+  let* setup_uses =
+    int_opt ~key:"setup_uses" ~default:2 ~min:1 ~max:lim.max_slot opts
+  in
+  Ok (setup_slot, setup_move, setup_uses)
+
 let parse_slots opts =
   let* lead_slot, sleep_slot, sleep_move, false_swipe_slot, false_swipe_move =
     parse_primary opts
   in
+  let* setup_slot, setup_move, setup_uses = parse_setup opts in
   let* chipper_slot =
     int_opt ~key:"chipper_slot" ~default:0 ~min:0 ~max:lim.max_slot opts
   in
@@ -153,6 +170,9 @@ let parse_slots opts =
       sleep_move;
       false_swipe_slot;
       false_swipe_move;
+      setup_slot;
+      setup_move;
+      setup_uses;
       chipper_slot;
       chipper_move;
       chipper_floor_pct;
@@ -182,24 +202,25 @@ let make_status_setter s =
   if s.sleep_slot = 0 then None
   else
     Some
+      { CS.slot = s.sleep_slot; move_slot = s.sleep_move; hp_floor = hp_floors.status_hp }
+
+let make_setup s =
+  if s.setup_slot = 0 then None
+  else
+    Some
       {
-        CS.slot = s.sleep_slot;
-        move_slot = s.sleep_move;
-        hp_floor = hp_floors.status_hp;
+        CS.slot = s.setup_slot; move_slot = s.setup_move;
+        uses = s.setup_uses; require_status = s.sleep_slot > 0;
       }
 
 let make_heavy_chipper s =
   if s.chipper_slot = 0 then None
   else
-    let foe_hp_floor =
-      float_of_int s.chipper_floor_pct /. hp_floors.pct_divisor
-    in
+    let foe_hp_floor = float_of_int s.chipper_floor_pct /. hp_floors.pct_divisor in
     Some
       {
-        CS.slot = s.chipper_slot;
-        move_slot = s.chipper_move;
-        hp_floor = hp_floors.chipper_hp;
-        foe_hp_floor;
+        CS.slot = s.chipper_slot; move_slot = s.chipper_move;
+        hp_floor = hp_floors.chipper_hp; foe_hp_floor;
         require_status = s.sleep_slot > 0;
       }
 
@@ -208,10 +229,8 @@ let make_false_swiper s =
   else
     Some
       {
-        CS.slot = s.false_swipe_slot;
-        move_slot = s.false_swipe_move;
-        require_status = s.sleep_slot > 0;
-        hp_floor = hp_floors.swiper_hp;
+        CS.slot = s.false_swipe_slot; move_slot = s.false_swipe_move;
+        require_status = s.sleep_slot > 0; hp_floor = hp_floors.swiper_hp;
       }
 
 let make_wall s =
@@ -231,6 +250,7 @@ let build_policy ~ball_name ~max_balls ~max_turns s : CS.policy =
   in
   {
     CS.status_setter = make_status_setter s;
+    setup = make_setup s;
     heavy_chipper = make_heavy_chipper s;
     false_swiper = make_false_swiper s;
     wall = make_wall s;

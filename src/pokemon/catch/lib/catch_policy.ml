@@ -24,12 +24,15 @@ let needs_status state =
   | Some status -> not (is_statused status)
   | None -> false
 
+let wall_heal_move_pp = 5
+
 let survival_for_wall policy state =
   match policy.wall with
   | Some w when state.active_slot = w.slot -> (
       match w.heal_move_slot with
-      | Some m -> Some (Use_move m)
-      | None -> Some Heal_active)
+      | Some m when state.wall_move_heals_done < wall_heal_move_pp ->
+          Some (Use_move m)
+      | _ -> Some Heal_active)
   | Some w when not (is_fainted state w.slot) -> Some (Switch_to w.slot)
   | Some _ | None -> Some Heal_active
 
@@ -47,6 +50,21 @@ let status_or_pause policy state =
         (use_or_switch ~active_slot:state.active_slot ~target_slot:ss.slot
            ~move_slot:ss.move_slot)
   | Some _ | None -> Some (Pause_for_user "need status before false swipe")
+
+let setup_for policy state (su : setup_config) =
+  if
+    state.balls_thrown > 0 || state.setup_uses_done >= su.uses
+    || is_fainted state su.slot
+  then None
+  else if su.require_status && needs_status state then
+    status_or_pause policy state
+  else
+    Some
+      (use_or_switch ~active_slot:state.active_slot ~target_slot:su.slot
+         ~move_slot:su.move_slot)
+
+let setup_command policy state =
+  Option.bind policy.setup (setup_for policy state)
 
 let heavy_chip_for policy state ratio (hc : heavy_chipper_config) =
   if
@@ -98,7 +116,7 @@ let status_command policy state =
 let ball_command policy state =
   match (policy.false_swiper, policy.wall) with
   | Some fs, Some w
-    when fs.require_status
+    when fs.require_status && fs.slot <> w.slot
          && state.active_slot = fs.slot
          && not (is_fainted state w.slot) ->
       Switch_to w.slot
@@ -123,6 +141,7 @@ let decide policy state =
     [
       limit_command policy state;
       survival_command policy state;
+      setup_command policy state;
       heavy_chip_command policy state;
       chip_command policy state;
       status_command policy state;

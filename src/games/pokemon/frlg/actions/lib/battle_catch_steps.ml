@@ -98,6 +98,8 @@ let state_of_frame tr m : CS.t =
     foe_status = Option.map map_foe_status (Option.bind m Hud.foe_status);
     balls_thrown = tr.balls_thrown;
     fainted = [];
+    setup_uses_done = 0;
+    wall_move_heals_done = 0;
   }
 
 let read_action_state tr = state_of_frame tr (Effects.read ())
@@ -226,6 +228,7 @@ let build_policy ~ball_name ~max_balls ~max_turns ~sleeper_slot ~spore_move
   {
     status_setter =
       Some { slot = sleeper_slot; move_slot = spore_move; hp_floor };
+    setup = None;
     heavy_chipper = None;
     false_swiper =
       Some
