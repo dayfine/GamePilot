@@ -12,14 +12,14 @@ let html =
   header { display:flex; align-items:center; justify-content:space-between; padding:14px 24px; border-bottom:1px solid var(--border); background:#131822; }
   header h1 { margin:0; font-size:18px; letter-spacing:.2px; }
   .muted { color:var(--muted); font-size:12px; }
-  main { max-width:1120px; margin:0 auto; padding:20px 24px 48px; display:grid; gap:20px; }
-  section { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px 18px; }
-  section h2 { margin:0 0 12px; font-size:15px; display:flex; align-items:center; justify-content:space-between; }
-  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:12px; }
-  .console-card { border:1px solid var(--border); border-radius:8px; padding:12px 14px; background:#121720; cursor:pointer; transition:border-color .15s; }
+  main { max-width:1120px; width:100%; margin:0 auto; padding:20px 24px 48px; display:grid; grid-template-columns:minmax(0,1fr); gap:20px; }
+  section { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px 18px; min-width:0; }
+  section h2 { margin:0 0 12px; font-size:15px; display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(270px,100%),1fr)); gap:12px; }
+  .console-card { border:1px solid var(--border); border-radius:8px; padding:12px 14px; background:#121720; cursor:pointer; transition:border-color .15s; min-width:0; overflow-wrap:anywhere; }
   .console-card:hover { border-color:#445577; }
   .console-card.selected { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent); }
-  .card-top { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; }
+  .card-top { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; flex-wrap:wrap; }
   .card-title { font-weight:600; font-size:15px; }
   .pill { font-size:11px; font-weight:600; padding:2px 8px; border-radius:99px; text-transform:uppercase; }
   .pill.ready, .pill.passed { background:rgba(58,210,159,.15); color:var(--ok); }
@@ -27,15 +27,15 @@ let html =
   .pill.offline, .pill.failed { background:rgba(255,92,119,.16); color:var(--err); }
   .pill.stopped { background:rgba(246,183,60,.16); color:var(--warn); }
   .row { display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end; }
-  label { display:flex; flex-direction:column; gap:4px; font-size:12px; color:var(--muted); min-width:160px; }
-  input, select { background:#0d1118; color:var(--text); border:1px solid var(--border); border-radius:6px; padding:7px 9px; font:inherit; }
+  label { display:flex; flex-direction:column; gap:4px; font-size:12px; color:var(--muted); min-width:140px; max-width:100%; flex:1 1 160px; }
+  input, select { background:#0d1118; color:var(--text); border:1px solid var(--border); border-radius:6px; padding:7px 9px; font:inherit; max-width:100%; }
   button { background:var(--accent); color:#08111f; border:none; border-radius:6px; padding:8px 14px; font-weight:600; cursor:pointer; }
   button.secondary { background:#232c3d; color:var(--text); }
   button.danger { background:var(--err); color:#fff; }
   button:disabled { opacity:.45; cursor:not-allowed; }
-  .opts { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px; margin-top:12px; }
-  .run-item { border:1px solid var(--border); border-radius:8px; padding:10px 12px; background:#121720; margin-top:10px; }
-  pre { margin:8px 0 0; padding:10px; background:#0a0d12; border-radius:6px; overflow:auto; max-height:200px; font-size:12px; color:#c8d4e6; }
+  .opts { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(220px,100%),1fr)); gap:10px; margin-top:12px; }
+  .run-item { border:1px solid var(--border); border-radius:8px; padding:10px 12px; background:#121720; margin-top:10px; min-width:0; overflow-wrap:anywhere; }
+  pre { margin:8px 0 0; padding:10px; background:#0a0d12; border-radius:6px; overflow:auto; max-height:200px; max-width:100%; font-size:12px; color:#c8d4e6; white-space:pre-wrap; word-break:break-word; }
   .err-banner { color:var(--err); margin-top:8px; font-size:13px; }
   .hidden { display:none; }
   a { color:var(--accent); }
