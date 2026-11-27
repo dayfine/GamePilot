@@ -33,7 +33,7 @@ Each save also needs its seed shift measured (below).
 - a member holds no Mail (pc_deposit)
 - a member knows fly (fly)
 - the thunder badge (fly)
-- poke-ball at least x1 (wild_rng)
+- poke-ball at least x8 (wild_rng)
 - at the start, anywhere outdoors where Fly works
 <!-- /generated -->
 
@@ -72,7 +72,7 @@ sh run/run_checkpoints_on_mgba.sh frlg.wild_rng --from 01-route10-grass --to 02-
 | Resume from | The pre-flight checks |
 |---|---|
 | 01-route10-grass | a member holds no Mail (pc_deposit); a member knows fly (fly); the thunder badge (fly); at the start, anywhere outdoors where Fly works |
-| 02-shiny-ekans | poke-ball at least x1 (wild_rng); at the start, Route10 |
+| 02-shiny-ekans | poke-ball at least x8 (wild_rng); at the start, Route10 |
 <!-- /generated -->
 
 ## Known limits

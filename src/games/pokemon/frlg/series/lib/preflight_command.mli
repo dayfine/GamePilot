@@ -14,6 +14,9 @@ type setup = {
           (Program_registry.check_viewport). *)
   home_tile : Switch.Home_screen.tile_color option;
       (** The game's Switch HOME tile colour, when known. *)
+  options : Run_options.t;
+      (** The program's [--options] overrides, forwarded to
+          {!Frlg_checkpoints.Preflight.needs}. *)
   info : Run_record.info;
   watch : Daemon_process.watch option;
 }
