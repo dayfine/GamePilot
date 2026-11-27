@@ -271,9 +271,11 @@ let slots t =
 
 let calibrated_model ~boot_offset_ms ~ingame_offset
     (m : R.Rng_timings.frame_model) =
-  let fixed_seed_offset_ms = m.fixed_seed_offset_ms + boot_offset_ms in
-  ( { m with fixed_seed_offset_ms },
-    { R.Rng_timings.no_calibrations with ingame_offset } )
+  let csf_offset =
+    if m.ingame_advances_per_frame > 1.0 then ingame_offset land 1 else 0
+  in
+  ( { m with fixed_seed_offset_ms = m.fixed_seed_offset_ms + boot_offset_ms },
+    { R.Rng_timings.no_calibrations with csf_offset; ingame_offset = ingame_offset - csf_offset } )
 
 let target t =
   let* delays, seeds = seed_column_of ~seeds:t.seeds ~seed_shift:t.seed_shift in
