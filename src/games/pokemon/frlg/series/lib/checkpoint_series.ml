@@ -74,49 +74,62 @@ let attempt_of : Run.outcome -> Checkpoint_trials.attempt = function
   | Passed _ -> Attempt_passed
   | Failed { at; reason; repeats } -> Attempt_failed { at; reason; repeats }
 
+let record_retry_decision cp n ~attempt record why =
+  if cp.Run.plan.retries > 0 then (
+    let line =
+      Printf.sprintf "%s run %d: %s after %d of %d attempts" cp.id n why attempt
+        (cp.plan.retries + 1)
+    in
+    print_endline ("[Checkpoints] " ^ line);
+    Run_record.append record "summary.txt" (line ^ "\n"))
+
+let finish_attempts cp n (attempt, (record, outcome), verdict) =
+  match verdict with
+  | Checkpoint_trials.Run_passed ->
+      record_retry_decision cp n ~attempt record "passed";
+      (record, outcome)
+  | Run_failed _ when cp.Run.plan.retries = 0 -> (record, outcome)
+  | Run_failed { at; repeats; why } ->
+      let reason =
+        match outcome with Run.Failed f -> f.reason | Passed _ -> ""
+      in
+      record_retry_decision cp n ~attempt record ("failed: " ^ why);
+      (record, Run.Failed { at; reason = why ^ ": " ^ reason; repeats })
+  | Attempt_again -> (record, outcome)
+
 (* Run [n] of [cp]: attempts from its start until Checkpoint_trials.attempts
    decides; the last attempt's folder and the run's outcome, noted in that
    folder's summary.txt. [Error] when an attempt's folder could not be made. *)
-let rec attempts setup cp n ~progress tried =
-  let attempt = List.length tried + 1 in
-  Result.bind (Run.run setup cp n ~attempt ~progress) (fun (record, outcome) ->
-      attempted setup cp n ~progress tried ~attempt record outcome)
-
-and attempted setup cp n ~progress tried ~attempt record outcome =
-  let tried = tried @ [ attempt_of outcome ] in
-  let decided why outcome =
-    if cp.Run.plan.retries > 0 then (
-      let line =
-        Printf.sprintf "%s run %d: %s after %d of %d attempts" cp.id n why
-          attempt (cp.plan.retries + 1)
-      in
-      print_endline ("[Checkpoints] " ^ line);
-      Run_record.append record "summary.txt" (line ^ "\n"));
-    Ok (record, outcome)
+let attempts setup cp n ~trial_ctx ~progress =
+  let rec go tried =
+    let attempt = List.length tried + 1 in
+    let already_at_start =
+      Series_chain.trial_already_at_start trial_ctx ~attempt
+    in
+    let* res = Run.run setup cp n ~attempt ~already_at_start ~progress in
+    let tried = tried @ [ attempt_of (snd res) ] in
+    match Checkpoint_trials.attempts ~retries:cp.Run.plan.retries tried with
+    | Attempt_again -> go tried
+    | (Run_passed | Run_failed _) as verdict ->
+        Ok (finish_attempts cp n (attempt, res, verdict))
   in
-  match Checkpoint_trials.attempts ~retries:cp.plan.retries tried with
-  | Attempt_again -> attempts setup cp n ~progress tried
-  | Run_passed -> decided "passed" outcome
-  | Run_failed _ when cp.plan.retries = 0 -> Ok (record, outcome)
-  | Run_failed { at; repeats; why } ->
-      let reason = match outcome with Failed f -> f.reason | Passed _ -> "" in
-      decided ("failed: " ^ why)
-        (Run.Failed { at; reason = why ^ ": " ^ reason; repeats })
+  go []
+
+let wire_progress started = function
+  | None -> Chain_progress.to_wire started ~now_ms:(now_ms ())
+  | Some r ->
+      let t = now_ms () in
+      Chain_progress.to_wire
+        (Chain_progress.end_trial started r ~now_ms:t)
+        ~now_ms:t
 
 (* One run of [cp], [chain] updated around it; [Error] (the checkpoint failed
    on the chain) when a folder could not be made. *)
-let trial setup cp n chain =
+let trial setup cp n ~trial_ctx chain =
   chain := Chain_progress.begin_trial !chain;
   let started = !chain in
-  let progress = function
-    | None -> Chain_progress.to_wire started ~now_ms:(now_ms ())
-    | Some r ->
-        let now_ms = now_ms () in
-        Chain_progress.to_wire
-          (Chain_progress.end_trial started r ~now_ms)
-          ~now_ms
-  in
-  match attempts setup cp n ~progress [] with
+  let progress = wire_progress started in
+  match attempts setup cp n ~trial_ctx ~progress with
   | Ok (_, outcome) as run ->
       chain :=
         Chain_progress.end_trial started (Run.trial outcome) ~now_ms:(now_ms ());
@@ -127,10 +140,10 @@ let trial setup cp n chain =
 
 (* Runs [cp] until the policy decides; the verdict and the runs, oldest
    first. A run whose folder cannot be made stops the checkpoint. *)
-let runs_of setup cp chain =
-  Checkpoint_trials.until_decided setup.Run.policy
+let runs_of setup cp ~from_pass chain =
+  Series_chain.run_trials setup.Run.policy ~continuing_from_pass:from_pass
     ~trial:(fun (_, o) -> Run.trial o)
-    (fun n -> trial setup cp n chain)
+    (fun t -> trial setup cp t.number ~trial_ctx:t chain)
 
 (* The last passing run's end.ss as [next]'s start (or [id].end.ss). *)
 let keep_end (setup : Run.setup) id ~next runs =
@@ -159,8 +172,7 @@ let keep_uncapped_end (setup : Run.setup) id ~next runs =
   match setup.common.grind_cap with
   | Some cap ->
       Printf.printf
-        "[Checkpoints] grind capped at %d: the end is not saved as the next \
-         start state\n\
+        "[Checkpoints] grind capped at %d: end not saved as next start state\n\
          %!"
         cap
   | None -> keep_end setup id ~next runs
@@ -182,19 +194,18 @@ let record_dex_progress (setup : Run.setup) (cp : Run.checkpoint) =
   | _ -> ()
 
 (* Whether [cp] passed, after running it until its policy decided. *)
-let decide (setup : Run.setup) (cp : Run.checkpoint) chain ~next =
-  match runs_of setup cp chain with
-  | Checkpoint_trials.Checkpoint_passed { passes; runs }, done_runs ->
-      Printf.printf "[Checkpoints] %s: passed (%d of %d runs)%s\n%!" cp.id
-        passes runs (Run.capped_note setup cp);
-      record_dex_progress setup cp;
-      if Event_range.keeps_end (Run.partial_range cp) setup.policy then
-        keep_uncapped_end setup cp.id ~next done_runs;
-      true
-  | Checkpoint_trials.Stopped why, _ ->
-      Printf.printf "[Checkpoints] %s: stopped: %s\n%!" cp.id why;
-      false
-  | Checkpoint_trials.Run_again, _ -> false
+let decide (setup : Run.setup) (cp : Run.checkpoint) ~from_pass chain ~next =
+  let verdict, done_runs = runs_of setup cp ~from_pass chain in
+  let passed, line =
+    Series_chain.verdict_outcome ~note:(Run.capped_note setup cp) ~id:cp.id
+      verdict
+  in
+  Option.iter print_endline line;
+  if passed then (
+    record_dex_progress setup cp;
+    if Event_range.keeps_end (Run.partial_range cp) setup.policy then
+      keep_uncapped_end setup cp.id ~next done_runs);
+  passed
 
 (* {1 A repeating checkpoint} Each round is one run (its attempts inside it),
    saved like any checkpoint's pass: on the Switch in the game
@@ -229,50 +240,45 @@ let rounds_ended (setup : Run.setup) (cp : Run.checkpoint) chain ~next runs
     keep_uncapped_end setup cp.id ~next runs;
   passed
 
-let rec rounds (setup : Run.setup) cp chain ~next ~max_rounds runs =
-  let capped = setup.common.grind_cap <> None in
-  match
-    Round_trials.decide ~max_rounds ~capped
-      (List.map (fun (_, o) -> round_of o) runs)
-  with
-  | Next_round n ->
-      Printf.printf "[Checkpoints] %s round %d of at most %d\n%!" cp.Run.id n
-        max_rounds;
-      next_round setup cp chain ~next ~max_rounds runs n
-  | decision -> rounds_ended setup cp chain ~next runs decision
-
-and next_round setup cp chain ~next ~max_rounds runs n =
-  match trial setup cp n chain with
-  | Ok run ->
-      rounds setup (after_round setup cp run) chain ~next ~max_rounds
-        (runs @ [ run ])
-  | Error e -> rounds_ended setup cp chain ~next runs (Stopped e)
-
-let repeat (setup : Run.setup) (cp : Run.checkpoint) chain ~next
+let repeat (setup : Run.setup) (cp : Run.checkpoint) ~from_pass chain ~next
     (r : Plan.repeat) =
   let max_rounds = Option.value setup.max_rounds ~default:r.max_rounds in
+  let capped = setup.common.grind_cap <> None in
   chain := Chain_progress.begin_rounds !chain ~max_rounds;
-  rounds setup cp chain ~next ~max_rounds []
+  let rec go cp ~from_pass runs =
+    match
+      Round_trials.decide ~max_rounds ~capped
+        (List.map (fun (_, o) -> round_of o) runs)
+    with
+    | Next_round number -> step cp ~from_pass runs ~number
+    | decision -> (decision, runs)
+  and step (cp : Run.checkpoint) ~from_pass runs ~number =
+    Printf.printf "[Checkpoints] %s round %d of at most %d\n%!" cp.id number
+      max_rounds;
+    let trial_ctx =
+      { Series_chain.number = 1; continuing_from_pass = from_pass }
+    in
+    match trial setup cp number ~trial_ctx chain with
+    | Ok ((_, outcome) as res) ->
+        let from_pass =
+          match outcome with Run.Passed _ -> true | _ -> false
+        in
+        go (after_round setup cp res) ~from_pass (runs @ [ res ])
+    | Error e -> (Round_trials.Stopped e, runs)
+  in
+  let decision, runs = go cp ~from_pass [] in
+  rounds_ended setup cp chain ~next runs decision
 
-let one ~plan_dir setup id chain ~next =
+let one ~plan_dir setup id ~from_pass chain ~next =
   chain := Chain_progress.begin_checkpoint !chain id ~now_ms:(now_ms ());
   match checkpoint ~plan_dir setup id ~next with
   | Ok ({ plan = { repeat = Some r; _ }; _ } as cp) ->
-      repeat setup cp chain ~next r
-  | Ok cp -> decide setup cp chain ~next
+      repeat setup cp ~from_pass chain ~next r
+  | Ok cp -> decide setup cp ~from_pass chain ~next
   | Error e ->
       print_endline ("[Checkpoints] " ^ id ^ ": " ^ e);
       chain := Chain_progress.fail_checkpoint !chain ~now_ms:(now_ms ());
       false
-
-let rec chain_from ~plan_dir setup ids chain ~after =
-  match ids with
-  | [] -> 0
-  | id :: rest ->
-      let next = match rest with n :: _ -> Some n | [] -> after in
-      if one ~plan_dir setup id chain ~next then
-        chain_from ~plan_dir setup rest chain ~after
-      else 1
 
 let run ~plan_dir (setup : Run.setup) ids ~after =
   let chain =
@@ -280,10 +286,15 @@ let run ~plan_dir (setup : Run.setup) ids ~after =
       (Chain_progress.create ~mode:setup.mode ~policy:setup.policy
          ~started_ms:(now_ms ()) ids)
   in
-  let code = chain_from ~plan_dir setup ids chain ~after in
-  Series_daemons.finished setup.daemons ~passed:(code = 0);
+  let passed =
+    Series_chain.run_chain ?after ids (fun item ->
+        one ~plan_dir setup item.value ~from_pass:item.continuing_from_pass
+          chain ~next:item.next)
+  in
+  let code = if passed then 0 else 1 in
+  Series_daemons.finished setup.daemons ~passed;
   let closed =
     Series_daemons.close_game_after_pass setup.daemons
-      ~close_game:setup.close_game ?tile:setup.home_tile ~passed:(code = 0) ()
+      ~close_game:setup.close_game ?tile:setup.home_tile ~passed ()
   in
   if code = 0 && not closed then 1 else code

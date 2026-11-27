@@ -37,7 +37,9 @@ type program = {
           stick). *)
   initial_screen : Plza_engine.Plan.t -> Switch.Initial_screen.expectation;
       (** What screen the console must show before an attempt starts (checked by
-          {!Switch.Initial_screen.check}). *)
+          {!Switch.Initial_screen.check} on cold starts, retries, later trials,
+          and reloads; skipped when continuing directly from a passing
+          checkpoint without a reload). *)
   attempt : attempt;
 }
 (** What a program's runs do. *)

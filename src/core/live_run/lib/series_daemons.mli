@@ -54,6 +54,20 @@ val with_daemon :
     ports change. The series' record has the run going
     ({!Series_watch.run_started}) before the daemon starts. *)
 
+val run_in :
+  t ->
+  runs_dir:string ->
+  failed:(Daemon_run.failed -> 'o) ->
+  ending:('o -> string * Run_record.ending) ->
+  banner:string ->
+  Run_record.run ->
+  n:int ->
+  (log:(string -> unit) -> Daemon_process.t -> 'o) ->
+  'o
+(** [run_in t ~runs_dir ~failed ~ending ~banner run ~n body] opens the run's
+    log, writes [banner], runs [body ~log] inside {!with_daemon}, closes the
+    log, and finishes the run with [ending outcome] via {!finish}. *)
+
 val finish :
   t ->
   runs_dir:string ->

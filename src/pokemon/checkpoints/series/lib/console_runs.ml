@@ -3,7 +3,8 @@ open Pokemon_engine
 type outcome = Passed | Failed_event | Failed_end_check | Stopped
 type step = Return_to_save | Save_in_game | Keep_start_frame
 
-let before_run = [ Return_to_save ]
+let before_run ~already_at_start =
+  if already_at_start then [] else [ Return_to_save ]
 
 let after_run ~save_after_pass = function
   | Passed when save_after_pass -> [ Save_in_game; Keep_start_frame ]

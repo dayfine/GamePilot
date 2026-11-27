@@ -22,6 +22,12 @@ val in_session : failed:(failed -> 'o) -> dir:string -> (unit -> 'o) -> 'o
     fails at ["session"] (not repeating) and a Unix error at ["session"]
     (repeating); any other exception goes on to the caller. *)
 
+val run_live :
+  failed:(failed -> 'o) -> dir:string -> port:int -> (Wire.backend -> 'o) -> 'o
+(** [run_live ~failed ~dir ~port body] runs [Live.run_with_backend ~port body]
+    inside {!in_session}, turning any unexpected exception into a non-repeating
+    failure at ["raised"] so the run folder and watch run always close. *)
+
 val finish :
   runs_dir:string ->
   Run_record.run ->

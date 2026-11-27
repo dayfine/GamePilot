@@ -74,6 +74,17 @@ let finish t ~runs_dir run ~summary ending =
   Daemon_run.finish ~runs_dir run ~summary ending;
   Series_watch.run_ended t.watched run ending
 
+let run_in t ~runs_dir ~failed ~ending ~banner (run : Run_record.run) ~n body =
+  let log, close = Run_record.run_log run.record in
+  let outcome =
+    Fun.protect ~finally:close (fun () ->
+        log banner;
+        with_daemon t ~failed run ~n (body ~log))
+  in
+  let summary, run_ending = ending outcome in
+  finish t ~runs_dir run ~summary run_ending;
+  outcome
+
 let finished t ~passed = Series_watch.finished t.watched ~passed
 
 type close_game_action = Close_game | Skip_failed_run | No_close
