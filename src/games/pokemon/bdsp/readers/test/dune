@@ -6,7 +6,8 @@
   test_battle_hud
   test_eye_blink_reader
   test_shiny_encounter_reader
-  test_shiny_encounter_detector)
+  test_shiny_encounter_detector
+  test_bag_pocket_reader)
  (libraries
   gamepilot.wire
   gamepilot.effects
