@@ -136,4 +136,30 @@ let () =
       case "the start marker"
         (fun () -> Guide_page.start_marker "checkpoints" (Some "mg-06"))
         "<!-- generated:checkpoints mg-06 -->";
-    ]
+    ];
+  let check_eq name ~expected actual =
+    Table_test.report name
+      (if actual = expected then Ok () else Error "value did not match expected")
+  in
+  let load_title ~plan_dir id =
+    match id with
+    | "01" -> Ok ("01-start", "Start | intro")
+    | "02" -> Ok ("02-next", "Next step")
+    | other -> Error (plan_dir ^ ": missing " ^ other)
+  in
+  check_eq "checkpoint_rows formats rows and escapes pipes"
+    ~expected:
+      (Ok [ "| 01-start | Start \\| intro |"; "| 02-next | Next step |" ])
+    (Guide_page.checkpoint_rows ~load_title ~plan_dir:"plans" [ "01"; "02" ]);
+  check_eq "checkpoint_rows stops on first error"
+    ~expected:(Error "plans: missing 99")
+    (Guide_page.checkpoint_rows ~load_title ~plan_dir:"plans" [ "01"; "99" ]);
+  check_eq "switch_testing_commands includes args and switch testing flags"
+    ~expected:
+      "# the Switch: each checkpoint once, from where the console is\n\
+       cd src && opam exec -- dune exec -- gamepilot run bdsp.demo --from 01 \
+       --to 02 --mode testing --backend switch --serial PORT --capture DEVICE \
+       \\\n\
+      \    --watch"
+    (Guide_page.switch_testing_commands ~args:"bdsp.demo --from 01 --to 02");
+  Table_test.finish ()

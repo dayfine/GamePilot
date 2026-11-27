@@ -60,3 +60,16 @@ val run :
     (passed as [~next] for the last checkpoint). When [override] is provided and
     returns [Some passed] for a prepared checkpoint, it runs in place of the
     standard trial policy loop (used by repeating checkpoints). *)
+
+val run_testing :
+  policy:Engine_run.Checkpoint_trials.policy ->
+  now_ms:(unit -> int) ->
+  log:(string -> unit) ->
+  entry_id:('plan -> string) ->
+  run_trial:('plan -> Series_chain.trial -> ('run, string) result) ->
+  trial_of:('run -> Engine_run.Checkpoint_trials.run) ->
+  'plan list ->
+  bool
+(** Convenience wrapper over {!run} for testing-mode series whose plans are
+    already prepared and need no per-checkpoint verdict note or [on_pass] hook.
+*)

@@ -4,4 +4,6 @@
   gamepilot.table_test
   gamepilot.run_flags
   gamepilot.live_run
+  gamepilot.run_record
+  gamepilot.run_options
   gamepilot.engine_run))

@@ -97,4 +97,4 @@ val run_series :
     is run.json's program fields, [options] the program's options, checked
     (Program_registry.check_options), for run.json, [viewport] the Switch
     daemons' (the registry's check of --viewport). [Ok 0] when every one passed,
-    [Ok 1] when one stopped; the Switch only, testing ({!Flags}). *)
+    [Ok 1] when one stopped; the Switch only, testing ({!Run_flags}). *)

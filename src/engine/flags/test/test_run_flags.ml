@@ -1,15 +1,8 @@
 (* gamepilot run's --options: one KEY=VALUE each, repeatable, collected in the
    order given; the keys are the program's to check (Run_options). *)
 
-let no_game : unit Run_flags.game_flags =
-  {
-    game_defaults = ();
-    game_switch = (fun () _ -> None);
-    game_valued = (fun () _ _ -> Run_flags.Not_game_flag);
-  }
-
 let options args () =
-  match Run_flags.parse no_game (Run_flags.defaults no_game) args with
+  match Run_flags.parse_no_game_flags args with
   | Ok f -> String.concat " " (List.map (fun (k, v) -> k ^ "=" ^ v) f.options)
   | Error e -> "error: " ^ e
 
@@ -40,7 +33,7 @@ let () =
         (options [ "--options"; "item" ])
         "error: --options item: not KEY=VALUE";
     ];
-  let parse args = Run_flags.parse no_game (Run_flags.defaults no_game) args in
+  let parse = Run_flags.parse_no_game_flags in
   let check_bool name ~expected actual =
     Table_test.report name
       (if actual = expected then Ok ()
@@ -98,4 +91,44 @@ let () =
          (Live_run.Daemon_process.Switch
             { serial = None; frames = Replay "run.mp4" }))
     [ "--backend"; "switch"; "--replay"; "run.mp4"; "--close-game" ];
+  let check_eq name ~expected actual =
+    Table_test.report name
+      (if actual = expected then Ok () else Error "value did not match expected")
+  in
+  let testing_check args =
+    Result.bind (parse args) (Run_flags.require_testing_only ~game:"BDSP")
+  in
+  check_eq "require_testing_only accepts testing flags" ~expected:(Ok ())
+    (testing_check [ "--mode"; "testing"; "--backend"; "switch" ]);
+  check_eq "require_testing_only rejects verification and preflight"
+    ~expected:
+      (Error
+         "BDSP runs whole checkpoints in testing mode only: no --mode, \
+          --preflight")
+    (testing_check [ "--mode"; "verification"; "--preflight" ]);
+  check_eq "require_switch accepts Switch backend" ~expected:(Ok ())
+    (Run_flags.require_switch ~game:"PLZA"
+       (Live_run.Daemon_process.Switch
+          { serial = None; frames = Replay "run.mp4" }));
+  check_eq "require_switch rejects mGBA backend"
+    ~expected:(Error "PLZA runs on the Switch only: --backend switch")
+    (Run_flags.require_switch ~game:"PLZA"
+       (Live_run.Daemon_process.Mgba { port = 47810 }));
+  let f =
+    Result.get_ok (parse [ "--backend"; "switch"; "--replay"; "run.mp4" ])
+  in
+  let opts = Result.get_ok (Run_options.check [] []) in
+  check_eq "run_info builds Checkpoints info by default"
+    ~expected:
+      {
+        Run_record.kind = Checkpoints;
+        program = [ ("game", "bdsp") ];
+        from_id = "01";
+        to_id = "02";
+        backend = "switch";
+        options = [];
+      }
+    (Run_flags.run_info
+       ~program:[ ("game", "bdsp") ]
+       ~from_id:"01" ~to_id:"02" ~options:opts f);
   Table_test.finish ()

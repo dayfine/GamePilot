@@ -42,23 +42,25 @@ let with_temp_plan_dir f =
     (fun () -> f dir)
 
 let test_flags_accepts_testing () =
-  match Flags.parse [ "--mode"; "testing"; "--backend"; "switch" ] with
+  match
+    Run_flags.parse_no_game_flags [ "--mode"; "testing"; "--backend"; "switch" ]
+  with
   | Error e -> fail ("parse testing: " ^ e)
   | Ok f -> (
-      match Flags.takes f with
+      match Run_flags.require_testing_only ~game:"BDSP" f with
       | Ok () -> ()
       | Error e -> fail ("takes testing: " ^ e))
 
 let test_flags_rejects_verification () =
-  match Flags.parse [ "--mode"; "verification" ] with
+  match Run_flags.parse_no_game_flags [ "--mode"; "verification" ] with
   | Error e -> fail ("parse verification: " ^ e)
   | Ok f -> (
-      match Flags.takes f with
+      match Run_flags.require_testing_only ~game:"BDSP" f with
       | Ok () -> fail "expected verification mode to be rejected"
       | Error _ -> ())
 
 let test_select_range_defaults_to_all dir =
-  let f = Result.get_ok (Flags.parse []) in
+  let f = Result.get_ok (Run_flags.parse_no_game_flags []) in
   match Checkpoint_series.select_range ~plan_dir:dir f with
   | Error e -> fail ("select_range default: " ^ e)
   | Ok sel ->
@@ -68,13 +70,21 @@ let test_select_range_defaults_to_all dir =
         ~actual:sel.selected
 
 let test_guide_tables dir =
-  match Guide_tables.rows ~plan_dir:dir [ "01-save-game" ] with
+  let load_title ~plan_dir id =
+    Result.map
+      (fun (p : Bdsp_engine.Plan.t) ->
+        (p.checkpoint.checkpoint_id, p.checkpoint.title))
+      (Checkpoint_series.load_plan ~plan_dir id)
+  in
+  match
+    Guide_page.checkpoint_rows ~load_title ~plan_dir:dir [ "01-save-game" ]
+  with
   | Error e -> fail ("guide rows: " ^ e)
   | Ok rows ->
       assert_eq ~name:"guide rows"
         ~expected:[ "| 01-save-game | Save Game |" ]
         ~actual:rows;
-      let cmd = Guide_tables.commands ~args:"bdsp.example" in
+      let cmd = Guide_page.switch_testing_commands ~args:"bdsp.example" in
       assert_eq ~name:"commands non-empty" ~expected:true
         ~actual:(String.length cmd > 0)
 
