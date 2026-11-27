@@ -3,13 +3,7 @@
    Run_record, so the hub lists it like a series' run. The wire log stays
    with a daemon already up; its own daemon logs to the run folder. *)
 
-let default_runs_dir () =
-  match Sys.getenv_opt "GAMEPILOT_RUNS" with
-  | Some dir when dir <> "" -> dir
-  | _ ->
-      List.fold_left Filename.concat
-        (Option.value (Sys.getenv_opt "HOME") ~default:".")
-        [ ".local"; "share"; "gamepilot"; "runs" ]
+let default_runs_dir () = Repo_io.Repo_files.data_dir "GAMEPILOT_RUNS" "runs"
 
 (* --runs-dir DIR out of [args], wherever it is; else the default. *)
 let runs_dir_flag args =

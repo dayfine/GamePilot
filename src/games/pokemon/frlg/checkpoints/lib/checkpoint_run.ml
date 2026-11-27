@@ -1,6 +1,9 @@
 open Frlg_readers
 module A = Frlg_actions
-module Event_snapshot = Pokemon_engine.Event_snapshot
+module PE = Pokemon_engine
+module Event_snapshot = PE.Event_snapshot
+
+let ( let* ) = Result.bind
 
 type options = {
   state : string option;
@@ -59,52 +62,57 @@ let load_map name = Result.bind (load_world ()) (fun w -> map_in w name)
 (* FireRed reckons where the player stands from the start; from anywhere
    outdoors it knows nothing until a Fly lands, and that Fly is the check that
    the save is outdoors (the game will not fly from indoors). *)
-let check_start (checkpoint : Pokemon_engine.Plan.checkpoint) =
+let check_start (checkpoint : PE.Plan.checkpoint) =
   match (checkpoint.start, checkpoint.events) with
   | Some (Anywhere _), { kind = Named_action _; way = Some "fly"; _ } :: _ ->
       Ok ()
   | Some (Anywhere _ as start), _ ->
       Error
-        ("a checkpoint that starts "
-        ^ Pokemon_engine.Pose.to_string start
-        ^ " begins with a fly event")
+        ("a checkpoint that starts " ^ PE.Pose.to_string start
+       ^ " begins with a fly event")
   | _ -> Ok ()
 
-let check_menu (plan : Pokemon_engine.Plan.t) =
-  match (plan.game, Json_field.find "menu" plan.execution) with
-  | "frlg", (None | Some (`String "full")) -> Ok ()
-  | "frlg", Some menu ->
-      Error ("execution.menu " ^ Yojson.Safe.to_string menu ^ " is not \"full\"")
-  | game, _ -> Error ("the plan is for " ^ game ^ ", not frlg")
+let check_menu (plan : PE.Plan.t) =
+  let menu =
+    Json_field.catch (fun () ->
+        Json_field.string_opt ~where:"execution." "menu" plan.execution)
+  in
+  if plan.game <> "frlg" then
+    Error ("the plan is for " ^ plan.game ^ ", not frlg")
+  else
+    Result.bind menu (function
+      | None | Some "full" -> Ok ()
+      | Some other ->
+          Error (Printf.sprintf "execution.menu %S is not \"full\"" other))
 
-(* Each skip_if condition FireRed reads names what it reads: the species
-   names (English, as the Pokédex reader matches them) are loaded only for a
-   plan with a pokedex_seen or pokedex_not_seen condition. *)
+(* English species names are loaded only when a condition reads the Pokédex or
+   party. *)
 let read_species () =
   let file = Frlg_text.Data_files.species_names_eng in
   match Frlg_text.Data_files.locate file with
   | Some path -> Ok (Frlg_text.Species_names.load path)
   | None -> Error (file ^ " not found")
 
-let check_all species conditions =
-  List.fold_left
-    (fun ok c -> Result.bind ok (fun () -> A.Skip_conditions.check species c))
-    (Ok ()) conditions
+let check_each f =
+  List.fold_left (fun ok c -> Result.bind ok (fun () -> f c)) (Ok ())
 
-let check_skip_conditions (checkpoint : Pokemon_engine.Plan.checkpoint) =
+let check_species_conditions conditions =
+  if not (List.exists A.Skip_conditions.reads_species conditions) then Ok ()
+  else
+    let* species = read_species () in
+    check_each (A.Skip_conditions.check species) conditions
+
+let check_skip_conditions (checkpoint : PE.Plan.checkpoint) =
   let conditions =
-    List.concat_map
-      (fun (e : Pokemon_engine.Plan.event) -> e.skip_if)
-      checkpoint.events
+    List.concat_map (fun (e : PE.Plan.event) -> e.skip_if) checkpoint.events
   in
-  if List.exists A.Skip_conditions.reads_pokedex conditions then
-    Result.bind (read_species ()) (fun species -> check_all species conditions)
-  else Ok ()
+  let* () = check_each A.Skip_conditions.check_syntax conditions in
+  check_species_conditions conditions
 
-let check_plan (plan : Pokemon_engine.Plan.t) =
-  Result.bind (check_menu plan) (fun () ->
-      Result.bind (check_start plan.checkpoint) (fun () ->
-          check_skip_conditions plan.checkpoint))
+let check_plan (plan : PE.Plan.t) =
+  let* () = check_menu plan in
+  let* () = check_start plan.checkpoint in
+  check_skip_conditions plan.checkpoint
 
 let start_of (checkpoint : Pokemon_engine.Plan.checkpoint) =
   match checkpoint.start with
@@ -124,7 +132,26 @@ let reload state () =
         (Pokemon_engine.Failure.cause ~repeats:true "no_state"
            "no start state to reload")
 
-let config options world : A.Checkpoint_game.config =
+let lookup_center town =
+  match Frlg_places.Place_table.load () with
+  | Error e -> Error e
+  | Ok table ->
+      Result.map Option.some (Frlg_places.Place_table.center_nurse table town)
+
+let resolve_center = function
+  | None -> Ok None
+  | Some town -> lookup_center town
+
+let bad_center (plan : Pokemon_engine.Plan.t) msg : Pokemon_engine.Failure.t =
+  {
+    checkpoint_id = plan.checkpoint.checkpoint_id;
+    event_index = 0;
+    event_id = "center";
+    reason =
+      Handler (Pokemon_engine.Failure.cause ~repeats:true "bad_center" msg);
+  }
+
+let config options ~center world : A.Checkpoint_game.config =
   {
     world;
     gait = options.gait;
@@ -132,7 +159,7 @@ let config options world : A.Checkpoint_game.config =
     flags = A.Skip_conditions.read_once ~log:options.log;
     party = options.party;
     grind_cap = options.grind_cap;
-    center = options.center;
+    center;
     reload = reload options.state;
     program_options = options.program_options;
     log = options.log;
@@ -144,33 +171,26 @@ let to_run options ~end_at (plan : Pokemon_engine.Plan.t) =
   if options.end_check_only then ({ plan.checkpoint with events = [] }, None)
   else (plan.checkpoint, end_at)
 
-let capped_postconditions ~grind_cap (plan : Pokemon_engine.Plan.t) =
-  let p = Pokemon_engine.Postconditions.stated plan.postconditions in
+let capped_postconditions ~grind_cap (plan : PE.Plan.t) =
+  let p = PE.Postconditions.stated plan.postconditions in
   match grind_cap with
   | None -> (p, [])
   | Some cap ->
       let capped what = Printf.sprintf "%s (grind capped at %d)" what cap in
-      let skipped_knows
-          ({ species; moves } : Pokemon_engine.Postconditions.knows) =
+      let skipped_knows ({ species; moves } : PE.Postconditions.knows) =
         capped (Printf.sprintf "knows %s %s" species (String.concat ", " moves))
-      and skipped_level ({ species; min } : Pokemon_engine.Postconditions.level)
-          =
+      and skipped_level ({ species; min } : PE.Postconditions.level) =
         capped (Printf.sprintf "level %s at least %d" species min)
       in
       ( { p with knows = []; levels = [] },
         List.map skipped_knows p.knows @ List.map skipped_level p.levels )
 
 (* The game with the caller's own actions first (a shadow plan's). *)
-let with_actions actions (game : Pokemon_engine.Game.t) =
+let with_actions actions (game : PE.Game.t) =
   { game with game_actions = actions @ game.game_actions }
 
-type from_event = {
-  range : Engine_run.Event_range.t;
-  kept : Pokemon_engine.Saved.t;
-}
-
-type keep_event_state =
-  index:int -> Pokemon_engine.Plan.event -> Pokemon_engine.Saved.t -> unit
+type from_event = { range : Engine_run.Event_range.t; kept : PE.Saved.t }
+type keep_event_state = index:int -> PE.Plan.event -> PE.Saved.t -> unit
 
 let kept_start_line (start : Pokemon_engine.Postcondition_check.start) =
   let items =
@@ -216,11 +236,12 @@ let keeping_states ?on_event ~keep ~first
     | _ -> ());
     Option.iter (fun f -> f index progress) on_event
 
-let run ?end_at ?on_event ?(actions = []) ?from_event ?keep_event_state options
-    world (plan : Pokemon_engine.Plan.t) =
+let run_with_center ?end_at ?on_event ~actions ?from_event ?keep_event_state
+    options ~center world (plan : Pokemon_engine.Plan.t) =
   Option.iter (fun s -> ignore (Effects.load_state s)) options.state;
   let game =
-    A.Checkpoint_game.create (config options world)
+    A.Checkpoint_game.create
+      (config options ~center world)
       ~start:(start_pose plan from_event)
   in
   let checkpoint, end_at = to_run options ~end_at plan in
@@ -257,6 +278,14 @@ let run ?end_at ?on_event ?(actions = []) ?from_event ?keep_event_state options
       in
       Pokemon_engine.Runner.run ?end_at ?end_state ~on_event ?events game
         checkpoint)
+
+let run ?end_at ?on_event ?(actions = []) ?from_event ?keep_event_state options
+    world (plan : Pokemon_engine.Plan.t) =
+  match resolve_center options.center with
+  | Error msg -> Error (bad_center plan msg)
+  | Ok center ->
+      run_with_center ?end_at ?on_event ~actions ?from_event ?keep_event_state
+        options ~center world plan
 
 let goal_holds ~log ~id (goal : Pokemon_engine.Postconditions.t) =
   let module C = Pokemon_engine.Postcondition_check in

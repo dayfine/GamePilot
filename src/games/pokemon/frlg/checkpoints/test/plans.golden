@@ -48,14 +48,14 @@ no repeat
 frlg 01-ultra-balls from anywhere outdoors: 2 game_action, 3 route, 1 heal
 fly_indigo: [fly] game_action {"town":"IndigoPlateau"} => IndigoPlateau_Exterior (11, 7) south
 to_clerk: [run] route to IndigoPlateau_PokemonCenter_1F (2, 7) west
-buy_ultra_balls: [mart] game_action {"map":"IndigoPlateau_PokemonCenter_1F","items":[{"item":"ultra-ball","quantity":10}]}
+buy_ultra_balls: [mart] game_action {"map":"IndigoPlateau_PokemonCenter_1F","items":[{"item":"ultra-ball","quantity":20}]}
 heal_indigo.walk: [run] route to IndigoPlateau_PokemonCenter_1F (13, 12) north
 heal_indigo: heal
 out_of_indigo: [run] route to IndigoPlateau_Exterior (11, 7) south
 retries 0
 postconditions:
-item ultra-ball gained 10
-money spent 12000
+item ultra-ball gained 20
+money spent 24000
 no repeat
 == dex_collection/plans/02-shiny-voltorb.plan.json
 frlg 02-shiny-voltorb from anywhere outdoors: 6 game_action, 5 route, 1 heal
@@ -64,7 +64,7 @@ to_pc: [run] route to Route10_PokemonCenter_1F (11, 2) north
 make_room: [pc_deposit] game_action {"member":"holding_no_mail"}
 to_grass: [run] route to Route10 (12, 8) east
 save_in_grass: [save_game] game_action {}
-shiny_voltorb: [wild_rng] game_action {"species":"voltorb","location":"route_10","tid":33002,"sid":9011,"seeds":"rng_seeds_mgba_sevii_save.json","seed_shift":8,"ingame_offset":-1,"frame_model":"mgba","advances":[1000,4000],"ball":"ultra-ball","balls":5,"attempts":1}
+shiny_voltorb: [wild_rng] game_action {"species":"voltorb","location":"route_10","seeds":"rng_seeds_mgba_sevii_save.json","seed_shift":8,"ingame_offset":-1,"frame_model":"mgba","advances":[1000,4000],"ball":"ultra-ball","balls":5,"attempts":1}
 save_catch: [save_game] game_action {}
 back_to_pc: [run] route to Route10_PokemonCenter_1F (11, 2) north
 deposit_catch: [pc_deposit] game_action {"species":["voltorb"]}
@@ -80,7 +80,7 @@ frlg 03-shiny-drowzee from anywhere outdoors: 6 game_action, 4 route, 1 heal
 fly_vermilion: [fly] game_action {"town":"VermilionCity"} => VermilionCity (15, 7) south
 to_grass: [run] route to Route11 (15, 13) east
 save_in_grass: [save_game] game_action {}
-shiny_drowzee: [wild_rng] game_action {"species":"drowzee","location":"route_11","tid":33002,"sid":9011,"seeds":"rng_seeds_mgba_sevii_save.json","seed_shift":4,"ingame_offset":-3,"frame_model":"mgba","advances":[1000,4000],"ball":"ultra-ball","balls":5,"attempts":1}
+shiny_drowzee: [wild_rng] game_action {"species":"drowzee","location":"route_11","seeds":"rng_seeds_mgba_sevii_save.json","seed_shift":4,"ingame_offset":-3,"frame_model":"mgba","advances":[1000,4000],"ball":"ultra-ball","balls":5,"attempts":1}
 save_catch: [save_game] game_action {}
 fly_vermilion_back: [fly] game_action {"town":"VermilionCity"} => VermilionCity (15, 7) south
 back_to_pc: [run] route to VermilionCity_PokemonCenter_1F (11, 2) north
@@ -97,7 +97,7 @@ frlg 04-shiny-ekans from anywhere outdoors: 5 game_action, 4 route, 1 heal
 fly_route10: [fly] game_action {"town":"Route10"} => Route10 (13, 21) south
 to_grass: [run] route to Route10 (12, 8) east
 save_in_grass: [save_game] game_action {}
-shiny_ekans: [wild_rng] game_action {"species":"ekans","location":"route_10","tid":33002,"sid":9011,"seeds":"rng_seeds_mgba_sevii_save.json","seed_shift":4,"ingame_offset":1,"frame_model":"mgba","advances":[1000,4000],"ball":"ultra-ball","balls":5,"attempts":1}
+shiny_ekans: [wild_rng] game_action {"species":"ekans","location":"route_10","seeds":"rng_seeds_mgba_sevii_save.json","seed_shift":4,"ingame_offset":1,"frame_model":"mgba","advances":[1000,4000],"ball":"ultra-ball","balls":5,"attempts":1}
 save_catch: [save_game] game_action {}
 back_to_pc: [run] route to Route10_PokemonCenter_1F (11, 2) north
 deposit_catch: [pc_deposit] game_action {"species":["ekans"]}
@@ -112,8 +112,8 @@ no repeat
 frlg 01-celadon-setup from anywhere outdoors: 6 game_action, 7 route, 1 talk, 1 scene
 fly_celadon: [fly] game_action {"town":"CeladonCity"} => CeladonCity (48, 12) south
 to_coin_case_man: [run] route to CeladonCity_Restaurant (2, 2) west
-talk_coin_case_man: talk
-clear_coin_case_text: scene => CeladonCity_Restaurant (2, 2) west
+talk_coin_case_man: talk skip_if bag_has_item:coin-case:1
+clear_coin_case_text: scene => CeladonCity_Restaurant (2, 2) west skip_if bag_has_item:coin-case:1
 to_4f_clerk: [run] route to CeladonCity_DepartmentStore_1F (6, 2) north
 to_4f_clerk.lift: [lift_floor] game_action {"from":"1F","to":"4F"} => CeladonCity_DepartmentStore_4F (6, 2) south
 to_4f_clerk.walk: [run] route to CeladonCity_DepartmentStore_4F (3, 11) south
@@ -121,9 +121,9 @@ buy_retro_mail: [mart] game_action {"map":"CeladonCity_DepartmentStore_4F","item
 to_coins_clerk: [run] route to CeladonCity_DepartmentStore_4F (6, 2) north
 to_coins_clerk.lift: [lift_floor] game_action {"from":"4F","to":"1F"} => CeladonCity_DepartmentStore_1F (6, 2) south
 to_coins_clerk.walk: [run] route to CeladonCity_GameCorner (6, 4) north
-buy_200_coins: [buy_coins] game_action {"coins":200}
+buy_200_coins: [buy_coins] game_action {"coins":200} skip_if coins_at_least:200
 to_prize_clerk: [run] route to CeladonCity_GameCorner_PrizeRoom (4, 4) north
-redeem_abra: [redeem_prize_mon] game_action {"slot":0}
+redeem_abra: [redeem_prize_mon] game_action {"slot":0} skip_if party_has_species:abra,party_has_species:mr-mime
 exit_prize_room: [run] route to CeladonCity (39, 21) south
 retries 0
 postconditions:
@@ -136,12 +136,12 @@ frlg 02-trade-farfetchd from CeladonCity (39, 21) south: 7 route, 6 game_action,
 to_route16_cut_tree: [run] route to Route16 (41, 12) north
 cut_route16_tree: [cut_tree] game_action {"direction":"north"} => Route16 (41, 11) north
 to_route16_grass: [run] route to Route16 (35, 6) east
-catch_spearow: [capture] game_action {"species":"spearow","catches":1,"encounters":50,"balls":10,"pace":"east"}
+catch_spearow: [capture] game_action {"species":"spearow","catches":1,"encounters":50,"balls":10,"pace":"east"} skip_if party_has_species:spearow,party_has_species:farfetchd
 fly_vermilion: [fly] game_action {"town":"VermilionCity"} => VermilionCity (15, 7) south
 to_route6_pond_wall: [run] route to Route6 (10, 38) north
 to_route6_sitrus_berry: [run] route to Route6 (5, 6) north
-pickup_sitrus_berry: [pick_up_item] game_action {"item":"sitrus-berry"}
-clear_berry_text: scene => Route6 (5, 6) north
+pickup_sitrus_berry: [pick_up_item] game_action {"item":"sitrus-berry"} skip_if bag_has_item:sitrus-berry:1
+clear_berry_text: scene => Route6 (5, 6) north skip_if bag_has_item:sitrus-berry:1
 fly_vermilion_house2: [fly] game_action {"town":"VermilionCity"} => VermilionCity (15, 7) south
 to_vermilion_mart_wall: [run] route to VermilionCity (27, 14) south
 to_vermilion_elyssa: [run] route to VermilionCity_House2 (4, 5) north
@@ -222,20 +222,20 @@ to_route8_cut_tree: [run] route to Route8 (48, 12) west
 cut_route8_tree: [cut_tree] game_action {"direction":"west","species":"rattata"} => Route8 (47, 12) west
 to_route8_grass: [run] route to Route8 (45, 12) west
 face_route8_leppa_berry: [run] route to Route8 (42, 14) south
-pick_up_leppa_berry: [pick_up_item] game_action {"item":"leppa-berry"}
-clear_leppa_text: scene => Route8 (42, 14) south
+pick_up_leppa_berry: [pick_up_item] game_action {"item":"leppa-berry"} skip_if bag_has_item:leppa-berry:1
+clear_leppa_text: scene => Route8 (42, 14) south skip_if bag_has_item:leppa-berry:1
 return_to_route8_grass: [run] route to Route8 (45, 12) west
-lead_blastoise: [party_swap] game_action {"species":"blastoise","target_slot":1}
+lead_blastoise: [party_swap] game_action {"species":"blastoise","role":"sweeper","target_slot":1}
 use_up_blizzard_pp: [prepare_berry_pp] game_action {"species":"blastoise","move":"blizzard","backup_move":"surf","pace":"west"} => Route8 (45, 12) west
 fly_celadon: [fly] game_action {"town":"CeladonCity"} => CeladonCity (48, 12) south
 to_route16_cut_tree: [run] route to Route16 (41, 12) north
 cut_route16_tree: [cut_tree] game_action {"direction":"north","species":"rattata"} => Route16 (41, 11) north
 to_lea_and_jed: [run] route to Route16 (30, 7) north
 arrange_slot1_chding: [party_swap] game_action {"species":"farfetchd","target_slot":1}
-arrange_slot2_blastoise: [party_swap] game_action {"species":"blastoise","target_slot":2}
+arrange_slot2_blastoise: [party_swap] game_action {"species":"blastoise","role":"sweeper","target_slot":2}
 arrange_slot3_mimien: [party_swap] game_action {"species":"mr-mime","target_slot":3}
-give_leppa_berry_slot2: [give_bag_item] game_action {"item":"leppa-berry","species":"blastoise"}
-give_retro_mail_slot3: [give_bag_item] game_action {"item":"retro-mail","species":"mr-mime"}
+give_leppa_berry_slot2: [give_bag_item] game_action {"item":"leppa-berry","species":"blastoise","role":"sweeper"}
+give_retro_mail_slot3: [give_bag_item] game_action {"item":"retro-mail","species":"mr-mime"} skip_if party_slot_holds_mail:3
 retries 0
 postconditions:
 farfetchd in slot 1
@@ -259,11 +259,11 @@ buy_retro_mail: [mart] game_action {"map":"CeladonCity_DepartmentStore_4F","item
 to_1f_save_spot: [run] route to CeladonCity_DepartmentStore_4F (6, 2) north
 to_1f_save_spot.lift: [lift_floor] game_action {"from":"4F","to":"1F"} => CeladonCity_DepartmentStore_1F (6, 2) south
 arrange_slot1_mimien: [party_swap] game_action {"species":"mr-mime","target_slot":1}
-fill_mail_slot2: [give_bag_item] game_action {"item":"retro-mail","target_slot":2}
-fill_mail_slot3: [give_bag_item] game_action {"item":"retro-mail","target_slot":3}
-fill_mail_slot4: [give_bag_item] game_action {"item":"retro-mail","target_slot":4}
-fill_mail_slot5: [give_bag_item] game_action {"item":"retro-mail","target_slot":5}
-fill_mail_slot6: [give_bag_item] game_action {"item":"retro-mail","target_slot":6}
+fill_mail_slot2: [give_bag_item] game_action {"item":"retro-mail","target_slot":2} skip_if party_slot_holds_mail:2
+fill_mail_slot3: [give_bag_item] game_action {"item":"retro-mail","target_slot":3} skip_if party_slot_holds_mail:3
+fill_mail_slot4: [give_bag_item] game_action {"item":"retro-mail","target_slot":4} skip_if party_slot_holds_mail:4
+fill_mail_slot5: [give_bag_item] game_action {"item":"retro-mail","target_slot":5} skip_if party_slot_holds_mail:5
+fill_mail_slot6: [give_bag_item] game_action {"item":"retro-mail","target_slot":6} skip_if party_slot_holds_mail:6
 check_mail_marks: [check_party_marks] game_action {"marks":["held_item","mail","mail","mail","mail","mail"]}
 read_glitched_mail: [read_glitched_mail] game_action {"species":"mr-mime","word":"ABRA"}
 give_dup_item: [give_bag_item] game_action {"item":"antidote","species":"mr-mime"}
@@ -312,7 +312,7 @@ item meteorite at least 1
 no repeat
 == sevii_story/plans/04-three-island-bikers.plan.json
 frlg 04-three-island-bikers from ThreeIsland_Harbor (8, 5) south: 1 game_action, 1 route, 2 step, 1 scene, 1 answer, 1 train
-lead_blastoise: [party_swap] game_action {"species":"blastoise","target_slot":1}
+lead_blastoise: [party_swap] game_action {"species":"blastoise","role":"sweeper","target_slot":1}
 below_bikers: [run] route to ThreeIsland (8, 28) north
 onto_boss_intro: step north => ThreeIsland (8, 27) north
 boss_intro_scene: scene
@@ -374,28 +374,26 @@ out_of_dept_store.lift: [lift_floor] game_action {"from":"4F","to":"1F"} => Cela
 out_of_dept_store.walk: [run] route to CeladonCity (11, 15) south
 retries 0
 postconditions:
-item retro-mail gained 100
-item super-repel gained 5
-money spent 7500
+none
 no repeat
 == team_training/plans/tt-01.plan.json
-frlg tt-01 from anywhere outdoors: 8 game_action, 3 route, 1 scene
+frlg tt-01 from anywhere outdoors: 9 game_action, 3 route, 1 scene
 fly_vermilion: [fly] game_action {"town":"VermilionCity"} => VermilionCity (15, 7) south
+check_marks_before: [check_party_marks] game_action {"marks":["held_item","mail","mail","mail","mail","mail"]}
 super_repel: [use_item] game_action {"item":"super-repel"}
 face_route6_rare_candy: [run] route to Route6 (19, 6) north
-pick_up_rare_candy: [pick_up_item] game_action {"item":"rare-candy"}
-clear_rare_candy_text: scene => Route6 (19, 6) north
+pick_up_rare_candy: [pick_up_item] game_action {"item":"rare-candy"} skip_if bag_has_item:rare-candy:1
+clear_rare_candy_text: scene => Route6 (19, 6) north skip_if bag_has_item:rare-candy:1
 fly_celadon: [fly] game_action {"town":"CeladonCity"} => CeladonCity (48, 12) south
 to_save_spot: [run] route to CeladonCity_DepartmentStore_1F (6, 2) south
-give_rare_candy: [give_bag_item] game_action {"item":"rare-candy","species":"mr-mime"}
+give_rare_candy: [give_bag_item] game_action {"item":"rare-candy","target_slot":1}
 retro_mail_to_top: [move_item_to_top] game_action {"item":"retro-mail"}
-duplicate_rare_candy: [duplicate_item] game_action {"species":"mr-mime","item":"rare-candy","count":98,"word":"ABRA"}
+duplicate_rare_candy: [duplicate_item] game_action {"target_slot":1,"item":"rare-candy","count":98,"word":"ABRA"}
 check_marks_after: [check_party_marks] game_action {"marks":["held_item","mail","mail","mail","mail","mail"]}
 out_of_dept_store: [run] route to CeladonCity (11, 15) south
 retries 0
 postconditions:
-mr-mime in slot 1
-item rare-candy gained 98
+none
 no repeat
 == wild_rng/plans/01-route10-grass.plan.json
 frlg 01-route10-grass from anywhere outdoors: 3 game_action, 2 route
@@ -410,7 +408,7 @@ none
 no repeat
 == wild_rng/plans/02-shiny-ekans.plan.json
 frlg 02-shiny-ekans from Route10 (12, 8) east: 2 game_action
-shiny_ekans: [wild_rng] game_action {"species":"ekans","location":"route_10","tid":33002,"sid":9011,"seeds":"rng_seeds_mgba_sevii_save.json","seed_shift":8,"frame_model":"mgba","advances":[900,4000],"ball":"poke-ball","balls":8,"attempts":1}
+shiny_ekans: [wild_rng] game_action {"species":"ekans","location":"route_10","seeds":"rng_seeds_mgba_sevii_save.json","seed_shift":8,"frame_model":"mgba","advances":[900,4000],"ball":"poke-ball","balls":8,"attempts":1}
 save_catch: [save_game] game_action {}
 retries 0
 postconditions:

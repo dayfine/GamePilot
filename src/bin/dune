@@ -6,13 +6,12 @@
   (:standard -open Live_run))
  (libraries
   gamepilot.live_run
+  gamepilot.console_config
+  gamepilot.ui_hub
   gamepilot.run_options
   gamepilot.wire
   gamepilot.effects
-  gamepilot.watch_report
-  gamepilot.replay
   gamepilot.live
-  gamepilot.start_menu_poc
   gamepilot.bdsp_underground_program
   gamepilot.program_registry
   gamepilot.guide_page
@@ -20,7 +19,7 @@
   gamepilot.engine_series
   gamepilot.frlg_ctl_readers
   gamepilot.ctl_script
-  gamepilot.switch_home
+  gamepilot.switch
   gamepilot.pokemon_home
   gamepilot.repo_io
   gamepilot.frlg_series
@@ -34,7 +33,6 @@
   gamepilot.plza_bank_home_series
   gamepilot.run_flags
   gamepilot.run_args
-  gamepilot.one_shot_flags
   gamepilot.pokemon_flags
   gamepilot.strings
   unix

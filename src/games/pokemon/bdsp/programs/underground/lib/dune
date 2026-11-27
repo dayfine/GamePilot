@@ -6,8 +6,9 @@
   gamepilot.run_options
   gamepilot.effects
   gamepilot.screen_state
+  gamepilot.screen_graph
   gamepilot.watch_report
-  gamepilot.switch_home
+  gamepilot.switch
   gamepilot.grid_geometry
   gamepilot.grid_planning
   gamepilot.bdsp_readers

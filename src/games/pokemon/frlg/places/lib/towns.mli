@@ -28,6 +28,9 @@ val towns : t -> town list
 val find : t -> string -> (town, string) result
 (** The town of that key; an unknown key's error suggests the nearest. *)
 
+val find_by_fly : t -> string -> town option
+(** The town whose Fly map is that name (["ViridianCity"]), if listed. *)
+
 val field : t -> string -> field:string option -> (string, string) result
 (** A [town] parameter's value: the key itself ([None]), or its ["nurse"],
     ["fly"] or ["mart"]. *)

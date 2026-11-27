@@ -1,5 +1,5 @@
-module PB = Switch_home.Picture_box
-module CS = Switch_home.Color_share
+module PB = Switch.Picture_box
+module CS = Switch.Color_share
 
 let tl_id = "bdsp_mine_cnt_tl"
 let ml_id = "bdsp_mine_cnt_ml"

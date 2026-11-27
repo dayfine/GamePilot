@@ -5,13 +5,7 @@ let probe ?template ~picture ~id box params =
   | None, _ | _, Error _ -> []
 
 let read m id =
-  match Effects.probe m id with
-  | Some (Wire.Find { blobs }) -> blobs
-  | Some
-      ( Wire.Color_stats _ | Wire.Template_match _ | Wire.Color_count _
-      | Wire.Line_shares _ | Wire.Other _ )
-  | None ->
-      []
+  match Effects.probe m id with Some (Wire.Find { blobs }) -> blobs | _ -> []
 
 type argb_range = { min : int; max : int }
 

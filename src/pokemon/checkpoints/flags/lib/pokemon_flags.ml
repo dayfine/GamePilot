@@ -36,18 +36,17 @@ let switch f = function
       Some (common_flag f (fun c -> { c with end_check_only = true }))
   | _ -> None
 
-let valued f name v =
+let valued f name v : series Run_flags.valued_flag =
   match name with
-  | "--party" -> Some (Ok (common_flag f (fun c -> { c with party = v })))
+  | "--party" -> Parsed (common_flag f (fun c -> { c with party = v }))
   | "--grind-battles" -> (
       match int_of_string_opt v with
       | Some n when n > 0 ->
-          Some (Ok (common_flag f (fun c -> { c with grind_cap = Some n })))
-      | _ -> Some (Error ("bad --grind-battles " ^ v)))
-  | "--make-room" -> Some (Ok { f with make_room = Some v })
-  | "--center" ->
-      Some (Ok (common_flag f (fun c -> { c with center = Some v })))
-  | _ -> None
+          Parsed (common_flag f (fun c -> { c with grind_cap = Some n }))
+      | _ -> Bad_value ("bad --grind-battles " ^ v))
+  | "--make-room" -> Parsed { f with make_room = Some v }
+  | "--center" -> Parsed (common_flag f (fun c -> { c with center = Some v }))
+  | _ -> Not_game_flag
 
 let series : series Run_flags.game_flags =
   {

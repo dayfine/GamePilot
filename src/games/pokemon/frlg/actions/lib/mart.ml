@@ -44,11 +44,12 @@ let buy_one ~log cursor (b : Mart_plan.buy) =
 let run ~log stock (plan : Mart_plan.t) =
   let buys = Mart_plan.buys stock plan in
   log ("Mart (" ^ plan.map ^ "): " ^ Mart_plan.buys_to_string buys);
-  M.press Wire.A ~cooldown_ms:clerk_menu_wait_ms;
-  ignore
-    (M.await_screen ~code:"mart_no_clerk" "the clerk's menu" Dialog.dialog_up);
-  M.press Wire.A ~cooldown_ms:clerk_menu_wait_ms;
-  ignore (M.await_screen ~code:"mart_no_buy_list" "the BUY list" list_back);
-  ignore (List.fold_left (buy_one ~log) 0 buys);
-  M.close "the BUY list" Money_box.money_box;
-  M.settle_back ~label:"leave the Mart" ~log
+  if buys <> [] then (
+    M.press Wire.A ~cooldown_ms:clerk_menu_wait_ms;
+    ignore
+      (M.await_screen ~code:"mart_no_clerk" "the clerk's menu" Dialog.dialog_up);
+    M.press Wire.A ~cooldown_ms:clerk_menu_wait_ms;
+    ignore (M.await_screen ~code:"mart_no_buy_list" "the BUY list" list_back);
+    ignore (List.fold_left (buy_one ~log) 0 buys);
+    M.close "the BUY list" Money_box.money_box;
+    M.settle_back ~label:"leave the Mart" ~log)

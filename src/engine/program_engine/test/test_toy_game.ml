@@ -73,7 +73,7 @@ let decode_cases =
       (fun () ->
         decoded Plan_text.outline
           (toy_plan [ {|{"id": "x", "kind": "route"}|} ]))
-      {|toy.plan.json: checkpoint.events[0].kind "route" is not a story event kind.|};
+      {|toy.plan.json: checkpoint.events[0].kind "route" is not a built-in event kind.|};
     case "an unknown arg of the toy's walk action, named by its set's decoder"
       (fun () ->
         decoded Plan_text.outline
@@ -145,7 +145,12 @@ let outcome ?end_at ?end_state ?after ?flags () =
   fst (run_result ?end_at ?end_state ?after ?flags ())
 
 let reads gold_now : Toy_rules.Postconditions.reads =
-  { gold_now = Some gold_now; start = Some 50; set = [ "met_cat" ] }
+  {
+    gold_now = Some gold_now;
+    start = Some 50;
+    set = [ "met_cat" ];
+    in_sight = None;
+  }
 
 let promised () = Option.get (plan ()).postconditions
 

@@ -145,7 +145,7 @@ let run f frames ~viewport =
 let main args =
   let defaults =
     {
-      daemon = "daemon/build/gamepilot_daemon";
+      daemon = Repo_io.Repo_files.default_daemon ();
       serial = None;
       frames = None;
       program = None;

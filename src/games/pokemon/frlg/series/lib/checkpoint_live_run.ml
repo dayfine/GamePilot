@@ -188,7 +188,7 @@ let record_outcome setup cp (run : Run_record.run) n ~attempt outcome =
 (* The attempt in its folder: the folder and how it ended. *)
 let run_in setup cp n ~attempt ~progress (run : Run_record.run) =
   let record = run.record in
-  let log, close = Run_record.story_log record in
+  let log, close = Run_record.run_log record in
   log
     (Printf.sprintf "[Run] %s%s from %s"
        (Run_line.run_name cp.id cp.plan n)

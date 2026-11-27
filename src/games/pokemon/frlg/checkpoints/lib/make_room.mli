@@ -10,35 +10,44 @@
 val id : string
 (** ["00-make-room"]: sorts before the chain's first checkpoint. *)
 
-val center_map : string -> string
-(** ["ViridianCity"] -> ["ViridianCity_PokemonCenter_1F"]. *)
-
 val pc_front : Grid_geometry.Tile_pos.t
 (** (11, 2), facing north: below the PC (11, 1) on a standard Center's ground
     floor ({!Frlg_overworld.Standard_center.pc_front}). *)
 
+type center = {
+  town : Frlg_actions.Fly_towns.town;  (** The Fly town to fly to. *)
+  map : string;
+      (** Its standard Center's ground floor map, from the places table. *)
+}
+(** A Fly town and its standard Pokémon Center map. *)
+
 val town_of_map :
-  Frlg_actions.Fly_towns.t -> string -> Frlg_actions.Fly_towns.town option
-(** The Fly town a map belongs to: the town itself, or the town whose name
-    begins the map's (["PalletTown_PlayersHouse_1F"] is Pallet Town's). *)
+  Frlg_actions.Fly_towns.t ->
+  maps:Grid_maps.Connected_maps.t ->
+  string ->
+  Frlg_actions.Fly_towns.town option
+(** The Fly town a map belongs to: the town (or its Fly landing map) itself, or
+    the town reached by indoor warps from an indoor map in [maps]. *)
 
 val nearest_center :
   Frlg_actions.Fly_towns.t ->
-  maps:string list ->
+  places:Frlg_places.Place_table.t ->
+  maps:Grid_maps.Connected_maps.t ->
   string ->
-  (Frlg_actions.Fly_towns.town, string) result
+  (center, string) result
 (** The Fly town with a standard Center ({!Frlg_overworld.Standard_center}) in
-    [maps] whose fly-map cell is nearest (by squared distance; the table's order
-    breaks ties) to the town of the save's map: Viridian City from Pallet Town,
-    which has no Center. The Indigo Plateau's Center has its own layout, with no
-    PC at {!pc_front}, so it is never chosen. *)
+    [places] and [maps] whose fly-map cell is nearest (by squared distance; the
+    table's order breaks ties) to the town of the save's map: Viridian City from
+    Pallet Town, which has no Center. The Indigo Plateau's Center has its own
+    layout, with no PC at {!pc_front}, so it is never chosen. *)
 
 type room = {
-  center : Frlg_actions.Fly_towns.town;
+  center : center;
   deposits : Room_policy.plan;
   party : Room_policy.member list;  (** As read, slot 1 first. *)
   needed_moves : string list;  (** Field moves the chain needs. *)
 }
+(** Inputs to build the ["00-make-room"] checkpoint plan. *)
 
-val plan_json : room -> Yojson.Safe.t
+val room_plan : room -> Yojson.Safe.t
 (** The checkpoint as a plan file ([gamepilot-checkpoint/1]). *)

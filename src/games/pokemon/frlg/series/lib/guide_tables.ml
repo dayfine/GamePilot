@@ -39,8 +39,8 @@ let rows ~plan_dir ids =
 
 let plural n one many = if n = 1 then one else many
 
-(* No line when the chain needs no free slot and no member joins: a need of
-   zero is no need (review rule R2). *)
+(* No line when the chain needs no free slot at the start: a need of zero is no
+   need (review rule R2). *)
 let room_line (room : Frlg_checkpoints.Party_room.need) =
   let free = Frlg_checkpoints.Party_room.free_needed room in
   let joins =
@@ -48,7 +48,7 @@ let room_line (room : Frlg_checkpoints.Party_room.need) =
       (fun (species, cp) -> Printf.sprintf "%s in %s" species cp)
       room.joins
   in
-  if free = 0 && joins = [] then []
+  if free = 0 then []
   else
     [
       Printf.sprintf "- %d free party %s%s" free
@@ -82,7 +82,7 @@ let chain_need (room : Frlg_checkpoints.Party_room.need) =
 (* The chain's declared preconditions are its first checkpoint's: the save's
    state where it starts. *)
 let chain_lines stocks ~before (loaded : Pokemon_engine.Plan.t list) =
-  let room = Frlg_checkpoints.Party_room.chain_need loaded in
+  let* room = Frlg_checkpoints.Party_room.chain_need loaded in
   let* needs =
     Frlg_checkpoints.Preflight.needs stocks ~before (as_one_plan loaded)
   in
@@ -97,9 +97,7 @@ let needs ~plan_dir chain =
   let* loaded = load ~plan_dir chain in
   let* before = Plan_dir.promised_before ~plan_dir (List.hd chain) in
   let* stocks = Frlg_actions.Mart_plan.load () in
-  match chain_lines stocks ~before loaded with
-  | lines -> Result.map (String.concat "\n") lines
-  | exception Json_field.Invalid e -> Error e
+  Result.map (String.concat "\n") (chain_lines stocks ~before loaded)
 
 (* The needs any save meets left out (review rule R2). *)
 let needs_text needs =
@@ -110,12 +108,8 @@ let needs_text needs =
 let preflight_row stocks ~plan_dir id =
   let* plan = Plan_dir.load_plan ~plan_dir id in
   let* before = Plan_dir.promised_before ~plan_dir id in
-  match Frlg_checkpoints.Preflight.needs stocks ~before plan with
-  | needs ->
-      Result.map
-        (fun needs -> Printf.sprintf "| %s | %s |" id (needs_text needs))
-        needs
-  | exception Json_field.Invalid e -> Error e
+  let* needs = Frlg_checkpoints.Preflight.needs stocks ~before plan in
+  Ok (Printf.sprintf "| %s | %s |" id (needs_text needs))
 
 let preflight ~plan_dir ids =
   let* stocks = Frlg_actions.Mart_plan.load () in

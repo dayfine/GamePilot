@@ -129,7 +129,7 @@ let header =
 
 let show runs_dir =
   let entries = live_entries (Filename.concat runs_dir ".watch") in
-  let now_ms = int_of_float (Unix.gettimeofday () *. 1000.) in
+  let now_ms = Run_record.now_ms () in
   if entries = [] then print_endline "no live runs"
   else (
     print_endline header;

@@ -54,6 +54,20 @@ next unlock of this kind (a ride, a gift) would add another cutoff beside it.
    checks the screen for the gift. 03.15-mable-reward setting `mystery_gift` is written in its
    plan now, so the composition design finds it there.
 
+**Intended direction: `sets` implies the `flags` postcondition.** Pokémon plans can already
+promise story flags at a checkpoint's end (`metadata.postconditions.flags`, "story flags that must
+be set", checked after the last event). A checkpoint that `sets` a flag should imply that promise
+instead of naming the flag a second time in its postconditions: one list, `sets`, says both what
+the next checkpoints may assume and what this one's end must show. Not built with `sets`; it waits
+for a game whose flags the runner can read at the end.
+
+PLZA reads one such flag now: `mystery_gift`, from the main menu's sixth row (Link Play), which
+shows only once 03.15-mable-reward's reward is claimed. With `sets` not built yet, that plan
+promises it as Pokémon plans do, `metadata.postconditions.flags: ["mystery_gift"]`
+(`Plza_rules.readable_flags` lists what PLZA can read; `Plza_autostory.Story_flag_read` reads it),
+so the runner's end check and its "already at its end" pre-pass read it. When `sets` lands, the
+plan's `sets` takes the name and the postcondition goes.
+
 Story flags are not the `skip_if` flags events already name: those are read from the screen at
 run time (PLZA's `Resume_flags`) to skip an event whose result the game already holds. Story flags
 are read from the plans before the console moves.

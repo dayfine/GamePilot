@@ -6,6 +6,18 @@ open Frlg_battle
 (* A flee only reads events and presses RUN; any other verb fails the test. *)
 let not_a_flee_verb () = failwith "not a flee's verb"
 
+let not_a_flee_level_up : Level_up.game_steps =
+  {
+    next = (fun () -> not_a_flee_verb ());
+    open_list = (fun () -> not_a_flee_verb ());
+    read_list = (fun () -> not_a_flee_verb ());
+    forget = (fun _ -> not_a_flee_verb ());
+    leave_list = (fun () -> not_a_flee_verb ());
+    decline = (fun () -> not_a_flee_verb ());
+    evolution = (fun ~cancel:_ -> not_a_flee_verb ());
+    log = ignore;
+  }
+
 let fake_game_steps events runs : Battle.game_steps =
   let events = Queue.of_seq (List.to_seq events) in
   {
@@ -17,7 +29,7 @@ let fake_game_steps events runs : Battle.game_steps =
     send_in = (fun ~slot:_ -> not_a_flee_verb ());
     run = (fun () -> incr runs);
     use_item = (fun _ -> not_a_flee_verb ());
-    answer_move_learn = (fun _ -> not_a_flee_verb ());
+    level_up = not_a_flee_level_up;
     answer_use_next = (fun _ -> not_a_flee_verb ());
   }
 

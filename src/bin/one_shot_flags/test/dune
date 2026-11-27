@@ -1,8 +1,0 @@
-(test
- (name test_one_shot_flags)
- (libraries
-  gamepilot.table_test
-  gamepilot.one_shot_flags
-  gamepilot.program_registry
-  gamepilot.live_run
-  unix))

@@ -1,6 +1,6 @@
-module B = Switch_home.Black_screen
-module H = Switch_home.Held_screen
-module P = Switch_home.Switch_presses
+module B = Switch.Black_screen
+module H = Screen_graph.Held_screen
+module P = Switch.Switch_presses
 
 let ( let* ) = Result.bind
 let load_game_timeout_ms = 60_000

@@ -2,25 +2,30 @@ open Frlg_readers
 module M = Menu_input
 module Steps = Frlg_menu_cursor.Cursor_steps
 
-type trip = { from : string; to_ : string; row : int }
+type island = { name : string; harbor : string }
+type trip = { from : string; to_ : island; row : int }
+
+let one_island = { name = "OneIsland"; harbor = "OneIsland_Harbor" }
+let two_island = { name = "TwoIsland"; harbor = "TwoIsland_Harbor" }
+let three_island = { name = "ThreeIsland"; harbor = "ThreeIsland_Harbor" }
 
 let islands =
   [
-    ("OneIsland_Harbor", [ "TwoIsland"; "ThreeIsland" ]);
-    ("TwoIsland_Harbor", [ "OneIsland"; "ThreeIsland" ]);
+    (one_island.harbor, [ two_island; three_island ]);
+    (two_island.harbor, [ one_island; three_island ]);
   ]
 
 let island_list = Script_menu.seagallop_islands
 let where = "ferry: "
 let bad e = Error (Pokemon_engine.Failure.cause ~repeats:true "bad_args" e)
 
-let trip_on from to_ =
+let trip_on from to_name =
   match List.assoc_opt from islands with
   | None -> bad (where ^ "no Seagallop list is read at " ^ from)
   | Some list -> (
-      match List.find_index (String.equal to_) list with
-      | Some row -> Ok { from; to_; row }
-      | None -> bad (Printf.sprintf "%s%s's list has no %s" where from to_))
+      match List.find_index (fun (i : island) -> i.name = to_name) list with
+      | Some row -> Ok { from; to_ = List.nth list row; row }
+      | None -> bad (Printf.sprintf "%s%s's list has no %s" where from to_name))
 
 let trip_of_args ~from args =
   match
@@ -34,7 +39,7 @@ let trip_of_args ~from args =
 let landing : Grid_geometry.Tile_pos.t = { x = 8; y = 5 }
 
 let arrival trip : Pokemon_engine.Pose.observed =
-  { at_map = trip.to_ ^ "_Harbor"; at_tile = landing; faces = Some South }
+  { at_map = trip.to_.harbor; at_tile = landing; faces = Some South }
 
 (* The text box opening after the A, as a talk's. *)
 let talk_ms = 500
@@ -65,11 +70,12 @@ let pick trip =
 
 let sail ~log trip =
   log
-    (Printf.sprintf "Seagallop: %s to %s (row %d)." trip.from trip.to_ trip.row);
+    (Printf.sprintf "Seagallop: %s to %s (row %d)." trip.from trip.to_.name
+       trip.row);
   M.press Wire.A ~cooldown_ms:talk_ms;
   Effects.with_probes (Script_menu.probes island_list) (fun () -> pick trip);
   M.raise_error
-    (Scene_looks.settle ~await_fade_in:true Talk ~label:"Seagallop"
+    (Scene_readings.settle ~await_fade_in:true Talk ~label:"Seagallop"
        ~battle_ends:false ~log)
 
 let run ~log ~from args =

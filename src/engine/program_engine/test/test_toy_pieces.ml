@@ -56,13 +56,13 @@ let claimed parts () =
 
 (* A command's generated plan: the story set and the command's steps. *)
 type command_action =
-  | Story of Engine_rules.Story_action.t
+  | Story of Engine_rules.Builtin_action.t
   | Command of Engine_rules.Command_step.t
 
 let command_parts =
   Action_parts.
     [
-      Part ((module Story_action_decode), fun a -> Story a);
+      Part ((module Builtin_action_decode), fun a -> Story a);
       Part
         ( Command_step_decode.of_names [ "soft_reset"; "read_party" ],
           fun s -> Command s );
@@ -72,7 +72,7 @@ let command name json () =
   read
     (Action_parts.action_of_plan command_parts)
     (function
-      | Story a -> "story " ^ Engine_rules.Story_action.to_string a
+      | Story a -> "story " ^ Engine_rules.Builtin_action.to_string a
       | Command s -> "step " ^ Engine_rules.Command_step.to_string s)
     name json
 

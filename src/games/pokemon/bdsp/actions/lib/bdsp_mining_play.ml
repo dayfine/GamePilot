@@ -1,6 +1,6 @@
 open Bdsp_underground
-module H = Switch_home.Held_screen
-module P = Switch_home.Switch_presses
+module H = Screen_graph.Held_screen
+module P = Switch.Switch_presses
 
 let ( let* ) = Result.bind
 

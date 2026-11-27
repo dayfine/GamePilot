@@ -41,7 +41,7 @@ val on_mining_screen : Effects.measurements -> bool
 (** [true] when the right-side Red Hammer + Blue Pickaxe tool panel is visible,
     meaning the game is currently on the mining wall screen. *)
 
-val classify_cell : Switch_home.Solid_color.stats -> Mining_wall.visible_cell
+val classify_cell : Switch.Solid_color.stats -> Mining_wall.visible_cell
 (** Classify one cell's RGB mean/stddev into covered dirt (1/2/4), cleared empty
     wall, iron bar, or exposed item (distinguishing pink/magenta Mysterious
     Shards from other items). *)

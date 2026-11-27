@@ -148,6 +148,21 @@ void check_live_schedule() {
     CHECK(segments[1].keys == 0 && segments[1].ms == 0 &&
           segments[1].sticks.left.y == 0);
   }
+  schedule.clear();
+
+  // start_at_t_ms (v1.21): holds until the requested clock time, starts at
+  // once when already in the past, and still waits for queued batches.
+  CHECK(schedule.submit("t1", {press}, 3000, 3500.0) == 3500.0);
+  CHECK(schedule.next_event_ms() == 3500.0);
+  CHECK(schedule.take_due(3499.9).empty());
+  const auto on_time = schedule.take_due(3500.0);
+  CHECK(on_time.size() == 1 && on_time[0].start_ms == 3500.0 &&
+        on_time[0].keys == kA);
+  // t1 ends at 3650; a batch asking for 3100 queues after t1 at 3650.
+  CHECK(schedule.submit("t2", {press}, 3550, 3100.0) == 3650.0);
+  // Idle with a past start_at_t_ms starts at now_ms.
+  schedule.clear();
+  CHECK(schedule.submit("t3", {press}, 4000, 3900.0) == 4000.0);
 }
 
 // Frame 1 at once, then frames 2..`total` as fast as they go once `open()` is
@@ -797,6 +812,135 @@ void check_keep_awake_keys() {
   CHECK(refused);
 }
 
+// Per-gap notifications under delivery "every" (v1.21), and absolute-time
+// submit `start_at_t_ms` on the live backend.
+void check_gap_notification_and_start_at() {
+  // Part 1: deterministic live backend that jumps seq from 1 to 5 once the
+  // client is subscribed, verifying the daemon emits `gap` before `frame`.
+  {
+    class JumpingBackend : public Backend {
+     public:
+      JumpingBackend() {
+        info_.kind = "switch";
+        info_.frame_rate = 60;
+        info_.width = 4;
+        info_.height = 4;
+        info_.timing = Timing::kLive;
+        info_.takes_input = false;
+      }
+      const BackendInfo& info() const override { return info_; }
+      std::int64_t seq() const override { return seq_; }
+      void set_keys(KeyMask) override {}
+      std::int64_t step() override { return seq_; }
+      cv::Mat frame() override {
+        return cv::Mat(4, 4, CV_8UC3,
+                       cv::Scalar::all(static_cast<double>(seq_ * 10)));
+      }
+      std::int64_t load_state(const std::string&) override { return seq_; }
+      std::int64_t save_state(const std::string&) override { return seq_; }
+      void release() override {}
+      void push(std::int64_t seq, double t_ms) {
+        std::lock_guard<std::mutex> guard(lock_);
+        pending_.push_back(FrameStamp{seq, t_ms});
+        ready_.notify_one();
+      }
+      std::optional<FrameStamp> next_frame(double timeout_ms) override {
+        std::unique_lock<std::mutex> guard(lock_);
+        if (!ready_.wait_for(
+                guard,
+                std::chrono::microseconds(
+                    static_cast<std::int64_t>(timeout_ms * 1000.0)),
+                [&] { return !pending_.empty(); })) {
+          return std::nullopt;
+        }
+        const FrameStamp stamp = pending_.front();
+        pending_.erase(pending_.begin());
+        seq_ = stamp.seq;
+        return stamp;
+      }
+
+     private:
+      BackendInfo info_;
+      std::mutex lock_;
+      std::condition_variable ready_;
+      std::vector<FrameStamp> pending_;
+      std::int64_t seq_ = 0;
+    };
+
+    const Clock clock;
+    JumpingBackend backend;
+    ServerOptions options;
+    options.port = 47981;
+    Server server(backend, options, clock);
+    std::atomic<bool> stop{false};
+    std::thread serving([&] { server.run(stop); });
+
+    TestClient client = connect_client(options.port);
+    call(
+        client,
+        R"({"jsonrpc":"2.0","id":1,"method":"hello","params":{"protocol":1,"client":"gap-test"}})");
+    call(
+        client,
+        R"({"jsonrpc":"2.0","id":2,"method":"subscribe","params":{"probes":[{"id":"p","kind":"core.color_stats@1","box":{"x":0,"y":0,"w":1,"h":1},"delivery":"every"}]}})");
+    backend.push(1, 100.0);
+    const auto first_lines = read_until(client, "\"method\":\"frame\"", 1000);
+    CHECK(!first_lines.empty());
+    backend.push(5, 166.7);
+    const auto after_lines = read_until(client, "\"method\":\"frame\"", 1000);
+    const auto gap_it = std::find_if(
+        after_lines.begin(), after_lines.end(), [](const std::string& line) {
+          return line.find("\"method\":\"gap\"") != std::string::npos;
+        });
+    CHECK(gap_it != after_lines.end());
+    if (gap_it != after_lines.end()) {
+      const pa::JsonValue msg = parse_message(*gap_it);
+      const pa::JsonObject& params = msg.to_object()->get_object_throw("params");
+      CHECK(params.get_integer_throw("from_seq") == 2);
+      CHECK(params.get_integer_throw("to_seq") == 4);
+      CHECK(params.get_double_throw("from_t_ms") == 100.0);
+      CHECK(params.get_double_throw("to_t_ms") == 166.7);
+    }
+    stop.store(true);
+    serving.join();
+  }
+
+  // Part 2: submit with start_at_t_ms waits until the requested daemon time.
+  {
+    const Clock clock;
+    test::FakeConsole console(clock);
+    SwitchBackend backend(console.board.screen(60, 0, cv::Size(64, 36)),
+                          console.session, clock, SwitchOptions{});
+    ServerOptions options;
+    options.port = 47982;
+    Server server(backend, options, clock);
+    std::atomic<bool> stop{false};
+    std::thread serving([&] { server.run(stop); });
+
+    TestClient client = connect_client(options.port);
+    call(
+        client,
+        R"({"jsonrpc":"2.0","id":1,"method":"hello","params":{"protocol":1,"client":"start-at-test"}})");
+    const double target_ms = std::round(clock.now_ms() + 120.0);
+    const std::string req =
+        R"({"jsonrpc":"2.0","id":2,"method":"submit","params":{"batch_id":"timed","start_at_t_ms":)" +
+        std::to_string(target_ms) +
+        R"(,"commands":[{"press":["A"],"hold_ms":40,"cooldown_ms":10}]}})";
+    call(client, req);
+    const auto done_lines = read_until(client, "\"batch_done\"", 2000);
+    CHECK(!done_lines.empty());
+    const std::vector<BoardCommand> commands = console.board.commands();
+    const auto press = std::find_if(
+        commands.begin(), commands.end(),
+        [](const BoardCommand& c) { return c.message.buttons.button3 != 0; });
+    CHECK(press != commands.end());
+    if (press != commands.end()) {
+      CHECK(press->start_ms >= target_ms - 1.0);
+    }
+    stop.store(true);
+    serving.join();
+  }
+}
+
 }  // namespace
 
 int main() {
@@ -813,5 +957,6 @@ int main() {
   check_stick_run();
   check_one_clock_and_cancel();
   check_keep_awake_keys();
+  check_gap_notification_and_start_at();
   return TEST_RESULT();
 }

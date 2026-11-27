@@ -1,4 +1,5 @@
 module J = Json_field
+module Level_up_policy = Frlg_battle.Level_up_policy
 
 type use = { member : Action_args.member; policy : Level_up_policy.policy }
 
@@ -77,7 +78,12 @@ let read_goal ~where args =
 let check_rule (r : rule_read) =
   if r.learn = r.replacing then
     bad_args "%sreplacing is the move itself, %s" r.rule_where r.learn
-  else Ok { Level_up_policy.learn = r.learn; replacing = r.replacing }
+  else
+    Ok
+      {
+        Level_up_policy.learn = r.learn;
+        replacing = Level_up_policy.Named r.replacing;
+      }
 
 let check_rules rules =
   List.fold_left

@@ -1,25 +1,45 @@
+let library_code_checks c path src =
+  if not (Source_tree.in_library_dir c path) then []
+  else
+    Magic_numbers.check src @ Flat_constants.check c src
+    @ Variant_with_suffix.check_implementation src
+    @ if Direct_io.in_scope path then Direct_io.check src else []
+
 let code_checks c path text =
   match Parsed_source.parse ~path text with
   | Error f -> [ f ]
   | Ok src ->
       Function_length.check c src
       @ Nesting.check c src @ Complexity.check c src
-      @ (if Source_tree.in_library_dir c path then Magic_numbers.check src
-         else [])
+      @ library_code_checks c path src
       @
       if Source_tree.under_no_exceptions_root c path then
         No_exceptions.check src
       else []
 
 let interface_checks c path text =
-  if
-    Source_tree.in_library_dir c path
-    && Source_tree.under_interface_docs_root c path
-  then Interface_docs.check ~path text
-  else []
+  if not (Source_tree.in_library_dir c path) then []
+  else
+    match Parsed_source.parse_interface ~path text with
+    | Error f -> [ f ]
+    | Ok _ ->
+        Variant_with_suffix.check_interface ~path text
+        @ Ambiguous_return.check ~path text
+        @
+        if Source_tree.under_interface_docs_root c path then
+          Interface_docs.check ~path text
+        else []
+
+let test_checks path text =
+  match Parsed_source.parse ~path text with
+  | Error f -> [ f ]
+  | Ok src -> Text_assertions.check src
 
 let file_findings (c : Config.t) path =
-  if Source_tree.in_test_dir c path then []
+  if Source_tree.in_test_dir c path then
+    if Filename.check_suffix path ".ml" then
+      test_checks path (Source_tree.read path)
+    else []
   else if Filename.check_suffix path ".ml" then
     let text = Source_tree.read path in
     File_length.check c ~path text @ code_checks c path text

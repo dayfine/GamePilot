@@ -1,5 +1,5 @@
 open Bdsp_underground
-module PB = Switch_home.Picture_box
+module PB = Switch.Picture_box
 module BF = Wire.Blob_find
 
 type offset = { dx : int; dy : int; dx_norm : float; dy_norm : float }

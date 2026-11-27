@@ -53,8 +53,8 @@ let bad_plans () =
       | Some dir ->
           let plan_error =
             match p.rules with
-            | Plza_story | Plza_home | Plza_gifts -> plza_plan_error
-            | Pokemon_grid -> frlg_plan_error
+            | Plza_story | Pokemon_home | Plza_gifts -> plza_plan_error
+            | Pokemon_grid | Bdsp_underground -> frlg_plan_error
           in
           List.filter_map plan_error (plans_in dir))
     R.all
@@ -152,8 +152,8 @@ let () =
         (fun () -> id_of (R.find "frlg.mail_glitch"))
         "frlg.mail_glitch";
       case "find by the part after the game"
-        (fun () -> id_of (R.find "start_menu_poc"))
-        "frlg.start_menu_poc";
+        (fun () -> id_of (R.find "mail_glitch"))
+        "frlg.mail_glitch";
       case "find: unknown" (fun () -> id_of (R.find "mail")) "none";
       case "plan dir: relative, trailing slash"
         (fun () ->
@@ -203,18 +203,33 @@ let () =
       case "every options declaration is sound" bad_options "";
       case "frlg.ace's items are the preset table's" ace_items "same";
       case "options: none given to a program that takes none"
-        (fun () -> options_for (Some "frlg.mail_glitch") [])
+        (fun () -> options_for (Some "frlg.ace_setup") [])
         "ok ";
       case "options: refused by a program that takes none"
-        (fun () -> options_for (Some "frlg.mail_glitch") [ ("item", "x") ])
+        (fun () -> options_for (Some "frlg.ace_setup") [ ("item", "x") ])
         "error: --options item: this program takes no options";
+      case "options: frlg.sevii_story defaults to blastoise"
+        (fun () -> options_for (Some "frlg.sevii_story") [])
+        "ok sweeper=blastoise";
+      case "options: frlg.sevii_story accepts another sweeper"
+        (fun () ->
+          options_for (Some "frlg.sevii_story") [ ("sweeper", "charizard") ])
+        "ok sweeper=charizard";
+      case "options: frlg.mail_glitch defaults to blastoise and blizzard"
+        (fun () -> options_for (Some "frlg.mail_glitch") [])
+        "ok sweeper=blastoise depleted-move=blizzard";
+      case "options: frlg.mail_glitch overrides sweeper and depleted-move"
+        (fun () ->
+          options_for (Some "frlg.mail_glitch")
+            [ ("sweeper", "charizard"); ("depleted-move", "fire-blast") ])
+        "ok sweeper=charizard depleted-move=fire-blast";
       case "options: plza.autostory, none given: the plan's"
         (fun () -> options_for (Some "plza.autostory") [])
         "ok ";
       case "options: plza.autostory refuses Korean"
         (fun () -> options_for (Some "plza.autostory") [ ("language", "ko") ])
         "error: --options language=ko: language is en | es-ES | es-419 | fr | \
-         de | it | ja | zh-Hant";
+         de | it | ja | zh-Hans | zh-Hant";
       case "options: refused for a plan folder no program registers"
         (fun () -> options_for None [ ("item", "x") ])
         "error: --options item: this program takes no options";
@@ -225,6 +240,6 @@ let () =
           |> List.map (fun (k, v) -> k ^ "=" ^ v)
           |> String.concat "; ")
         "game=frlg; game_name=Pokémon FireRed/LeafGreen; \
-         program=frlg.mail_glitch; program_name=Mail Glitch; group=FRLG / \
-         Glitches";
+         program=frlg.mail_glitch; program_name=Mail Glitch; group=Glitch \
+         Setup";
     ]

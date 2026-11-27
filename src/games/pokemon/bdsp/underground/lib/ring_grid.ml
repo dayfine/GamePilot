@@ -15,56 +15,70 @@ type route = {
   return_legs : P.t L.t list;
 }
 
+type bounds = {
+  min_x : int;
+  max_x : int;
+  top_y_min : int;
+  top_y_max : int;
+  bot_y_min : int;
+  bot_y_max : int;
+  east_x_min : int;
+}
+
+type centers = { bottom_y : int; east_x : int; top_y : int }
+
 let width = 16
 let height = 24
 let south_door : P.t = { x = 1; y = 20 }
 let north_door : P.t = { x = 1; y = 1 }
-let min_x = 1
-let max_x = 14
-let top_y_min = 1
-let top_y_max = 3
-let bot_y_min = 20
-let bot_y_max = 22
-let east_x_min = 12
-let bot_x0 = 2
-let bot_x1 = 3
-let bot_x2 = 5
-let bot_x3 = 7
-let bot_x4 = 8
-let bot_x5 = 10
-let bot_x6 = 12
-let bot_x7 = 14
-let east_y0 = 19
-let east_y1 = 16
-let east_y2 = 14
-let east_y3 = 12
-let east_y4 = 9
-let east_y5 = 7
-let east_y6 = 5
-let east_y7 = 2
+
+let bounds =
+  {
+    min_x = 1;
+    max_x = 14;
+    top_y_min = 1;
+    top_y_max = 3;
+    bot_y_min = 20;
+    bot_y_max = 22;
+    east_x_min = 12;
+  }
+
+type bucket_coords = {
+  b0 : int;
+  b1 : int;
+  b2 : int;
+  b3 : int;
+  b4 : int;
+  b5 : int;
+  b6 : int;
+  b7 : int;
+}
+
+let coords_array c = [| c.b0; c.b1; c.b2; c.b3; c.b4; c.b5; c.b6; c.b7 |]
+let centers = { bottom_y = 20; east_x = 14; top_y = 1 }
 
 let bucket_bottom_xs =
-  [| bot_x0; bot_x1; bot_x2; bot_x3; bot_x4; bot_x5; bot_x6; bot_x7 |]
+  coords_array
+    { b0 = 2; b1 = 3; b2 = 5; b3 = 7; b4 = 8; b5 = 10; b6 = 12; b7 = 14 }
 
 let bucket_east_ys =
-  [| east_y0; east_y1; east_y2; east_y3; east_y4; east_y5; east_y6; east_y7 |]
+  coords_array
+    { b0 = 19; b1 = 16; b2 = 14; b3 = 12; b4 = 9; b5 = 7; b6 = 5; b7 = 2 }
 
-let bucket_top_xs =
-  [| bot_x7; bot_x6; bot_x5; bot_x4; bot_x3; bot_x2; bot_x1; bot_x0 |]
-
-let bottom_center_y = 20
-let east_center_x = 14
-let top_center_y = 1
+let bucket_top_xs = Array.of_list (List.rev (Array.to_list bucket_bottom_xs))
 
 let in_corridor (p : P.t) =
   let in_bottom =
-    p.x >= min_x && p.x <= max_x && p.y >= bot_y_min && p.y <= bot_y_max
+    p.x >= bounds.min_x && p.x <= bounds.max_x && p.y >= bounds.bot_y_min
+    && p.y <= bounds.bot_y_max
   in
   let in_top =
-    p.x >= min_x && p.x <= max_x && p.y >= top_y_min && p.y <= top_y_max
+    p.x >= bounds.min_x && p.x <= bounds.max_x && p.y >= bounds.top_y_min
+    && p.y <= bounds.top_y_max
   in
   let in_east =
-    p.x >= east_x_min && p.x <= max_x && p.y >= top_y_min && p.y <= bot_y_max
+    p.x >= bounds.east_x_min && p.x <= bounds.max_x && p.y >= bounds.top_y_min
+    && p.y <= bounds.bot_y_max
   in
   in_bottom || in_top || in_east
 
@@ -97,9 +111,9 @@ let clamp_bucket b = max 0 (min (Array.length bucket_bottom_xs - 1) b)
 let waypoint_of_bucket ~segment ~bucket =
   let i = clamp_bucket bucket in
   match segment with
-  | Bottom_east -> { P.x = bucket_bottom_xs.(i); y = bottom_center_y }
-  | East_vertical -> { P.x = east_center_x; y = bucket_east_ys.(i) }
-  | Top_east -> { P.x = bucket_top_xs.(i); y = top_center_y }
+  | Bottom_east -> { P.x = bucket_bottom_xs.(i); y = centers.bottom_y }
+  | East_vertical -> { P.x = centers.east_x; y = bucket_east_ys.(i) }
+  | Top_east -> { P.x = bucket_top_xs.(i); y = centers.top_y }
 
 let leg_tile_count (l : _ L.t) =
   match l.kind with L.Walk { tiles; _ } -> tiles | Face | Special_step _ -> 0

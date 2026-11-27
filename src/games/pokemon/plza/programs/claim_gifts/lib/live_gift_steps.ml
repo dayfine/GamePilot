@@ -51,9 +51,8 @@ let game_steps ~log ~picture ~assets ~name_templates : Claim_gifts.game_steps =
         Gift_claim.claim ~log ~picture ~assets
           ~gift_name:(gift_name ~name_templates gift)
           gift);
-    check_slots =
-      (fun ~party_gift ~in_box ->
-        probed (fun () -> Gift_boxes.check ~log ~party_gift ~in_box));
+    settle_boxes =
+      (fun slots -> probed (fun () -> Gift_boxes.settle ~log slots));
     save = (fun () -> probed (fun () -> Save_progress.save ~log));
     log;
   }

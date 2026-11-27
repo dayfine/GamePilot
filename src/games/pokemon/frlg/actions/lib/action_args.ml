@@ -16,8 +16,19 @@ let slot ~where key args =
     J.fail "%s%s is %d, not a party slot (1-%d)." where key n party_slots
   else n
 
-let member ~where args =
-  match J.string_opt ~where "species" args with
+let role_species ~options ~where args role =
+  match (Run_options.find options role, J.string_opt ~where "species" args) with
+  | Some s, _ | None, Some s -> Some s
+  | None, None ->
+      J.fail "%srole %s needs --options %s=SPECIES or species." where role role
+
+let species_opt ?(options = Run_options.none) ~where args =
+  match J.string_opt ~where "role" args with
+  | Some role -> role_species ~options ~where args role
+  | None -> J.string_opt ~where "species" args
+
+let member ?(options = Run_options.none) ~where args =
+  match species_opt ~options ~where args with
   | Some species -> Species species
   | None when J.has "target_slot" args -> Slot (slot ~where "target_slot" args)
   | None -> J.fail "%sneeds species or target_slot." where
@@ -28,6 +39,9 @@ let member_to_string = function
 
 let member_keys =
   [ "species"; "sweeper"; "knock_off_species"; "recycle_species" ]
+
+let named_species ~where args =
+  List.filter_map (fun key -> J.string_opt ~where key args) member_keys
 
 let field_move_users = [ ("cut_tree", "cut"); ("fly", "fly") ]
 
@@ -54,7 +68,8 @@ let badge_needed action =
 let picks_member ~action args =
   action = "capture" || action = "pc_deposit"
   || (not (List.mem_assoc action field_move_users))
-     && List.exists (fun key -> J.has key args) member_keys
+     && (J.has "role" args
+        || List.exists (fun key -> J.has key args) member_keys)
 
 let deposited_species ~where args =
   Option.fold ~none:[]

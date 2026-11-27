@@ -1,5 +1,7 @@
 module Failure = Engine_run.Failure
 
+type link_play_row = Shown | Absent | No_menu
+
 type game_steps = {
   submit : Wire.command -> unit;
   submit_batch : Wire.command list -> unit;
@@ -16,6 +18,7 @@ type game_steps = {
   wait_until : float -> unit;
   read_lock_target : unit -> Catch_plan.target option;
   read_party_slots : unit -> int option;
+  read_link_play_row : unit -> link_play_row;
   log : string -> unit;
   log_detail : string -> unit;
 }
@@ -41,8 +44,7 @@ let walk_game_steps steps : Plza_walk.Walk.game_steps =
   }
 
 let game_not_running =
-  Failure.cause ~repeats:true "game_not_running"
-    Switch_home.Screen_poll.not_running
+  Failure.cause ~repeats:true "game_not_running" Switch.Screen_poll.not_running
 
 type waited =
   | Matched of { look : Look.t; looks : int; elapsed_ms : float }

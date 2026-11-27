@@ -1,10 +1,11 @@
 (* The new game's readers (Switch_home_tile, Intro_screens, the keyboard's cursor and text
-   field as Switch_home.Keyboard_typing reads them, Confirm_choices) on the
+   field as Switch.Keyboard_typing reads them, Confirm_choices) on the
    fork's frames of 2026-11-15 (PokemonLZA_AutoStoryIntroScreens_Tests.cpp,
    AutoStoryNewGame/2026-11-15, images/new-game): the language list on each
    of its ten entries, the look picker before the stick moves and after the
    first tilt, the name keyboard in nine languages with the cursor on "1",
-   Simplified Chinese's keyboard keeping "1" after the first +, and Confirm
+   Simplified Chinese's keyboard keeping "1" after the first +, and console
+   B's Simplified Chinese keyboard of 2026-11-26 (dark, in English), and Confirm
    Choices after the name "1" (none of the others); and console B's Switch
    HOME (the home- frames, redacted to PLZA's title band, another game's title
    made a checkerboard: images/new-game/README.md): the cursor on PLZA's tile, first or scrolled to, reads as
@@ -15,7 +16,7 @@
    (fixtures/intro/intro.shifted.probes.jsonl, one shift per frame). *)
 
 open Plza_readers
-module T = Switch_home.Keyboard_typing
+module T = Switch.Keyboard_typing
 
 let frames = Wire.read_image_probes "fixtures/intro/intro.probes.jsonl"
 let shifted = Wire.read_image_probes "fixtures/intro/intro.shifted.probes.jsonl"
@@ -28,9 +29,9 @@ let keyboard_parts m =
   [
     Some "keyboard";
     Option.map
-      (fun (k : Switch_home.Code_keyboard.key) ->
+      (fun (k : Switch.Code_keyboard.key) ->
         Printf.sprintf "cursor (%d, %d)" k.row k.col)
-      (Switch_home.Code_keyboard.cursor m);
+      (Switch.Code_keyboard.cursor m);
     (if T.text_pixels m >= has_text then Some "text" else None);
   ]
 
@@ -123,6 +124,10 @@ let keyboards =
   @ [
       case "name-keyboard-zhHans-typed-1-after-plus"
         "keyboard, cursor (0, 0), text";
+      (* Console B, 2026-11-26: the dark theme, opened in English (英文),
+         the Latin page every other language types on. *)
+      case "name-keyboard-zhHans-english-dark-cursor-on-1"
+        "keyboard, cursor (0, 0)";
     ]
 
 let confirms =

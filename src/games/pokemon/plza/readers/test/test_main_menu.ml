@@ -15,10 +15,10 @@ open Plza_readers
 let yes = Fixture_frames.yes_no
 
 let read m =
-  let right, b = Main_menu.buttons m in
+  let b = Main_menu.buttons m in
   Printf.sprintf "menu %s (right %s, B %s)"
     (yes (Main_menu.shown m))
-    (yes right) (yes b)
+    (yes b.right_arrow) (yes b.b_button)
 
 let menu_frames = [ "tutorial-cards/it-menu-no-card" ]
 

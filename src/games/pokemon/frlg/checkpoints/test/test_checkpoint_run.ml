@@ -13,7 +13,8 @@ let handled =
   :: Frlg_actions.Action_requests.names
   @ List.map fst
       (Frlg_actions.Mail_glitch_use.handlers ~log:ignore
-         ~party:(ref (Frlg_actions.Party_roster.of_list [])))
+         ~party:(ref (Frlg_actions.Party_roster.of_list []))
+         ~options:Run_options.none)
 
 let missing (p : Pokemon_engine.Plan.t) =
   List.filter_map
@@ -92,6 +93,22 @@ let walks file () =
   String.concat "; " (List.rev out)
 
 let case name input expectation = { Table_test.name; input; expectation }
+
+(* check_plan on a plan with [execution] JSON. *)
+let check_execution execution () =
+  let text =
+    Printf.sprintf
+      {|{"format": "gamepilot-checkpoint/1", "game": "frlg", "execution": %s,
+  "checkpoint": {"id": "cp", "title": "Test", "events": []}}|}
+      execution
+  in
+  match
+    Pokemon_engine.Plan_decode.decode ~source:"cp.plan.json"
+      (Yojson.Safe.from_string text)
+  with
+  | Error e -> e
+  | Ok p -> (
+      match Checkpoint_run.check_plan p with Ok () -> "frlg" | Error e -> e)
 
 (* check_plan on a plan that starts anywhere outdoors, its first event [first]. *)
 let anywhere_first first () =
@@ -280,6 +297,13 @@ let () =
         (anywhere_first
            {|{"id": "walk", "kind": "route", "action": "run", "args": {"target": {"map": "CeladonCity", "tiles": [[1, 2]]}}}|})
         "a checkpoint that starts anywhere outdoors begins with a fly event";
+      case "execution.menu omitted: accepted" (check_execution {|{}|}) "frlg";
+      case "execution.menu short: refused"
+        (check_execution {|{"menu": "short"}|})
+        "execution.menu \"short\" is not \"full\"";
+      case "execution.menu non-string: refused"
+        (check_execution {|{"menu": 1}|})
+        "execution.menu is not a string.";
       case "su-01"
         (summary "su-01.plan.json")
         "frlg; from anywhere outdoors; missing: none";

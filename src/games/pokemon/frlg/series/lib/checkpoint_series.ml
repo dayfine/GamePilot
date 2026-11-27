@@ -43,10 +43,17 @@ let start_and_partial (setup : Run.setup) id (plan : Plan.t) =
 (* The checkpoint [id], its end declared by [next]'s plan. *)
 let checkpoint ~plan_dir (setup : Run.setup) id ~next =
   let* plan = load_plan ~plan_dir id in
+  let apply =
+    Option.map
+      (Frlg_checkpoints.Plan_file.apply_postcondition_options
+         setup.program_options)
+  in
+  let plan = { plan with postconditions = apply plan.postconditions } in
   let next_id = next in
   let* next = next_plan ~plan_dir next in
   let* start_state, partial = start_and_partial setup id plan in
   let* before = Plan_dir.promised_before ~plan_dir id in
+  let before = apply before in
   Ok
     {
       Run.id;
@@ -61,8 +68,7 @@ let checkpoint ~plan_dir (setup : Run.setup) id ~next =
         | None -> Checkpoint_end.declared ~next plan.checkpoint);
     }
 
-let ms_per_s = 1000.
-let now_ms () = int_of_float (Unix.gettimeofday () *. ms_per_s)
+let now_ms = Run_record.now_ms
 
 let attempt_of : Run.outcome -> Checkpoint_trials.attempt = function
   | Passed _ -> Attempt_passed
@@ -159,12 +165,29 @@ let keep_uncapped_end (setup : Run.setup) id ~next runs =
         cap
   | None -> keep_end setup id ~next runs
 
+let record_species cp_id species =
+  match Dex_targets.record_caught species with
+  | Ok () ->
+      Printf.printf "[Checkpoints] %s: recorded %s in local dex progress\n%!"
+        cp_id species
+  | Error e ->
+      Printf.printf "[Checkpoints] %s: dex progress not saved: %s\n%!" cp_id e
+
+let record_dex_progress (setup : Run.setup) (cp : Run.checkpoint) =
+  match
+    ( Run_options.find setup.program_options "target",
+      Dex_targets.plan_species cp.plan )
+  with
+  | Some _, Some species -> record_species cp.id species
+  | _ -> ()
+
 (* Whether [cp] passed, after running it until its policy decided. *)
 let decide (setup : Run.setup) (cp : Run.checkpoint) chain ~next =
   match runs_of setup cp chain with
   | Checkpoint_trials.Checkpoint_passed { passes; runs }, done_runs ->
       Printf.printf "[Checkpoints] %s: passed (%d of %d runs)%s\n%!" cp.id
         passes runs (Run.capped_note setup cp);
+      record_dex_progress setup cp;
       if Event_range.keeps_end (Run.partial_range cp) setup.policy then
         keep_uncapped_end setup cp.id ~next done_runs;
       true

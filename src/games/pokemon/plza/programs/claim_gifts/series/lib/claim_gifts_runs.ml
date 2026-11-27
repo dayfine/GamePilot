@@ -15,7 +15,7 @@ let run_checkpoint inputs ~log ~picture ~assets report (plan : P.Plan.t) =
       ~assets
   in
   (* A console idle before the run dims its screen; nothing reads on it. *)
-  Switch_home.Stick_wake.run ();
+  Switch.Stick_wake.run ();
   P.Plan_watch.run ~mode:"testing" report (fun ~on_event ->
       P.Runner.run ~on_event game plan.checkpoint)
 
@@ -34,6 +34,7 @@ let run_series inputs ~program ~options ~viewport plan_dir args =
   Series.run_series
     {
       check_plans = Series.each_plan Plza_claim_gifts.Claim_gifts.check_plan;
+      with_end_place = Series.no_end_place;
       daemon_flags = Series.keepawake_stick;
       attempt = attempt inputs;
     }

@@ -5,17 +5,18 @@ let run args () = show (Run_args.parse args)
 
 let old command args () =
   match Run_args.of_old_command command args with
-  | None -> "none"
-  | Some r -> show r
+  | Not_old_command -> "none"
+  | Invalid_old_args e -> "error: " ^ e
+  | Run t -> Run_args.command_line t
 
 let case name input expectation = { Table_test.name; input; expectation }
 
 let () =
   Table_test.run "run_args"
     [
-      case "a one-shot program"
-        (run [ "frlg.start_menu_poc"; "--console" ])
-        "gamepilot run frlg.start_menu_poc --console";
+      case "a program with --console"
+        (run [ "frlg.supplies"; "--console" ])
+        "gamepilot run frlg.supplies --console";
       case "a chain with its flags"
         (run [ "frlg.mail_glitch"; "--from"; "mg-01"; "--mode"; "testing" ])
         "gamepilot run frlg.mail_glitch --from mg-01 --mode testing";

@@ -1,4 +1,4 @@
-module P = Switch_home.Switch_presses
+module P = Switch.Switch_presses
 
 type yield_cfg = {
   probe_timeout_ms : int;

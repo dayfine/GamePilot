@@ -333,7 +333,7 @@ let () =
   in
   let program () =
     ignore (Effects.load_state "state.ss" : int);
-    Effects.show_log "[Story] waiting";
+    Effects.show_log "[Run] waiting";
     Effects.await ~timeout_ms:100_000 (fun _ -> false)
   in
   expect "a logged stop replays as Stop_requested"
@@ -445,3 +445,45 @@ let () =
     (match Replay.run log program with
     | Effects.Holds m, "b3" -> m.seq = 560
     | _ -> false)
+
+(* v1.21: recorded gap reaches the program via take_gaps, renew_lease matches
+   lease.acquire, and submit_at checks start_at_t_ms. *)
+let () =
+  let log =
+    Replay.log_of_lines
+      (hello
+      @ [
+          frame ~seq:501 ~load:2;
+          {|{"dir":"out","t_ms":505,"msg":{"jsonrpc":"2.0","method":"gap","params":{"from_seq":502,"to_seq":504,"from_t_ms":501.0,"to_t_ms":505.0}}}|};
+          frame ~seq:505 ~load:2;
+          {|{"dir":"in","t_ms":506,"msg":{"jsonrpc":"2.0","id":3,"method":"lease.acquire","params":{"owner":"gamepilot-programs/0.1","ttl_ms":60000}}}|};
+          {|{"dir":"out","t_ms":506,"msg":{"jsonrpc":"2.0","id":3,"result":{"lease":{"owner":"gamepilot-programs/0.1","client":"gamepilot-programs/0.1","held_ms":506,"ttl_ms":60000}}}}|};
+          {|{"dir":"in","t_ms":507,"msg":{"jsonrpc":"2.0","id":4,"method":"submit","params":{"batch_id":"b1","start_at_t_ms":600.5,"commands":[{"press":["A"],"hold_ms":80,"cooldown_ms":100}]}}}|};
+          {|{"dir":"out","t_ms":507,"msg":{"jsonrpc":"2.0","id":4,"result":{"batch_id":"b1","start_seq":508}}}|};
+          batch_done ~batch_id:"b1" ~seq:610;
+        ])
+  in
+  let program start_at_t_ms () =
+    ignore (Effects.load_state "state.ss" : int);
+    ignore
+      (Effects.await ~timeout_ms:1000 (fun m -> m.seq = 505) : Effects.awaited);
+    let gaps = Effects.take_gaps () in
+    Effects.renew_lease ~ttl_ms:60000 ();
+    let done_ =
+      Effects.submit_at ~start_at_t_ms
+        [ Wire.press ~hold_ms:80 ~cooldown_ms:100 [ A ] ]
+    in
+    (gaps, done_.batch_id)
+  in
+  let gaps, batch_id = Replay.run log (program 600.5) in
+  expect "replay delivers recorded gap, renew_lease and submit_at"
+    (gaps
+     = [
+         { Wire.from_seq = 502; to_seq = 504; from_t_ms = 501.; to_t_ms = 505. };
+       ]
+    && batch_id = "b1");
+  match Replay.run log (program 700.0) with
+  | _ -> failwith "FAILED replay accepted a different start_at_t_ms"
+  | exception Replay.Divergence e ->
+      expect "submit_at mismatch -> divergence"
+        (Strings.Contains.substring e "start_at_t_ms differs")

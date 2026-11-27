@@ -21,7 +21,8 @@ let mart ctx (plan : Mart_plan.t) =
           (Mart_plan.stock s plan.map))
   in
   match stock with
-  | Ok stock -> Mart.run ~log:ctx.log stock plan
+  | Ok stock ->
+      Mart.run ~log:ctx.log stock (Mart_plan.apply_options ctx.options plan)
   | Error e -> Menu_input.fail ~repeats:true "no_mart_stock" e
 
 let swap ctx (swap : R.swap) =
@@ -115,11 +116,11 @@ let handler ctx name (_ : Pokemon_engine.Plan.event) args =
       Error (Pokemon_engine.Failure.cause ~repeats:true "no_mart_stock" e)
   | stocks, _ ->
       let stocks = Result.value stocks ~default:Mart_plan.empty in
-      Result.bind (R.decode stocks name args) (perform ctx)
+      Result.bind (R.decode ~options:ctx.options stocks name args) (perform ctx)
 
 let handlers ctx =
   List.map (fun name -> (name, handler ctx name)) R.names
-  @ Mail_glitch_use.handlers ~log:ctx.log ~party:ctx.party
+  @ Mail_glitch_use.handlers ~log:ctx.log ~party:ctx.party ~options:ctx.options
   @ Candy_actions.handlers ~log:ctx.log ~party:ctx.party
   @ Ace_mail.handlers ~log:ctx.log ~party:ctx.party
   @ Box_rename.handlers ~log:ctx.log

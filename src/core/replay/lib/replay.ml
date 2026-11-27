@@ -54,13 +54,21 @@ let describe_command = function
 let describe_commands commands =
   "[" ^ String.concat "; " (List.map describe_command commands) ^ "]"
 
+let describe_call_args = function
+  | Wire.Submit { commands; start_at_t_ms; _ } ->
+      let at =
+        Option.fold ~none:""
+          ~some:(fun t -> Printf.sprintf " at %g" t)
+          start_at_t_ms
+      in
+      " " ^ describe_commands commands ^ at
+  | Wire.Unsubscribe ids -> " [" ^ String.concat ", " ids ^ "]"
+  | _ -> ""
+
 let describe = function
   | Wire.Request { id; call } ->
       Printf.sprintf "%s (id %d)%s" (Wire.method_name call) id
-        (match call with
-        | Wire.Submit { commands; _ } -> " " ^ describe_commands commands
-        | Wire.Unsubscribe ids -> " [" ^ String.concat ", " ids ^ "]"
-        | _ -> "")
+        (describe_call_args call)
   | m -> Wire.string_of_message m
 
 (* The first field in which two requests of the same method differ. *)
@@ -72,6 +80,8 @@ let differing_field (e : Wire.request) (a : Wire.request) =
       Some "template"
   | Wire.Submit ec, Wire.Submit ac when ec.commands <> ac.commands ->
       Some "commands"
+  | Wire.Submit ec, Wire.Submit ac when ec.start_at_t_ms <> ac.start_at_t_ms ->
+      Some "start_at_t_ms"
   | Wire.Submit ec, Wire.Submit ac when ec.batch_id <> ac.batch_id ->
       Some "batch id"
   | _ -> if e.id <> a.id then Some "request id" else None

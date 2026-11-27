@@ -102,11 +102,11 @@ let () =
   in
   Session.run transport (fun () ->
       Effects.show_plan plan;
-      Effects.show_log "[Story] mg-01 #1 ready: start");
+      Effects.show_log "[Run] mg-01 #1 ready: start");
   expect "show_plan and show_log go out as watch notifications"
     (match !sent with
     | [
-     Wire.Notification (Wire.Watch_log "[Story] mg-01 #1 ready: start");
+     Wire.Notification (Wire.Watch_log "[Run] mg-01 #1 ready: start");
      Wire.Notification (Wire.Watch_plan p);
      Wire.Request _;
     ] ->

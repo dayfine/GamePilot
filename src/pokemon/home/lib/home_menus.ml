@@ -1,15 +1,16 @@
 module F = Frame_box
-open Switch_home.Solid_color
+open Switch.Solid_color
 
+type rgb = { r : int; g : int; b : int }
+type color_bounds = { lo : rgb; hi : rgb }
+
+let rgb_tuple { r; g; b } = (r, g, b)
 let menu_id = "home.main_menu"
 let menu_box : F.t = { x = 1075; y = 238; w = 653; h = 130 }
-let channel_max = 255
-let orange_red_min = 211
-let orange_green_min = 121
-let orange_green_max = 204
-let orange_blue_max = 59
-let orange_min = (orange_red_min, orange_green_min, 0)
-let orange_max = (channel_max, orange_green_max, orange_blue_max)
+
+let orange =
+  { lo = { r = 211; g = 121; b = 0 }; hi = { r = 255; g = 204; b = 59 } }
+
 let strip_id = "home.banner_strip"
 let strip : F.t = { x = 307; y = 864; w = 1306; h = 22 }
 let line1_id = "home.banner_line1"
@@ -19,68 +20,80 @@ let line2 : F.t = { x = 288; y = 967; w = 864; h = 54 }
 
 type tile = { row : int; col : int }
 
-let grid = 3
-let tile_left = 1046
-let tile_top = 344
-let tile_across = 267
-let tile_down = 222
+type tile_geom = {
+  grid : int;
+  left : int;
+  top : int;
+  across : int;
+  down : int;
+  frame_inset : int;
+  icon_margin : int;
+  tile_size : int;
+}
+
+let tg =
+  {
+    grid = 3;
+    left = 1046;
+    top = 344;
+    across = 267;
+    down = 222;
+    frame_inset = 30;
+    icon_margin = 10;
+    tile_size = 194;
+  }
 
 let tiles =
-  List.init (grid * grid) (fun i -> { row = i / grid; col = i mod grid })
+  List.init (tg.grid * tg.grid) (fun i ->
+      { row = i / tg.grid; col = i mod tg.grid })
 
-let tile_x t = tile_left + (tile_across * t.col)
-let tile_y t = tile_top + (tile_down * t.row)
+let tile_x t = tg.left + (tg.across * t.col)
+let tile_y t = tg.top + (tg.down * t.row)
 let frame_id t = Printf.sprintf "home.game_frame.%d.%d" t.row t.col
 let icon_id t = Printf.sprintf "home.game_icon.%d.%d" t.row t.col
 
 (* The frame's top edge, inside the tile's width; the icon searched 10 px
    round the tile. *)
-let frame_inset = 30
-
 let frame_box t : F.t =
-  { x = tile_x t + frame_inset; y = tile_y t - 2; w = 134; h = 10 }
-
-let icon_margin = 10
-let tile_size = 194
+  { x = tile_x t + tg.frame_inset; y = tile_y t - 2; w = 134; h = 10 }
 
 let icon_box t : F.t =
   {
-    x = tile_x t - icon_margin;
-    y = tile_y t - icon_margin;
-    w = tile_size + (2 * icon_margin);
-    h = tile_size + (2 * icon_margin);
+    x = tile_x t - tg.icon_margin;
+    y = tile_y t - tg.icon_margin;
+    w = tg.tile_size + (2 * tg.icon_margin);
+    h = tg.tile_size + (2 * tg.icon_margin);
   }
 
 (* The list's light page above the game's card. *)
 let page_id = "home.game_list_page"
 let page : F.t = { x = 100; y = 200; w = 800; h = 40 }
-let frame_red_min = 200
-let frame_green_min = 120
-let frame_green_max = 210
-let frame_blue_max = 90
-let frame_min = (frame_red_min, frame_green_min, 0)
-let frame_max = (channel_max, frame_green_max, frame_blue_max)
+
+let frame_color =
+  { lo = { r = 200; g = 120; b = 0 }; hi = { r = 255; g = 210; b = 90 } }
+
+let tile_probes ~game_icon t =
+  [
+    F.count_probe (frame_id t) (frame_box t) ~min:(rgb_tuple frame_color.lo)
+      ~max:(rgb_tuple frame_color.hi);
+    F.template_probe (icon_id t) (icon_box t) game_icon;
+  ]
 
 let probes ~game_icon =
   [
-    F.count_probe menu_id menu_box ~min:orange_min ~max:orange_max;
+    F.count_probe menu_id menu_box ~min:(rgb_tuple orange.lo)
+      ~max:(rgb_tuple orange.hi);
     F.stats_probe strip_id strip;
     F.stats_probe line1_id line1;
     F.stats_probe line2_id line2;
     F.stats_probe page_id page;
   ]
-  @ List.concat_map
-      (fun t ->
-        [
-          F.count_probe (frame_id t) (frame_box t) ~min:frame_min ~max:frame_max;
-          F.template_probe (icon_id t) (icon_box t) game_icon;
-        ])
-      tiles
+  @ List.concat_map (tile_probes ~game_icon) tiles
 
 let min_menu_orange = 0.45
 
 let holds m id test =
-  Option.fold ~none:false ~some:test (Switch_home.Color_share.read m id)
+  Option.fold ~none:false ~some:test (Switch.Color_share.read m id)
 
 let main_menu m = holds m menu_id (fun s -> s > min_menu_orange)
 

@@ -6,7 +6,7 @@
 (** A run's text over the game's rules, printed by the rules ([T]). *)
 module Make (T : Engine_rules.GAME_RULES) : sig
   val line : Engine_run.Log_line.Make(T).t -> string
-  (** The line as logged: ["[Story] 01-celadon-setup end <pose>: holds"]. *)
+  (** The line as logged: ["[Run] 01-celadon-setup end <pose>: holds"]. *)
 
   val stop :
     Engine_run.Repeat_until.Make(T)(Engine_plan_format.Raw_json).stop -> string

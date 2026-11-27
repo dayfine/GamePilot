@@ -1,3 +1,6 @@
+module Level_up = Frlg_battle.Level_up
+module Level_up_policy = Frlg_battle.Level_up_policy
+
 type opened = Opened | No_candy | Not_opened of string
 
 type game_steps = {

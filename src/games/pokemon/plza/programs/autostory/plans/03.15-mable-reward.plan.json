@@ -5,7 +5,9 @@
   "metadata": {
     "phase": "testing",
     "source": "played from a new game; starts on 3F at the elevator, as the 03.14 autosave reloads. Chained start and start signature are guesses; starts where 03.14 ends; the fork's plza-03.11.plan.json (plza/lean)",
-    "postconditions": {}
+    "postconditions": {
+      "flags": ["mystery_gift"]
+    }
   },
   "checkpoint": {
     "id": "03.15-mable-reward",

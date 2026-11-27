@@ -1,4 +1,4 @@
-(** plza.bank-home's checkpoints on the Switch
+(** pokemon_home.bank-plza's checkpoints on the Switch
     (Plza_checkpoint_series.Checkpoint_series), each attempt through
     {!Plza_bank_home.Bank_home_game} and the engine: it first finds Legends:
     Z-A's tile on the Switch's HOME menu

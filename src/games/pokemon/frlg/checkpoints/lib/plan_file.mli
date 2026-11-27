@@ -13,3 +13,10 @@ val decode :
 
 val load : string -> (Pokemon_engine.Plan.t, string) result
 (** The plan in the file at the path, named by its base name in errors. *)
+
+val apply_postcondition_options :
+  Run_options.t ->
+  Pokemon_engine.Postconditions.t ->
+  Pokemon_engine.Postconditions.t
+(** Replaces the default sweeper (["blastoise"]) in party postconditions when
+    [--options sweeper=SPECIES] overrides it. *)

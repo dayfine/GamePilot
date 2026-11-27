@@ -2,11 +2,11 @@
 
    Opens Pokémon HOME on Legends: Z-A from the Switch's HOME menu and logs
    the box number and HOME's box, moving nothing (Pokemon_home.Home_bank's
-   Look): a look at the boxes before plza.bank-home banks the gifts, which
+   Look): a look at the boxes before pokemon_home.bank-plza banks the gifts, which
    is the one way to move them. HOME is left open on the boxes, unsaved.
    Through a running daemon under the input lease
    (Console_park_command.run_step); the daemon must show the whole frame
-   (--viewport native). The templates are plza.bank-home's
+   (--viewport native). The templates are pokemon_home.bank-plza's
    (Plza_bank_home_series.Home_templates). *)
 
 let usage_line =

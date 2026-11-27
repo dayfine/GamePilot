@@ -2,8 +2,8 @@ module OW = Bdsp_actions.Bdsp_overworld
 module MP = Bdsp_actions.Bdsp_mining_play
 module US = Bdsp_readers.Underground_screen
 module MS = Bdsp_readers.Minimap_sparkles
-module H = Switch_home.Held_screen
-module P = Switch_home.Switch_presses
+module H = Screen_graph.Held_screen
+module P = Switch.Switch_presses
 open Bdsp_underground
 
 let ( let* ) = Result.bind
@@ -162,12 +162,16 @@ let run_check_map ~log =
   P.press ~hold_ms:map_press_hold_ms ~cooldown_ms:map_restore_wait_ms Wire.B;
   Ok "full-sized map captured"
 
+type outcome = Not_step_mode | Completed of string | Failed of string
+
+let of_result = function Ok s -> Completed s | Error e -> Failed e
+
 let run ~mode ~door ~log ~picture ~goal =
   match mode with
-  | "check-bag" -> Some (run_check_bag ~log ~picture)
-  | "check-map" -> Some (run_check_map ~log)
-  | "step-refresh" -> Some (step_refresh ~log ~picture)
-  | "step-read-map" -> Some (step_read_map ~log ~picture)
-  | "step-route-one" -> Some (step_route_one ~log ~picture ~door)
-  | "step-dig-one" -> Some (step_dig_one ~log ~picture ~goal)
-  | _ -> None
+  | "check-bag" -> of_result (run_check_bag ~log ~picture)
+  | "check-map" -> of_result (run_check_map ~log)
+  | "step-refresh" -> of_result (step_refresh ~log ~picture)
+  | "step-read-map" -> of_result (step_read_map ~log ~picture)
+  | "step-route-one" -> of_result (step_route_one ~log ~picture ~door)
+  | "step-dig-one" -> of_result (step_dig_one ~log ~picture ~goal)
+  | _ -> Not_step_mode

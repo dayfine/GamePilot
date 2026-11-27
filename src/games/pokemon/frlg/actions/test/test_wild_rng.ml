@@ -8,13 +8,50 @@ let case name input expectation = { Table_test.name; input; expectation }
 let obj json = Json_field.as_object "" (Yojson.Safe.from_string json)
 
 let plan_args =
-  {|{"species": "ekans", "location": "route_10", "tid": 33002, "sid": 9011,
+  {|{"species": "ekans", "location": "route_10", "tid": 12345, "sid": 54321,
      "seeds": "rng_seeds_mgba_sevii_save.json", "seed_shift": 8,
      "frame_model": "mgba",
      "advances": [900, 4000], "ball": "poke-ball", "balls": 8}|}
 
-let decode json () =
-  match Wild_rng_plan.decode (obj json) with
+let plan_args_no_ids =
+  {|{"species": "ekans", "location": "route_10",
+     "seeds": "rng_seeds_mgba_sevii_save.json", "seed_shift": 8,
+     "frame_model": "mgba",
+     "advances": [900, 4000], "ball": "poke-ball", "balls": 8}|}
+
+let options_of pairs =
+  let decl : Run_options.declared list =
+    [
+      {
+        key = "tid";
+        value = Int_range (0, 0xffff);
+        presence = Optional;
+        doc = "";
+      };
+      {
+        key = "sid";
+        value = Int_range (0, 0xffff);
+        presence = Optional;
+        doc = "";
+      };
+      {
+        key = "ball";
+        value = One_of [ "poke-ball"; "great-ball"; "ultra-ball" ];
+        presence = Optional;
+        doc = "";
+      };
+      {
+        key = "balls";
+        value = Int_range (1, 999);
+        presence = Optional;
+        doc = "";
+      };
+    ]
+  in
+  Result.get_ok (Run_options.check decl pairs)
+
+let decode ?options ?fallback json () =
+  match Wild_rng_plan.decode ?options ?fallback (obj json) with
   | Ok t ->
       Printf.sprintf
         "%s at %s, ids %d/%d, %s + %d (%s), advances %d..%d, in-game %d: %s"
@@ -25,10 +62,50 @@ let decode json () =
 
 let decoding =
   [
-    case "02-shiny-ekans's args" (decode plan_args)
-      "ekans at route_10, ids 33002/9011, rng_seeds_mgba_sevii_save.json + 8 \
+    case "plan args with inline ids" (decode plan_args)
+      "ekans at route_10, ids 12345/54321, rng_seeds_mgba_sevii_save.json + 8 \
        (mgba), advances 900..4000, in-game 0: 1 ekans, 1 encounters, 8 \
        poke-ball";
+    case "ids from --options when omitted from plan"
+      (decode
+         ~options:(options_of [ ("tid", "42"); ("sid", "99") ])
+         plan_args_no_ids)
+      "ekans at route_10, ids 42/99, rng_seeds_mgba_sevii_save.json + 8 \
+       (mgba), advances 900..4000, in-game 0: 1 ekans, 1 encounters, 8 \
+       poke-ball";
+    case "ball and balls overridden by --options"
+      (decode
+         ~options:
+           (options_of
+              [
+                ("tid", "42");
+                ("sid", "99");
+                ("ball", "great-ball");
+                ("balls", "12");
+              ])
+         plan_args_no_ids)
+      "ekans at route_10, ids 42/99, rng_seeds_mgba_sevii_save.json + 8 \
+       (mgba), advances 900..4000, in-game 0: 1 ekans, 1 encounters, 12 \
+       great-ball";
+    case "--options overrides plan and fallback"
+      (decode
+         ~options:(options_of [ ("tid", "7"); ("sid", "8") ])
+         ~fallback:{ tid = Some 10; sid = Some 20 }
+         plan_args)
+      "ekans at route_10, ids 7/8, rng_seeds_mgba_sevii_save.json + 8 (mgba), \
+       advances 900..4000, in-game 0: 1 ekans, 1 encounters, 8 poke-ball";
+    case "fallback used when plan and --options omit ids"
+      (decode ~fallback:{ tid = Some 10; sid = Some 20 } plan_args_no_ids)
+      "ekans at route_10, ids 10/20, rng_seeds_mgba_sevii_save.json + 8 \
+       (mgba), advances 900..4000, in-game 0: 1 ekans, 1 encounters, 8 \
+       poke-ball";
+    case "missing tid fails clearly" (decode plan_args_no_ids)
+      "bad_args: wild_rng: missing tid (pass --options tid=N, set \
+       GAMEPILOT_FRLG_TID, or set it in trainer_ids.json)";
+    case "missing sid fails clearly"
+      (decode ~fallback:{ tid = Some 10; sid = None } plan_args_no_ids)
+      "bad_args: wild_rng: missing sid (pass --options sid=N, set \
+       GAMEPILOT_FRLG_SID, or set it in trainer_ids.json)";
     case "no seed_shift: 0"
       (decode
          {|{"species": "ekans", "location": "route_10", "tid": 1, "sid": 2,

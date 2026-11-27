@@ -67,6 +67,9 @@ val decode :
     ["max_battles"], ["strategy"] (default {!default_strategy}) and ["round"]
     (default [false]). [bad_args] naming the field. *)
 
+val apply_options : Run_options.t -> t -> t
+(** Applies [--options sweeper=SPECIES] over the plan's sweeper when given. *)
+
 val met : goal -> known:string list -> bool
 (** The grinder knows the move. *)
 

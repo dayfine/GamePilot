@@ -27,7 +27,7 @@ let probes ~picture =
     (fun (id, b) -> Box_color.probe ~picture ~id b)
     ((panel_id, panel) :: edges)
 
-let per_channel = Switch_home.Solid_color.sum
+let per_channel = Switch.Solid_color.sum
 
 let dark_flat_edge m (id, _) =
   match Box_color.read m id with

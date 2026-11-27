@@ -20,15 +20,33 @@ type viewport = Nso_gba | Native
 (** The rules a program's checkpoint plans are written over, which pick the
     library that loads and runs them. [Pokemon_grid]: the Pokémon grid rules
     (Pokemon_engine, the FRLG runner); [Plza_story]: PLZA's story rules
-    (Plza_engine, Plza_series); [Plza_home]: PLZA's plans run from the Switch's
-    HOME menu in Pokémon HOME (Plza_engine, Plza_bank_home_series);
-    [Plza_gifts]: PLZA's plans run from its main menu's Mystery Gift
-    (Plza_engine, Plza_claim_gifts_series). *)
-type rules = Pokemon_grid | Plza_story | Plza_home | Plza_gifts
+    (Plza_engine, Plza_series); [Pokemon_home]: Pokémon HOME plans run from the
+    Switch's HOME menu (Plza_engine, Plza_bank_home_series); [Plza_gifts]:
+    PLZA's plans run from its main menu's Mystery Gift (Plza_engine,
+    Plza_claim_gifts_series); [Bdsp_underground]: BDSP Grand Underground direct
+    Switch farming program (Bdsp_underground_program). *)
+type rules =
+  | Pokemon_grid
+  | Plza_story
+  | Pokemon_home
+  | Plza_gifts
+  | Bdsp_underground
 
-type switch_home = {
+(** Shared program grouping across games, shown by [gamepilot programs] and
+    recorded in [run.json]. *)
+type category =
+  | Testing  (** Proofs of concept and bring-up harnesses. *)
+  | Story  (** Story progression checkpoints. *)
+  | Glitch_setup  (** Glitch activation, ACE setup, and ACE execution. *)
+  | Farming  (** Repeatable supply, item, or training loops. *)
+  | Dex_collection  (** Pokédex completion catches. *)
+  | Shiny_hunting  (** RNG manipulation and shiny hunts. *)
+  | Gifts  (** Mystery Gift claiming. *)
+  | Storage  (** Pokémon HOME box transfers. *)
+
+type switch = {
   title : string;  (** As the ctl usage names it: ["FireRed"]. *)
-  home_tile : Switch_home.Home_screen.tile_color;
+  home_tile : Switch.Home_screen.tile_color;
   lab_panel : string;  (** ["PokemonFRLG:AutoStory"]. *)
 }
 (** A game on the lab's Switch: the title the HOME steps (park, resume,
@@ -42,9 +60,9 @@ type game = {
   game_name : string;
   delete_save_icons : (string * string) list;
       (** Its Switch titles' icons on their "Delete Save Data for <user>" page
-          (Switch_home.Delete_save), each a repo path, by the key
+          (Switch.Delete_save), each a repo path, by the key
           [gamepilot ctl delete-save] takes: [firered] for FRLG. *)
-  switch_home : switch_home option;
+  switch : switch option;
       (** [None] while none of its HOME tiles was measured. *)
 }
 
@@ -52,7 +70,7 @@ type t = {
   id : string;  (** [<game>.<program>]: ["frlg.mail_glitch"]. *)
   game : game;
   name : string;  (** Display name. *)
-  group : string list;  (** Where it is listed: [["FRLG"; "Glitches"]]. *)
+  category : category;  (** Shared group this program is listed under. *)
   description : string;  (** One line. *)
   doc : string;  (** Its page, from the repo root. *)
   checkpoints : string option;
@@ -73,20 +91,20 @@ val games : game list
 (** Every game with a program or a Switch title GamePilot knows, PLZA (no
     program yet) first, as [gamepilot ctl delete-save] lists their keys. *)
 
-val lab_game : string option -> (game * switch_home, string) result
+val lab_game : string option -> (game * switch, string) result
 (** The game the lab's console runs, by its id; with none, the one game that has
     Switch HOME data. An unknown id, a game without it, or (no id) not exactly
     one such game is an error naming the ids to pick from. *)
 
-val lab_game_of_env : unit -> (game * switch_home, string) result
+val lab_game_of_env : unit -> (game * switch, string) result
 (** {!lab_game} of $GAMEPILOT_LAB_GAME (unset or empty: none). *)
 
 val all : t list
 (** By game, then group, then name. *)
 
 val find : string -> t option
-(** By id, or by the part after the game ([start_menu_poc]) when only one
-    program has it. *)
+(** By id, or by the part after the game ([mail_glitch]) when only one program
+    has it. *)
 
 val of_plan_dir : string -> t option
 (** The program whose checkpoints folder this is: the folder's path (absolute or
@@ -99,6 +117,9 @@ val of_checkpoint : string -> t option
 val locate : string -> string option
 (** A repo path ({!t.doc}, {!t.checkpoints}) on this machine, found from the
     working directory up. *)
+
+val category_name : category -> string
+(** Display name of a category, e.g. ["Glitch Setup"], ["Shiny Hunting"]. *)
 
 val backend_name : backend -> string
 (** [mgba], [switch]: as [--backend] takes it. *)
@@ -119,4 +140,4 @@ val check_options :
 
 val run_fields : t -> (string * string) list
 (** What a run's run.json says of its program: [game], [game_name], [program]
-    (the id), [program_name], [group] (its parts joined by [" / "]). *)
+    (the id), [program_name], [group] (the {!category_name}). *)

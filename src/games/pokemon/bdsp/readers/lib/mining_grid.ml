@@ -1,7 +1,7 @@
 open Bdsp_underground
-module PB = Switch_home.Picture_box
-module SC = Switch_home.Solid_color
-module CS = Switch_home.Color_share
+module PB = Switch.Picture_box
+module SC = Switch.Solid_color
+module CS = Switch.Color_share
 
 type crack_config = {
   slices : int;

@@ -40,7 +40,7 @@ end
 module Promises_decode = struct
   type t = Toy_rules.Toy_promises.t
 
-  let keys = [ "gold"; "flags" ]
+  let keys = [ "gold"; "flags"; "sign" ]
 
   let gold ~where obj =
     match F.find "gold" obj with
@@ -56,6 +56,7 @@ module Promises_decode = struct
             Option.fold ~none:[]
               ~some:(F.strings (where ^ "flags"))
               (F.find "flags" obj);
+          sign = F.string_opt ~where "sign" obj;
         })
 end
 
@@ -64,7 +65,7 @@ module T = Toy_rules
 let parts =
   Action_parts.
     [
-      Part ((module Story_action_decode), fun a -> Toy_rules.Action.Story a);
+      Part ((module Builtin_action_decode), fun a -> Toy_rules.Action.Story a);
       Part ((module Walk_decode), fun w -> Toy_rules.Action.Walk w);
       Part ((module Inn_decode), fun i -> Toy_rules.Action.Inn i);
     ]

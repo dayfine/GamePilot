@@ -34,6 +34,30 @@ type line = { line_item : string; quantity : int }
 type t = { map : string; lines : line list; budget : int option }
 
 let max_quantity = 99
+let split_chunk = 50
+
+let rec split_quantity n =
+  if n <= 0 then []
+  else if n <= max_quantity then [ n ]
+  else split_chunk :: split_quantity (n - split_chunk)
+
+let apply_option_line options (seen, acc) (l : line) =
+  match Run_options.int options l.line_item with
+  | None -> (seen, l :: acc)
+  | Some _ when List.mem l.line_item seen -> (seen, acc)
+  | Some n ->
+      let expanded =
+        List.rev_map
+          (fun quantity -> { line_item = l.line_item; quantity })
+          (split_quantity n)
+      in
+      (l.line_item :: seen, expanded @ acc)
+
+let apply_options options plan =
+  let _, rev_lines =
+    List.fold_left (apply_option_line options) ([], []) plan.lines
+  in
+  { plan with lines = List.rev rev_lines }
 
 let line stock ~where obj =
   let line_item = J.string ~where "item" obj in

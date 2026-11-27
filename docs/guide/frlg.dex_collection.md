@@ -17,22 +17,36 @@ Runs on: mGBA.
 
 - Save anywhere outdoors in Kanto: 01 flies to Indigo Plateau for Ultra Balls and ends outside its
   Center; each catch starts and ends outdoors.
-- Bring ¥12,000 for 10 Ultra Balls at the Indigo Plateau's Pokemon Center.
+- Bring ¥24,000 for 20 Ultra Balls at the Indigo Plateau's Pokemon Center.
 - The party's last Pokemon must know Sweet Scent, the game's sound must be Mono and its button
-  mode Help, as [Wild RNG](frlg.wild_rng.md) says. Its plans hold your trainer ID and secret ID.
+  mode Help, as [Wild RNG](frlg.wild_rng.md) says. Supply your trainer ID and secret ID via
+  `--options tid=N --options sid=N`, `GAMEPILOT_FRLG_TID` / `GAMEPILOT_FRLG_SID`, or
+  `trainer_ids.json` in your local FRLG config directory.
 - 02 starts with a full party and stores one member to make room; from then on each catch joins
   as the sixth member, is checked for the shiny star and goes to the PC.
 
 <!-- generated:needs -->
-- 3 free party slots (joining: voltorb in 02-shiny-voltorb, drowzee in 03-shiny-drowzee, ekans in 04-shiny-ekans)
 - a member holds no Mail (pc_deposit)
 - a member knows fly (fly)
 - the thunder badge (fly)
-- money at least ¥12000 (all the purchases)
+- money at least ¥24000 (all the purchases)
 - at the start, anywhere outdoors where Fly works
 <!-- /generated -->
 
 ## Running it
+
+<!-- generated:options -->
+Give each as `--options KEY=VALUE`:
+
+| Key | Values | When not given | What it chooses |
+|---|---|---|---|
+| `ball` | poke-ball \| great-ball \| ultra-ball | optional | the ball to throw (overrides each catch plan's default) |
+| `balls` | 1 to 999 | optional | max balls to throw per catch attempt (overrides plan default) |
+| `target` | everything \| missing-on-dex \| version-exclusive \| version-exclusive-uncaught \| specific-list | default `everything` | which species to catch (everything and missing-on-dex skip species recorded in local dex_progress.json) |
+| `species` | text | optional | comma-separated species slugs for target=specific-list (e.g. ekans,voltorb) |
+| `tid` | 0 to 65535 | optional | your trainer ID (overrides GAMEPILOT_FRLG_TID and trainer_ids.json) |
+| `sid` | 0 to 65535 | optional | your secret ID (overrides GAMEPILOT_FRLG_SID and trainer_ids.json) |
+<!-- /generated -->
 
 <!-- generated:commands -->
 ```sh
@@ -51,7 +65,7 @@ sh run/run_checkpoints_on_mgba.sh frlg.dex_collection --from 01-ultra-balls --to
 | 03-shiny-drowzee | From anywhere outdoors: a shiny Drowzee in Route 11's grass by the wild RNG, stored in the PC, back to the nurse |
 | 04-shiny-ekans | From anywhere outdoors: a shiny Ekans in Route 10's grass by the wild RNG, stored in the PC, back to the nurse |
 
-<!-- plans: 315cd0a45e53 -->
+<!-- plans: b4a62405fce3 -->
 <!-- /generated -->
 
 
@@ -60,7 +74,7 @@ sh run/run_checkpoints_on_mgba.sh frlg.dex_collection --from 01-ultra-balls --to
 <!-- generated:preflight -->
 | Resume from | The pre-flight checks |
 |---|---|
-| 01-ultra-balls | a member knows fly (fly); the thunder badge (fly); money at least ¥12000 (mart); at the start, anywhere outdoors where Fly works |
+| 01-ultra-balls | a member knows fly (fly); the thunder badge (fly); money at least ¥24000 (mart); at the start, anywhere outdoors where Fly works |
 | 02-shiny-voltorb | a member holds no Mail (pc_deposit); a member knows fly (fly); the thunder badge (fly); ultra-ball at least x1 (wild_rng); at the start, anywhere outdoors where Fly works |
 | 03-shiny-drowzee | a member knows fly (fly); the thunder badge (fly); ultra-ball at least x1 (wild_rng); at the start, anywhere outdoors where Fly works |
 | 04-shiny-ekans | a member knows fly (fly); the thunder badge (fly); ultra-ball at least x1 (wild_rng); at the start, anywhere outdoors where Fly works |
@@ -77,7 +91,14 @@ sh run/run_checkpoints_on_mgba.sh frlg.dex_collection --from 01-ultra-balls --to
 - A catch started where its Fly lands (outside that route's Center) fails at once: Fly to the town
   the player stands in lands where it took off, which the fly action takes for no landing. The
   order of the checkpoints never flies twice in a row to one town.
-- A catch already in the Pokedex is not skipped yet: it is caught again, shiny.
+- A catch already recorded in local progress (`dex_progress.json` under `GAMEPILOT_FRLG_CONFIG`,
+  defaulting to `~/.local/share/gamepilot/frlg`) is skipped under `target=everything`,
+  `target=missing-on-dex`, and `target=version-exclusive-uncaught`. Use `target=version-exclusive`
+  or `target=specific-list --options species=...` to target specific species regardless of local
+  progress.
+- Ball choice (`--options ball=...` and `--options balls=...`) overrides the ball thrown during
+  catches; `01-ultra-balls` still buys Ultra Balls at Indigo Plateau (start from `02-shiny-voltorb`
+  if you bring your own Poké Balls or Great Balls).
 - It never weakens a Pokemon before throwing: Ultra Balls catch these three often enough at full HP.
 
 ## How it works

@@ -1,8 +1,8 @@
 (* Gift_claim's read after a claim's A, on a fake console: a handler that
    answers every wait with one frame on which no Mystery Gift screen and no
    main menu read (each probe's share 0.00), then a timeout, and every press
-   at once. So the screen is unknown and the way back runs out of B presses.
-   Nothing reaches a daemon. *)
+   at once. So the screen is unknown and the way back runs out of presses, all
+   B. Nothing reaches a daemon. *)
 
 module Gc = Plza_claim_gifts.Gift_claim
 
@@ -87,10 +87,25 @@ let () =
         expectation = "true";
       };
       {
-        name = "no main menu after 8 B: lost";
+        name = "no main menu after 3 unread B presses: lost";
         input =
           (fun () ->
-            match fst (lines ()) with Lost why -> why | _ -> "not lost");
-        expectation = "no main menu after 8 B";
+            match fst (lines ()) with
+            | Lost why -> List.hd (String.split_on_char '(' why)
+            | _ -> "not lost");
+        expectation = "plza.gifts: screen unread ";
+      };
+      {
+        name =
+          "the way back on an unknown screen: capped recovery presses logged";
+        input =
+          (fun () ->
+            string_of_int
+              (List.length
+                 (List.filter
+                    (fun l ->
+                      String.starts_with ~prefix:"plza.gifts: screen unread" l)
+                    (snd (lines ())))));
+        expectation = "3";
       };
     ]

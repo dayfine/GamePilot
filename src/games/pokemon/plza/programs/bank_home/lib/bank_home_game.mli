@@ -1,4 +1,4 @@
-(** [plza.bank-home]'s checkpoints as a game of the checkpoint engine
+(** [pokemon_home.bank-plza]'s checkpoints as a game of the checkpoint engine
     ({!Plza_engine}): one game action, [bank_in_home], which opens Pokémon HOME
     on Legends: Z-A from the Switch's HOME menu, moves the gift catalog's
     Pokémon ({!Catalog_moves}) from the game's box to their HOME boxes, saves
@@ -30,8 +30,8 @@ val start_check :
 (** From anywhere the HOME button reaches the Switch's HOME menu: HOME (100 ms,
     released 1 s) to the first tile, then Right (80 ms, released 600) along the
     row, each tile's title read for 1.5 s, up to 8 tiles
-    ({!Switch_home.Home_title.find_tile}); the cursor is left on Legends: Z-A's
-    tile, or [home_tile_not_found] (repeats). *)
+    ({!Switch.Home_title.find_tile}); the cursor is left on Legends: Z-A's tile,
+    or [home_tile_not_found] (repeats). *)
 
 val make :
   log:(string -> unit) ->

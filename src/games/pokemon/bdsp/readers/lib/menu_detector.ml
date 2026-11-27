@@ -1,5 +1,5 @@
-module PB = Switch_home.Picture_box
-module SC = Switch_home.Solid_color
+module PB = Switch.Picture_box
+module SC = Switch.Solid_color
 
 let stripe_top = 0.110
 let stripe_top_below_banner = 0.170

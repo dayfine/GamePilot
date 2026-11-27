@@ -66,6 +66,7 @@
   (glob_files fixtures/*.jsonl))
  (libraries
   gamepilot.wire
+  gamepilot.strings
   gamepilot.effects
   gamepilot.table_test
   gamepilot.frlg_readers))

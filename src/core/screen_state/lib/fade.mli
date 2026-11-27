@@ -1,6 +1,7 @@
 (** A fade to black or white, read from a [core.color_stats@1] probe over the
     middle of the screen. Game-agnostic: the thresholds are the fork's shared
-    ones (CommonTools/ScreenEvents), used by every game there. *)
+    ones (CommonTools/ScreenEvents in
+    https://github.com/dayfine/Arduino-Source), used by every game there. *)
 
 type t =
   | No_fade

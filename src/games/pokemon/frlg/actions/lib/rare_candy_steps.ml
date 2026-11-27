@@ -1,5 +1,7 @@
 open Frlg_readers
 module M = Menu_input
+module Level_up = Frlg_battle.Level_up
+module Level_up_screens = Frlg_battle.Level_up_screens
 
 let candy = "rare-candy"
 let use_row = 0

@@ -46,6 +46,8 @@ let find t key =
       Error
         (Name_suggestion.unknown ~what:"town" key (List.map (fun t -> t.key) t))
 
+let find_by_fly t fly = List.find_opt (fun town -> town.fly = fly) t
+
 let field t key ~field =
   let* town = find t key in
   match field with

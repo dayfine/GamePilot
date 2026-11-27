@@ -8,7 +8,7 @@ type config = {
   flags : string -> bool;
   party : Party_roster.t option;
   grind_cap : int option;
-  center : string option;
+  center : Pokemon_engine.Pose.grid option;
   reload : unit -> (unit, Failure.cause) result;
   program_options : Run_options.t;
   log : string -> unit;
@@ -42,14 +42,22 @@ let route_from w (at : Pokemon_engine.Pose.observed) target =
       Route_target.plan w ~from ~facing:at.faces target
       |> Result.map (fun legs -> (from, legs)))
 
-let battle_game_steps () =
-  Frlg_battle.Battle_steps.make ~read_offered_move:Summary_moves.read_offered
+let known_moves_count = 4
+
+let read_forget_list () : Frlg_battle.Level_up.forget_list =
+  {
+    offered = Summary_moves.read_offered ();
+    known = List.init known_moves_count Summary_moves.read_row;
+  }
+
+let battle_game_steps ~log () =
+  Frlg_battle.Battle_steps.make ~log ~read_forget_list
     ~is_switch_offer:Switch_offer.read ()
 
 let battle_on t wrap script =
   Effects.with_probes Frlg_battle.Battle_look.probes (fun () ->
       Frlg_battle.Scripted_battle.run ~log:t.config.log
-        (wrap (battle_game_steps ()))
+        (wrap (battle_game_steps ~log:t.config.log ()))
         script)
 
 let battle t script = battle_on t Fun.id script
@@ -154,11 +162,8 @@ let lift t (_ : Pokemon_engine.Plan.event) args =
 let heal t () =
   match t.config.center with
   | None -> not_implemented "heal with no Center configured"
-  | Some town ->
-      let front =
-        { Heal_and_save.nurse_front with map = Heal_and_save.center_map town }
-      in
-      Result.bind (walk_to t front) (fun () ->
+  | Some nurse ->
+      Result.bind (walk_to t nurse) (fun () ->
           Menu_input.run (Heal_and_save.heal_at_nurse ~log:t.config.log))
 
 let find_battle t ~pace ~patch () =
@@ -181,6 +186,7 @@ let grind t (_ : Pokemon_engine.Plan.event) args =
   | Error e -> Error (Failure.cause ~repeats:true "no_grind_strategies" e)
   | Ok strategies ->
       Result.bind (Grind_plan.decode strategies args) (fun plan ->
+          let plan = Grind_plan.apply_options t.config.program_options plan in
           Menu_input.run (run_grind t ?cap plan))
 
 (* The catches that went to the party join it; the player stands where the
@@ -211,6 +217,7 @@ let run_capture t (plan : Capture_plan.t) () =
 
 let capture t (_ : Pokemon_engine.Plan.event) args =
   Result.bind (Capture_plan.decode args) (fun plan ->
+      let plan = Capture_plan.apply_options t.config.program_options plan in
       Menu_input.run (run_capture t plan))
 
 (* The wild RNG catch ({!Wild_rng}): the target searched for, then the capture
@@ -242,8 +249,17 @@ let run_wild_rng t (plan : Wild_rng_plan.t) () =
     (Wild_rng.failure_code r.end_)
 
 let wild_rng t (_ : Pokemon_engine.Plan.event) args =
-  Result.bind (Wild_rng_plan.decode args) (fun plan ->
-      Menu_input.run (run_wild_rng t plan))
+  let options = t.config.program_options in
+  let fallback =
+    match (Run_options.int options "tid", Run_options.int options "sid") with
+    | Some _, Some _ -> Ok Wild_rng_plan.no_trainer_ids
+    | _ ->
+        Wild_rng_plan.load_trainer_ids ()
+        |> Result.map_error (Failure.cause ~repeats:true "bad_args")
+  in
+  Result.bind fallback (fun fallback ->
+      Result.bind (Wild_rng_plan.decode ~options ~fallback args) (fun plan ->
+          Menu_input.run (run_wild_rng t plan)))
 
 (* The game saved from the Start menu, as between loop rounds: what a hard
    reset ({!Effects.reset}) boots from. *)
@@ -272,6 +288,7 @@ let run_berry_pp t (plan : Berry_pp.plan) () =
 
 let prepare_berry_pp t (_ : Pokemon_engine.Plan.event) args =
   Result.bind (Berry_pp.decode args) (fun plan ->
+      let plan = Berry_pp.apply_options t.config.program_options plan in
       Menu_input.run (run_berry_pp t plan))
 
 let double_battle t (_ : Pokemon_engine.Plan.event) args =
@@ -281,6 +298,9 @@ let double_battle t (_ : Pokemon_engine.Plan.event) args =
       ~battle:(battle_on t)
   in
   Result.bind (Mail_glitch_battle.decode args) (fun plan ->
+      let plan =
+        Mail_glitch_battle.apply_options t.config.program_options plan
+      in
       Menu_input.run (fun () -> Mail_glitch_battle.run game_steps plan))
 
 let action_context t : Game_actions.context =

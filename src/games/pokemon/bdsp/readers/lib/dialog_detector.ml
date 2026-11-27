@@ -1,5 +1,5 @@
-module PB = Switch_home.Picture_box
-module SC = Switch_home.Solid_color
+module PB = Switch.Picture_box
+module SC = Switch.Solid_color
 
 let id_left_white = "bdsp_dlg_lw"
 let id_left = "bdsp_dlg_l"

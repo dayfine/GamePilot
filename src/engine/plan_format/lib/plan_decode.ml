@@ -27,29 +27,29 @@ struct
     required ~where key args;
     F.records ~where key args read
 
-  (* The engine's story actions are still the plan's own kinds, read by their
+  (* The engine's built-in actions are still the plan's own kinds, read by their
      piece's decoder. *)
-  let story : Engine_rules.Story_action.t -> Plan.kind = function
+  let builtin : Engine_rules.Builtin_action.t -> Plan.kind = function
     | Talk -> Talk
     | Answer yes -> Answer yes
     | Scene -> Scene
     | Save -> Save
 
-  let story_kind read ~where args = story (ok_or_fail (read ~where args))
+  let builtin_kind read ~where args = builtin (ok_or_fail (read ~where args))
   let game_kind read ~where args = Plan.Game (ok_or_fail (read ~where args))
 
   let kind ~where obj way : Plan.kind =
     let name = F.string ~where "kind" obj in
     let args = Option.value ~default:[] (F.object_opt ~where "args" obj) in
     let args_where = where ^ "args." in
-    match (name, Story_action_decode.of_plan name, C.action_of_plan name) with
+    match (name, Builtin_action_decode.of_plan name, C.action_of_plan name) with
     | "game_action", _, _ when way = None ->
         F.fail "%saction is missing: a game_action names its action." where
     | "game_action", _, _ -> Plan.Named_action args
-    | _, Some read, _ -> story_kind read ~where:args_where args
+    | _, Some read, _ -> builtin_kind read ~where:args_where args
     | _, None, Some read -> game_kind read ~where:args_where args
     | _, None, None ->
-        F.fail "%skind \"%s\" is not a story event kind." where name
+        F.fail "%skind \"%s\" is not a built-in event kind." where name
 
   let event ~where obj : Plan.event =
     known_fields_only ~where
@@ -148,6 +148,10 @@ struct
           (promises ~where:(where ^ "metadata.postconditions."))
           (F.object_opt ~where:(where ^ "metadata.") "postconditions" m))
 
+  (* The plan's promises name where it ends ([T.end_place]). *)
+  let ends_in_place (plan : Plan.t) =
+    Option.is_some (Option.bind plan.postconditions T.end_place)
+
   let plan ~where obj : Plan.t =
     known_fields_only ~where
       [ "format"; "game"; "checkpoint"; "execution"; "metadata" ]
@@ -162,15 +166,23 @@ struct
       | Some metadata -> (Some metadata, inner_where)
       | None -> (F.object_opt ~where "metadata" obj, where)
     in
-    {
-      game = F.string ~where "game" obj;
-      checkpoint = checkpoint ~where:inner_where inner;
-      execution = object_field ~where "execution" obj;
-      metadata;
-      postconditions = postconditions ~where:metadata_where metadata;
-      retries = retries ~where:(metadata_where ^ "metadata.") metadata;
-      repeat = repeat ~where:(metadata_where ^ "metadata.") metadata;
-    }
+    let plan : Plan.t =
+      {
+        game = F.string ~where "game" obj;
+        checkpoint = checkpoint ~where:inner_where inner;
+        execution = object_field ~where "execution" obj;
+        metadata;
+        postconditions = postconditions ~where:metadata_where metadata;
+        retries = retries ~where:(metadata_where ^ "metadata.") metadata;
+        repeat = repeat ~where:(metadata_where ^ "metadata.") metadata;
+      }
+    in
+    if ends_in_place plan && Option.is_some plan.repeat then
+      F.fail
+        "%smetadata.postconditions name an end place on a repeated checkpoint: \
+         a round ends where it starts."
+        metadata_where;
+    plan
 
   let decode ~source json =
     let where = source ^ ": " in

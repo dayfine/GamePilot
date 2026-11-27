@@ -26,7 +26,11 @@ type call =
   | Upload_template of { png : string }
   | Subscribe of Probe.probe_spec list
   | Unsubscribe of string list
-  | Submit of { batch_id : string; commands : Command.command list }
+  | Submit of {
+      batch_id : string;
+      start_at_t_ms : float option;
+      commands : Command.command list;
+    }
   | Cancel
   | Cancel_then of { batch_id : string; commands : Command.command list }
   | Status
@@ -35,9 +39,11 @@ type call =
 
 type request = { id : int; call : call }
 type response = { id : int; outcome : (json, error) result }
+type gap = { from_seq : int; to_seq : int; from_t_ms : float; to_t_ms : float }
 
 type notification =
   | Frame of { load : int; frame : Probe.frame }
+  | Gap of gap
   | Batch_done of Command.batch_done
   | Watch_plan of Watch.plan
   | Watch_log of string
@@ -87,9 +93,15 @@ let lease_acquire_of_params what params =
     }
 
 let submit_of_params what params =
+  let start_at_t_ms =
+    Option.map
+      (to_float (what ^ ".start_at_t_ms"))
+      (field_opt what "start_at_t_ms" params)
+  in
   Submit
     {
       batch_id = string_field what "batch_id" params;
+      start_at_t_ms;
       commands =
         List.map Command.command_of_json (list_field what "commands" params);
     }
@@ -99,7 +111,7 @@ let cancel_of_params what params =
   | None -> Cancel
   | Some then_ -> (
       match submit_of_params (what ^ ".then") then_ with
-      | Submit { batch_id; commands } -> Cancel_then { batch_id; commands }
+      | Submit { batch_id; commands; _ } -> Cancel_then { batch_id; commands }
       | _ -> fail "%s.then: not a batch" what)
 
 let call_of_json name params =
@@ -125,12 +137,15 @@ let call_of_json name params =
   | "lease.release" -> Lease_release
   | m -> fail "unknown method %S" m
 
-let submit_params batch_id commands =
+let submit_params ?start_at_t_ms batch_id commands =
+  let start_at =
+    Option.fold ~none:[]
+      ~some:(fun t -> [ ("start_at_t_ms", `Float t) ])
+      start_at_t_ms
+  in
   `Assoc
-    [
-      ("batch_id", `String batch_id);
-      ("commands", `List (List.map Command.json_of_command commands));
-    ]
+    ((("batch_id", `String batch_id) :: start_at)
+    @ [ ("commands", `List (List.map Command.json_of_command commands)) ])
 
 let params_of_call = function
   | Hello { protocol; client } ->
@@ -141,7 +156,8 @@ let params_of_call = function
   | Subscribe probes ->
       `Assoc [ ("probes", `List (List.map Probe.json_of_probe_spec probes)) ]
   | Unsubscribe ids -> `Assoc [ ("ids", json_of_strings ids) ]
-  | Submit { batch_id; commands } -> submit_params batch_id commands
+  | Submit { batch_id; start_at_t_ms; commands } ->
+      submit_params ?start_at_t_ms batch_id commands
   | Cancel_then { batch_id; commands } ->
       `Assoc [ ("then", submit_params batch_id commands) ]
   | Lease_acquire { owner; ttl_ms } ->
@@ -177,6 +193,16 @@ let frame_notification_of_json j =
   let p = params j in
   Frame { load = int_field "frame" "load" p; frame = Probe.frame_of_json p }
 
+let gap_of_json p =
+  let what = "gap" in
+  Gap
+    {
+      from_seq = int_field what "from_seq" p;
+      to_seq = int_field what "to_seq" p;
+      from_t_ms = float_field what "from_t_ms" p;
+      to_t_ms = float_field what "to_t_ms" p;
+    }
+
 let keepawake_of_json p =
   Keepawake
     {
@@ -187,6 +213,7 @@ let keepawake_of_json p =
 let notification_of_json m j =
   match m with
   | `String "frame" -> Notification (frame_notification_of_json j)
+  | `String "gap" -> Notification (gap_of_json (params j))
   | `String "batch_done" ->
       Notification (Batch_done (Command.batch_done_of_json (params j)))
   | `String "watch.plan" ->
@@ -212,11 +239,21 @@ let message_of_json j =
 
 let envelope rest = `Assoc (("jsonrpc", `String "2.0") :: rest)
 
+let json_of_gap { from_seq; to_seq; from_t_ms; to_t_ms } =
+  `Assoc
+    [
+      ("from_seq", `Int from_seq);
+      ("to_seq", `Int to_seq);
+      ("from_t_ms", `Float from_t_ms);
+      ("to_t_ms", `Float to_t_ms);
+    ]
+
 let json_of_notification = function
   | Frame { load; frame } ->
       [
         ("method", `String "frame"); ("params", Probe.json_of_frame ~load frame);
       ]
+  | Gap gap -> [ ("method", `String "gap"); ("params", json_of_gap gap) ]
   | Batch_done d ->
       [
         ("method", `String "batch_done");

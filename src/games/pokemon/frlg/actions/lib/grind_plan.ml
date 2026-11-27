@@ -148,11 +148,22 @@ let decode strategies obj =
   | exception J.Invalid e ->
       Error (Pokemon_engine.Failure.cause ~repeats:true "bad_args" e)
 
+let apply_options options t =
+  match Run_options.find options "sweeper" with
+  | Some sweeper -> { t with sweeper }
+  | None -> t
+
 let met goal ~known = List.mem goal.learn_move known
 let heal_due s ~since_heal = since_heal >= s.heal_every
 
 (* The sweeper's place: party slot 1 counted from 0 (the grinder leads). *)
 let sweeper_slot = 1
+
+let level_up_policy t =
+  let rule : B.Level_up_policy.move_rule =
+    { learn = t.goal.learn_move; replacing = Slot t.goal.learn_slot }
+  in
+  B.Level_up_policy.for_everyone { rules = [ rule ]; evolve = false }
 
 let battle_script t =
   let opening =
@@ -161,8 +172,7 @@ let battle_script t =
   in
   B.Battle_script.make ~opening
     ~send_ins:[ { slot = sweeper_slot; then_ = None } ]
-    ~switch_refused:Flee
-    ~learn:(Forget_for { move = t.goal.learn_move; slot = t.goal.learn_slot })
+    ~switch_refused:Flee ~level_up:(level_up_policy t)
     (Attack { slots = t.sweeper_moves; target = Default })
 
 let describe t =

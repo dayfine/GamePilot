@@ -4,7 +4,7 @@ module L = Plza_story.Look
 let probes ~picture ~assets =
   List.concat
     [
-      Switch_home.Home_screen.probes ~picture Game_reload.tile_color;
+      Switch.Home_screen.probes ~picture Game_reload.tile_color;
       Story_screen.probes ~picture ~assets;
       Confirm_choices.probes ~picture;
       Frame_cells.probes ~picture;
@@ -25,7 +25,7 @@ let fresh () =
   | Timeout -> Effects.read ()
 
 let home m =
-  match Switch_home.Home_screen.read m with
+  match Switch.Home_screen.read m with
   | Home _ | Home_dimmed | User_select -> true
   | Elsewhere -> false
 
@@ -143,6 +143,26 @@ let read_party_slots ~picture () =
   | Some n when n > 0 -> Some n
   | Some _ | None -> None
 
+(* The main menu's sixth row: its bands and edges subscribed for the read
+   (the menu's own probes are the story's), the row given 1.5 s to slide in. *)
+let link_play_ms = 1500
+
+(* On the latest frame: [Absent] with the menu shown, [No_menu] without. *)
+let link_play_absent () : Plza_story.Steps.link_play_row =
+  match Option.bind (fresh ()) Main_menu_row.highlighted with
+  | Some _ -> Absent
+  | None -> No_menu
+
+let await_link_play () =
+  match
+    Effects.await ~timeout_ms:link_play_ms Main_menu_row.link_play_shown
+  with
+  | Holds _ -> Plza_story.Steps.Shown
+  | Timeout -> link_play_absent ()
+
+let read_link_play_row ~picture () =
+  Effects.with_probes (Main_menu_row.link_play_probes ~picture) await_link_play
+
 let game_steps ~picture ~log ~log_detail : Plza_story.Steps.game_steps =
   let last = ref None in
   {
@@ -157,6 +177,7 @@ let game_steps ~picture ~log ~log_detail : Plza_story.Steps.game_steps =
     wait_until;
     read_lock_target = read_lock_target ~picture;
     read_party_slots = read_party_slots ~picture;
+    read_link_play_row = read_link_play_row ~picture;
     log;
     log_detail;
   }

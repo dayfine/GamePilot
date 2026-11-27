@@ -6,7 +6,9 @@ let frame_budget = 20
 let agreeing_frames = 3
 let ( let* ) = Result.bind
 
-type t = {
+module Sig = Plza_rules.Screen_signature
+
+type t = Sig.t = {
   talk_prompt : bool option;
   wild_zone : bool option;
   near_rocks : bool option;
@@ -14,42 +16,12 @@ type t = {
   minimap : string option;
 }
 
-let nothing =
-  {
-    talk_prompt = None;
-    wild_zone = None;
-    near_rocks = None;
-    party = None;
-    minimap = None;
-  }
-
-let flag ~yes ~no = Option.map (fun b -> if b then yes else no)
-
-let to_string s =
-  match
-    List.filter_map Fun.id
-      [
-        flag ~yes:"talk prompt" ~no:"no talk prompt" s.talk_prompt;
-        flag ~yes:"in a wild zone" ~no:"not in a wild zone" s.wild_zone;
-        flag ~yes:"near Taunie's rocks" ~no:"not near Taunie's rocks"
-          s.near_rocks;
-        Option.map (Printf.sprintf "party %d") s.party;
-        Option.map (( ^ ) "minimap ") s.minimap;
-      ]
-  with
-  | [] -> "nothing read"
-  | parts -> String.concat ", " parts
+let nothing = Sig.nothing
+let to_string = Sig.to_string
 
 let unread ~checkpoint_id ~which detail =
   Failure.cause ~repeats:true "start_signature_unread"
     (Printf.sprintf "%s: its %s signature %s" checkpoint_id which detail)
-
-let other_field ~checkpoint_id ~which key =
-  unread ~checkpoint_id ~which
-    (Printf.sprintf
-       "has \"%s\": its fields are talk_prompt, wild_zone and near_rocks (true \
-        or false), party (a count) and minimap (a recorded name)"
-       key)
 
 let unrecorded ~checkpoint_id ~which name =
   unread ~checkpoint_id ~which
@@ -57,33 +29,20 @@ let unrecorded ~checkpoint_id ~which name =
 
 let recorded name = List.mem name Plza_readers.Minimap.reference_names
 
-(* One field of the plan's signature. *)
-let field ~checkpoint_id ~which s = function
-  | "talk_prompt", `Bool b -> Ok { s with talk_prompt = Some b }
-  | "wild_zone", `Bool b -> Ok { s with wild_zone = Some b }
-  | "near_rocks", `Bool b -> Ok { s with near_rocks = Some b }
-  | "party", `Int n -> Ok { s with party = Some n }
-  | "minimap", `String name when recorded name ->
-      Ok { s with minimap = Some name }
-  | "minimap", `String name -> Error (unrecorded ~checkpoint_id ~which name)
-  | key, _ -> Error (other_field ~checkpoint_id ~which key)
+(* A signature as the plan writes it, its minimap a recorded one. *)
+let of_plan ~checkpoint_id ~which value =
+  match Plza_plan_format.signature_of_plan value with
+  | Error detail -> Error (unread ~checkpoint_id ~which detail)
+  | Ok { minimap = Some name; _ } when not (recorded name) ->
+      Error (unrecorded ~checkpoint_id ~which name)
+  | Ok s -> Ok s
 
-let of_fields ~checkpoint_id ~which fields =
-  let* s =
-    List.fold_left
-      (fun s kv -> Result.bind s (fun s -> field ~checkpoint_id ~which s kv))
-      (Ok nothing) fields
-  in
-  if s = nothing then Error (unread ~checkpoint_id ~which "names nothing")
-  else Ok s
-
-(* The plan's [key] signature, [None] when it names none. *)
-let signature ~checkpoint_id ~which key (execution : Json_field.obj) =
-  match List.assoc_opt key execution with
+(* The plan's start signature, [None] when it names none. *)
+let start_signature ~checkpoint_id (execution : Json_field.obj) =
+  match List.assoc_opt "start_signature" execution with
   | None -> Ok None
-  | Some (`Assoc fields) ->
-      Result.map Option.some (of_fields ~checkpoint_id ~which fields)
-  | Some _ -> Error (unread ~checkpoint_id ~which "is not an object")
+  | Some value ->
+      Result.map Option.some (of_plan ~checkpoint_id ~which:"start" value)
 
 (* One frame: nothing when no frame came (as PokemonLZA_AutoStory.cpp reads
    an empty signature), or during a fade or a text box; else the A prompt,
@@ -143,14 +102,7 @@ let read steps (asked : pin_fields) =
     }
   else r
 
-(* Every field the signature names reads the same. *)
-let confirmed known r =
-  let agrees k v = Option.is_none k || k = v in
-  agrees known.talk_prompt r.talk_prompt
-  && agrees known.wild_zone r.wild_zone
-  && agrees known.near_rocks r.near_rocks
-  && agrees known.party r.party
-  && agrees known.minimap r.minimap
+let confirmed known r = Sig.confirmed ~known r
 
 let log_check steps ~checkpoint_id verdict screen =
   steps.S.log
@@ -168,7 +120,7 @@ let start_screen r known ~at_end =
     | None -> "")
 
 (* The start, or the end: a reload past the checkpoint's own autosave lands
-   at its end, and its events skip there (skip_if). *)
+   at its end, where the runner runs none of its events. *)
 let confirm steps ~checkpoint_id known ~at_end =
   let asked =
     Option.fold ~none:(names_pin known)
@@ -193,45 +145,47 @@ let unchecked steps ~checkpoint_id =
        "[Checkpoint] %s: START UNCHECKED: its plan names no start signature"
        checkpoint_id)
 
-let check steps ~checkpoint_id (execution : Json_field.obj) =
-  let* start =
-    signature ~checkpoint_id ~which:"start" "start_signature" execution
-  in
-  let* at_end =
-    signature ~checkpoint_id ~which:"end" "end_signature" execution
-  in
+let check steps ~checkpoint_id ~at_end (execution : Json_field.obj) =
+  let* start = start_signature ~checkpoint_id execution in
   match start with
   | None -> Ok (unchecked steps ~checkpoint_id)
   | Some known -> confirm steps ~checkpoint_id known ~at_end
 
-let decode ~checkpoint_id (execution : Json_field.obj) =
-  let* (_ : t option) =
-    signature ~checkpoint_id ~which:"start" "start_signature" execution
-  in
-  let* (_ : t option) =
-    signature ~checkpoint_id ~which:"end" "end_signature" execution
-  in
-  Ok ()
+let decode ~checkpoint_id (plan : Plza_engine.Plan.t) =
+  let* (_ : t option) = start_signature ~checkpoint_id plan.execution in
+  match Option.bind plan.postconditions (fun p -> p.place) with
+  | Some { minimap = Some name; _ } when not (recorded name) ->
+      Error (unrecorded ~checkpoint_id ~which:"end" name)
+  | _ -> Ok ()
 
-let off_end ~checkpoint_id screen =
-  Failure.cause "end_off_signature"
-    (Printf.sprintf "%s passed its events but did not end at its end: %s"
-       checkpoint_id screen)
+(* The next checkpoint's start signature, as an end place. *)
+let next_start = function
+  | None -> Ok None
+  | Some (next : Plza_engine.Plan.t) ->
+      start_signature ~checkpoint_id:next.checkpoint.checkpoint_id
+        next.execution
 
-let check_end steps ~checkpoint_id (execution : Json_field.obj) =
-  let* at_end =
-    signature ~checkpoint_id ~which:"end" "end_signature" execution
+let promised_end ~next (plan : Plza_engine.Plan.t) =
+  let own = Option.bind plan.postconditions (fun p -> p.place) in
+  let flags =
+    Option.fold ~none:[]
+      ~some:(fun (p : Plza_rules.Postconditions.t) -> p.flags)
+      plan.postconditions
   in
-  match at_end with
-  | None -> Ok ()
-  | Some known ->
-      let r = read steps (names_pin known) in
-      let screen =
-        Printf.sprintf "the screen reads (%s), its end is (%s)" (to_string r)
-          (to_string known)
-      in
-      if r <> nothing && confirmed known r then
-        Ok (log_check steps ~checkpoint_id "END CHECKED" screen)
-      else (
-        log_check steps ~checkpoint_id "END CHECK FAILED" screen;
-        Error (off_end ~checkpoint_id screen))
+  let* place = if Option.is_some own then Ok own else next_start next in
+  Ok { Plza_rules.Postconditions.place; flags }
+
+let read_place steps ~checkpoint_id (place : t) =
+  let r = read steps (names_pin place) in
+  log_check steps ~checkpoint_id "END PLACE READ"
+    (Printf.sprintf "the screen reads (%s), its end is (%s)" (to_string r)
+       (to_string place));
+  r
+
+let read_end steps ~checkpoint_id (p : Plza_rules.Postconditions.t) :
+    Plza_rules.Postconditions.reads =
+  {
+    screen =
+      Option.fold ~none:nothing ~some:(read_place steps ~checkpoint_id) p.place;
+    flags_read = Story_flag_read.read steps ~checkpoint_id p.flags;
+  }

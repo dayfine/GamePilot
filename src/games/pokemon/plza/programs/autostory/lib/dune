@@ -8,11 +8,12 @@
   gamepilot.watch_report
   gamepilot.json_field
   gamepilot.run_options
-  gamepilot.switch_home
+  gamepilot.switch
   gamepilot.screen_state
   gamepilot.engine_run
   gamepilot.plza_readers
   gamepilot.plza_walk
   gamepilot.plza_story
   gamepilot.plza_rules
+  gamepilot.plza_plan_format
   gamepilot.plza_engine))

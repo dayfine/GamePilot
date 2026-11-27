@@ -334,6 +334,11 @@ pa::JsonObject probe_result_json(const ProbeResult& result) {
             blobs.push_back(blob_json(value, blob));
           }
           json["blobs"] = std::move(blobs);
+        } else if constexpr (std::is_same_v<T, TemplateNcc>) {
+          json["kind"] = std::string(kTemplateNccKind);
+          json["score"] = round_to(value.score, 1e6);
+          json["x"] = round_to(value.x, 1e5);
+          json["y"] = round_to(value.y, 1e5);
         } else {
           json["kind"] = std::string(kTemplateMatchKind);
           json["score"] = round_to(value.score, 1e6);
@@ -435,6 +440,15 @@ SubscribeParams decode_subscribe(const pa::JsonObject& params) {
         spec.ink = require_color_range(require_object(*ink, "ink"), spec.id);
       }
       spec.skip_seams = optional_skip_seams(probe, spec);
+    } else if (spec.kind == kTemplateNccKind) {
+      if (probe.get_value("ink") != nullptr ||
+          probe.get_value("skip_seams") != nullptr) {
+        throw RpcError(
+            kInvalidParams,
+            "ink and skip_seams are only for core.template_match@1: " +
+                spec.id);
+      }
+      spec.template_hash = require_string(probe, "template");
     } else if (spec.kind == kFindKind) {
       if (probe.get_value("ink") != nullptr ||
           probe.get_value("skip_seams") != nullptr) {
@@ -532,6 +546,9 @@ RpcError switch_stick_refusal(const std::string& backend,
 SubmitParams decode_submit(const pa::JsonObject& params) {
   SubmitParams submit;
   submit.batch_id = require_string(params, "batch_id");
+  if (params.get_value("start_at_t_ms") != nullptr) {
+    submit.start_at_t_ms = optional_ms(params, "start_at_t_ms");
+  }
   for (const pa::JsonValue& item : require_array(params, "commands")) {
     const pa::JsonObject& command = require_object(item, "command");
     InputCommand input;
@@ -709,6 +726,20 @@ pa::JsonValue frame_notification(std::int64_t seq, std::int64_t load,
   pa::JsonObject message;
   message["jsonrpc"] = "2.0";
   message["method"] = "frame";
+  message["params"] = std::move(params);
+  return message;
+}
+
+pa::JsonValue gap_notification(std::int64_t from_seq, std::int64_t to_seq,
+                               double from_t_ms, double to_t_ms) {
+  pa::JsonObject params;
+  params["from_seq"] = from_seq;
+  params["to_seq"] = to_seq;
+  params["from_t_ms"] = round_to(from_t_ms, 10);
+  params["to_t_ms"] = round_to(to_t_ms, 10);
+  pa::JsonObject message;
+  message["jsonrpc"] = "2.0";
+  message["method"] = "gap";
   message["params"] = std::move(params);
   return message;
 }

@@ -213,8 +213,8 @@ let preflight_cases =
         |> String.concat " | ")
       "at the start, CeladonCity: no kept start frame to compare";
     case
-      "preflight tt-01, console B: the picked-up Rare Candy is duplicated; its \
-       Retro Mail and Super Repel come from su-01"
+      "preflight tt-01, console B: slot 1 is targeted by slot (no hardcoded \
+       species); its Retro Mail and Super Repel come from su-01"
       (fun () ->
         preflight "tt-01" None
           {
@@ -228,8 +228,7 @@ let preflight_cases =
             card = badges 8;
             members = members [ "mr-mime"; "blastoise"; "pidgey" ];
           })
-      "mr-mime in the party (give_bag_item): mr-mime, blastoise, pidgey: ok | \
-       a member knows fly (fly): pidgey knows fly: ok | the thunder badge \
+      "a member knows fly (fly): pidgey knows fly: ok | the thunder badge \
        (fly): 8 badges (boulder, cascade, thunder, rainbow, soul, marsh, \
        volcano, earth), no star: ok | super-repel at least x1 (use_item): \
        super-repel x2: ok | retro-mail at least x99 (duplicate_item): \
@@ -412,7 +411,8 @@ let console_b =
     member 6 "magikarp" 5 ~moves:[ "splash" ];
   ]
 
-let need = Party_room.chain_need chain
+let chain_need plans = Result.get_ok (Party_room.chain_need plans)
+let need = chain_need chain
 
 let deposits party =
   match Party_room.deposits need party with
@@ -441,9 +441,30 @@ let deposit_plan =
 let room_cases =
   [
     case "room: pc_deposit's species list: each member is used"
-      (fun () ->
-        String.concat ", " (Party_room.chain_need [ deposit_plan ]).used)
+      (fun () -> String.concat ", " (chain_need [ deposit_plan ]).used)
       "abra, mr-mime";
+    case "room: deposit before a catch makes its own room: 0 free needed"
+      (fun () ->
+        let catch_plan =
+          match
+            Plan_file.decode ~source:"catch"
+              (Yojson.Safe.from_string
+                 {|{"format": "gamepilot-checkpoint/1", "game": "frlg",
+                    "checkpoint": {"id": "catch", "title": "Catch one",
+                      "events": [
+                        {"id": "c", "kind": "game_action", "action": "wild_rng",
+                         "args": {"species": "voltorb"}},
+                        {"id": "d", "kind": "game_action", "action": "pc_deposit",
+                         "args": {"species": ["voltorb"]}}]},
+                    "execution": {"menu": "full"}}|})
+          with
+          | Ok p -> p
+          | Error e -> failwith e
+        in
+        Printf.sprintf "with deposit=%d; two catches=%d"
+          (Party_room.free_needed (chain_need [ deposit_plan; catch_plan ]))
+          (Party_room.free_needed (chain_need [ catch_plan; catch_plan ])))
+      "with deposit=0; two catches=1";
     case
       "room: the chain brings Abra (01-celadon-setup) and Spearow \
        (02-trade-farfetchd)"
@@ -583,8 +604,7 @@ let deposit_cases =
       "a member holds no Mail (pc_deposit): every member holds Mail: MISMATCH \
        => stop";
     case "preflight pc_deposit by role: no species is used"
-      (fun () ->
-        String.concat ", " (Party_room.chain_need [ no_mail_deposit_plan ]).used)
+      (fun () -> String.concat ", " (chain_need [ no_mail_deposit_plan ]).used)
       "";
   ]
 

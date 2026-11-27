@@ -4,6 +4,7 @@
    (mail_glitch_double_battle), as the fork's Route 16 run played them. *)
 
 open Frlg_actions
+open Frlg_level_up_fake
 module B = Frlg_battle
 module Battle = B.Battle
 
@@ -42,7 +43,7 @@ let fake_battle_game_steps (b : fake_battle) call : Battle.game_steps =
         true);
     run = (fun () -> call "run");
     use_item = (fun _ -> true);
-    answer_move_learn = (fun _ -> Battle.Not_learned { offered = None });
+    level_up = Level_up_fake.fake_game_steps (Level_up_fake.game []);
     answer_use_next = (fun _ -> ());
   }
 
@@ -105,11 +106,40 @@ let ran_dry =
     moves = [ Battle.Refused ];
   }
 
+let mail_glitch_options pairs =
+  let decl : Run_options.declared list =
+    [
+      {
+        key = "sweeper";
+        value = Text;
+        presence = Default "blastoise";
+        doc = "";
+      };
+      {
+        key = "depleted-move";
+        value = Text;
+        presence = Default "blizzard";
+        doc = "";
+      };
+    ]
+  in
+  Result.get_ok (Run_options.check decl pairs)
+
 let berry_pp_cases =
   [
     case "decode: the fork's mg-05a args"
       (fun () -> cause_or_ok (Berry_pp.decode (obj berry_args)))
       "ok";
+    case "apply_options: overrides sweeper and depleted-move"
+      (fun () ->
+        let p =
+          Berry_pp.apply_options
+            (mail_glitch_options
+               [ ("sweeper", "charizard"); ("depleted-move", "fire-blast") ])
+            berry_plan
+        in
+        Printf.sprintf "%s %s/%s" p.species p.move p.backup_move)
+      "charizard fire-blast/surf";
     case "decode: no backup move"
       (fun () ->
         cause_or_ok
@@ -186,6 +216,17 @@ let menus n = List.init n (fun _ -> Battle.Action_menu)
 
 let double_battle_cases =
   [
+    case "apply_options: overrides sweeper and depleted-move"
+      (fun () ->
+        let p =
+          Mail_glitch_battle.apply_options
+            (mail_glitch_options
+               [ ("sweeper", "charizard"); ("depleted-move", "fire-blast") ])
+            battle_plan
+        in
+        Printf.sprintf "%s %s (%s/%s)" p.sweeper p.depleted_move
+          p.knock_off_species p.recycle_species)
+      "charizard fire-blast (farfetchd/mr-mime)";
     case "slots: from the members' known moves"
       (fun () ->
         match

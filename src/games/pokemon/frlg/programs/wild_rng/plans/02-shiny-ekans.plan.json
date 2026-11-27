@@ -13,8 +13,6 @@
         "args": {
           "species": "ekans",
           "location": "route_10",
-          "tid": 33002,
-          "sid": 9011,
           "seeds": "rng_seeds_mgba_sevii_save.json",
           "seed_shift": 8,
           "frame_model": "mgba",
@@ -23,7 +21,7 @@
           "balls": 8,
           "attempts": 1
         },
-        "why": "The soonest shiny Ekans of the table: seed 08F5 (press 33050 ms after the reset), advance 988, Lv 11. SID 9011 was read once from this save's memory. seed_shift 8: what 01's end save adds to the Sevii table's seeds on mGBA, measured. Oddish, last in the party, knows Sweet Scent."
+        "why": "The soonest shiny Ekans of the table for the run's TID and SID (passed via --options, GAMEPILOT_FRLG_TID/SID, or trainer_ids.json). seed_shift 8: what 01's end save adds to the Sevii table's seeds on mGBA, measured. Oddish, last in the party, knows Sweet Scent."
       },
       {
         "id": "save_catch",

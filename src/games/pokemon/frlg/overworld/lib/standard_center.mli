@@ -32,7 +32,9 @@
       {!Frlg_checkpoints.Checkpoint_run.load_world} does not read those map
       files.
     - There is a ["pc_front"] point, the PC's stand as
-      [Frlg_checkpoints.Make_room] uses it. *)
+      [Frlg_checkpoints.Make_room] uses it.
+    - The town's door point uses the typed {!door_point} key
+      ({!door_point_name}) rather than a string built from the Center's name. *)
 
 open Grid_maps
 open Grid_geometry
@@ -61,9 +63,17 @@ val room :
     town's door point). Its points are each mat warp's ["warp_<n>"], ["mat"],
     ["nurse_front"] and ["pc_front"]. [Error] for a map not in {!centers}. *)
 
+(** The key of the point {!with_rooms} adds on a town's Center door. *)
+type door_point =
+  | Standard_center_door
+      (** The town's Center door point, where the mat's warps land. *)
+
+val door_point_name : door_point -> string
+(** The point name in {!Grid_maps.Map_data.t.points} for a {!door_point}. *)
+
 val with_rooms : Map_data.t list -> Map_data.t list
 (** The maps, plus the room of each standard Center whose door is on one of them
-    and that is not among them. As in the fork, each such town gets a point
-    ["<Center>_door"] on that door, and only its first such Center is added. The
-    caller leaves out the standard Centers' map files for their rooms to be
-    added. *)
+    and that is not among them. Each such town gets the {!Standard_center_door}
+    point ({!door_point_name}) on that door, and only its first such Center is
+    added. The caller leaves out the standard Centers' map files for their rooms
+    to be added. *)

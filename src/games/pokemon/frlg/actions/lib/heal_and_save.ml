@@ -1,10 +1,6 @@
 open Frlg_readers
 module M = Menu_input
 
-let nurse_front : Pokemon_engine.Pose.grid =
-  { map = ""; tiles = [ { x = 7; y = 4 } ]; facing = Some North }
-
-let center_map town = town ^ "_PokemonCenter_1F"
 let dialog_press_ms = 340
 let dialog_presses = 20
 let mash_a_ms = 8000

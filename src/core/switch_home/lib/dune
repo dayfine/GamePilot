@@ -1,4 +1,0 @@
-(library
- (name switch_home)
- (public_name gamepilot.switch_home)
- (libraries gamepilot.wire gamepilot.effects))

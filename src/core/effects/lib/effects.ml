@@ -14,6 +14,7 @@ let () =
 
 type _ Effect.t +=
   | Submit : Wire.command list -> Wire.batch_done Effect.t
+  | Submit_at : float * Wire.command list -> Wire.batch_done Effect.t
   | Await : (measurements -> bool) * int -> awaited Effect.t
   | Race : Wire.command list * (measurements -> bool) -> raced Effect.t
   | Race_held : Wire.command list * (measurements -> bool) -> raced Effect.t
@@ -21,6 +22,8 @@ type _ Effect.t +=
   | Queue : Wire.command list -> unit Effect.t
   | Now : float Effect.t
   | Read : measurements option Effect.t
+  | Take_gaps : Wire.gap list Effect.t
+  | Renew_lease : int option -> unit Effect.t
   | Load_state : string -> int Effect.t
   | Reset : int Effect.t
   | Save_state : string -> int Effect.t
@@ -34,6 +37,10 @@ type _ Effect.t +=
   | Show_counters : Wire.Watch.counter list -> unit Effect.t
 
 let submit commands = Effect.perform (Submit commands)
+
+let submit_at ~start_at_t_ms commands =
+  Effect.perform (Submit_at (start_at_t_ms, commands))
+
 let await ~timeout_ms pred = Effect.perform (Await (pred, timeout_ms))
 let race commands ~stop = Effect.perform (Race (commands, stop))
 
@@ -48,6 +55,8 @@ let race_then commands ~stop ~then_ =
 let queue commands = Effect.perform (Queue commands)
 let now () = Effect.perform Now
 let read () = Effect.perform Read
+let take_gaps () = Effect.perform Take_gaps
+let renew_lease ?ttl_ms () = Effect.perform (Renew_lease ttl_ms)
 let load_state path = Effect.perform (Load_state path)
 let reset () = Effect.perform Reset
 let save_state path = Effect.perform (Save_state path)

@@ -11,7 +11,7 @@ val needs :
   Frlg_actions.Mart_plan.stocks ->
   before:Pokemon_engine.Postconditions.t option ->
   Pokemon_engine.Plan.t ->
-  Need.t list
+  (Need.t list, string) result
 (** What the save must hold for the plan's first event, in the table's order:
-    the party, the money, the items, the place. Raises {!Json_field.Invalid} for
-    a plan arg that does not read. *)
+    the party, the money, the items, the place. [Error] for a plan arg that does
+    not decode. *)

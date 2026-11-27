@@ -1,7 +1,7 @@
 (** Primitive overworld, Grand Underground doorway, menu, dialog, and battle-
     escape actions for BDSP, built on
     {!Bdsp_underground.Corridor_nav.bdsp_move_mechanics} (fork PR #402) and
-    {!Switch_home.Switch_presses}. *)
+    {!Switch.Switch_presses}. *)
 
 open Bdsp_underground
 

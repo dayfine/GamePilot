@@ -1,3 +1,6 @@
+(* Minimap_arrow: heading angle and confidence tested on synthetic rotated dart
+   masks (no capture frames or daemon fakes) and on recorded PLZA fixture masks. *)
+
 open Plza_readers
 
 let text = function Some a -> Printf.sprintf "%.0f" a | None -> "none"
@@ -128,9 +131,9 @@ let frames =
     ("interact-prompt/arrival-to-ad-0005-prompt", "none");
     ("interact-prompt/mission-complete-0001-prompt", "none");
     ("interact-prompt/mission-complete-0003-nothing", "none");
-    ("minimap/es-0303-start", "145");
-    ("minimap/es-0306-start", "234");
-    ("minimap/es-0307-start", "245");
+    ("minimap/es-after-taunie-battle", "145");
+    ("minimap/es-pokemon-center-door", "234");
+    ("minimap/es-wild-zone-1-gate", "245");
     ("minimap/es-center-counter", "325");
     ("move-symbols/0303-andi-battle-no-zl-1", "none");
     ("move-symbols/0303-andi-battle-no-zl-3", "none");

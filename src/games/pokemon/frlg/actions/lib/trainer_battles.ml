@@ -13,7 +13,7 @@ type game_steps = {
 let lead_moves = [ 0; 1; 2; 3 ]
 
 let script =
-  B.Battle_script.make ~learn:Keep_moves ~use_next:false
+  B.Battle_script.make ~use_next:false
     (Attack { slots = lead_moves; target = Default })
 
 let fight_one (g : game_steps) ~battle ~battles =
@@ -46,11 +46,11 @@ let failure = function
 let live_game_steps ~log ~fight =
   {
     await_battle =
-      (fun () -> Scene_looks.until_battle ~label:"trainer battle" ~log);
+      (fun () -> Scene_readings.until_battle ~label:"trainer battle" ~log);
     fight;
     settle =
       (fun () ->
-        Scene_looks.settle Talk ~label:"after the battles" ~battle_ends:false
+        Scene_readings.settle Talk ~label:"after the battles" ~battle_ends:false
           ~log);
     log;
   }

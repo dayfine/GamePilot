@@ -112,7 +112,7 @@ let p = "pending"
 and c = "current"
 and d = "done"
 
-(* The runner's own story lines ("[Story] ...") go to the page too; left out
+(* The runner's own story lines ("[Run] ...") go to the page too; left out
    here, as they are the runner's. *)
 let only_page lines =
   List.filter (fun l -> not (String.starts_with ~prefix:"log [" l)) lines

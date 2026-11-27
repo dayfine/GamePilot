@@ -1,6 +1,10 @@
-(* Copied verbatim from the fork's ReferenceData/plza-minimap-<name>.json: each grid's 16 rows of 16 cells, "rrggbb" each. *)
+(* Copied verbatim from the fork's ReferenceData/plza-minimap-<NN.NN>-start.json
+   (plza/lean), named here for the place each shows: each grid's 16 rows of 16
+   cells, "rrggbb" each. *)
 
-let grid_03_03_start =
+(* plza-minimap-03.03-start.json: the courtyard past the plaza arch, after
+   Taunie's battle (Spanish, console B). *)
+let grid_after_taunie_battle =
   [
     "5b697275a5b8e2e6d1f5efd7e5d1b3e7d2b2e5d2b5e8d2b2d9cab1e5dbc2fdf9e1f9f3dde2cfb3ebe3caa0a299424e53";
     "76a5bad5dfbdedeccaf8f3dce4cfb3ebd5b4ecd5b4e0cdadd5cdadf9f5defffce4fffce4faf5dee9dcc3e9d3b48e8a7c";
@@ -20,7 +24,9 @@ let grid_03_03_start =
     "4c605d6ca6a8d4e0dbf0ecd5f2edd5e7d1b0e8d2b2ebd5b5ebd5b4e7d2b5dbd6b1dfd5b7f0ebd3f2f2dd96bac6657989";
   ]
 
-let grid_03_04_start =
+(* plza-minimap-03.04-start.json: Station Front, off the roof (Korean, console
+   B). *)
+let grid_station_front =
   [
     "f5efb2c6ebdbd6e0d5f3e3c3f7f4e3f3f0dff2e3c9ffe6c1fbe3b1ffd036fbe69fead331dbda5efaddb5fce4b3f8f3bc";
     "cff2e0e7f4f2fcfbf1f6f2e2f5e3c4f8e4c0f2eddaf2e5c9f5f0d6fcd75dfcdf78ffd546fbf2baf4d5bbfdcfaaf8ecc3";
@@ -40,7 +46,9 @@ let grid_03_04_start =
     "bac6c5a8d6e8e6e2d3fae3beffe6c1f9e3bef5e2bddbd3b5adb1a2849e9c74989e7298a17298a17299a289bfcfbbdee7";
   ]
 
-let grid_03_06_start =
+(* plza-minimap-03.06-start.json: outside the Pokemon Center at Station Front
+   (Spanish, console B). *)
+let grid_pokemon_center_door =
   [
     "71808186afc2ddceb8e9d2b1e7dec4fcf8e1fbf6dff6f4d7eff0ccefefccf7f4d9f6f1dae6d4b9e8d1b29993863b4757";
     "83aec3ddd8c8e3d5bcebd5b4e7d2b2f0e9d1fefae2f5f2d7ececc8f9f5dcf0e8d2e5d2b6e9d3b1ead4b3ecd5b48b897e";
@@ -60,7 +68,9 @@ let grid_03_06_start =
     "ad9e728baaafccc8b7e4d6beebccb2e9c7a8ecd5b4e1c3a7eec1a2d7b9a1a3a49d7c969a72929b6f929d6398b354728a";
   ]
 
-let grid_03_07_start =
+(* plza-minimap-03.07-start.json: before Wild Zone 1's gate (Spanish, console
+   B). *)
+let grid_wild_zone_1_gate =
   [
     "61707182adc0eaebdae9cdb4f2c1a2ecc1a2e5d0b8e3ceb0e1d2b9e3d4bbd9d5b2e7d2b2e7d2b0ebd5b4999976344c2f";
     "6e9eb9d7d7bcebc4a8f3c1a1eec3a4e3d0b4f8f3dbe2ceb0e6dcc2fcf7e0efeccee1c6a7e9d3b2e6d0afecd5b58f8f7d";
@@ -82,8 +92,8 @@ let grid_03_07_start =
 
 let all =
   [
-    ("03.03-start", grid_03_03_start);
-    ("03.04-start", grid_03_04_start);
-    ("03.06-start", grid_03_06_start);
-    ("03.07-start", grid_03_07_start);
+    ("after-taunie-battle", grid_after_taunie_battle);
+    ("station-front", grid_station_front);
+    ("pokemon-center-door", grid_pokemon_center_door);
+    ("wild-zone-1-gate", grid_wild_zone_1_gate);
   ]

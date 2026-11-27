@@ -8,13 +8,26 @@ open Frlg_actions
 let case name input expectation = { Table_test.name; input; expectation }
 let stocks = Result.get_ok (Mart_plan.load ())
 
-let decode name json () =
+let decode ?(options = Run_options.none) name json () =
   match
-    Action_requests.decode stocks name
+    Action_requests.decode ~options stocks name
       (Json_field.as_object "" (Yojson.Safe.from_string json))
   with
   | Ok r -> Action_requests.to_string r
   | Error c -> Pokemon_engine.Failure.cause_to_string c
+
+let sweeper_options value =
+  let decl : Run_options.declared list =
+    [
+      {
+        key = "sweeper";
+        value = Text;
+        presence = Default "blastoise";
+        doc = "";
+      };
+    ]
+  in
+  Result.get_ok (Run_options.check decl [ ("sweeper", value) ])
 
 let decoding =
   [
@@ -36,6 +49,21 @@ let decoding =
     case "give_bag_item to a species"
       (decode "give_bag_item" {|{"item": "retro-mail", "species": "mr-mime"}|})
       "give retro-mail to mr-mime";
+    case "give_bag_item by role uses default species when no option is given"
+      (decode "give_bag_item"
+         {|{"item": "leppa-berry", "species": "blastoise", "role": "sweeper"}|})
+      "give leppa-berry to blastoise";
+    case "give_bag_item by role is overridden by --options sweeper"
+      (decode
+         ~options:(sweeper_options "charizard")
+         "give_bag_item"
+         {|{"item": "leppa-berry", "species": "blastoise", "role": "sweeper"}|})
+      "give leppa-berry to charizard";
+    case "give_bag_item without role ignores --options sweeper"
+      (decode
+         ~options:(sweeper_options "charizard")
+         "give_bag_item" {|{"item": "retro-mail", "species": "mr-mime"}|})
+      "give retro-mail to mr-mime";
     case "give_bag_item to a slot out of range"
       (decode "give_bag_item" {|{"item": "sitrus-berry", "target_slot": 7}|})
       "bad_args: give_bag_item: target_slot is 7, not a party slot (1-6).";
@@ -51,6 +79,20 @@ let decoding =
     case "party_swap by species"
       (decode "party_swap" {|{"species": "farfetchd", "target_slot": 1}|})
       "swap farfetchd to slot 1";
+    case "party_swap by role uses default species when no option is given"
+      (decode "party_swap"
+         {|{"species": "blastoise", "role": "sweeper", "target_slot": 1}|})
+      "swap blastoise to slot 1";
+    case "party_swap by role is overridden by --options sweeper"
+      (decode
+         ~options:(sweeper_options "charizard")
+         "party_swap"
+         {|{"species": "blastoise", "role": "sweeper", "target_slot": 1}|})
+      "swap charizard to slot 1";
+    case "party_swap by role without species fails when option is unset"
+      (decode "party_swap" {|{"role": "sweeper", "target_slot": 1}|})
+      "bad_args: party_swap: role sweeper needs --options sweeper=SPECIES or \
+       species.";
     case "party_swap by slots"
       (decode "party_swap" {|{"slot_a": 2, "slot_b": 5}|})
       "swap slots 2 and 5";
@@ -104,12 +146,32 @@ let decoding =
       "unknown_action: switch_grind";
   ]
 
-let buys map items budget () =
+let buys ?(options = Run_options.none) map items budget () =
   let stock = Option.get (Mart_plan.stock stocks map) in
   let lines =
     List.map (fun (i, q) -> { Mart_plan.line_item = i; quantity = q }) items
   in
-  Mart_plan.buys_to_string (Mart_plan.buys stock { map; lines; budget })
+  let plan = Mart_plan.apply_options options { map; lines; budget } in
+  Mart_plan.buys_to_string (Mart_plan.buys stock plan)
+
+let supplies_options pairs =
+  let decl : Run_options.declared list =
+    [
+      {
+        key = "retro-mail";
+        value = Int_range (0, 999);
+        presence = Default "100";
+        doc = "";
+      };
+      {
+        key = "super-repel";
+        value = Int_range (0, 99);
+        presence = Default "5";
+        doc = "";
+      };
+    ]
+  in
+  Result.get_ok (Run_options.check decl pairs)
 
 let presses q () =
   let right, up = Mart_plan.quantity_presses q in
@@ -125,6 +187,28 @@ let mart =
          [ ("revive", 2); ("escape-rope", 1) ]
          (Some 2000))
       "1 revive (row 2, $1500)";
+    case "options override retro-mail to 20 (collapses 50+50)"
+      (buys
+         ~options:(supplies_options [ ("retro-mail", "20") ])
+         "CeladonCity_DepartmentStore_4F"
+         [ ("retro-mail", 50); ("retro-mail", 50) ]
+         None)
+      "20 retro-mail (row 1, $1000)";
+    case "options override retro-mail to 150 (splits 50+50+50)"
+      (buys
+         ~options:(supplies_options [ ("retro-mail", "150") ])
+         "CeladonCity_DepartmentStore_4F"
+         [ ("retro-mail", 50); ("retro-mail", 50) ]
+         None)
+      "50 retro-mail (row 1, $2500); 50 retro-mail (row 1, $2500); 50 \
+       retro-mail (row 1, $2500)";
+    case "options override super-repel to 0 (skips purchase)"
+      (buys
+         ~options:(supplies_options [ ("super-repel", "0") ])
+         "LavenderTown_Mart"
+         [ ("super-repel", 5) ]
+         None)
+      "nothing";
     case "quantity 1: no presses" (presses 1) "right 0, up 0";
     case "quantity 25: two tens, then four" (presses 25) "right 2, up 4";
     case "quantity 99" (presses 99) "right 9, up 8";

@@ -1,7 +1,7 @@
 module OW = Bdsp_actions.Bdsp_overworld
 module US = Bdsp_readers.Underground_screen
 module WS = Bdsp_readers.Wall_sparkle
-module P = Switch_home.Switch_presses
+module P = Switch.Switch_presses
 module D = Grid_geometry.Direction
 open Bdsp_underground
 

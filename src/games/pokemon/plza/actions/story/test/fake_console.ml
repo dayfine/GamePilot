@@ -37,9 +37,14 @@ let queue c commands =
 
 let frame_ms = 33.0
 
-let steps ?(party = fun _ -> None) ?(lock = fun _ -> None) c screen :
+let steps ?(party = fun _ -> None) ?(lock = fun _ -> None) ?link_play c screen :
     Plza_story.Steps.game_steps =
   let log line = c.lines <- line :: c.lines in
+  let link_play =
+    Option.value link_play ~default:(fun c ->
+        if (screen c).Plza_story.Look.main_menu then Plza_story.Steps.Absent
+        else No_menu)
+  in
   {
     submit = submit c;
     submit_batch = List.iter (submit c);
@@ -82,6 +87,10 @@ let steps ?(party = fun _ -> None) ?(lock = fun _ -> None) c screen :
       (fun () ->
         c.now <- c.now +. (2. *. frame_ms);
         party c);
+    read_link_play_row =
+      (fun () ->
+        c.now <- c.now +. frame_ms;
+        link_play c);
     log;
     log_detail = log;
   }

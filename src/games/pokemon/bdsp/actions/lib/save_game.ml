@@ -1,4 +1,4 @@
-module P = Switch_home.Switch_presses
+module P = Switch.Switch_presses
 
 let ( let* ) = Result.bind
 let press_hold_ms = 120

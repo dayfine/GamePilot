@@ -175,7 +175,7 @@ let inline_plans : Table_test.case list =
       (at ^ "events[0].colour is not a known field.");
     error "unknown kind"
       ({|"kind": "battle"|}, {|"kind": "dance"|})
-      (at ^ {|events[5].kind "dance" is not a story event kind.|});
+      (at ^ {|events[5].kind "dance" is not a built-in event kind.|});
     error "route without a target"
       ( {|{"target": {"map": "Town", "tiles": [[4, 0]], "facing": "north"}}|},
         "{}" )

@@ -2,8 +2,8 @@ module OW = Bdsp_actions.Bdsp_overworld
 module MP = Bdsp_actions.Bdsp_mining_play
 module US = Bdsp_readers.Underground_screen
 module MS = Bdsp_readers.Minimap_sparkles
-module H = Switch_home.Held_screen
-module P = Switch_home.Switch_presses
+module H = Screen_graph.Held_screen
+module P = Switch.Switch_presses
 open Bdsp_underground
 
 let ( let* ) = Result.bind
@@ -276,8 +276,9 @@ let run_farm_loop ctx =
 
 let dispatch_mode ~mode ~door ctx =
   match Step_modes.run ~mode ~door ~log ~picture:ctx.picture ~goal:ctx.goal with
-  | Some res -> res
-  | None ->
+  | Step_modes.Completed msg -> Ok msg
+  | Step_modes.Failed e -> Error e
+  | Step_modes.Not_step_mode ->
       Result.map
         (Mining_counters.format_summary ~goal:ctx.goal)
         (run_farm_loop ctx)

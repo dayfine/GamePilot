@@ -1,0 +1,16 @@
+{
+  "jsonrpc": "2.0",
+  "id": 59,
+  "method": "submit",
+  "params": {
+    "batch_id": "timed1",
+    "start_at_t_ms": 25000.5,
+    "commands": [
+      {
+        "press": ["A"],
+        "hold_ms": 80,
+        "cooldown_ms": 100
+      }
+    ]
+  }
+}

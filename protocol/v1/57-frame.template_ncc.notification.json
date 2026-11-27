@@ -1,0 +1,17 @@
+{
+  "jsonrpc": "2.0",
+  "method": "frame",
+  "params": {
+    "seq": 1001,
+    "load": 0,
+    "t_ms": 16683.3,
+    "probes": {
+      "eye.player": {
+        "kind": "core.template_ncc@1",
+        "score": 0.874215,
+        "x": 0.4625,
+        "y": 0.41296
+      }
+    }
+  }
+}

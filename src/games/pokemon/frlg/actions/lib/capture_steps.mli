@@ -13,7 +13,10 @@
       uncaught target's: the patch's species) while the line prints, and every
       species once its page waits, so another species reads too.
     - New: on the action menu, the foe's caught mark is read
-      ({!Frlg_readers.Caught_mark}), and the ball thrown is the plan's. *)
+      ({!Frlg_readers.Caught_mark}), and the ball thrown is the plan's.
+
+    Language: matches the English encounter line ["Wild <SPECIES> appeared!"]
+    and English species names; non-English ROMs differ in wording and length. *)
 
 val throw_poll_ms : int
 (** 500 ms between looks after a throw; every fourth look with neither answer

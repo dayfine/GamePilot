@@ -12,6 +12,10 @@ type need = {
   moves : string list;
       (** Field moves the plans' events need some member to know (Cut for a
           [cut_tree]). *)
+  free : int;
+      (** Peak free party slots needed at the start of the chain, counting
+          unconditional [pc_deposit] events that free slots before or between
+          joins. *)
 }
 
 val party_size : int
@@ -20,13 +24,13 @@ val party_size : int
 val field_moves : string list
 (** cut, fly, surf, strength: a member knowing one stays. *)
 
-val chain_need : Pokemon_engine.Plan.t list -> need
-(** Over the plans in run order. Raises {!Json_field.Invalid} for an arg that
-    does not read. *)
+val chain_need : Pokemon_engine.Plan.t list -> (need, string) result
+(** Over the plans in run order. [Error] for an arg that does not decode. *)
 
 val free_needed : need -> int
-(** The members that join: each must reach the party (a trade or a battle uses
-    it), and none leaves. *)
+(** Peak free party slots needed at the start of the chain ({!need.free}): a
+    plan that deposits a member before catching or stores each catch before the
+    next needs only the peak simultaneous growth, not the total joins. *)
 
 type member = Room_policy.member
 

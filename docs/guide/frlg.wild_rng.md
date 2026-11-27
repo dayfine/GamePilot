@@ -14,22 +14,22 @@ Runs on: mGBA.
 Your party's last Pokémon must know Sweet Scent (Oddish here), with Sweet Scent second on its menu,
 and the game's sound must be Mono with the button mode Help.
 
-The plan holds your trainer ID (TID) and secret ID (SID) as `tid` and `sid` on its `wild_rng`
-event. The TID is on your Trainer Card. The game never shows the SID: find it with PA/CC's SID
-Helper (Pokémon FRLG, *SID Helper*), which runs on a new game's naming screen and lists the
-possible SIDs.
+Give your trainer ID (TID) and secret ID (SID) via `--options tid=N --options sid=N`, or set
+`GAMEPILOT_FRLG_TID` and `GAMEPILOT_FRLG_SID`, or store `{"tid": N, "sid": N}` in
+`trainer_ids.json` under the local FRLG config directory (`GAMEPILOT_FRLG_CONFIG`, defaulting to
+`~/.local/share/gamepilot/frlg`). `--options` overrides the environment variables, which override
+`trainer_ids.json`.
+
+The TID is on your Trainer Card. The game never shows the SID: find it with PA/CC's SID Helper
+(Pokémon FRLG, *SID Helper*), which runs on a new game's naming screen and lists the possible SIDs.
 
 The list shows in the program's *TID/SID Results* box, in its *SID Candidates* notification and
 in its log (`Possible SIDs:`). At the PA/CC version GamePilot builds against, the box is not saved
 in `SerialPrograms-Settings.json`, so copy the SID from the box or the log.
 
-A Switch FireRed save takes its SID the same way, once, into the plan. The mGBA save these plans
-were made on has SID 9011, read from the game's memory.
-
 Each save also needs its seed shift measured (below).
 
 <!-- generated:needs -->
-- 1 free party slot (joining: ekans in 02-shiny-ekans)
 - a member holds no Mail (pc_deposit)
 - a member knows fly (fly)
 - the thunder badge (fly)
@@ -38,6 +38,15 @@ Each save also needs its seed shift measured (below).
 <!-- /generated -->
 
 ## Running it
+
+<!-- generated:options -->
+Give each as `--options KEY=VALUE`:
+
+| Key | Values | When not given | What it chooses |
+|---|---|---|---|
+| `tid` | 0 to 65535 | optional | your trainer ID (overrides GAMEPILOT_FRLG_TID and trainer_ids.json) |
+| `sid` | 0 to 65535 | optional | your secret ID (overrides GAMEPILOT_FRLG_SID and trainer_ids.json) |
+<!-- /generated -->
 
 <!-- generated:commands -->
 ```sh
@@ -54,7 +63,7 @@ sh run/run_checkpoints_on_mgba.sh frlg.wild_rng --from 01-route10-grass --to 02-
 | 01-route10-grass | From anywhere outdoors: fly to Route 10, a party slot free in the Center's PC, into the north grass, saved |
 | 02-shiny-ekans | Route 10's north grass: a hard reset timed for a shiny Ekans, Sweet Scent, the catch, its summary's star, saved |
 
-<!-- plans: 55dbaca1a59d -->
+<!-- plans: 1fd2eb79df7d -->
 <!-- /generated -->
 
 ## When it stops
@@ -92,6 +101,10 @@ the save 01 starts from. The plan names its table (`seeds`).
 timer counts later or sooner by where its last save left the flash sectors (the save count modulo
 14: 0, 4, 8 or 12 on these saves), which moves every seed by that much. 01's end save adds 8,
 measured: the table it gives is the Sevii table plus 8, row for row.
+
+**The in-game offset.** The plan's optional `ingame_offset` (default `0`, in advances) shifts the
+Sweet Scent wait, as in the fork's calibration, when the overworld's RNG lands a few advances off
+the target (for example on routes with walking NPCs).
 
 **The target.** It is searched, not given: of the table's seeds and advances 900 to 4000, the
 shiny Ekans for the plan's TID and SID whose waits add up least (`Frlg_rng.Wild_target`).

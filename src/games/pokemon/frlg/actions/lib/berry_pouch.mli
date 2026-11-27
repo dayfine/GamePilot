@@ -46,6 +46,14 @@ val choose_give : string -> unit
     [unknown_item] for no berry's slug, [not_in_bag] when the pouch does not
     hold it. *)
 
+val count : log:(string -> unit) -> string -> int option
+(** From the overworld: the pouch opened ({!open_pouch}), the berry found by its
+    number, its count read off its shown row ({!Bag_items.count_on_row}), then
+    the pouch and bag closed back to the overworld. [Some 0] when the pouch does
+    not hold the berry; [None] when its count did not read. Fails as
+    [unknown_item] for no berry's slug, [not_in_bag] when the Berry Pouch itself
+    is not in Key Items, or [no_berry_pouch] / [not_closed]. *)
+
 val shows_pouch : Effects.measurements -> bool
 (** The pouch shows ({!Frlg_readers.Berry_pouch_screen.berry_pouch}), for a
     caller that subscribes {!probes}. *)

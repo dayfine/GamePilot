@@ -30,8 +30,10 @@ You need:
   differently.
 - **A post-game save**: the plans walk through Celadon, Vermilion, Route 2, Lavender, the Pokémon
   Tower and Victory Road, and fly between towns.
-- **Blastoise** (it fights the grind's battles and Lea & Jed) in the party, and members that know **Fly**
-  and **Cut**. Any member that knows Fly will do: each Fly reads the party's moves and uses the first.
+- **A sweeper** (default **Blastoise** with **Blizzard**; pass `--options sweeper=SPECIES` and
+  `--options depleted-move=MOVE` for another starter/move) in the party to fight the grind's battles
+  and Lea & Jed, plus members that know **Fly** and **Cut**. Any member that knows Fly will do: each
+  Fly reads the party's moves and uses the first.
 - **Two free party slots**: Abra (a Game Corner prize) joins in 01-celadon-setup and Spearow (caught on Route
   16) in 02-trade-farfetchd. On the Switch, `--make-room MAP` can deposit members for you (see below).
 - **Enough money** for every purchase on the way.
@@ -57,6 +59,15 @@ runs. A full party makes it name the members to deposit; it never picks a member
 lead, or one that knows a field move.
 
 ## Running it
+
+<!-- generated:options -->
+Give each as `--options KEY=VALUE`:
+
+| Key | Values | When not given | What it chooses |
+|---|---|---|---|
+| `sweeper` | text | default `blastoise` | party member that leads and sweeps battles (species slug) |
+| `depleted-move` | text | default `blizzard` | sweeper move whose PP is drained on Route 8 so the Leppa Berry fires |
+<!-- /generated -->
 
 Build first (`cd src && opam exec -- dune build`; on the Switch, also the daemon), and set the
 `GAMEPILOT_*` variables described in [Running on mGBA](../mgba.md) (mGBA) and
@@ -101,7 +112,7 @@ steps and its log, and stop it.
 | 07-glitch-prep | Prepare Leppa and Retro Mail for Lea & Jed on Route 16 |
 | 08-activate-and-verify | Turn the Mail Glitch on against Lea & Jed on Route 16, read the glitched mail, duplicate one Antidote |
 
-<!-- plans: 7542b40f9e77 -->
+<!-- plans: 3bac4195ef02 -->
 <!-- /generated -->
 
 In plain words, beyond the table:

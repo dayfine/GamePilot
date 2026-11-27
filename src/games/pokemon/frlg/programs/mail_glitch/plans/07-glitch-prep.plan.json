@@ -68,12 +68,14 @@
         "kind": "game_action",
         "action": "pick_up_item",
         "args": {"item": "leppa-berry"},
+        "skip_if": ["bag_has_item:leppa-berry:1"],
         "why": "Pick up the Leppa Berry for the opening turn."
       },
       {
         "id": "clear_leppa_text",
         "kind": "scene",
         "declared_after": {"map": "Route8", "tiles": [[42, 14]], "facing": "south"},
+        "skip_if": ["bag_has_item:leppa-berry:1"],
         "why": "Clear the hidden item dialog."
       },
       {
@@ -87,8 +89,8 @@
         "id": "lead_blastoise",
         "kind": "game_action",
         "action": "party_swap",
-        "args": {"species": "blastoise", "target_slot": 1},
-        "why": "Lead with Blastoise for the wild battles."
+        "args": {"species": "blastoise", "role": "sweeper", "target_slot": 1},
+        "why": "Lead with the sweeper (default Blastoise, --options sweeper=...) for the wild battles."
       },
       {
         "id": "use_up_blizzard_pp",
@@ -139,8 +141,8 @@
         "id": "arrange_slot2_blastoise",
         "kind": "game_action",
         "action": "party_swap",
-        "args": {"species": "blastoise", "target_slot": 2},
-        "why": "Place Blastoise in the berry holder's battle position."
+        "args": {"species": "blastoise", "role": "sweeper", "target_slot": 2},
+        "why": "Place the sweeper (default Blastoise, --options sweeper=...) in the berry holder's battle position."
       },
       {
         "id": "arrange_slot3_mimien",
@@ -153,14 +155,15 @@
         "id": "give_leppa_berry_slot2",
         "kind": "game_action",
         "action": "give_bag_item",
-        "args": {"item": "leppa-berry", "species": "blastoise"},
-        "why": "Equip Blastoise to restore Blizzard PP after the first turn."
+        "args": {"item": "leppa-berry", "species": "blastoise", "role": "sweeper"},
+        "why": "Equip the sweeper (default Blastoise, --options sweeper=...) to restore its depleted move's PP after the first turn."
       },
       {
         "id": "give_retro_mail_slot3",
         "kind": "game_action",
         "action": "give_bag_item",
         "args": {"item": "retro-mail", "species": "mr-mime"},
+        "skip_if": ["party_slot_holds_mail:3"],
         "why": "equip Retro Mail with 1 Easy Chat word onto Slot 3 (MIMIEN)"
       }
     ]

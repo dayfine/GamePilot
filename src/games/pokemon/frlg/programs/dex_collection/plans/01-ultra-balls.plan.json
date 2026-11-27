@@ -27,9 +27,9 @@
         "action": "mart",
         "args": {
           "map": "IndigoPlateau_PokemonCenter_1F",
-          "items": [{"item": "ultra-ball", "quantity": 10}]
+          "items": [{"item": "ultra-ball", "quantity": 20}]
         },
-        "why": "10 Ultra Balls ($12,000): at full HP one catches an Ekans about two times in three, a Voltorb or a Drowzee one in two."
+        "why": "20 Ultra Balls ($24,000): at full HP one catches an Ekans about two times in three, a Voltorb or a Drowzee one in two; 20 covers the three catches (5 balls each) with margin."
       },
       {
         "fragment": "heal_at",
@@ -51,8 +51,8 @@
     "phase": "testing",
     "notes": "Starts anywhere outdoors in Kanto and ends outside Indigo Plateau's Pokemon Center, healed. The bag's Poke Balls (8 on the Sevii save) catch Voltorb about one time in four.",
     "postconditions": {
-      "items": [{"item": "ultra-ball", "gained": 10}],
-      "money": {"spent": 12000}
+      "items": [{"item": "ultra-ball", "gained": 20}],
+      "money": {"spent": 24000}
     }
   }
 }

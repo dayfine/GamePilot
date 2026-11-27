@@ -2,25 +2,15 @@
    entry points: how gamepilot run runs its series and one plan (--plan),
    how gamepilot replay checkpoint replays one plan, how its guide lists its checkpoints,
    their needs and the commands that run them, and what gamepilot programs
-   says a chain needs; the readers gamepilot ctl read runs; and the one-shot
-   programs gamepilot run and replay run. The one place under bin/ that picks
-   a family; a program no registry entry names is over the Pokémon grid
-   rules. *)
+   says a chain needs; and the readers gamepilot ctl read runs. The one place
+   under bin/ that picks a family; a program no registry entry names is over
+   the Pokémon grid rules. *)
 
 module R = Program_registry
 module Grid = Frlg_series
 module Plza = Plza_series.Runs
 
 let ( let* ) = Result.bind
-
-(* A one-shot program (gamepilot run, gamepilot replay): its label in the run's
-   lines and on the watch page, the save state it loads unless --console, and
-   a run: whether it passed and its line. In the effect context. *)
-type one_shot = {
-  label : string;
-  default_state : string;
-  run : options:Run_options.t -> state:string option -> bool * string;
-}
 
 type t = {
   run_series : string -> string list -> (int, string) result;
@@ -34,7 +24,6 @@ type t = {
       (** What a plan folder's chain needs of the save, in one line (gamepilot
           programs). *)
   ctl_readers : Ctl_script.reader list;  (** What gamepilot ctl read runs. *)
-  one_shots : (string * one_shot) list;  (** By program id. *)
 }
 
 (* run.json's program fields for a plan folder; none for no program. *)
@@ -69,26 +58,6 @@ let grid_guide : Guide_blocks.rules_guide =
     program_block = (fun _ _ -> None);
   }
 
-let start_menu_poc =
-  {
-    label = "start_menu_poc";
-    default_state = Start_menu_poc.default_state;
-    run =
-      (fun ~options:_ ~state ->
-        let outcome = Start_menu_poc.run ?state () in
-        ( (match outcome with Start_menu_poc.Passed _ -> true | _ -> false),
-          Start_menu_poc.describe outcome ));
-  }
-
-let bdsp_underground =
-  {
-    label = "bdsp.underground";
-    default_state = Bdsp_underground_program.Underground.default_state;
-    run =
-      (fun ~options ~state ->
-        Bdsp_underground_program.Underground.run ~options ?state ());
-  }
-
 (* The Pokémon grid rules' entry points. *)
 let grid =
   {
@@ -98,11 +67,6 @@ let grid =
     guide = grid_guide;
     chain_needs = Grid.Chain_needs.needs;
     ctl_readers = Frlg_ctl_readers.Ctl_readers.all;
-    one_shots =
-      [
-        ("frlg.start_menu_poc", start_menu_poc);
-        ("bdsp.underground", bdsp_underground);
-      ];
   }
 
 let plza_series plan_dir args =
@@ -134,7 +98,6 @@ let plza =
     guide = plza_guide;
     chain_needs = (fun _ -> Error "PLZA's plans state no chain needs");
     ctl_readers = [];
-    one_shots = [];
   }
 
 let plza_home_series plan_dir args =
@@ -158,7 +121,8 @@ let plza_home =
     plza with
     run_series = plza_home_series;
     run_checkpoint =
-      (fun _ _ -> Error "plza.bank-home runs whole series only: gamepilot run");
+      (fun _ _ ->
+        Error "pokemon_home.bank-plza runs whole series only: gamepilot run");
     ctl_readers = [];
   }
 
@@ -188,13 +152,97 @@ let plza_gifts =
     guide = { plza_guide with program_block = gifts_block };
   }
 
-let all = [ grid; plza; plza_home; plza_gifts ]
+let no_game_flags : unit Run_flags.game_flags =
+  {
+    game_defaults = ();
+    game_switch = (fun () _ -> None);
+    game_valued = (fun () _ _ -> Run_flags.Not_game_flag);
+  }
+
+let direct_failed id (e : Daemon_run.failed) =
+  (Printf.sprintf "%s: %s: %s" id e.at e.reason, 1)
+
+let run_underground_body ~options (record : Run_record.t) () =
+  let passed, line = Bdsp_underground_program.Underground.run ~options () in
+  if not passed then Attached_run.save_failure record;
+  (line, if passed then 0 else 1)
+
+let run_in_session (p : R.t) ~options ~port (record : Run_record.t) =
+  let body = run_underground_body ~options record in
+  Daemon_run.in_session ~failed:(direct_failed p.id) ~dir:record.dir (fun () ->
+      Live.run ~port body)
+
+let start_direct_daemon (p : R.t) (f : unit Run_flags.flags) ~viewport backend
+    (record : Run_record.t) =
+  let watch =
+    Watch_hub.for_runs_dir ~daemon:f.daemon ~runs_dir:f.runs_dir f.watch
+  in
+  let flags = Daemon_process.viewport_args backend viewport @ f.daemon_flags in
+  Daemon_process.start ?watch ~flags ~daemon:f.daemon ~backend ~port:f.port
+    ~wire_log:(Run_record.path record "wire.jsonl")
+    ~out_file:(Run_record.path record "daemon.log")
+    ~checkpoint:p.id ()
+
+let execute_direct (p : R.t) (f : unit Run_flags.flags) ~options ~viewport
+    backend (record : Run_record.t) =
+  match backend with
+  | None -> run_in_session p ~options ~port:f.port record
+  | Some b ->
+      let started = start_direct_daemon p f ~viewport b record in
+      Daemon_run.with_daemon ~failed:(direct_failed p.id) started (fun d ->
+          run_in_session p ~options ~port:d.port record)
+
+let run_bdsp_underground (p : R.t) args =
+  let* f =
+    Run_flags.parse no_game_flags (Run_flags.defaults no_game_flags) args
+  in
+  let* options = R.check_options (Some p) f.options in
+  let* viewport = R.check_viewport (Some p) f.viewport in
+  let attach =
+    f.serial = None && f.capture = None && f.replay = None && f.port <> 0
+  in
+  let* backend =
+    if attach then Ok None
+    else
+      Result.map Option.some
+        (Run_flags.daemon_backend f Engine_run.Checkpoint_trials.Testing)
+  in
+  let* run =
+    Attached_run.start
+      ?backend:(if attach then None else Some f.backend)
+      ~options:(Run_options.pairs options)
+      ~runs_dir:f.runs_dir ~kind:Program ~program:(R.run_fields p) ~label:p.id
+      ~mode:"run" ()
+  in
+  let line, code = execute_direct p f ~options ~viewport backend run.record in
+  print_endline line;
+  Attached_run.finish ~runs_dir:f.runs_dir run ~line ~code;
+  Ok code
+
+let bdsp_underground =
+  {
+    plza with
+    run_series = (fun _ _ -> Error "bdsp.underground has no checkpoint plans");
+    run_checkpoint =
+      (fun _ _ -> Error "bdsp.underground has no checkpoint plans");
+    replay_checkpoint =
+      (fun _ _ _ -> Error "bdsp.underground has no checkpoint replay");
+    chain_needs = (fun _ -> Error "bdsp.underground has no checkpoint plans");
+  }
+
+let all = [ grid; plza; plza_home; plza_gifts; bdsp_underground ]
 
 let of_rules = function
   | R.Pokemon_grid -> grid
   | R.Plza_story -> plza
-  | R.Plza_home -> plza_home
+  | R.Pokemon_home -> plza_home
   | R.Plza_gifts -> plza_gifts
+  | R.Bdsp_underground -> bdsp_underground
+
+let run_direct (p : R.t) args =
+  match p.rules with
+  | R.Bdsp_underground -> run_bdsp_underground p args
+  | _ -> Error (p.id ^ " has no checkpoint plans")
 
 let of_program (p : R.t option) =
   of_rules (match p with Some p -> p.rules | None -> R.Pokemon_grid)
@@ -221,6 +269,3 @@ let ctl_readers = List.concat_map (fun f -> f.ctl_readers) all
 
 let ctl_reader name =
   List.find_opt (fun (r : Ctl_script.reader) -> r.name = name) ctl_readers
-
-(* The one-shot program's runner, if its family has one. *)
-let one_shot (p : R.t) = List.assoc_opt p.id (of_program (Some p)).one_shots

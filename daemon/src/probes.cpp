@@ -21,9 +21,9 @@ cv::Scalar bgr_of(const std::array<std::uint8_t, 3>& rgb) {
 
 const std::vector<std::string>& probe_kinds() {
   static const std::vector<std::string> kinds = {
-      std::string(kColorStatsKind), std::string(kTemplateMatchKind),
-      std::string(kColorCountKind), std::string(kLineSharesKind),
-      std::string(kFindKind)};
+      std::string(kColorStatsKind),  std::string(kTemplateMatchKind),
+      std::string(kTemplateNccKind), std::string(kColorCountKind),
+      std::string(kLineSharesKind),  std::string(kFindKind)};
   return kinds;
 }
 
@@ -57,6 +57,23 @@ TemplateMatch template_match(const cv::Mat& image,
   // OpenCV may sum in the frequency domain and land a hair below 0.
   match.score = std::clamp(
       min_difference / (samples * kChannelMax * kChannelMax), 0.0, 1.0);
+  match.x = pixels.x + best.x;
+  match.y = pixels.y + best.y;
+  return match;
+}
+
+TemplateNcc template_ncc(const cv::Mat& bgr, const cv::Mat& template_gray,
+                         const cv::Rect& pixels) {
+  cv::Mat gray;
+  cv::cvtColor(bgr(pixels), gray, cv::COLOR_BGR2GRAY);
+  cv::Mat scores;
+  cv::matchTemplate(gray, template_gray, scores, cv::TM_CCOEFF_NORMED);
+  double max_score = 0;
+  cv::Point best;
+  cv::minMaxLoc(scores, nullptr, &max_score, nullptr, &best);
+  TemplateNcc match;
+  match.score =
+      std::isfinite(max_score) ? std::clamp(max_score, -1.0, 1.0) : 0.0;
   match.x = pixels.x + best.x;
   match.y = pixels.y + best.y;
   return match;

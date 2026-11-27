@@ -27,7 +27,7 @@ an empty event id
 an event without a kind
   p.plan.json: checkpoint.events[0].kind is missing.
 an unknown kind
-  p.plan.json: checkpoint.events[0].kind "dance" is not a story event kind.
+  p.plan.json: checkpoint.events[0].kind "dance" is not a built-in event kind.
 a repeated event id
   p.plan.json: checkpoint.events[1].id "e" repeats events[0].
 args not an object

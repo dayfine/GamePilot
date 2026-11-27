@@ -2,10 +2,11 @@
     samples, estimated again when their count has moved by a quarter, and frozen
     for every watcher at the first solve so that blink numbering stops moving.
 
-    Port of the threshold steps of [recover_state_from_blinks] in the fork's
-    [PokemonBDSP/Programs/RngManipulation/PokemonBDSP_BlinkRecovery.cpp] (R21:
-    same order, same integer quarter). The C++'s -1 for "none yet" is [None];
-    its per-watcher frozen values, all set at once, are one option. *)
+    Port of the threshold steps of [recover_state_from_blinks] in
+    [PokemonBDSP/Programs/RngManipulation/PokemonBDSP_BlinkRecovery.cpp]
+    (https://github.com/PokemonAutomation/Arduino-Source; R21: same order, same
+    integer quarter). The C++'s -1 for "none yet" is [None]; its per-watcher
+    frozen values, all set at once, are one option. *)
 
 type t
 (** Each watcher's latest estimate and how many samples it came from, and the

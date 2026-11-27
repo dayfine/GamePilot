@@ -36,6 +36,7 @@ type probe_spec = {
 
 let color_stats_kind = "core.color_stats@1"
 let template_match_kind = "core.template_match@1"
+let template_ncc_kind = "core.template_ncc@1"
 let color_count_kind = "core.color_count@1"
 let line_shares_kind = "core.line_shares@1"
 let find_kind = "core.find@1"
@@ -63,6 +64,12 @@ let template_match_probe ?ink ?skip_seams ~id ~box ~delivery ~template () =
     template = Some template;
     ink;
     skip_seams = Option.is_some ink && skip_seams = Some true;
+  }
+
+let template_ncc_probe ~id ~box ~delivery ~template =
+  {
+    (bare ~id ~kind:template_ncc_kind ~box ~delivery) with
+    template = Some template;
   }
 
 let color_count_probe ~id ~box ~delivery ~min ~max =
@@ -148,19 +155,12 @@ let probe_spec_of_json j =
     find = find_of_json kind j;
   }
 
-let json_of_template = function
-  | Some t -> [ ("template", `String t) ]
-  | None -> []
-
-let json_of_test = function
-  | [] -> []
-  | test -> [ ("test", Line_shares.json_of_test test) ]
-
-let json_of_find = function
-  | Some params -> Blob_find.params_fields params
-  | None -> []
-
 let json_of_probe_spec p =
+  let opt k f = Option.fold ~none:[] ~some:(fun v -> [ (k, f v) ]) in
+  let test =
+    if p.test = [] then [] else [ ("test", Line_shares.json_of_test p.test) ]
+  in
+  let find = Option.fold ~none:[] ~some:Blob_find.params_fields p.find in
   `Assoc
     ([
        ("id", `String p.id);
@@ -168,10 +168,10 @@ let json_of_probe_spec p =
        ("box", json_of_box p.box);
        ("delivery", `String (string_of_delivery p.delivery));
      ]
-    @ json_of_template p.template
+    @ opt "template" (fun t -> `String t) p.template
     @ json_of_ink p
     @ json_of_color_range p.color_range
-    @ json_of_test p.test @ json_of_find p.find)
+    @ test @ find)
 
 type rgb = { r : float; g : float; b : float }
 
@@ -186,6 +186,7 @@ let json_of_rgb { r; g; b } = `List [ `Float r; `Float g; `Float b ]
 type probe_result =
   | Color_stats of { mean : rgb; stddev : rgb }
   | Template_match of { score : float; x : float; y : float }
+  | Template_ncc of { score : float; x : float; y : float }
   | Color_count of { fraction : float; mean : rgb option }
   | Line_shares of Line_shares.t
   | Find of { blobs : Blob_find.blob list }
@@ -198,9 +199,9 @@ let color_stats_of_json what j =
       stddev = rgb_of_json "probe.stddev" (field what "stddev" j);
     }
 
-let template_match_of_json what j =
+let template_fields what j =
   let f = float_field what in
-  Template_match { score = f "score" j; x = f "x" j; y = f "y" j }
+  (f "score" j, f "x" j, f "y" j)
 
 let color_count_of_json what j =
   Color_count
@@ -216,42 +217,42 @@ let probe_result_of_json j =
   let what = "probe result" in
   match string_field what "kind" j with
   | kind when kind = color_stats_kind -> color_stats_of_json what j
-  | kind when kind = template_match_kind -> template_match_of_json what j
+  | kind when kind = template_match_kind ->
+      let score, x, y = template_fields what j in
+      Template_match { score; x; y }
+  | kind when kind = template_ncc_kind ->
+      let score, x, y = template_fields what j in
+      Template_ncc { score; x; y }
   | kind when kind = color_count_kind -> color_count_of_json what j
   | kind when kind = line_shares_kind ->
       Line_shares (Line_shares.of_json what j)
   | kind when kind = find_kind -> Find { blobs = Blob_find.of_json what j }
   | _ -> Other j
 
-let json_of_color_stats ~mean ~stddev =
-  `Assoc
-    [
-      ("kind", `String color_stats_kind);
-      ("mean", json_of_rgb mean);
-      ("stddev", json_of_rgb stddev);
-    ]
+let json_of_color_stats mean stddev =
+  let f = [ ("mean", json_of_rgb mean); ("stddev", json_of_rgb stddev) ] in
+  `Assoc (("kind", `String color_stats_kind) :: f)
 
-let json_of_template_match ~score ~x ~y =
-  `Assoc
-    [
-      ("kind", `String template_match_kind);
-      ("score", `Float score);
-      ("x", `Float x);
-      ("y", `Float y);
-    ]
+let json_of_template_result kind score x y =
+  let coords = [ ("score", `Float score); ("x", `Float x); ("y", `Float y) ] in
+  `Assoc (("kind", `String kind) :: coords)
 
-let json_of_color_count ~fraction ~mean =
+let json_of_color_count fraction mean =
+  let m = Option.fold ~none:`Null ~some:json_of_rgb mean in
   `Assoc
     [
       ("kind", `String color_count_kind);
       ("fraction", `Float fraction);
-      ("mean", Option.fold ~none:`Null ~some:json_of_rgb mean);
+      ("mean", m);
     ]
 
 let json_of_probe_result = function
-  | Color_stats { mean; stddev } -> json_of_color_stats ~mean ~stddev
-  | Template_match { score; x; y } -> json_of_template_match ~score ~x ~y
-  | Color_count { fraction; mean } -> json_of_color_count ~fraction ~mean
+  | Color_stats { mean; stddev } -> json_of_color_stats mean stddev
+  | Template_match { score; x; y } ->
+      json_of_template_result template_match_kind score x y
+  | Template_ncc { score; x; y } ->
+      json_of_template_result template_ncc_kind score x y
+  | Color_count { fraction; mean } -> json_of_color_count fraction mean
   | Line_shares shares -> Line_shares.to_json shares
   | Find { blobs } -> Blob_find.to_json blobs
   | Other j -> j

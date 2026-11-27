@@ -5,7 +5,7 @@ let fail msg =
   prerr_endline ("FAIL: " ^ msg);
   exit 1
 
-let mk_stats (r, g, b) (sr, sg, sb) : Switch_home.Solid_color.stats =
+let mk_stats (r, g, b) (sr, sg, sb) : Switch.Solid_color.stats =
   { mean = { Wire.r; g; b }; stddev = { Wire.r = sr; g = sg; b = sb } }
 
 let assert_cell label expected stats =

@@ -4,10 +4,9 @@
     languages in the list's order, each one's tag, entry and name limit, its
     defaults (English, look 1, "Kosmos") and its refusals.
 
-    Where it differs: Simplified Chinese is refused too. Its keyboard opens in
-    Pinyin, and the fork presses the keyboard's English key on the bottom row
-    first, which the cursor reader here does not read
-    ({!Switch_home.Keyboard_typing}). *)
+    Simplified Chinese's keyboard opens in Pinyin; 00.00-new-game presses its
+    English key first, as the fork does ({!Letters_mode}), and types on the
+    Latin page there. *)
 
 (** In the language list's order: down the left column, then the right one. *)
 type language =
@@ -28,7 +27,7 @@ type language_info = {
   name_limit : int;  (** The name keyboard's limit: 12, or 6 in East Asian. *)
   typed : bool;
       (** Whether 00.00-new-game types a name on its keyboard: not Korean's
-          (Hangul) nor Simplified Chinese's (Pinyin). *)
+          (Hangul). *)
 }
 (** What 00.00-new-game needs to know of a language. *)
 
@@ -59,8 +58,8 @@ val problem : t -> string option
 (** Why 00.00-new-game cannot play the choices, before any press: a look outside
     1 to 8, an empty name, a name longer than the language takes (counted in
     characters), a keyboard 00.00-new-game does not type on, or a character not
-    on the keyboard's first page ({!Switch_home.Keyboard_typing.key_of_char});
-    [None] when it can. *)
+    on the keyboard's first page ({!Switch.Keyboard_typing.key_of_char}); [None]
+    when it can. *)
 
 val by_hand_hint : string
 (** What every refusal and failure of 00.00-new-game ends with: make the choices

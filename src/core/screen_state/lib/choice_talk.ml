@@ -1,4 +1,4 @@
-type look = { choice : bool; page : bool; past_choice : bool }
+type reading = { choice : bool; page : bool; past_choice : bool }
 type move = Pick | Next_page | Answered | Wait
 
 let move ~pressed look =

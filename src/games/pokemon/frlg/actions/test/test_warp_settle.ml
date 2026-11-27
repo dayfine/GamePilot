@@ -60,7 +60,7 @@ let use ~fades ~arrival () =
                   before
               else None
             in
-            Scene_looks.settle After_warp ?arrived ~start:[ use_a ]
+            Scene_readings.settle After_warp ?arrived ~start:[ use_a ]
               ~label:"use escape-rope" ~battle_ends:false ~log))
   in
   Printf.sprintf "%s; %s; %s" (outcome result) !last_line

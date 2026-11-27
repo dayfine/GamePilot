@@ -14,4 +14,4 @@ let probe ~picture ~id box { low; high } =
          Wire.color_count_probe ~id ~box ~delivery:Every ~min:low ~max:high)
        (Native_box.probe_box ~picture box))
 
-let share = Switch_home.Color_share.read
+let share = Switch.Color_share.read

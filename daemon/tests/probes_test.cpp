@@ -7,6 +7,7 @@
 #include <cmath>
 #include <cstdint>
 #include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
 #include <optional>
 #include <string>
 #include <vector>
@@ -87,6 +88,65 @@ void check_template_match() {
       template_match(frame, black, gba_pixels(Box{0.0, 0.0, 0.25, 0.25})).score,
       0));
   CHECK(is_known_probe_kind("core.template_match@1"));
+}
+
+void check_template_ncc() {
+  // Grayscale zero-mean normalized cross-correlation (TM_CCOEFF_NORMED):
+  // invariant to uniform brightness shift, -1 on inverted contrast, 0 on flat.
+  cv::Mat pattern(4, 4, CV_8UC3, cv::Scalar(40, 40, 40));
+  pattern(cv::Rect(0, 0, 2, 2)).setTo(cv::Scalar(180, 180, 180));
+  pattern(cv::Rect(2, 2, 2, 2)).setTo(cv::Scalar(120, 120, 120));
+  cv::Mat pattern_gray;
+  cv::cvtColor(pattern, pattern_gray, cv::COLOR_BGR2GRAY);
+
+  cv::Mat frame(20, 30, CV_8UC3, cv::Scalar(90, 90, 90));
+  pattern.copyTo(frame(cv::Rect(12, 6, 4, 4)));
+  const cv::Rect whole(0, 0, 30, 20);
+  const TemplateNcc exact = template_ncc(frame, pattern_gray, whole);
+  CHECK(std::abs(exact.score - 1.0) < 1e-5);
+  CHECK(near(exact.x, 12) && near(exact.y, 6));
+
+  // Brightness-shifted (+40): zero-mean NCC still scores ~1.0.
+  cv::Mat shifted(20, 30, CV_8UC3, cv::Scalar(130, 130, 130));
+  cv::Mat bright = pattern + cv::Scalar(40, 40, 40);
+  bright.copyTo(shifted(cv::Rect(5, 8, 4, 4)));
+  const TemplateNcc bright_match = template_ncc(shifted, pattern_gray, whole);
+  CHECK(std::abs(bright_match.score - 1.0) < 1e-5);
+  CHECK(near(bright_match.x, 5) && near(bright_match.y, 8));
+
+  // Inverted pattern inside an exact-sized box scores ~-1.0.
+  cv::Mat inverted(4, 4, CV_8UC3);
+  cv::bitwise_not(pattern, inverted);
+  const TemplateNcc inv = template_ncc(inverted, pattern_gray, cv::Rect(0, 0, 4, 4));
+  CHECK(std::abs(inv.score + 1.0) < 1e-5);
+
+  // Flat frame has zero variance -> finite 0.0.
+  const cv::Mat flat(10, 10, CV_8UC3, cv::Scalar(100, 100, 100));
+  const TemplateNcc zero = template_ncc(flat, pattern_gray, cv::Rect(0, 0, 10, 10));
+  CHECK(near(zero.score, 0.0));
+  CHECK(is_known_probe_kind("core.template_ncc@1"));
+
+  // Through map_probe + evaluate_probe on native 1920x1080 viewport.
+  TemplateStore templates;
+  std::vector<uchar> png;
+  cv::imencode(".png", pattern, png);
+  const auto hash = templates.add_png(std::string(png.begin(), png.end()));
+  CHECK(hash.has_value());
+  if (hash) {
+    cv::Mat hd(1080, 1920, CV_8UC3, cv::Scalar(90, 90, 90));
+    pattern.copyTo(hd(cv::Rect(960, 540, 4, 4)));
+    ProbeSpec spec{.id = "eye",
+                   .kind = std::string(kTemplateNccKind),
+                   .box = Box{0.45, 0.45, 0.1, 0.1},
+                   .delivery = "every",
+                   .template_hash = *hash};
+    const FrameProbe mapped =
+        map_probe(spec, templates, native_switch_viewport(), 1920, 1080);
+    const ProbeResult res = evaluate_probe(mapped, hd);
+    const auto* ncc = std::get_if<TemplateNcc>(&res);
+    CHECK(ncc != nullptr && std::abs(ncc->score - 1.0) < 1e-5 &&
+          near(ncc->x, 960.0 / 1920) && near(ncc->y, 540.0 / 1080));
+  }
 }
 
 void check_mask_match() {
@@ -322,6 +382,7 @@ void check_schedule() {
 int main() {
   check_color_stats();
   check_template_match();
+  check_template_ncc();
   check_mask_match();
   check_skip_seams();
   check_color_count();
