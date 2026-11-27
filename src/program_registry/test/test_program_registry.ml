@@ -230,6 +230,15 @@ let () =
           options_for (Some "frlg.mail_glitch")
             [ ("sweeper", "charizard"); ("depleted-move", "fire-blast") ])
         "ok sweeper=charizard depleted-move=fire-blast";
+      case "options: frlg.dex_collection accepts luxury-ball"
+        (fun () ->
+          options_for (Some "frlg.dex_collection") [ ("ball", "luxury-ball") ])
+        "ok ball=luxury-ball target=everything";
+      case "options: frlg.dex_collection refuses master-ball"
+        (fun () ->
+          options_for (Some "frlg.dex_collection") [ ("ball", "master-ball") ])
+        "error: --options ball=master-ball: ball is poke-ball | great-ball | \
+         ultra-ball | luxury-ball";
       case "options: plza.autostory, none given: the plan's"
         (fun () -> options_for (Some "plza.autostory") [])
         "ok ";

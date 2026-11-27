@@ -153,9 +153,9 @@ let filter_for_target ~plan_dir options ids =
   match target with
   | None -> Ok ids
   | Some mode ->
-      let* caught = Dex_targets.load_caught () in
+      let* counts = Dex_targets.load_counts () in
       let* kept, skipped =
-        Dex_targets.filter_checkpoints ~plan_dir ~mode ~caught ids
+        Dex_targets.filter_checkpoints ~plan_dir ~mode ~counts ids
       in
       List.iter
         (fun (id, why) ->

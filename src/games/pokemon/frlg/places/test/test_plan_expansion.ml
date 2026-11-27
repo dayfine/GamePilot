@@ -87,4 +87,187 @@ let () =
       case "heal_at an unknown town suggests the nearest"
         (expanded ~start:lavender [ heal_at "lavendar" ])
         "t: checkpoint.events[0]: no town \"lavendar\"; did you mean lavender?";
-    ]
+    ];
+  let open Grid_geometry in
+  let module PE = Pokemon_engine.Plan in
+  let decode_events ~start events =
+    match
+      Frlg_checkpoints.Plan_file.decode ~source:"t"
+        (Yojson.Safe.from_string (plan_text ~start events))
+    with
+    | Ok p -> Ok p.checkpoint.events
+    | Error e -> Error e
+  in
+  let show_item (id, kind, way) =
+    let k =
+      match kind with
+      | `Route (m, ts, f) ->
+          Printf.sprintf "Route(%s, [%s], %s)" m
+            (String.concat ";" (List.map Tile_pos.to_string ts))
+            (Option.fold ~none:"none" ~some:Direction.name f)
+      | `Heal -> "Heal"
+      | `Action args -> "Action(" ^ Yojson.Safe.to_string (`Assoc args) ^ ")"
+      | `Other -> "Other"
+    in
+    Printf.sprintf "(%s, %s, %s)" id k (Option.value ~default:"None" way)
+  in
+  let show_res show_ok = function
+    | Ok xs -> "Ok [\n  " ^ String.concat ";\n  " (List.map show_ok xs) ^ "\n]"
+    | Error e -> "Error " ^ e
+  in
+  let check_eq ~show name expected actual =
+    if expected <> actual then (
+      Printf.eprintf "FAIL plan_expansion: %s\nexpected: %s\nactual:   %s\n%!"
+        name (show expected) (show actual);
+      exit 1)
+  in
+  let show_id_way (id, way) =
+    Printf.sprintf "(%s, %s)" id (Option.value ~default:"None" way)
+  in
+  let summarize (e : PE.event) =
+    match e.kind with
+    | PE.Game (Route { target = { map; tiles; facing }; _ }) ->
+        (e.id, `Route (map, tiles, facing), e.way)
+    | PE.Game Heal -> (e.id, `Heal, e.way)
+    | PE.Named_action args -> (e.id, `Action args, e.way)
+    | _ -> (e.id, `Other, e.way)
+  in
+  let outdoors = {|{"anywhere": "outdoors"}|} in
+  let grass_call =
+    {|{"id": "ekans", "fragment": "wild_rng_grass_catch",
+       "args": {"town": "route10", "spot": "route10_north_grass",
+                "location": "route_10", "species": "ekans"}}|}
+  in
+  let grass_events =
+    Result.map (List.map summarize)
+      (decode_events ~start:outdoors [ grass_call ])
+  in
+  check_eq ~show:(show_res show_item)
+    "wild_rng_grass_catch expands to 10 typed events"
+    (Ok
+       [
+         ("ekans.fly", `Action [ ("town", `String "Route10") ], Some "fly");
+         ( "ekans.to_spot",
+           `Route
+             ("Route10", [ { Tile_pos.x = 12; y = 8 } ], Some Direction.East),
+           Some "run" );
+         ("ekans.save_before", `Action [], Some "save_game");
+         ( "ekans.catch",
+           `Action
+             [
+               ("method", `String "grass");
+               ("species", `String "ekans");
+               ("location", `String "route_10");
+             ],
+           Some "wild_rng" );
+         ("ekans.save_catch", `Action [], Some "save_game");
+         ( "ekans.to_pc",
+           `Route
+             ( "Route10_PokemonCenter_1F",
+               [ { Tile_pos.x = 11; y = 2 } ],
+               Some Direction.North ),
+           Some "run" );
+         ( "ekans.deposit",
+           `Action [ ("species", `List [ `String "ekans" ]) ],
+           Some "pc_deposit" );
+         ( "ekans.to_nurse",
+           `Route
+             ( "Route10_PokemonCenter_1F",
+               [ { Tile_pos.x = 7; y = 4 } ],
+               Some Direction.North ),
+           Some "run" );
+         ("ekans.heal", `Heal, None);
+         ( "ekans.outside",
+           `Route
+             ("Route10", [ { Tile_pos.x = 13; y = 21 } ], Some Direction.South),
+           Some "run" );
+       ])
+    grass_events;
+  let surf_call =
+    {|{"id": "psyduck", "fragment": "wild_rng_surf_catch",
+       "args": {"town": "vermilion", "shore": "vermilion_center_outside",
+                "location": "viridian_city", "species": "psyduck"}}|}
+  in
+  let surf_ids =
+    Result.map
+      (List.map (fun (e : PE.event) -> (e.id, e.way)))
+      (decode_events ~start:outdoors [ surf_call ])
+  in
+  check_eq ~show:(show_res show_id_way)
+    "wild_rng_surf_catch includes surf and wild_rng"
+    (Ok
+       [
+         ("psyduck.fly", Some "fly");
+         ("psyduck.to_shore", Some "run");
+         ("psyduck.surf", Some "surf");
+         ("psyduck.save_before", Some "save_game");
+         ("psyduck.catch", Some "wild_rng");
+         ("psyduck.save_catch", Some "save_game");
+         ("psyduck.to_pc", Some "run");
+         ("psyduck.deposit", Some "pc_deposit");
+         ("psyduck.to_nurse", Some "run");
+         ("psyduck.heal", None);
+         ("psyduck.outside", Some "run");
+       ])
+    surf_ids;
+  let fish_call =
+    {|{"id": "shellder", "fragment": "wild_rng_fish_catch",
+       "args": {"town": "vermilion", "shore": "vermilion_center_outside",
+                "location": "vermilion_city", "species": "shellder"}}|}
+  in
+  let fish_ids =
+    Result.map
+      (List.map (fun (e : PE.event) -> (e.id, e.way)))
+      (decode_events ~start:outdoors [ fish_call ])
+  in
+  check_eq ~show:(show_res show_id_way)
+    "wild_rng_fish_catch expands to 10 events"
+    (Ok
+       [
+         ("shellder.fly", Some "fly");
+         ("shellder.to_shore", Some "run");
+         ("shellder.save_before", Some "save_game");
+         ("shellder.catch", Some "wild_rng");
+         ("shellder.save_catch", Some "save_game");
+         ("shellder.to_pc", Some "run");
+         ("shellder.deposit", Some "pc_deposit");
+         ("shellder.to_nurse", Some "run");
+         ("shellder.heal", None);
+         ("shellder.outside", Some "run");
+       ])
+    fish_ids;
+  let gift_call =
+    {|{"id": "scyther", "fragment": "gift_rng_prize",
+       "args": {"town": "vermilion", "counter": "celadon_prize_room_mon_clerk",
+                "species": "scyther", "prize_row": "3"}}|}
+  in
+  let gift_ids =
+    Result.map
+      (List.map (fun (e : PE.event) -> (e.id, e.way)))
+      (decode_events ~start:outdoors [ gift_call ])
+  in
+  check_eq ~show:(show_res show_id_way) "gift_rng_prize expands to 8 events"
+    (Ok
+       [
+         ("scyther.fly", Some "fly");
+         ("scyther.to_counter", Some "run");
+         ("scyther.save_before", Some "save_game");
+         ("scyther.claim", Some "gift_rng");
+         ("scyther.save_claim", Some "save_game");
+         ("scyther.to_pc", Some "run");
+         ("scyther.deposit", Some "pc_deposit");
+         ("scyther.outside", Some "run");
+       ])
+    gift_ids;
+  let bad_spot =
+    {|{"id": "ekans", "fragment": "wild_rng_grass_catch",
+       "args": {"town": "route10", "spot": "route10_north_gras",
+                "location": "route_10", "species": "ekans"}}|}
+  in
+  check_eq
+    ~show:(show_res (fun (e : PE.event) -> e.id))
+    "unknown place arg fails with suggestion"
+    (Error
+       "t: checkpoint.events[0]: no place \"route10_north_gras\"; did you mean \
+        route10_north_grass?")
+    (decode_events ~start:outdoors [ bad_spot ])

@@ -214,7 +214,7 @@ let dex_collection_options : Run_options.declared list =
   ([
      {
        key = "ball";
-       value = One_of [ "poke-ball"; "great-ball"; "ultra-ball" ];
+       value = One_of [ "poke-ball"; "great-ball"; "ultra-ball"; "luxury-ball" ];
        presence = Optional;
        doc = "the ball to throw (overrides each catch plan's default)";
      };

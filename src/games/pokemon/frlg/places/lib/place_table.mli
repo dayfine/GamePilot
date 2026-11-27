@@ -73,4 +73,5 @@ val routes : t -> Checkpoints_expand.Place_routes.game
 
 val resolve : t -> Engine_expand.Fragment_calls.resolve
 (** FireRed's answers to a fragment's placeholders: a ["town"] parameter's key,
-    nurse, Fly name or mart ({!Towns.field}). *)
+    nurse, Fly name, mart, pc or outside ({!Towns.field}); a ["place"] parameter
+    validated against the places table; or a ["string"] literal pass-through. *)

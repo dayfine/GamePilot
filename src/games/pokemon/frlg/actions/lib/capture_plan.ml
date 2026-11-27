@@ -11,7 +11,7 @@ type t = {
   pace : Grid_geometry.Direction.t;
 }
 
-let balls = [ "poke-ball"; "great-ball"; "ultra-ball" ]
+let balls = [ "poke-ball"; "great-ball"; "ultra-ball"; "luxury-ball" ]
 let default_ball = "poke-ball"
 let default_catches = 1
 let default_encounters = 20

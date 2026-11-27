@@ -114,7 +114,19 @@ let to_place game at event name =
   | None -> Ok [ `Assoc (route_to target event) ]
   | Some r -> Ok (with_ride ~id ~name event target r)
 
+let expand_declared_after game event =
+  match List.assoc_opt "declared_after" event with
+  | Some (`Assoc fields) -> (
+      match List.assoc_opt "place" fields with
+      | Some (`String name) ->
+          let* spot = game.place name in
+          Ok (J.set "declared_after" (spot_json spot) event)
+      | Some _ -> Error "declared_after.place is not a string."
+      | None -> Ok event)
+  | _ -> Ok event
+
 let step game at event =
+  let* event = expand_declared_after game event in
   let* events =
     match place_name event with
     | None -> Ok [ `Assoc event ]

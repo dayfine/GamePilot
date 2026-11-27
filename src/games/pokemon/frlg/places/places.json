@@ -227,10 +227,10 @@
     "indigo_plateau": {"nurse": "indigo_plateau_nurse", "fly": "IndigoPlateau", "mart": "indigo_plateau_mart_clerk"},
     "lavender": {"nurse": "lavender_nurse", "fly": "LavenderTown", "mart": "lavender_mart_clerk"},
     "pewter": {"nurse": "pewter_nurse", "fly": "PewterCity"},
-    "route10": {"nurse": "route10_nurse", "fly": "Route10"},
-    "route4": {"nurse": "route4_nurse", "fly": "Route4"},
+    "route10": {"nurse": "route10_nurse", "fly": "Route10", "pc": "route10_center_pc", "outside": "route10_center_outside"},
+    "route4": {"nurse": "route4_nurse", "fly": "Route4", "pc": "route4_center_pc"},
     "saffron": {"nurse": "saffron_nurse", "fly": "SaffronCity"},
-    "vermilion": {"nurse": "vermilion_nurse", "fly": "VermilionCity"},
+    "vermilion": {"nurse": "vermilion_nurse", "fly": "VermilionCity", "pc": "vermilion_center_pc", "outside": "vermilion_center_outside"},
     "viridian": {"nurse": "viridian_nurse", "fly": "ViridianCity"}
   }
 }

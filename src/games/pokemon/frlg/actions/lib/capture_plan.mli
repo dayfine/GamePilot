@@ -33,7 +33,8 @@ val default_ball : string
 (** ["poke-ball"], the fork's. *)
 
 val balls : string list
-(** The balls a Mart sells: ["poke-ball"], ["great-ball"], ["ultra-ball"]. *)
+(** The supported Poké Balls: ["poke-ball"], ["great-ball"], ["ultra-ball"],
+    ["luxury-ball"]. *)
 
 val read : where:string -> Json_field.obj -> t
 (** {!decode}'s reader, for an action whose args hold a capture's

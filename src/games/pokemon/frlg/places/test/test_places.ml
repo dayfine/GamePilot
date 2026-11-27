@@ -70,15 +70,19 @@ let towns_fly () =
       String.concat ", "
         (List.map (fun (t : Towns.town) -> t.key ^ ": " ^ t.fly) l)
 
-(* Every town's nurse and mart places are named with its key: one spelling per
-   town. *)
+(* Every town's nurse, mart, pc and outside places are named with its key: one
+   spelling per town. *)
 let towns_prefix () =
   let towns = Towns.towns (Place_table.towns table) in
   let named (t : Towns.town) place =
     String.starts_with ~prefix:(t.key ^ "_") place
   in
   let wrong (t : Towns.town) =
-    List.filter (fun p -> not (named t p)) (t.nurse :: Option.to_list t.mart)
+    let places =
+      (t.nurse :: Option.to_list t.mart)
+      @ Option.to_list t.pc @ Option.to_list t.outside
+    in
+    List.filter (fun p -> not (named t p)) places
   in
   match List.concat_map wrong towns with
   | [] -> Printf.sprintf "%d towns, all pass" (List.length towns)
@@ -160,4 +164,24 @@ let () =
            (one_place
               {|{"map": "M", "object": {"npc": "s"}, "stand": [1], "facing": "south"}|}))
         "t.json: places.a.stand is not [x, y].";
-    ]
+    ];
+  let resolve = Place_table.resolve table in
+  let check_res name expected actual =
+    if expected <> actual then (
+      Printf.eprintf "FAIL %s\n%!" name;
+      exit 1)
+  in
+  check_res "town.pc resolves" (Ok "route10_center_pc")
+    (resolve ~kind:"town" "route10" ~field:(Some "pc"));
+  check_res "town.outside resolves" (Ok "route10_center_outside")
+    (resolve ~kind:"town" "route10" ~field:(Some "outside"));
+  check_res "town without pc errors" (Error "lavender has no pc place")
+    (resolve ~kind:"town" "lavender" ~field:(Some "pc"));
+  check_res "place resolves valid place" (Ok "route10_north_grass")
+    (resolve ~kind:"place" "route10_north_grass" ~field:None);
+  check_res "place rejects field" (Error "a place has no pc")
+    (resolve ~kind:"place" "route10_north_grass" ~field:(Some "pc"));
+  check_res "string passes through" (Ok "growlithe")
+    (resolve ~kind:"string" "growlithe" ~field:None);
+  check_res "string rejects field" (Error "a string has no fly")
+    (resolve ~kind:"string" "growlithe" ~field:(Some "fly"))
