@@ -13,8 +13,10 @@
     wild-intro duration and classifies it against {!thresholds} before turn 1 so
     automation can skip catch turns and balls on an RNG miss.
 
-    The default timing window in {!default_thresholds} is an initial visual
-    estimate to be verified against live mGBA and Switch shiny captures. *)
+    The default timing window in {!default_thresholds} (2800..5000 ms) is
+    calibrated against Switch 1080p capture, where non-shiny wild intros measure
+    2239..2336 ms and a verified shiny Oddish measured 3828 ms, giving >450 ms
+    margin above non-shiny and >1000 ms margin around shiny. *)
 
 (** Phase of an FRLG wild battle opening tracked from screen probes. *)
 type phase =
@@ -34,11 +36,11 @@ type verdict =
 
 type thresholds = {
   shiny_delay_ms : float;
-      (** Expected wild-intro duration in ms when shiny (default 2800). *)
+      (** Expected wild-intro duration in ms when shiny (default 3800). *)
   min_margin_ms : float;
-      (** Allowed margin below [shiny_delay_ms] in ms (default 500). *)
+      (** Allowed margin below [shiny_delay_ms] in ms (default 1000). *)
   max_margin_ms : float;
-      (** Allowed margin above [shiny_delay_ms] in ms (default 900). *)
+      (** Allowed margin above [shiny_delay_ms] in ms (default 1200). *)
 }
 (** Timing window for classifying the wild-intro duration. *)
 
@@ -55,8 +57,8 @@ type state
 (** Immutable tracker state advanced one frame at a time by {!step}. *)
 
 val default_thresholds : thresholds
-(** Default FRLG wild-intro shiny timing window: 2800 ms (-500 / +900 ms, i.e.
-    2300..3700 ms). *)
+(** Default FRLG wild-intro shiny timing window: 3800 ms (-1000 / +1200 ms, i.e.
+    2800..5000 ms). *)
 
 val probes : Wire.probe_spec list
 (** Combined probes for {!Battle_screen} and {!Battle_text_arrow}. *)
