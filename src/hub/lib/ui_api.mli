@@ -48,7 +48,6 @@ val decode_launch : Yojson.Safe.t -> (launch_request, string) result
 
 val build_run_argv :
   gamepilot:string ->
-  ?config_path:string ->
   console:Console_config.console ->
   launch_request ->
   (string list, string) result

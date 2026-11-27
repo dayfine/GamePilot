@@ -1,6 +1,6 @@
 (** Detection of ongoing [gamepilot] and [gamepilot_daemon] runs started outside
-    the UI hub (e.g. from a terminal or lab script), matched to configured
-    consoles by serial port or mGBA bridge port. *)
+    the UI hub (e.g. from a terminal), matched to configured consoles by serial
+    port or mGBA bridge port. *)
 
 type t = {
   pid : int;  (** Operating system process ID. *)

@@ -215,7 +215,7 @@ let range_args (p : Program_registry.t) (req : launch_request) =
   | None, None -> Ok (mode_args req.mode)
   | _ -> Error (p.id ^ " has incomplete checkpoint range")
 
-let build_run_argv ~gamepilot ?config_path ~console req =
+let build_run_argv ~gamepilot ~console req =
   let* prog =
     Option.to_result
       ~none:("unknown program " ^ req.program_id)
@@ -228,7 +228,6 @@ let build_run_argv ~gamepilot ?config_path ~console req =
       (fun (k, v) -> [ "--options"; k ^ "=" ^ v ])
       (Run_options.pairs checked)
   in
-  let _ = config_path in
   let watch = if req.preflight then [] else [ "--watch" ] in
   Ok
     ([ gamepilot; "run"; prog.id ]
