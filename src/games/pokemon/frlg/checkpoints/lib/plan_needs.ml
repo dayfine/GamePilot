@@ -152,7 +152,7 @@ let game_action stocks ~where action args acc =
         (A.Action_requests.decode stocks action args)
   | _ when List.mem_assoc action field_move_users ->
       Ok (field_move action (use_badge action acc))
-  | "capture" | "wild_rng" ->
+  | "capture" | "wild_rng" | "static_rng" ->
       map (of_capture action acc) (A.Capture_plan.decode args)
   | "gift_rng" ->
       let decode ~where a = Json_field.string ~where "species" a in
