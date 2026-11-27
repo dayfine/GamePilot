@@ -21,3 +21,17 @@ val home_to_south_door : log:(string -> unit) -> unit
 val leave_underground :
   log:(string -> unit) -> picture:Wire.box -> unit -> (unit, string) result
 (** Return from the Grand Underground to the Sinnoh surface via the [Y] menu. *)
+
+val bounce_doorway_with_rehome :
+  log:(string -> unit) ->
+  picture:Wire.box ->
+  hold_ms:int ->
+  unit ->
+  (unit, string) result
+(** Bounce West/East through the South Hideaway doorway; on miss, re-home to the
+    South doorway and retry once. *)
+
+val read_full_map_sparkles :
+  picture:Wire.box -> Bdsp_readers.Minimap_sparkles.nearby
+(** Open the full Grand Underground map ([Y -> A]), read all corridor sparkles,
+    and close back to the overworld ([B -> B]). *)

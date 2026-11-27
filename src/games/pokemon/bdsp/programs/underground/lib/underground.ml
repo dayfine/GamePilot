@@ -11,20 +11,42 @@ let default_state = ""
 let native_picture : Wire.box = { x = 0.; y = 0.; w = 1.; h = 1. }
 let default_cycles = 15
 let default_slates = 14
-let fade_timeout_ms = 8000
-let choice_wait_timeout_ms = 1400
-let dig_enter_fade_timeout_ms = 4000
-let open_dlg_timeout_ms = 8000
-let black_hold_ms = 80.
-let clear_hold_ms = 200.
-let post_open_wait_ms = 400
-let post_dig_wait_ms = 1000
-let screen_probe_timeout_ms = 1000
-let max_open_dialog_presses = 6
-let door_bounce_hold_ms = 2500
-let map_press_hold_ms = 120
-let map_view_wait_ms = 1500
-let map_restore_wait_ms = 800
+
+type fade_cfg = {
+  timeout_ms : int;
+  dig_enter_ms : int;
+  black_hold_ms : float;
+  clear_hold_ms : float;
+}
+
+type loop_cfg = {
+  choice_ms : int;
+  open_dlg_ms : int;
+  post_open_ms : int;
+  post_dig_ms : int;
+  probe_ms : int;
+  max_open_presses : int;
+  door_bounce_ms : int;
+}
+
+let fade_cfg =
+  {
+    timeout_ms = 8000;
+    dig_enter_ms = 4000;
+    black_hold_ms = 80.;
+    clear_hold_ms = 200.;
+  }
+
+let loop_cfg =
+  {
+    choice_ms = 1400;
+    open_dlg_ms = 8000;
+    post_open_ms = 400;
+    post_dig_ms = 1000;
+    probe_ms = 1000;
+    max_open_presses = 6;
+    door_bounce_ms = 2500;
+  }
 
 let step_refresh, step_read_map, step_route, step_dig, step_result =
   (0, 1, 2, 3, 4)
@@ -53,24 +75,25 @@ let is_dialog m = opt_unit (US.read m).dialog
 let is_choice_box m = opt_unit (US.read m).choice_box
 
 let wait_clear ~timeout_ms f =
-  ignore (H.wait_for ~timeout_ms (H.held clear_hold_ms f) : unit option)
+  ignore
+    (H.wait_for ~timeout_ms (H.held fade_cfg.clear_hold_ms f) : unit option)
 
 let subscribe_screen ~picture =
   ignore (Effects.subscribe (US.probes ~picture) : string list)
 
 let read_screen ~picture =
   subscribe_screen ~picture;
-  match Effects.await ~timeout_ms:screen_probe_timeout_ms (fun _ -> true) with
+  match Effects.await ~timeout_ms:loop_cfg.probe_ms (fun _ -> true) with
   | Effects.Holds m -> Some (US.read m)
   | Effects.Timeout -> None
 
 let handle_dig_result ~report ctx ~bailed ~counters =
   Watch_report.set report step_result Wire.Watch.Current "reading dig yields";
-  P.wait post_dig_wait_ms;
+  P.wait loop_cfg.post_dig_ms;
   let items = MP.collect_dig_yields ~log ~picture:ctx.picture () in
   subscribe_screen ~picture:ctx.picture;
-  wait_clear ~timeout_ms:fade_timeout_ms is_not_black;
-  P.wait post_dig_wait_ms;
+  wait_clear ~timeout_ms:fade_cfg.timeout_ms is_not_black;
+  P.wait loop_cfg.post_dig_ms;
   let next = Mining_counters.record_dig counters ~bailed items in
   let summary = Mining_counters.format_summary ~goal:ctx.goal next in
   log ("Counters: " ^ summary);
@@ -82,7 +105,7 @@ let read_announced_items ~picture =
   ignore
     (Effects.subscribe (Bdsp_readers.Mining_announce_reader.probes ~picture)
       : string list);
-  match Effects.await ~timeout_ms:screen_probe_timeout_ms (fun _ -> true) with
+  match Effects.await ~timeout_ms:loop_cfg.probe_ms (fun _ -> true) with
   | Effects.Holds m ->
       let n = Bdsp_readers.Mining_announce_reader.read m in
       Option.iter
@@ -104,21 +127,21 @@ let run_dig_step ?announced_items ~report ctx ~counters () =
   handle_dig_result ~report ctx ~bailed ~counters
 
 let play_entered_minigame ~report ctx ~counters =
-  wait_clear ~timeout_ms:fade_timeout_ms is_not_black;
-  wait_clear ~timeout_ms:open_dlg_timeout_ms is_dialog;
+  wait_clear ~timeout_ms:fade_cfg.timeout_ms is_not_black;
+  wait_clear ~timeout_ms:loop_cfg.open_dlg_ms is_dialog;
   let announced_items = read_announced_items ~picture:ctx.picture in
   let* () =
     OW.advance_dialog ~log ~picture:ctx.picture
-      ~max_presses:max_open_dialog_presses ()
+      ~max_presses:loop_cfg.max_open_presses ()
   in
-  P.wait post_open_wait_ms;
+  P.wait loop_cfg.post_open_ms;
   run_dig_step ?announced_items ~report ctx ~counters ()
 
 let dismiss_and_skip ctx counters msg =
   log msg;
   let* () =
     OW.dismiss_dialog ~log ~picture:ctx.picture
-      ~max_presses:max_open_dialog_presses ()
+      ~max_presses:loop_cfg.max_open_presses ()
   in
   Ok (counters, false)
 
@@ -126,8 +149,8 @@ let confirm_dig_choice ~report ctx ~counters =
   log "Dig choice box (是/否) detected! Confirming Yes...";
   OW.interact ();
   match
-    H.wait_for ~timeout_ms:dig_enter_fade_timeout_ms
-      (H.held black_hold_ms is_black)
+    H.wait_for ~timeout_ms:fade_cfg.dig_enter_ms
+      (H.held fade_cfg.black_hold_ms is_black)
   with
   | Some () ->
       log "Dig fade detected! Entering minigame...";
@@ -139,7 +162,7 @@ let confirm_dig_choice ~report ctx ~counters =
 
 let on_prompt ~report ctx counters =
   log "Dialog detected; waiting for dig Yes/No choice box...";
-  match H.wait_for ~timeout_ms:choice_wait_timeout_ms is_choice_box with
+  match H.wait_for ~timeout_ms:loop_cfg.choice_ms is_choice_box with
   | Some () -> confirm_dig_choice ~report ctx ~counters
   | None ->
       dismiss_and_skip ctx counters
@@ -151,37 +174,14 @@ let on_battle ctx counters =
   publish_counters ctx next;
   Ok next
 
-let read_full_map_sparkles ~picture =
-  P.press ~hold_ms:map_press_hold_ms ~cooldown_ms:map_restore_wait_ms Wire.Y;
-  P.press ~hold_ms:map_press_hold_ms ~cooldown_ms:map_view_wait_ms Wire.A;
-  ignore (Effects.subscribe (MS.full_map_probes ~picture) : string list);
-  let sp =
-    match Effects.await ~timeout_ms:screen_probe_timeout_ms (fun _ -> true) with
-    | Effects.Holds m -> MS.read_full_map m
-    | Effects.Timeout -> MS.none
-  in
-  P.press ~hold_ms:map_press_hold_ms ~cooldown_ms:map_restore_wait_ms Wire.B;
-  P.press ~hold_ms:map_press_hold_ms ~cooldown_ms:map_restore_wait_ms Wire.B;
-  sp
-
-let home_to_south_door () = Outdoor_transit.home_to_south_door ~log
-
-let bounce_doorway_with_rehome ~picture =
-  let anchor = { Corridor_nav.enter_dir = West; exit_dir = East } in
-  match
-    OW.bounce_doorway ~log ~picture ~anchor ~hold_ms:door_bounce_hold_ms ()
-  with
-  | Ok () -> Ok ()
-  | Error _ ->
-      log "Doorway bounce missed; re-homing to South doorway and retrying...";
-      home_to_south_door ();
-      OW.bounce_doorway ~log ~picture ~anchor ~hold_ms:door_bounce_hold_ms ()
-
 let step_refresh_cave ~report ctx counters =
   Watch_report.set report step_refresh Wire.Watch.Current
     "entering & exiting Hideaway";
-  let* () = bounce_doorway_with_rehome ~picture:ctx.picture in
-  P.wait post_dig_wait_ms;
+  let* () =
+    Outdoor_transit.bounce_doorway_with_rehome ~log ~picture:ctx.picture
+      ~hold_ms:loop_cfg.door_bounce_ms ()
+  in
+  P.wait loop_cfg.post_dig_ms;
   let next = Mining_counters.record_refresh counters in
   publish_counters ctx next;
   Watch_report.set report step_refresh Wire.Watch.Done
@@ -211,7 +211,7 @@ let run_one_cycle ctx ~idx ~door counters =
   log (Printf.sprintf "=== Cycle %d/%d ===" idx ctx.total_cycles);
   let* counters = step_refresh_cave ~report ctx counters in
   Watch_report.set report step_read_map Wire.Watch.Current "reading full map";
-  let sp = read_full_map_sparkles ~picture:ctx.picture in
+  let sp = Outdoor_transit.read_full_map_sparkles ~picture:ctx.picture in
   let desc = MS.to_string sp in
   log ("Full map sparkles: " ^ desc);
   Watch_report.set report step_read_map Wire.Watch.Done desc;
@@ -238,12 +238,12 @@ let recover_if_mid_dig ctx ~counters =
   | Some scr when scr.mining_wall ->
       log "Started mid-dig on an active wall; finishing it first...";
       let* next = run_dig_step ~report ctx ~counters () in
-      home_to_south_door ();
+      Outdoor_transit.home_to_south_door ~log;
       Ok next
   | Some scr when scr.dialog ->
       log "Started on post-dig dialog; clearing before homing...";
       ignore (MP.collect_dig_yields ~log ~picture:ctx.picture () : _ list);
-      home_to_south_door ();
+      Outdoor_transit.home_to_south_door ~log;
       Ok counters
   | Some scr ->
       log ("Initial screen: " ^ US.to_string scr);
@@ -251,7 +251,7 @@ let recover_if_mid_dig ctx ~counters =
         if scr.in_underground then Ok ()
         else Outdoor_transit.ensure_in_underground ~log ~picture:ctx.picture ()
       in
-      home_to_south_door ();
+      Outdoor_transit.home_to_south_door ~log;
       Ok counters
   | None -> Ok counters
 
