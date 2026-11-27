@@ -27,13 +27,6 @@ type game_steps = {
 type end_ = Shiny | Not_shiny | Claim_failed | Party_full
 type outcome = { end_ : end_; attempts : int }
 
-let max_id = 0xffff
-let seed_mask = 0xffff
-let default_min_advance = 900
-let default_max_advance = 4000
-let default_attempts = 1
-let max_attempts = 99
-let max_ingame_offset = 99
 let prize_page_wait_ms = 1800
 let prize_list_wait_ms = 1800
 let prize_tap_hold_ms = 200
@@ -61,64 +54,27 @@ let prize_row ~where args =
     J.fail "%sprize_row is %d, not 0..%d" where raw (Game_corner.prize_slots - 1)
   else raw
 
-let check_id ~where name n =
-  if n < 0 || n > max_id then J.fail "%s%s is %d, not 0..65535" where name n
-  else n
-
-let resolved_id ~where ~options ~fallback name args =
-  match (Run_options.int options name, J.find name args, fallback) with
-  | Some n, _, _ -> n
-  | None, Some _, _ -> check_id ~where name (J.int ~where name args)
-  | None, None, Some n -> n
-  | None, None, None ->
-      J.fail
-        "%smissing %s (pass --options %s=N, set GAMEPILOT_FRLG_%s, or set it \
-         in trainer_ids.json)"
-        where name name
-        (String.uppercase_ascii name)
-
-let opt_int ~where ~default ~low ~high name args =
-  match J.find name args with
-  | None -> default
-  | Some _ ->
-      let n = J.int ~where name args in
-      if n < low || n > high then
-        J.fail "%s%s is %d, not %d..%d" where name n low high
-      else n
-
-let advances ~where args =
-  match J.list_opt ~where "advances" args with
-  | None -> (default_min_advance, default_max_advance)
-  | Some [ `Int low; `Int high ] when 0 <= low && low <= high -> (low, high)
-  | Some _ -> J.fail "%sadvances is not [min, max]" where
-
-let frame_model ~where args =
-  match J.string_opt ~where "frame_model" args with
-  | None -> Wild_rng_plan.default_frame_model
-  | Some name ->
-      if Option.is_some (Wild_rng_plan.find_frame_model name) then name
-      else J.fail "%sframe_model is %s, not mgba or switch" where name
-
 let read ~options ~(fallback : Wild_rng_plan.trainer_ids) ~where args =
-  let min_advance, max_advance = advances ~where args in
+  let module W = Wild_rng_plan in
+  let min_advance, max_advance = W.advances ~where args in
   {
     species = J.string ~where "species" args;
     prize_row = prize_row ~where args;
-    tid = resolved_id ~where ~options ~fallback:fallback.tid "tid" args;
-    sid = resolved_id ~where ~options ~fallback:fallback.sid "sid" args;
+    tid = W.resolved_id ~where ~options ~fallback:fallback.tid "tid" args;
+    sid = W.resolved_id ~where ~options ~fallback:fallback.sid "sid" args;
     seeds =
-      Option.value ~default:Wild_rng_plan.default_seeds
-        (J.string_opt ~where "seeds" args);
+      Option.value ~default:W.default_seeds (J.string_opt ~where "seeds" args);
     boot_offset_ms = 0;
-    seed_shift = opt_int ~where ~default:0 ~low:0 ~high:max_id "seed_shift" args;
+    seed_shift =
+      W.opt_int ~where ~default:0 ~low:0 ~high:W.max_id "seed_shift" args;
     ingame_offset =
-      opt_int ~where ~default:0 ~low:(-max_ingame_offset)
-        ~high:max_ingame_offset "ingame_offset" args;
-    frame_model = frame_model ~where args;
+      W.opt_int ~where ~default:0 ~low:(-W.max_ingame_offset)
+        ~high:W.max_ingame_offset "ingame_offset" args;
+    frame_model = W.frame_model ~where args;
     min_advance;
     max_advance;
     attempts =
-      opt_int ~where ~default:default_attempts ~low:1 ~high:max_attempts
+      W.opt_int ~where ~default:W.default_attempts ~low:1 ~high:W.max_attempts
         "attempts" args;
   }
 
@@ -130,7 +86,7 @@ let apply_calibration (entry : R.Switch_rng_calibration.entry) p =
   {
     p with
     boot_offset_ms = p.boot_offset_ms + entry.boot_offset_ms;
-    seed_shift = (p.seed_shift + entry.seed_shift) land seed_mask;
+    seed_shift = (p.seed_shift + entry.seed_shift) land Wild_rng_plan.seed_mask;
     ingame_offset = p.ingame_offset + entry.ingame_offset;
   }
 

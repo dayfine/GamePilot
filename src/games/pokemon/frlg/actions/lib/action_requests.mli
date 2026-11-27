@@ -21,7 +21,7 @@ type t =
   | Ingame_trade of { offer : string; receive : string option }
   | Spin_for_encounter of { max_batches : int }
   | Cut_tree of Grid_geometry.Direction.t
-  | Surf
+  | Surf  (** Start surfing on the water tile the player faces. *)
   | Verify_mail_glitch of Action_args.member
   | Pc_deposit of deposit
   | Pc_withdraw
@@ -53,6 +53,8 @@ val decode :
     - [ingame_trade]: ["species"] offered, optional ["receive"].
     - [spin_for_encounter]: optional ["max_batches"].
     - [cut_tree]: ["direction"].
+    - [surf]: no args: start surfing on the water tile the player faces
+      ({!Surf}).
     - [verify_mail_glitch]: ["species"] or ["target_slot"].
     - [pc_deposit]: ["species"], a list of the members to store, or ["member"]:
       ["holding_no_mail"] ({!Holding_no_mail}), facing a Pokémon Center's PC

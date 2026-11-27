@@ -4,9 +4,11 @@
     [PokemonFRLG/Programs/RngManipulation/PokemonFRLG_WildRng.cpp]
     (https://github.com/PokemonAutomation/Arduino-Source; the target, location,
     species, trainer IDs, seed table and advances) as plan args; the seed and
-    advance are searched for ({!Frlg_rng.Wild_target}) instead of given. Sweet
-    Scent targets only, on a grass location, with the game's sound on Mono and
-    its button mode on Help (the seed column ["Mono / Help / A"]). *)
+    advance are searched for ({!Frlg_rng.Wild_target}) instead of given.
+    Supports ["grass"] (Sweet Scent in grass), ["surf"] (Sweet Scent on water),
+    and ["super_rod"] (registered Super Rod on shore) encounter methods, with
+    the game's sound on Mono and its button mode on Help (the seed column
+    ["Mono / Help / A"]). *)
 
 (** How {!Wild_rng} triggers a wild encounter after the RNG reset. *)
 type encounter_method =
@@ -94,6 +96,52 @@ val default_seeds : string
 val default_frame_model : string
 (** Default frame model (["mgba"]) when ["frame_model"] is omitted. *)
 
+val max_id : int
+(** Maximum valid 16-bit trainer ID, secret ID, or seed shift ([65535]). *)
+
+val seed_mask : int
+(** Bitmask for wrapping 16-bit seeds and seed shifts ([0xffff]). *)
+
+val default_attempts : int
+(** Default number of RNG reset attempts when ["attempts"] is omitted ([1]). *)
+
+val max_attempts : int
+(** Maximum allowed number of RNG reset attempts ([99]). *)
+
+val max_ingame_offset : int
+(** Maximum absolute value allowed for ["ingame_offset"] ([99]). *)
+
+val opt_int :
+  where:string ->
+  default:int ->
+  low:int ->
+  high:int ->
+  string ->
+  Json_field.obj ->
+  int
+(** Reads an optional integer field in [low..high], returning [default] when
+    absent or raising via {!Json_field.fail} on out-of-range / non-int values.
+*)
+
+val resolved_id :
+  where:string ->
+  options:Run_options.t ->
+  fallback:int option ->
+  string ->
+  Json_field.obj ->
+  int
+(** Resolves a trainer or secret ID from [--options], then [args], then
+    [fallback], failing via {!Json_field.fail} if missing or outside
+    [0..max_id]. *)
+
+val advances : where:string -> Json_field.obj -> int * int
+(** Reads optional ["advances"] as [[min, max]] with [0 <= min <= max],
+    defaulting to [(900, 4000)]. *)
+
+val frame_model : where:string -> Json_field.obj -> string
+(** Reads optional ["frame_model"] (["mgba"] or ["switch"]), defaulting to
+    {!default_frame_model}. *)
+
 val find_frame_model : string -> Frlg_rng.Rng_timings.frame_model option
 (** Looks up a frame model by name (["mgba"] or ["switch"]). *)
 
@@ -135,7 +183,8 @@ val decode :
   ?fallback:trainer_ids ->
   Json_field.obj ->
   (t, Pokemon_engine.Failure.cause) result
-(** ["species"], ["location"] (["route_10"]), ["tid"], ["sid"] (0..65535, from
+(** ["method"] (["grass"] | ["surf"] | ["super_rod"], default ["grass"]),
+    ["species"], ["location"] (["route_10"]), ["tid"], ["sid"] (0..65535, from
     [--options], else the plan, else [fallback]), ["seeds"], ["seed_shift"]
     (0..65535, default 0), ["ingame_offset"] (-99..99, default 0),
     ["frame_model"] (["mgba"]), ["advances"] ([[min, max]], default
@@ -144,7 +193,7 @@ val decode :
     ["throw_only"]), ["visual_shiny_check"] ([false]). *)
 
 val encounter_slots : string
-(** The file the grass slots are read from, FireRed's:
+(** The file the encounter slots are read from, FireRed's:
     [src/games/pokemon/frlg/assets/encounter_slots_firered.json], which
     [src/games/pokemon/frlg/assets/extract/extract_frlg_encounter_slots.py]
     writes from Packages' [EncounterSlotsFR.json] (LeafGreen's beside it). *)

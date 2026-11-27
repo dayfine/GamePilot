@@ -25,6 +25,8 @@ Runs on: mGBA.
   `trainer_ids.json` in your local FRLG config directory.
 - 02 starts with a full party and stores one member to make room; from then on each catch joins
   as the sixth member, is checked for the shiny star and goes to the PC.
+- `08-shiny-shellder` requires the Super Rod registered on Select, and `09-shiny-scyther` requires
+  5,500 Game Corner coins.
 
 <!-- generated:needs -->
 - a member holds no Mail (pc_deposit)
