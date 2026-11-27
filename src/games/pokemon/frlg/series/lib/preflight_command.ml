@@ -25,6 +25,7 @@ type setup = {
   viewport : string option;
       (** The Switch daemon's --viewport: the program's
           (Program_registry.check_viewport). *)
+  home_tile : Switch.Home_screen.tile_color option;
   info : Run_record.info;
   watch : Daemon_process.watch option;
 }
@@ -52,16 +53,19 @@ let needs ~plan_dir from_id =
 exception Not_back of string
 
 (* Back to what the save holds. *)
-let reload setup id log =
+let reload setup ~picture ~expectation id log =
   match setup.backend with
   | Daemon_process.Mgba _ ->
       let path = Filename.concat setup.states (id ^ ".start.ss") in
       if Sys.file_exists path then ignore (Effects.load_state path)
       else raise (Not_back ("no start state " ^ path))
   | Switch _ -> (
-      match Frlg_actions.Soft_reset.return_to_save ~log () with
-      | Ok () -> ()
-      | Error c -> raise (Not_back (Failure.cause_to_string c)))
+      match Switch.Initial_screen.check ~log ~picture expectation with
+      | Error e -> raise (Not_back e)
+      | Ok () -> (
+          match Frlg_actions.Soft_reset.return_to_save ~log () with
+          | Ok () -> ()
+          | Error c -> raise (Not_back (Failure.cause_to_string c))))
 
 let load_kept log path =
   match C.load_frame path with
@@ -116,8 +120,11 @@ type reads = {
 let action f : Pokemon_engine.Game.game_action = fun _ _ -> f ()
 
 (* Back to the save: on a failure, its frame and the verdict. *)
-let soft_reset setup record id reads log () =
-  match reload setup id log with
+let soft_reset setup ~picture record id reads log () =
+  match
+    reload setup ~picture ~expectation:Switch.Initial_screen.In_game_read_only
+      id log
+  with
   | () -> Ok ()
   | exception Not_back e ->
       save_failure record log;
@@ -164,9 +171,9 @@ let read_trainer_card needs reads log () =
 (* The shadow plan's steps (Frlg_checkpoints.Shadow_plan.preflight_steps). The
    party is read on its summaries (species, level, moves): the room and the
    field moves are judged on them. *)
-let actions setup record id start ((needs, _) as all) reads log =
+let actions setup ~picture record id start ((needs, _) as all) reads log =
   [
-    ("soft_reset", action (soft_reset setup record id reads log));
+    ("soft_reset", action (soft_reset setup ~picture record id reads log));
     ("check_start", action (check_start setup id start reads log));
     ("read_party", action (read_party reads log));
     ("read_trainer_card", action (read_trainer_card needs reads log));
@@ -178,7 +185,8 @@ let shadow_plan id =
     Frlg_checkpoints.Shadow_plan.preflight_steps
 
 (* The pre-flight as a plan through the checkpoint runner, on the page. *)
-let session setup record id start needs world log () =
+let session setup record id start needs world log (backend : Wire.backend) =
+  let picture = backend.viewport in
   let reads =
     {
       place = None;
@@ -191,7 +199,7 @@ let session setup record id start needs world log () =
   match
     Frlg_checkpoints.Plan_watch.run_shadow ~mode:"preflight" ~log world
       (shadow_plan id)
-      (actions setup record id start needs reads)
+      (actions setup ~picture record id start needs reads)
   with
   | Ok () -> reads.verdict
   | Error f -> (
@@ -231,7 +239,8 @@ let with_daemon setup record id body =
 
 let in_daemon setup record id start needs world log (d : Daemon_process.t) =
   match
-    Live.run ~port:d.port (session setup record id start needs world log)
+    Live.run_with_backend ~port:d.port
+      (session setup record id start needs world log)
   with
   | verdict -> verdict
   | exception Effects.Disconnected e -> Stopped ("disconnected: " ^ e)

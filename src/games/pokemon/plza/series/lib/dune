@@ -4,6 +4,7 @@
  (libraries
   gamepilot.wire
   gamepilot.effects
+  gamepilot.switch
   gamepilot.live
   gamepilot.live_run
   gamepilot.run_record
