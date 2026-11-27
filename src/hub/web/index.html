@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GamePilot Hub</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+  <div>
+    <h1>GamePilot Control Hub</h1>
+    <div id="cfgPath" class="muted">Loading...</div>
+  </div>
+  <div class="row">
+    <button class="secondary" onclick="toggleAdd()">+ Add Console</button>
+    <button class="secondary" onclick="refreshAll()">Refresh</button>
+  </div>
+</header>
+<main>
+  <section id="addSection" class="hidden">
+    <h2>Add or Update Console</h2>
+    <div class="row">
+      <label>ID <input id="addId" placeholder="console-a"></label>
+      <label>Name <input id="addName" placeholder="Console A"></label>
+      <label>Backend
+        <select id="addBackend" onchange="toggleBackendFields()">
+          <option value="switch">Switch</option>
+          <option value="mgba">mGBA</option>
+        </select>
+      </label>
+      <label id="lblCapture">Capture Device <input id="addCapture" list="captureList" placeholder="0"></label>
+      <datalist id="captureList"></datalist>
+      <label id="lblSerial">Serial Port <input id="addSerial" list="serialList" placeholder="/dev/cu.usbmodem..."></label>
+      <datalist id="serialList"></datalist>
+      <label id="lblPort" class="hidden">mGBA Port <input id="addPort" type="number" value="47810"></label>
+      <button onclick="saveConsole()">Save</button>
+      <button class="secondary" onclick="toggleAdd()">Cancel</button>
+    </div>
+    <div id="addErr" class="err-banner"></div>
+  </section>
+
+  <section>
+    <h2><span>Consoles</span><span id="consoleCount" class="muted"></span></h2>
+    <div id="consolesGrid" class="grid"></div>
+  </section>
+
+  <section>
+    <h2><span>Launch Program</span><span id="selectedConsoleLabel" class="muted"></span></h2>
+    <div class="row">
+      <label style="min-width:260px">Program
+        <select id="progSelect" onchange="renderProgram()"></select>
+      </label>
+      <label>From Checkpoint <select id="fromSelect"></select></label>
+      <label>To Checkpoint <select id="toSelect"></select></label>
+      <label>Mode
+        <select id="modeSelect">
+          <option value="default" selected>default</option>
+          <option value="verification">verification</option>
+        </select>
+      </label>
+    </div>
+    <div id="progDesc" class="muted" style="margin-top:8px"></div>
+    <div id="optsGrid" class="opts"></div>
+    <div class="row" style="margin-top:14px">
+      <button class="secondary" onclick="launch(true)">Preflight Check</button>
+      <button onclick="launch(false)">Run (--watch)</button>
+    </div>
+    <div id="launchErr" class="err-banner"></div>
+  </section>
+
+  <section>
+    <h2><span>Active &amp; Recent Runs</span><span id="runCount" class="muted"></span></h2>
+    <div id="runsList" class="muted">No runs launched yet.</div>
+  </section>
+
+  <section>
+    <h2><span>Run History</span><span id="historyDir" class="muted"></span></h2>
+    <div id="historyList" class="muted">Loading history...</div>
+  </section>
+</main>
+<script src="/app.js"></script>
+</body>
+</html>

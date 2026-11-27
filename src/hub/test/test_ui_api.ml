@@ -49,6 +49,8 @@ let with_temp_router f =
 let router_console_roundtrip () =
   with_temp_router (fun mgr ->
       let c1, _, _ = Http_router.route mgr "GET" "/" "" in
+      let c_css, _, _ = Http_router.route mgr "GET" "/style.css" "" in
+      let c_js, _, _ = Http_router.route mgr "GET" "/app.js" "" in
       let c2, _, _ =
         Http_router.route mgr "POST" "/api/consoles"
           {|{"id":"mgba","name":"Local mGBA","backend":"mgba","mgba_port":47810}|}
@@ -62,7 +64,7 @@ let router_console_roundtrip () =
             | _ -> false)
         | _ -> false
       in
-      Printf.sprintf "%d:%d:%d:%b" c1 c2 c3 has_mgba)
+      Printf.sprintf "%d:%d:%d:%d:%d:%b" c1 c_css c_js c2 c3 has_mgba)
 
 let router_error_codes () =
   with_temp_router (fun mgr ->
@@ -123,8 +125,8 @@ let () =
                 (Option.value r.registry ~default:"")
           | None -> "none")
         "80610:bdsp.underground:/tmp/watch";
-      case "http_router serves page and console upsert roundtrip"
-        router_console_roundtrip "200:200:200:true";
+      case "http_router serves HTML/CSS/JS and console upsert roundtrip"
+        router_console_roundtrip "200:200:200:200:200:true";
       case "http_router returns expected 400/404 status codes"
         router_error_codes "400:404:404:404";
       case "run_history parses RESULTS.tsv newest-first with limit"

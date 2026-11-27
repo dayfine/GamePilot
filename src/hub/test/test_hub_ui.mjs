@@ -1,8 +1,11 @@
 #!/usr/bin/env node
-// Fast, zero-dependency UI tests for the GamePilot Control Hub HTML/JS page
-// (src/bin/ui_hub/lib/ui_page.ml) using Node's built-in node:test and vm.
+// Optional dev/CI JS tests for the GamePilot Control Hub web frontend
+// (src/hub/web/index.html + src/hub/web/app.js) using Node's built-in
+// node:test and vm (zero npm packages). Node is NOT a build or runtime
+// dependency of gamepilot itself; CI runs this on Linux where Node is
+// preinstalled.
 //
-// Run: node --test dev/ui/test_hub_ui.mjs
+// Run: node --test src/hub/test/test_hub_ui.mjs
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -10,19 +13,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 
-const uiPagePath = path.resolve(
+const webDir = path.resolve(
   path.dirname(new URL(import.meta.url).pathname),
-  '../../src/hub/lib/ui_page.ml'
+  '../web'
 );
 
-function extractHtmlAndScript() {
-  const ml = fs.readFileSync(uiPagePath, 'utf8');
-  const htmlMatch = ml.match(/\{\|([\s\S]*)\|\}/);
-  assert.ok(htmlMatch, 'expected OCaml quoted string {|...|} in ui_page.ml');
-  const html = htmlMatch[1];
-  const scriptMatch = html.match(/<script>([\s\S]*?)<\/script>/);
-  assert.ok(scriptMatch, 'expected <script> block in Hub HTML');
-  return { html, script: scriptMatch[1] };
+function loadWebAssets() {
+  const html = fs.readFileSync(path.join(webDir, 'index.html'), 'utf8');
+  const script = fs.readFileSync(path.join(webDir, 'app.js'), 'utf8');
+  return { html, script };
 }
 
 function makeFakeElement(id) {
@@ -52,7 +51,7 @@ function makeFakeElement(id) {
 }
 
 function createHubSandbox(mockRoutes) {
-  const { html, script } = extractHtmlAndScript();
+  const { html, script } = loadWebAssets();
   const ids = [
     'cfgPath',
     'addSection',
@@ -229,9 +228,11 @@ const sampleFixtures = () => ({
 });
 
 test('Hub HTML offers default and verification modes', () => {
-  const { html } = extractHtmlAndScript();
+  const { html } = loadWebAssets();
   assert.match(html, /<option value="default" selected>default<\/option>/);
   assert.match(html, /<option value="verification">verification<\/option>/);
+  assert.match(html, /<link rel="stylesheet" href="\/style\.css">/);
+  assert.match(html, /<script src="\/app\.js"><\/script>/);
 });
 
 test('Initial load renders Console A external run + Watch link and Console B ready', async () => {
