@@ -210,9 +210,10 @@ const sampleFixtures = () => ({
   },
 });
 
-test('Hub HTML labels testing (single pass) as default mode', () => {
+test('Hub HTML offers default and verification modes', () => {
   const { html } = extractHtmlAndScript();
-  assert.match(html, /<option value="testing" selected>testing \(single pass\)<\/option>/);
+  assert.match(html, /<option value="default" selected>default<\/option>/);
+  assert.match(html, /<option value="verification">verification<\/option>/);
 });
 
 test('Initial load renders Console A external run + Watch link and Console B ready', async () => {
