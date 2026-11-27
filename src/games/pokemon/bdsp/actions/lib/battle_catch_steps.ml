@@ -158,13 +158,16 @@ let inspect_frame ~log cfg tr m =
   | Hud.Black -> Some (wait_battle_end ~log cfg tr)
   | Hud.Other -> None
 
+let is_event_screen m =
+  match Hud.classify_screen m with Hud.Other -> false | _ -> true
+
 let rec poll_event ~log cfg tr deadline =
   let remaining = int_of_float (deadline -. Effects.now ()) in
   if remaining <= 0 then
     Ok (CR.Unexpected "timed out waiting for BDSP battle event")
   else
     let slice = min remaining defaults.poll_slice_ms in
-    match Effects.await ~timeout_ms:slice (fun _ -> true) with
+    match Effects.await ~timeout_ms:slice is_event_screen with
     | Effects.Timeout -> poll_event ~log cfg tr deadline
     | Effects.Holds m -> (
         match inspect_frame ~log cfg tr m with
@@ -181,6 +184,8 @@ let move_cursor_delta t ~from_slot ~to_slot =
   if diff > 0 then nav_repeat t Wire.Down diff
   else if diff < 0 then nav_repeat t Wire.Up (-diff)
 
+let settle_after_action t = P.wait (t.menu_settle_ms * 3)
+
 let use_move ~log cfg tr move_slot =
   let t = cfg.timing in
   let prev = Cursor.last_move tr.cursor in
@@ -191,6 +196,7 @@ let use_move ~log cfg tr move_slot =
   tap t Wire.A;
   Cursor.record_move tr.cursor move_slot;
   tr.turns <- tr.turns + 1;
+  settle_after_action t;
   Ok ()
 
 let execute_command ~log cfg tr = function
@@ -204,6 +210,7 @@ let execute_command ~log cfg tr = function
       P.wait t.menu_settle_ms;
       select_party_row t row;
       tr.turns <- tr.turns + 1;
+      settle_after_action t;
       Ok ()
   | CS.Throw_ball name ->
       let t = cfg.timing in
@@ -214,6 +221,7 @@ let execute_command ~log cfg tr = function
       tap t Wire.A;
       tr.balls_thrown <- tr.balls_thrown + 1;
       tr.turns <- tr.turns + 1;
+      settle_after_action t;
       Ok ()
   | CS.Heal_active ->
       let t = cfg.timing in
@@ -228,6 +236,7 @@ let execute_command ~log cfg tr = function
       tap t Wire.A;
       tap t Wire.A;
       tr.turns <- tr.turns + 1;
+      settle_after_action t;
       Ok ()
   | CS.Pause_for_user _ -> Ok ()
 
@@ -237,19 +246,16 @@ let send_in ~log cfg tr slot =
   log (Printf.sprintf "BDSP: forced switch -> slot %d (row %d)" slot row);
   P.wait t.menu_settle_ms;
   select_party_row t row;
+  settle_after_action t;
   Ok ()
 
-let make ?(log = ignore) cfg : CR.game_steps =
+let make ?(log = ignore) ?(initial_move_slot = 1) cfg : CR.game_steps =
   let party_size = 6 in
-  let tr =
-    {
-      subscribed = false;
-      turns = 0;
-      balls_thrown = 0;
-      cursor =
-        Cursor.create ~party_size ~initial_active_slot:cfg.initial_active_slot;
-    }
+  let cursor =
+    Cursor.create ~party_size ~initial_active_slot:cfg.initial_active_slot
   in
+  if initial_move_slot <> 1 then Cursor.record_move cursor initial_move_slot;
+  let tr = { subscribed = false; turns = 0; balls_thrown = 0; cursor } in
   {
     next_event = next_event ~log cfg tr;
     execute = execute_command ~log cfg tr;

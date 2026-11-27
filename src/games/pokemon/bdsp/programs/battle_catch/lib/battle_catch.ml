@@ -27,10 +27,15 @@ let format_outcome target = function
         Printf.sprintf "bdsp.battle_catch: failed on %s (%s; turns=%d)" target
           reason summary.turns )
 
+let initial_move_slot () =
+  match Sys.getenv_opt "GAMEPILOT_BDSP_LEAD_MOVE" with
+  | Some s -> Option.value ~default:1 (int_of_string_opt (String.trim s))
+  | None -> 1
+
 let run_checked ~picture (cfg : Opts.t) =
   Effects.show_log ("Starting bdsp.battle_catch: " ^ Opts.format_summary cfg);
   let steps =
-    BCS.make ~log:Effects.show_log
+    BCS.make ~log:Effects.show_log ~initial_move_slot:(initial_move_slot ())
       {
         picture;
         initial_active_slot = cfg.lead_slot;
@@ -38,7 +43,7 @@ let run_checked ~picture (cfg : Opts.t) =
         timing = BCS.default_timing;
       }
   in
-  CR.run steps cfg.policy |> format_outcome cfg.target
+  CR.run ~log:Effects.show_log steps cfg.policy |> format_outcome cfg.target
 
 let run ~picture ?(options = Run_options.none) () =
   match Opts.of_run_options options with

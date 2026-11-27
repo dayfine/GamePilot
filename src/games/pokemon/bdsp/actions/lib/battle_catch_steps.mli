@@ -63,7 +63,10 @@ val default_timing : timing
 (** Conservative default timings for BDSP battle menus on Switch. *)
 
 val make :
-  ?log:(string -> unit) -> config -> Pokemon_catch.Catch_runner.game_steps
+  ?log:(string -> unit) ->
+  ?initial_move_slot:int ->
+  config ->
+  Pokemon_catch.Catch_runner.game_steps
 (** Build BDSP {!Pokemon_catch.Catch_runner.game_steps} driven through
     {!Effects}. *)
 
