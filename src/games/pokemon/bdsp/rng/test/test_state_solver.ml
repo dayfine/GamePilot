@@ -80,12 +80,14 @@ let npc_samples state ~count ~stride ~types ~flip ~repeat =
       let roll = Xorshift128.next rng in
       let blinked = Blink_model.npc_blinks roll <> (c = flip) in
       let typed = types = "all" || (types = "even" && c mod 2 = 0) in
-      let blink_type =
-        if blinked && typed then Some (Blink_model.npc_blink_type roll)
-        else None
+      let observation =
+        if blinked then
+          State_solver.Blinked
+            (if typed then Some (Blink_model.npc_blink_type roll) else None)
+        else State_solver.No_blink
       in
       List.init repeat (fun _ ->
-          { State_solver.advance = c * stride; blinked; blink_type }))
+          { State_solver.advance = c * stride; observation }))
   |> List.concat
 
 let solve_npc inputs =
@@ -129,7 +131,9 @@ let solve_pokemon = function
   | _ -> failwith "solve_pokemon: tolerance attempts count intervals"
 
 let rejected = function Ok _ -> Error "accepted" | Error _ -> Ok ()
-let sample advance = { State_solver.advance; blinked = true; blink_type = None }
+
+let sample advance =
+  { State_solver.advance; observation = State_solver.Blinked None }
 
 let () =
   let check = Fixture_lines.check_op records in

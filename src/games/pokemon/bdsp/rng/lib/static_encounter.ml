@@ -12,6 +12,17 @@ let gender_name = function
   | Female -> "Female"
   | Genderless -> "Genderless"
 
+type 'a per_stat = {
+  hp : 'a;
+  attack : 'a;
+  defense : 'a;
+  spatk : 'a;
+  spdef : 'a;
+  speed : 'a;
+}
+
+type base_stats = int per_stat
+
 type ivs = {
   hp : int;
   attack : int;

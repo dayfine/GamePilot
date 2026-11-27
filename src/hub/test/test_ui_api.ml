@@ -40,7 +40,7 @@ let with_temp_router f =
   let dir = Filename.temp_file "ui_hub_test_" "" in
   Sys.remove dir;
   let path = Filename.concat dir "consoles.json" in
-  let mgr = Run_manager.create ~config_path:path in
+  let mgr = Run_manager.create ~config_path:path () in
   let res = f mgr in
   if Sys.file_exists path then Sys.remove path;
   if Sys.file_exists dir then Sys.rmdir dir;

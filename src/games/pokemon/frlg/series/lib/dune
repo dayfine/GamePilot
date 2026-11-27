@@ -4,7 +4,9 @@
  (flags
   (:standard -open Live_run))
  (libraries
+  gamepilot.wire
   gamepilot.effects
+  gamepilot.switch
   gamepilot.json_field
   gamepilot.guide_page
   gamepilot.watch_report

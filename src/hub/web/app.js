@@ -14,7 +14,10 @@ function esc(s) {
 
 function watchHref(url) {
   if (!url || typeof window === 'undefined' || !window.location) return url;
-  return url.replace(/^http:\/\/127\.0\.0\.1(?=[:/])/, 'http://' + window.location.hostname);
+  return url.replace(
+    /^http:\/\/(127\.0\.0\.1|localhost|0\.0\.0\.0)(?=[:/])/,
+    'http://' + window.location.hostname
+  );
 }
 
 function toggleAdd() {

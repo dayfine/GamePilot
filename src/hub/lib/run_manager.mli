@@ -4,8 +4,9 @@
 type t
 (** Mutable hub run table bound to one [consoles.json] path. *)
 
-val create : config_path:string -> t
-(** Creates an empty run manager for [config_path]. *)
+val create : config_path:string -> ?listen:string -> unit -> t
+(** Creates an empty run manager for [config_path] and optional [listen] address
+    forwarded to [--watch] runs. *)
 
 val config_path : t -> string
 (** Returns the [consoles.json] path configured on the manager. *)

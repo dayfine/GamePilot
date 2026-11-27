@@ -21,6 +21,23 @@ val build_samples :
     streams), sorted by advance. [slots.(s)] is stream [s]'s place in the NPCs'
     order. [Error] names the problem, as the C++'s [failure_reason]. *)
 
+val build_samples_with_gaps :
+  ?double_blink_seconds:float ->
+  Blink_extraction.blink_event list list ->
+  gaps:Blink_extraction.frame_gap list list ->
+  slots:int list ->
+  period_seconds:float ->
+  (State_solver.blink_sample list, string) result
+(** Like {!build_samples}, but uses each watcher's {!Blink_extraction.frame_gap}
+    list to guard against dropped frames and capture stalls:
+    - a [Single] blink followed by a gap within [double_blink_seconds] (default
+      0.55) keeps its tick timing as [Blinked None] so an unobserved second dip
+      never injects a wrong bit-0 equation;
+    - a blink preceded by a gap within [double_blink_seconds] (which may have
+      hidden the first dip of a double blink) becomes [Unknown];
+    - an unobserved tick whose expected window overlaps a gap becomes [Unknown]
+      instead of an inferred [No_blink]. *)
+
 type anchor = {
   advance : int;  (** The blink's roll on the {!build_samples} grid. *)
   seconds : float;  (** When the blink was seen. *)

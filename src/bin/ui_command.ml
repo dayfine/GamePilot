@@ -46,6 +46,7 @@ let dispatch_raw st raw =
     "HTTP/1.1 %d %s\r\n\
      Content-Type: %s\r\n\
      Content-Length: %d\r\n\
+     Cache-Control: no-store\r\n\
      Connection: close\r\n\
      \r\n\
      %s"
@@ -65,7 +66,7 @@ let serve (f : flags) =
   let config_path =
     Option.value f.config ~default:(Console_config.default_path ())
   in
-  let st = Ui_hub.Run_manager.create ~config_path in
+  let st = Ui_hub.Run_manager.create ~config_path ~listen:f.listen () in
   let sock = Unix.socket Unix.PF_INET Unix.SOCK_STREAM 0 in
   Unix.setsockopt sock Unix.SO_REUSEADDR true;
   let addr = Unix.inet_addr_of_string f.listen in
