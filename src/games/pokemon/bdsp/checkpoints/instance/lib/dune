@@ -1,0 +1,8 @@
+(library
+ (name bdsp_engine)
+ (public_name gamepilot.bdsp_engine)
+ (libraries
+  gamepilot.program_engine
+  gamepilot.bdsp_rules
+  gamepilot.bdsp_plan_format
+  gamepilot.bdsp_event_snapshot))

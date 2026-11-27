@@ -44,6 +44,12 @@ let frlg_plan_error file =
       | Ok () -> None
       | Error e -> Some (file ^ ": " ^ e))
 
+(* BDSP's plans are over its own rules: they decode with Bdsp_engine. *)
+let bdsp_plan_error file =
+  match Bdsp_engine.Plan_decode.load file with
+  | Ok _ -> None
+  | Error e -> Some (file ^ ": " ^ e)
+
 (* Every plan of every program's folder that does not decode or check. *)
 let bad_plans () =
   List.concat_map
@@ -54,6 +60,7 @@ let bad_plans () =
           let plan_error =
             match p.rules with
             | Plza_story | Pokemon_home | Plza_gifts -> plza_plan_error
+            | Bdsp -> bdsp_plan_error
             | Pokemon_grid -> frlg_plan_error
           in
           List.filter_map plan_error (plans_in dir))

@@ -1,0 +1,7 @@
+(library
+ (name bdsp_plan_format)
+ (public_name gamepilot.bdsp_plan_format)
+ (libraries
+  gamepilot.json_field
+  gamepilot.engine_plan_format
+  gamepilot.bdsp_rules))

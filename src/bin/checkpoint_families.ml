@@ -162,13 +162,58 @@ let plza_gifts =
     guide = { plza_guide with program_block = gifts_block };
   }
 
-let all = [ grid; plza; plza_home; plza_gifts ]
+let run_bdsp_action ~log ~picture ~options:_ = function
+  | Bdsp_rules.Action.Save_game -> (
+      match Bdsp_actions.Save_game.save_game ~log ~picture () with
+      | Ok () -> Ok ()
+      | Error msg ->
+          Error (Engine_run.Failure.cause ~repeats:true "save_game_failed" msg))
+
+let bdsp_series plan_dir args =
+  let* f = Bdsp_checkpoint_series.Flags.parse args in
+  let* options = program_options plan_dir f in
+  Bdsp_checkpoint_series.Checkpoint_series.run_series
+    {
+      check_plans = (fun _ -> Ok ());
+      daemon_flags = [];
+      initial_screen = (fun _ -> Switch.Initial_screen.In_game_or_resume None);
+      run_action = run_bdsp_action;
+    }
+    ~program_fields:(program_fields plan_dir) ~options
+    ~viewport:(viewport plan_dir f) plan_dir args
+
+let no_bdsp_stated what ~plan_dir:_ _ = Error ("BDSP's plans state no " ^ what)
+
+let bdsp_guide : Guide_blocks.rules_guide =
+  {
+    rows = Bdsp_checkpoint_series.Guide_tables.rows;
+    needs = no_bdsp_stated "needs";
+    preflight = no_bdsp_stated "pre-flight";
+    commands =
+      (fun _ ~args -> Bdsp_checkpoint_series.Guide_tables.commands ~args);
+    program_block = (fun _ _ -> None);
+  }
+
+(* BDSP's rules' entry points: a series of whole checkpoints on the Switch. *)
+let bdsp =
+  {
+    run_series = bdsp_series;
+    run_checkpoint =
+      (fun _ _ -> Error "BDSP runs whole series only: gamepilot run");
+    replay_checkpoint = (fun _ _ _ -> Error "BDSP has no checkpoint replay yet");
+    guide = bdsp_guide;
+    chain_needs = (fun _ -> Error "BDSP's plans state no chain needs");
+    ctl_readers = [];
+  }
+
+let all = [ grid; plza; plza_home; plza_gifts; bdsp ]
 
 let of_rules = function
   | R.Pokemon_grid -> grid
   | R.Plza_story -> plza
   | R.Pokemon_home -> plza_home
   | R.Plza_gifts -> plza_gifts
+  | R.Bdsp -> bdsp
 
 let of_program (p : R.t option) =
   of_rules (match p with Some p -> p.rules | None -> R.Pokemon_grid)

@@ -1,0 +1,4 @@
+(library
+ (name bdsp_rules)
+ (public_name gamepilot.bdsp_rules)
+ (libraries gamepilot.engine_rules))
