@@ -44,8 +44,8 @@ type config = {
 (** Configuration for {!make}. *)
 
 type party_slots = {
-  sleeper : int;  (** 1-based party slot of the sleep user. *)
-  sleeper_move : int;  (** 1-based move slot of the sleep move. *)
+  status_setter : int;  (** 1-based party slot of the status move user. *)
+  status_move : int;  (** 1-based move slot of the status move. *)
   false_swiper : int;  (** 1-based party slot of the False Swipe user. *)
   false_swipe_move : int;  (** 1-based move slot of False Swipe. *)
   wall : int;  (** 1-based party slot of the defensive wall. *)

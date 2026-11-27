@@ -45,15 +45,20 @@ let test_sleep_badge () =
   let asleep =
     frame [ ("bdsp_foe_slp", cs (128., 122., 125.) (12., 12., 12.)) ]
   in
-  assert_eq "foe asleep pill" (Battle_hud.foe_asleep asleep) true;
+  assert_eq "foe asleep pill" (Battle_hud.foe_asleep asleep) (Some true);
   let white_hud =
     frame [ ("bdsp_foe_slp", cs (245., 245., 245.) (3., 3., 3.)) ]
   in
-  assert_eq "foe awake white plate" (Battle_hud.foe_asleep white_hud) false;
+  assert_eq "foe awake white plate"
+    (Battle_hud.foe_asleep white_hud)
+    (Some false);
   let para_yellow =
     frame [ ("bdsp_foe_slp", cs (230., 190., 30.) (8., 8., 8.)) ]
   in
-  assert_eq "foe paralyzed not sleep" (Battle_hud.foe_asleep para_yellow) false
+  assert_eq "foe paralyzed not sleep"
+    (Battle_hud.foe_asleep para_yellow)
+    (Some false);
+  assert_eq "missing sleep probe" (Battle_hud.foe_asleep (frame [])) None
 
 let test_screen_classification () =
   let switch_frame =

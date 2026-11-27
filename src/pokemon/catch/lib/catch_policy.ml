@@ -1,59 +1,84 @@
 open Catch_state
 
+let is_fainted state slot = List.mem slot state.fainted
+
 let active_hp_floor policy active_slot =
-  match (policy.sleeper, policy.false_swiper) with
-  | Some sl, _ when sl.slot = active_slot -> sl.hp_floor
-  | _, Some fs when fs.slot = active_slot -> fs.hp_floor
-  | _ -> policy.wall.hp_floor
+  match (policy.status_setter, policy.false_swiper, policy.wall) with
+  | Some ss, _, _ when ss.slot = active_slot -> ss.hp_floor
+  | _, Some fs, _ when fs.slot = active_slot -> fs.hp_floor
+  | _, _, Some w when w.slot = active_slot -> w.hp_floor
+  | _ -> 0.0
 
 let use_or_switch ~active_slot ~target_slot ~move_slot =
   if active_slot = target_slot then Use_move move_slot
   else Switch_to target_slot
 
-let survival_command policy state =
-  let floor = active_hp_floor policy state.active_slot in
-  if state.active_hp_ratio >= floor then None
-  else if state.active_slot = policy.wall.slot then
-    match policy.wall.heal_move_slot with
-    | Some m -> Some (Use_move m)
-    | None -> Some Heal_active
-  else Some (Switch_to policy.wall.slot)
+let needs_status state =
+  match state.foe_status with
+  | Some status -> not (is_statused status)
+  | None -> false
 
-let sleep_or_pause policy state =
-  match policy.sleeper with
-  | Some sl ->
+let survival_for_wall policy state =
+  match policy.wall with
+  | Some w when state.active_slot = w.slot -> (
+      match w.heal_move_slot with
+      | Some m -> Some (Use_move m)
+      | None -> Some Heal_active)
+  | Some w when not (is_fainted state w.slot) -> Some (Switch_to w.slot)
+  | Some _ | None -> Some Heal_active
+
+let survival_command policy state =
+  match state.active_hp_ratio with
+  | None -> None
+  | Some ratio ->
+      let floor = active_hp_floor policy state.active_slot in
+      if ratio >= floor then None else survival_for_wall policy state
+
+let status_or_pause policy state =
+  match policy.status_setter with
+  | Some ss when not (is_fainted state ss.slot) ->
       Some
-        (use_or_switch ~active_slot:state.active_slot ~target_slot:sl.slot
-           ~move_slot:sl.move_slot)
-  | None -> Some (Pause_for_user "need sleep before false swipe")
+        (use_or_switch ~active_slot:state.active_slot ~target_slot:ss.slot
+           ~move_slot:ss.move_slot)
+  | Some _ | None -> Some (Pause_for_user "need status before false swipe")
 
 let chip_for_swiper policy state (fs : false_swipe_config) =
-  if fs.require_sleep && not state.foe_asleep then sleep_or_pause policy state
+  if is_fainted state fs.slot then None
+  else if fs.require_status && needs_status state then
+    status_or_pause policy state
   else
     Some
       (use_or_switch ~active_slot:state.active_slot ~target_slot:fs.slot
          ~move_slot:fs.move_slot)
 
 let chip_command policy state =
-  let threshold =
-    if state.balls_thrown > 0 then policy.foe_hp_rechip
-    else policy.foe_hp_target
-  in
-  if state.foe_hp_ratio <= threshold then None
-  else Option.bind policy.false_swiper (chip_for_swiper policy state)
+  match state.foe_hp_ratio with
+  | None -> None
+  | Some ratio ->
+      let threshold =
+        if state.balls_thrown > 0 then policy.foe_hp_rechip
+        else policy.foe_hp_target
+      in
+      if ratio <= threshold then None
+      else Option.bind policy.false_swiper (chip_for_swiper policy state)
 
-let sleep_command policy state =
-  match policy.sleeper with
-  | Some sl when policy.reapply_sleep && not state.foe_asleep ->
+let status_command policy state =
+  match policy.status_setter with
+  | Some ss
+    when policy.reapply_status && needs_status state
+         && not (is_fainted state ss.slot) ->
       Some
-        (use_or_switch ~active_slot:state.active_slot ~target_slot:sl.slot
-           ~move_slot:sl.move_slot)
+        (use_or_switch ~active_slot:state.active_slot ~target_slot:ss.slot
+           ~move_slot:ss.move_slot)
   | _ -> None
 
 let ball_command policy state =
-  match policy.false_swiper with
-  | Some fs when fs.require_sleep && state.active_slot = fs.slot ->
-      Switch_to policy.wall.slot
+  match (policy.false_swiper, policy.wall) with
+  | Some fs, Some w
+    when fs.require_status
+         && state.active_slot = fs.slot
+         && not (is_fainted state w.slot) ->
+      Switch_to w.slot
   | _ -> Throw_ball policy.ball_name
 
 let limit_command policy state =
@@ -76,7 +101,7 @@ let decide policy state =
       limit_command policy state;
       survival_command policy state;
       chip_command policy state;
-      sleep_command policy state;
+      status_command policy state;
     ]
     ~default:(ball_command policy state)
 

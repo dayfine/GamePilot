@@ -39,86 +39,91 @@ let fake_game_steps events =
 
 let kyogre_policy : Catch_state.policy =
   {
-    sleeper = Some { slot = 2; move_slot = 1; hp_floor = 0.35 };
+    status_setter = Some { slot = 2; move_slot = 1; hp_floor = 0.35 };
     false_swiper =
-      Some { slot = 5; move_slot = 2; require_sleep = true; hp_floor = 0.40 };
-    wall = { slot = 3; heal_move_slot = Some 4; hp_floor = 0.45 };
+      Some { slot = 5; move_slot = 2; require_status = true; hp_floor = 0.40 };
+    wall = Some { slot = 3; heal_move_slot = Some 4; hp_floor = 0.45 };
     ball_name = "Luxury Ball";
     max_balls = 50;
     foe_hp_target = 0.15;
     foe_hp_rechip = 0.35;
-    reapply_sleep = true;
+    reapply_status = true;
     max_turns = 80;
     send_in_order = [ 3; 2; 5 ];
   }
 
 let groudon_policy : Catch_state.policy =
   {
-    sleeper = Some { slot = 2; move_slot = 1; hp_floor = 0.35 };
+    status_setter = Some { slot = 2; move_slot = 1; hp_floor = 0.35 };
     false_swiper =
-      Some { slot = 5; move_slot = 2; require_sleep = true; hp_floor = 0.40 };
-    wall = { slot = 6; heal_move_slot = None; hp_floor = 0.40 };
+      Some { slot = 5; move_slot = 2; require_status = true; hp_floor = 0.40 };
+    wall = Some { slot = 6; heal_move_slot = None; hp_floor = 0.40 };
     ball_name = "Luxury Ball";
     max_balls = 3;
     foe_hp_target = 0.15;
     foe_hp_rechip = 0.40;
-    reapply_sleep = true;
+    reapply_status = true;
     max_turns = 60;
     send_in_order = [ 6; 2; 5 ];
   }
 
-let menu ~active_slot ~active_hp ~foe_hp ~foe_asleep =
+let dex_policy : Catch_state.policy =
+  {
+    status_setter = None;
+    false_swiper = None;
+    wall = None;
+    ball_name = "Ultra Ball";
+    max_balls = 20;
+    foe_hp_target = 0.15;
+    foe_hp_rechip = 0.35;
+    reapply_status = false;
+    max_turns = 30;
+    send_in_order = [ 2; 3 ];
+  }
+
+let menu ?(fainted = []) ~active_slot ~active_hp ~foe_hp ~foe_status () =
   Catch_runner.Action_menu
     {
       turn = 0;
       active_slot;
       active_hp_ratio = active_hp;
       foe_hp_ratio = foe_hp;
-      foe_asleep;
+      foe_status;
       balls_thrown = 0;
+      fainted;
     }
+
+let full_menu ~active_slot ~active_hp ~foe_hp ~foe_status =
+  menu ~active_slot ~active_hp:(Some active_hp) ~foe_hp:(Some foe_hp)
+    ~foe_status:(Some foe_status) ()
 
 let test_kyogre_full_flow () =
   let events =
     [
-      (* Lead slot 1 opens vs full-HP awake Kyogre -> switch to Venusaur (2). *)
-      menu ~active_slot:1 ~active_hp:1.0 ~foe_hp:1.0 ~foe_asleep:false;
-      (* Venusaur puts Kyogre to sleep -> Use_move 1. *)
-      menu ~active_slot:2 ~active_hp:0.9 ~foe_hp:1.0 ~foe_asleep:false;
-      (* Kyogre asleep at full HP -> switch to Garchomp (5). *)
-      menu ~active_slot:2 ~active_hp:0.9 ~foe_hp:1.0 ~foe_asleep:true;
-      (* Garchomp chips with False Swipe -> Use_move 2. *)
-      menu ~active_slot:5 ~active_hp:0.85 ~foe_hp:1.0 ~foe_asleep:true;
-      (* Kyogre now at 1 HP (0.05) and asleep; fragile Garchomp retreats to
-         Milotic (3) before throwing balls. *)
-      menu ~active_slot:5 ~active_hp:0.85 ~foe_hp:0.05 ~foe_asleep:true;
-      (* Milotic throws Luxury Ball. *)
-      menu ~active_slot:3 ~active_hp:0.90 ~foe_hp:0.05 ~foe_asleep:true;
-      (* Kyogre wakes up -> switch to Venusaur (2) to re-sleep. *)
-      menu ~active_slot:3 ~active_hp:0.75 ~foe_hp:0.20 ~foe_asleep:false;
-      (* Venusaur uses Sleep Powder. *)
-      menu ~active_slot:2 ~active_hp:0.80 ~foe_hp:0.25 ~foe_asleep:false;
-      (* Aqua Ring healed Kyogre to 0.40 (> foe_hp_rechip 0.35) -> switch to
-         Garchomp (5) to re-chip. *)
-      menu ~active_slot:2 ~active_hp:0.80 ~foe_hp:0.40 ~foe_asleep:true;
-      (* Garchomp False Swipes back down. *)
-      menu ~active_slot:5 ~active_hp:0.80 ~foe_hp:0.40 ~foe_asleep:true;
-      (* Retreat Garchomp to Milotic (3). *)
-      menu ~active_slot:5 ~active_hp:0.80 ~foe_hp:0.05 ~foe_asleep:true;
-      (* Milotic is low (0.30 < 0.45) -> Recover (move 4). *)
-      menu ~active_slot:3 ~active_hp:0.30 ~foe_hp:0.05 ~foe_asleep:true;
-      (* Milotic healthy again -> throw Luxury Ball and catch! *)
-      menu ~active_slot:3 ~active_hp:0.80 ~foe_hp:0.05 ~foe_asleep:true;
+      full_menu ~active_slot:1 ~active_hp:1.0 ~foe_hp:1.0 ~foe_status:Healthy;
+      full_menu ~active_slot:2 ~active_hp:0.9 ~foe_hp:1.0 ~foe_status:Healthy;
+      full_menu ~active_slot:2 ~active_hp:0.9 ~foe_hp:1.0 ~foe_status:Asleep;
+      full_menu ~active_slot:5 ~active_hp:0.85 ~foe_hp:1.0 ~foe_status:Asleep;
+      full_menu ~active_slot:5 ~active_hp:0.85 ~foe_hp:0.05 ~foe_status:Asleep;
+      full_menu ~active_slot:3 ~active_hp:0.90 ~foe_hp:0.05 ~foe_status:Asleep;
+      full_menu ~active_slot:3 ~active_hp:0.75 ~foe_hp:0.20 ~foe_status:Healthy;
+      full_menu ~active_slot:2 ~active_hp:0.80 ~foe_hp:0.25 ~foe_status:Healthy;
+      full_menu ~active_slot:2 ~active_hp:0.80 ~foe_hp:0.40 ~foe_status:Asleep;
+      full_menu ~active_slot:5 ~active_hp:0.80 ~foe_hp:0.40 ~foe_status:Asleep;
+      full_menu ~active_slot:5 ~active_hp:0.80 ~foe_hp:0.05 ~foe_status:Asleep;
+      full_menu ~active_slot:3 ~active_hp:0.30 ~foe_hp:0.05 ~foe_status:Asleep;
+      full_menu ~active_slot:3 ~active_hp:0.80 ~foe_hp:0.05 ~foe_status:Asleep;
       Catch_runner.Caught;
     ]
   in
   let steps, recorded = fake_game_steps events in
-  let outcome = Catch_runner.run steps kyogre_policy in
   let expected_summary : Catch_runner.summary =
     { turns = 13; balls_thrown = 2; switches = 6; heals = 1 }
   in
-  assert_eq "kyogre outcome" outcome (Catch_runner.Caught expected_summary);
-  let expected_actions =
+  assert_eq "kyogre outcome"
+    (Catch_runner.run steps kyogre_policy)
+    (Catch_runner.Caught expected_summary);
+  assert_eq "kyogre actions" (recorded ())
     [
       Cmd (Switch_to 2);
       Cmd (Use_move 1);
@@ -134,34 +139,28 @@ let test_kyogre_full_flow () =
       Cmd (Use_move 4);
       Cmd (Throw_ball "Luxury Ball");
     ]
-  in
-  assert_eq "kyogre actions" (recorded ()) expected_actions
 
 let test_groudon_rest_and_forced_switch () =
   let events =
     [
-      (* Venusaur faints before switching -> forced switch sends Aerodactyl (6). *)
       Catch_runner.Forced_switch { fainted_slot = 2 };
-      (* Aerodactyl throws Luxury Ball at sleeping 1-HP Groudon. *)
-      menu ~active_slot:6 ~active_hp:0.95 ~foe_hp:0.05 ~foe_asleep:true;
-      (* Groudon used Rest (1.0 HP, asleep) -> re-chip with Garchomp (5). *)
-      menu ~active_slot:6 ~active_hp:0.95 ~foe_hp:1.0 ~foe_asleep:true;
-      menu ~active_slot:5 ~active_hp:0.90 ~foe_hp:1.0 ~foe_asleep:true;
-      (* Retreat Garchomp to Aerodactyl (6), then heal when low (no heal move). *)
-      menu ~active_slot:5 ~active_hp:0.90 ~foe_hp:0.05 ~foe_asleep:true;
-      menu ~active_slot:6 ~active_hp:0.25 ~foe_hp:0.05 ~foe_asleep:true;
-      (* Throw Luxury Ball and catch. *)
-      menu ~active_slot:6 ~active_hp:0.90 ~foe_hp:0.05 ~foe_asleep:true;
+      full_menu ~active_slot:6 ~active_hp:0.95 ~foe_hp:0.05 ~foe_status:Asleep;
+      full_menu ~active_slot:6 ~active_hp:0.95 ~foe_hp:1.0 ~foe_status:Asleep;
+      full_menu ~active_slot:5 ~active_hp:0.90 ~foe_hp:1.0 ~foe_status:Asleep;
+      full_menu ~active_slot:5 ~active_hp:0.90 ~foe_hp:0.05 ~foe_status:Asleep;
+      full_menu ~active_slot:6 ~active_hp:0.25 ~foe_hp:0.05 ~foe_status:Asleep;
+      full_menu ~active_slot:6 ~active_hp:0.90 ~foe_hp:0.05 ~foe_status:Asleep;
       Catch_runner.Caught;
     ]
   in
   let steps, recorded = fake_game_steps events in
-  let outcome = Catch_runner.run steps groudon_policy in
   let expected_summary : Catch_runner.summary =
     { turns = 6; balls_thrown = 2; switches = 3; heals = 1 }
   in
-  assert_eq "groudon outcome" outcome (Catch_runner.Caught expected_summary);
-  let expected_actions =
+  assert_eq "groudon outcome"
+    (Catch_runner.run steps groudon_policy)
+    (Catch_runner.Caught expected_summary);
+  assert_eq "groudon actions" (recorded ())
     [
       Send_in 6;
       Cmd (Throw_ball "Luxury Ball");
@@ -171,29 +170,131 @@ let test_groudon_rest_and_forced_switch () =
       Cmd Heal_active;
       Cmd (Throw_ball "Luxury Ball");
     ]
-  in
-  assert_eq "groudon actions" (recorded ()) expected_actions
 
-let test_pauses_safely_on_limits_and_unexpected () =
-  (* Max balls limit (3) pauses on the 4th action menu. *)
-  let ball_events =
-    [
-      menu ~active_slot:6 ~active_hp:1.0 ~foe_hp:0.05 ~foe_asleep:true;
-      menu ~active_slot:6 ~active_hp:1.0 ~foe_hp:0.05 ~foe_asleep:true;
-      menu ~active_slot:6 ~active_hp:1.0 ~foe_hp:0.05 ~foe_asleep:true;
-      menu ~active_slot:6 ~active_hp:1.0 ~foe_hp:0.05 ~foe_asleep:true;
-    ]
+let test_dex_throw_only () =
+  let blind_menu =
+    menu ~active_slot:1 ~active_hp:None ~foe_hp:None ~foe_status:None ()
   in
-  let steps, _ = fake_game_steps ball_events in
+  let events = [ blind_menu; blind_menu; blind_menu; Catch_runner.Caught ] in
+  let steps, recorded = fake_game_steps events in
+  assert_eq "dex outcome"
+    (Catch_runner.run steps dex_policy)
+    (Catch_runner.Caught
+       { turns = 3; balls_thrown = 3; switches = 0; heals = 0 });
+  assert_eq "dex actions" (recorded ())
+    [
+      Cmd (Throw_ball "Ultra Ball");
+      Cmd (Throw_ball "Ultra Ball");
+      Cmd (Throw_ball "Ultra Ball");
+    ]
+
+let test_mid_battle_fainted_roles () =
+  (* Sleeper (2) faints; foe wakes up already chipped -> throws, never switches to 2. *)
+  let s1, r1 =
+    fake_game_steps
+      [
+        Catch_runner.Forced_switch { fainted_slot = 2 };
+        full_menu ~active_slot:3 ~active_hp:0.9 ~foe_hp:0.05 ~foe_status:Healthy;
+        Catch_runner.Caught;
+      ]
+  in
+  assert_eq "fainted sleeper chipped"
+    (Catch_runner.run s1 kyogre_policy)
+    (Catch_runner.Caught
+       { turns = 1; balls_thrown = 1; switches = 1; heals = 0 });
+  assert_eq "fainted sleeper chipped actions" (r1 ())
+    [ Send_in 3; Cmd (Throw_ball "Luxury Ball") ];
+  (* Sleeper (2) faints; foe awake & unchipped with require_status -> pauses cleanly. *)
+  let s2, r2 =
+    fake_game_steps
+      [
+        Catch_runner.Forced_switch { fainted_slot = 2 };
+        full_menu ~active_slot:3 ~active_hp:0.9 ~foe_hp:1.0 ~foe_status:Healthy;
+      ]
+  in
+  assert_eq "fainted sleeper unchipped"
+    (Catch_runner.run s2 kyogre_policy)
+    (Catch_runner.Paused
+       {
+         reason = "need status before false swipe";
+         summary = { turns = 0; balls_thrown = 0; switches = 1; heals = 0 };
+       });
+  assert_eq "fainted sleeper unchipped actions" (r2 ()) [ Send_in 3 ];
+  (* False Swiper (5) faints; foe unchipped & paralyzed -> skips chip, throws ball. *)
+  let s3, r3 =
+    fake_game_steps
+      [
+        Catch_runner.Forced_switch { fainted_slot = 5 };
+        full_menu ~active_slot:3 ~active_hp:0.9 ~foe_hp:1.0
+          ~foe_status:Paralyzed;
+        Catch_runner.Caught;
+      ]
+  in
+  assert_eq "fainted swiper"
+    (Catch_runner.run s3 kyogre_policy)
+    (Catch_runner.Caught
+       { turns = 1; balls_thrown = 1; switches = 1; heals = 0 });
+  assert_eq "fainted swiper actions" (r3 ())
+    [ Send_in 3; Cmd (Throw_ball "Luxury Ball") ];
+  (* Wall (3) faints; active False Swiper (5) low HP -> heals in place, then stays & throws. *)
+  let s4, r4 =
+    fake_game_steps
+      [
+        Catch_runner.Forced_switch { fainted_slot = 3 };
+        full_menu ~active_slot:5 ~active_hp:0.2 ~foe_hp:0.05 ~foe_status:Asleep;
+        full_menu ~active_slot:5 ~active_hp:0.9 ~foe_hp:0.05 ~foe_status:Asleep;
+        Catch_runner.Caught;
+      ]
+  in
+  assert_eq "fainted wall"
+    (Catch_runner.run s4 kyogre_policy)
+    (Catch_runner.Caught
+       { turns = 2; balls_thrown = 1; switches = 1; heals = 1 });
+  assert_eq "fainted wall actions" (r4 ())
+    [ Send_in 2; Cmd Heal_active; Cmd (Throw_ball "Luxury Ball") ]
+
+let test_terminal_no_balls_and_foe_ended () =
+  let blind =
+    menu ~active_slot:1 ~active_hp:None ~foe_hp:None ~foe_status:None ()
+  in
+  let s1, _ = fake_game_steps [ blind; Catch_runner.No_balls ] in
+  assert_eq "no balls outcome"
+    (Catch_runner.run s1 dex_policy)
+    (Catch_runner.No_balls
+       { turns = 1; balls_thrown = 1; switches = 0; heals = 0 });
+  let s2, _ = fake_game_steps [ blind; blind; Catch_runner.Foe_ended ] in
+  assert_eq "foe ended outcome"
+    (Catch_runner.run s2 dex_policy)
+    (Catch_runner.Foe_ended
+       { turns = 2; balls_thrown = 2; switches = 0; heals = 0 })
+
+let test_limits_and_unexpected () =
+  let m =
+    full_menu ~active_slot:6 ~active_hp:1.0 ~foe_hp:0.05 ~foe_status:Asleep
+  in
+  let ball_steps, ball_rec = fake_game_steps [ m; m; m; m ] in
   assert_eq "max_balls pause"
-    (Catch_runner.run steps groudon_policy)
+    (Catch_runner.run ball_steps groudon_policy)
     (Catch_runner.Paused
        {
          reason = "ball limit reached (3)";
          summary = { turns = 3; balls_thrown = 3; switches = 0; heals = 0 };
        });
-  (* Unexpected screen pauses immediately without throwing or fleeing. *)
-  let unexp_steps, unexp_recorded =
+  assert_eq "max_balls no extra action" (List.length (ball_rec ())) 3;
+  let turn_policy = { dex_policy with max_turns = 2; max_balls = 10 } in
+  let blind =
+    menu ~active_slot:1 ~active_hp:None ~foe_hp:None ~foe_status:None ()
+  in
+  let turn_steps, turn_rec = fake_game_steps [ blind; blind; blind ] in
+  assert_eq "max_turns pause"
+    (Catch_runner.run turn_steps turn_policy)
+    (Catch_runner.Paused
+       {
+         reason = "turn limit reached (2)";
+         summary = { turns = 2; balls_thrown = 2; switches = 0; heals = 0 };
+       });
+  assert_eq "max_turns no extra action" (List.length (turn_rec ())) 2;
+  let unexp_steps, unexp_rec =
     fake_game_steps [ Catch_runner.Unexpected "unknown dialog prompt" ]
   in
   assert_eq "unexpected pause"
@@ -203,8 +304,7 @@ let test_pauses_safely_on_limits_and_unexpected () =
          reason = "unknown dialog prompt";
          summary = Catch_runner.empty_summary;
        });
-  assert_eq "unexpected no commands" (unexp_recorded ()) [];
-  (* Exhausted send-in list pauses cleanly. *)
+  assert_eq "unexpected no commands" (unexp_rec ()) [];
   let faint_steps, _ =
     fake_game_steps
       [
@@ -219,25 +319,13 @@ let test_pauses_safely_on_limits_and_unexpected () =
        {
          reason = "no healthy send-in left";
          summary = { turns = 0; balls_thrown = 0; switches = 2; heals = 0 };
-       });
-  (* require_sleep without a sleeper pauses instead of risking False Swiper. *)
-  let no_sleeper = { kyogre_policy with sleeper = None } in
-  let state : Catch_state.t =
-    {
-      turn = 0;
-      active_slot = 5;
-      active_hp_ratio = 1.0;
-      foe_hp_ratio = 1.0;
-      foe_asleep = false;
-      balls_thrown = 0;
-    }
-  in
-  assert_eq "require_sleep without sleeper"
-    (Catch_policy.decide no_sleeper state)
-    (Catch_state.Pause_for_user "need sleep before false swipe")
+       })
 
 let () =
   test_kyogre_full_flow ();
   test_groudon_rest_and_forced_switch ();
-  test_pauses_safely_on_limits_and_unexpected ();
+  test_dex_throw_only ();
+  test_mid_battle_fainted_roles ();
+  test_terminal_no_balls_and_foe_ended ();
+  test_limits_and_unexpected ();
   print_endline "OK"

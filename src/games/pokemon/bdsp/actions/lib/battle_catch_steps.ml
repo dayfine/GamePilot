@@ -30,8 +30,8 @@ type config = {
 }
 
 type party_slots = {
-  sleeper : int;
-  sleeper_move : int;
+  status_setter : int;
+  status_move : int;
   false_swiper : int;
   false_swipe_move : int;
   wall : int;
@@ -43,7 +43,7 @@ type policy_defaults = {
   ball_name : string;
   max_balls : int;
   max_turns : int;
-  sleeper_floor : float;
+  status_floor : float;
   swiper_floor : float;
   wall_floor : float;
   foe_target : float;
@@ -57,7 +57,7 @@ let defaults : policy_defaults =
     ball_name = "Luxury Ball";
     max_balls = 60;
     max_turns = 80;
-    sleeper_floor = 0.35;
+    status_floor = 0.35;
     swiper_floor = 0.40;
     wall_floor = 0.45;
     foe_target = 0.15;
@@ -108,14 +108,20 @@ let ensure_probes cfg tr =
         : string list);
     tr.subscribed <- true)
 
+let read_foe_status m =
+  Option.map
+    (fun asleep -> if asleep then CS.Asleep else CS.Healthy)
+    (Hud.foe_asleep m)
+
 let read_action_state tr m : CS.t =
   {
     turn = tr.turns;
     active_slot = tr.active_slot;
-    active_hp_ratio = Option.value ~default:1.0 (Hud.player_hp_ratio m);
-    foe_hp_ratio = Option.value ~default:1.0 (Hud.foe_hp_ratio m);
-    foe_asleep = Hud.foe_asleep m;
+    active_hp_ratio = Hud.player_hp_ratio m;
+    foe_hp_ratio = Hud.foe_hp_ratio m;
+    foe_status = read_foe_status m;
     balls_thrown = tr.balls_thrown;
+    fainted = [];
   }
 
 let is_not_black m = if not (B.shown m) then Some () else None
@@ -234,18 +240,18 @@ let make ?(log = ignore) cfg : CR.game_steps =
 
 let build_policy ~ball_name ~max_balls ~max_turns ~foe_hp_rechip
     (slots : party_slots) : CS.policy =
-  let sleeper : CS.role_config =
+  let status_setter : CS.role_config =
     {
-      slot = slots.sleeper;
-      move_slot = slots.sleeper_move;
-      hp_floor = defaults.sleeper_floor;
+      slot = slots.status_setter;
+      move_slot = slots.status_move;
+      hp_floor = defaults.status_floor;
     }
   in
   let false_swiper : CS.false_swipe_config =
     {
       slot = slots.false_swiper;
       move_slot = slots.false_swipe_move;
-      require_sleep = true;
+      require_status = true;
       hp_floor = defaults.swiper_floor;
     }
   in
@@ -257,14 +263,14 @@ let build_policy ~ball_name ~max_balls ~max_turns ~foe_hp_rechip
     }
   in
   {
-    sleeper = Some sleeper;
+    status_setter = Some status_setter;
     false_swiper = Some false_swiper;
-    wall;
+    wall = Some wall;
     ball_name;
     max_balls;
     foe_hp_target = defaults.foe_target;
     foe_hp_rechip;
-    reapply_sleep = true;
+    reapply_status = true;
     max_turns;
     send_in_order = slots.send_in_order;
   }

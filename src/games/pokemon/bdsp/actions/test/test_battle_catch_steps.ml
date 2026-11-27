@@ -129,8 +129,8 @@ let test_cfg : Battle_catch_steps.config =
 
 let kyogre_slots : Battle_catch_steps.party_slots =
   {
-    sleeper = 2;
-    sleeper_move = 1;
+    status_setter = 2;
+    status_move = 1;
     false_swiper = 5;
     false_swipe_move = 2;
     wall = 3;

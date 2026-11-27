@@ -1,10 +1,17 @@
+type foe_status = Healthy | Asleep | Paralyzed | Other_status
+
+let is_statused = function
+  | Healthy -> false
+  | Asleep | Paralyzed | Other_status -> true
+
 type t = {
   turn : int;
   active_slot : int;
-  active_hp_ratio : float;
-  foe_hp_ratio : float;
-  foe_asleep : bool;
+  active_hp_ratio : float option;
+  foe_hp_ratio : float option;
+  foe_status : foe_status option;
   balls_thrown : int;
+  fainted : int list;
 }
 
 type role_config = { slot : int; move_slot : int; hp_floor : float }
@@ -12,21 +19,21 @@ type role_config = { slot : int; move_slot : int; hp_floor : float }
 type false_swipe_config = {
   slot : int;
   move_slot : int;
-  require_sleep : bool;
+  require_status : bool;
   hp_floor : float;
 }
 
 type wall_config = { slot : int; heal_move_slot : int option; hp_floor : float }
 
 type policy = {
-  sleeper : role_config option;
+  status_setter : role_config option;
   false_swiper : false_swipe_config option;
-  wall : wall_config;
+  wall : wall_config option;
   ball_name : string;
   max_balls : int;
   foe_hp_target : float;
   foe_hp_rechip : float;
-  reapply_sleep : bool;
+  reapply_status : bool;
   max_turns : int;
   send_in_order : int list;
 }

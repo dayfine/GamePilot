@@ -140,20 +140,22 @@ let read_hp_bar m bar =
 let foe_hp_ratio m = read_hp_bar m foe_bar
 let player_hp_ratio m = read_hp_bar m player_bar
 
-let matches_target m (t : color_target) =
+let matches_target_opt m (t : color_target) =
   match SC.stats m t.id with
-  | None -> false
+  | None -> None
   | Some s ->
       let avg_sum = SC.sum s.mean in
-      if avg_sum < t.min_rgb_sum || avg_sum > t.max_rgb_sum then false
+      if avg_sum < t.min_rgb_sum || avg_sum > t.max_rgb_sum then Some false
       else
         let dr = (s.mean.r /. avg_sum) -. t.r_share in
         let dg = (s.mean.g /. avg_sum) -. t.g_share in
         let db = (s.mean.b /. avg_sum) -. t.b_share in
-        sqrt ((dr *. dr) +. (dg *. dg) +. (db *. db)) <= t.max_dist
+        Some (sqrt ((dr *. dr) +. (dg *. dg) +. (db *. db)) <= t.max_dist)
 
-let foe_asleep m = matches_target m sleep_badge
-let forced_switch_shown m = matches_target m switch_header
+let foe_asleep m = matches_target_opt m sleep_badge
+
+let forced_switch_shown m =
+  Option.value ~default:false (matches_target_opt m switch_header)
 
 let classify_screen m =
   if Battle_detector.shown m then Action_menu

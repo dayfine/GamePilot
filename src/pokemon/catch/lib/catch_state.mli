@@ -1,18 +1,36 @@
 (** Game-agnostic state, policy, and command types for automated Pokémon
-    legendary catching.
+    catching.
 
     The command type intentionally omits a [Run] constructor so a catch policy
     can never flee from a target encounter. *)
 
+(** Observed major status condition on the wild foe. *)
+type foe_status =
+  | Healthy  (** No major status condition is visible on the foe HUD. *)
+  | Asleep  (** Wild foe is currently asleep. *)
+  | Paralyzed  (** Wild foe is currently paralyzed. *)
+  | Other_status
+      (** Wild foe has another major status (Burn, Poison, Freeze). *)
+
+val is_statused : foe_status -> bool
+(** [true] when the wild foe has any non-{!Healthy} major status condition. *)
+
 type t = {
   turn : int;  (** Number of action menus answered so far in this battle. *)
   active_slot : int;  (** 1-based party slot currently on the field. *)
-  active_hp_ratio : float;
-      (** Active party member's remaining HP fraction in [0.0 .. 1.0]. *)
-  foe_hp_ratio : float;
-      (** Wild foe's remaining HP fraction in [0.0 .. 1.0]. *)
-  foe_asleep : bool;  (** [true] when the wild foe currently has Sleep. *)
+  active_hp_ratio : float option;
+      (** Active party member's remaining HP fraction in [0.0 .. 1.0], or [None]
+          when the HUD reader does not supply it (skips the survival check). *)
+  foe_hp_ratio : float option;
+      (** Wild foe's remaining HP fraction in [0.0 .. 1.0], or [None] when the
+          HUD reader does not supply it (skips chipping). *)
+  foe_status : foe_status option;
+      (** Observed status of the wild foe, or [None] when the HUD reader does
+          not supply it (skips status checks). *)
   balls_thrown : int;  (** Number of Poké Balls thrown so far in this battle. *)
+  fainted : int list;
+      (** 1-based party slots known to have fainted in this battle; the policy
+          never switches to a slot listed here. *)
 }
 (** Observed battle state at an action menu. *)
 
@@ -20,17 +38,19 @@ type role_config = {
   slot : int;  (** 1-based party slot fulfilling this role. *)
   move_slot : int;  (** 1-based move slot to use for this role. *)
   hp_floor : float;
-      (** Minimum HP ratio before switching to the wall for survival. *)
+      (** Minimum HP ratio before switching to the wall (or healing) for
+          survival. *)
 }
-(** Configuration for a single-move support role such as a sleeper. *)
+(** Configuration for a single-move support role such as a status setter. *)
 
 type false_swipe_config = {
   slot : int;  (** 1-based party slot of the False Swipe user. *)
   move_slot : int;  (** 1-based move slot of False Swipe. *)
-  require_sleep : bool;
-      (** When [true], put the foe to sleep before sending in the False Swiper
-          and switch to the wall before throwing balls. *)
-  hp_floor : float;  (** Minimum HP ratio before retreating to the wall. *)
+  require_status : bool;
+      (** When [true], apply a status condition before sending in the False
+          Swiper and switch to a healthy wall before throwing balls. *)
+  hp_floor : float;
+      (** Minimum HP ratio before retreating to the wall (or healing). *)
 }
 (** Configuration for the HP-chipping False Swipe role. *)
 
@@ -45,12 +65,15 @@ type wall_config = {
 *)
 
 type policy = {
-  sleeper : role_config option;
-      (** Optional party member that applies Sleep. *)
+  status_setter : role_config option;
+      (** Optional party member that applies a status condition (e.g. Sleep
+          Powder or Thunder Wave). *)
   false_swiper : false_swipe_config option;
       (** Optional party member that chips the foe's HP with False Swipe. *)
-  wall : wall_config;
-      (** Defensive party member that absorbs damage during ball throws. *)
+  wall : wall_config option;
+      (** Optional defensive party member that absorbs damage during ball
+          throws. When [None], survival heals the active member in place and
+          ball throws happen directly. *)
   ball_name : string;  (** Name of the Poké Ball to throw. *)
   max_balls : int;  (** Pause for user once this many balls have been thrown. *)
   foe_hp_target : float;
@@ -58,8 +81,9 @@ type policy = {
   foe_hp_rechip : float;
       (** Higher foe HP ratio threshold used after balls have been thrown, to
           re-chip foes that heal (e.g. Aqua Ring or Rest). *)
-  reapply_sleep : bool;
-      (** When [true], re-apply Sleep whenever the foe wakes up. *)
+  reapply_status : bool;
+      (** When [true], re-apply status whenever the foe is observed {!Healthy}.
+      *)
   max_turns : int;
       (** Pause for user once this many turns have elapsed, preventing Struggle
           or unbounded loops. *)

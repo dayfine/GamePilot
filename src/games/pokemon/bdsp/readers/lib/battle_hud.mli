@@ -35,8 +35,10 @@ val player_hp_ratio : Effects.measurements -> float option
 (** Estimated active player HP ratio in [0.0 .. 1.0] from the 10-segment player
     HP bar, or [None] when the HP bar probes are absent from the frame. *)
 
-val foe_asleep : Effects.measurements -> bool
-(** [true] when the foe's Sleep status pill color is present on the foe HUD. *)
+val foe_asleep : Effects.measurements -> bool option
+(** [Some true] when the foe's Sleep status pill color is present on the foe
+    HUD, [Some false] when the probe is present and does not match Sleep, or
+    [None] when the probe is absent from the frame. *)
 
 val forced_switch_shown : Effects.measurements -> bool
 (** [true] when the forced-switch party screen's cyan-teal header bar is
