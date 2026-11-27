@@ -18,11 +18,13 @@ type run_entry = {
 
 type t = {
   config_path : string;
+  listen : string option;
   mutable next_id : int;
   mutable runs : run_entry list;
 }
 
-let create ~config_path = { config_path; next_id = 0; runs = [] }
+let create ~config_path ?listen () =
+  { config_path; listen; next_id = 0; runs = [] }
 let config_path st = st.config_path
 
 let append_log entry line =
@@ -179,7 +181,8 @@ let spawn st (req : Ui_api.launch_request) =
   let* () = check_console_free st console in
   let gp = Sys.executable_name in
   let* argv =
-    map_err http_bad_request (Ui_api.build_run_argv ~gamepilot:gp ~console req)
+    map_err http_bad_request
+      (Ui_api.build_run_argv ~gamepilot:gp ?listen:st.listen ~console req)
   in
   launch_process st req gp argv
 
