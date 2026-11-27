@@ -163,6 +163,53 @@ retries 0
 postconditions:
 none
 no repeat
+== dex_collection/plans/07-shiny-psyduck.plan.json
+frlg 07-shiny-psyduck from anywhere outdoors: 6 game_action, 4 route, 1 heal
+psyduck.fly: [fly] game_action {"town":"ViridianCity"} => ViridianCity (26, 27) south
+psyduck.to_shore: [run] route to ViridianCity (17, 27) west
+psyduck.surf: [surf] game_action {}
+psyduck.save_before: [save_game] game_action {}
+psyduck.catch: [wild_rng] game_action {"method":"surf","species":"psyduck","location":"viridian_city"}
+psyduck.save_catch: [save_game] game_action {}
+psyduck.to_pc: [run] route to ViridianCity_PokemonCenter_1F (11, 2) north
+psyduck.deposit: [pc_deposit] game_action {"species":["psyduck"]}
+psyduck.to_nurse: [run] route to ViridianCity_PokemonCenter_1F (7, 4) north
+psyduck.heal: heal
+psyduck.outside: [run] route to ViridianCity (26, 27) south
+retries 0
+postconditions:
+none
+no repeat
+== dex_collection/plans/08-shiny-shellder.plan.json
+frlg 08-shiny-shellder from anywhere outdoors: 5 game_action, 4 route, 1 heal
+shellder.fly: [fly] game_action {"town":"VermilionCity"} => VermilionCity (15, 7) south
+shellder.to_shore: [run] route to VermilionCity (15, 11) south
+shellder.save_before: [save_game] game_action {}
+shellder.catch: [wild_rng] game_action {"method":"super_rod","species":"shellder","location":"vermilion_city"}
+shellder.save_catch: [save_game] game_action {}
+shellder.to_pc: [run] route to VermilionCity_PokemonCenter_1F (11, 2) north
+shellder.deposit: [pc_deposit] game_action {"species":["shellder"]}
+shellder.to_nurse: [run] route to VermilionCity_PokemonCenter_1F (7, 4) north
+shellder.heal: heal
+shellder.outside: [run] route to VermilionCity (15, 7) south
+retries 0
+postconditions:
+none
+no repeat
+== dex_collection/plans/09-shiny-scyther.plan.json
+frlg 09-shiny-scyther from anywhere outdoors: 5 game_action, 3 route
+scyther.fly: [fly] game_action {"town":"CeladonCity"} => CeladonCity (48, 12) south
+scyther.to_counter: [run] route to CeladonCity_GameCorner_PrizeRoom (4, 4) north
+scyther.save_before: [save_game] game_action {}
+scyther.claim: [gift_rng] game_action {"species":"scyther","prize_row":"3"}
+scyther.save_claim: [save_game] game_action {}
+scyther.to_pc: [run] route to CeladonCity_PokemonCenter_1F (11, 2) north
+scyther.deposit: [pc_deposit] game_action {"species":["scyther"]}
+scyther.outside: [run] route to CeladonCity (48, 12) south
+retries 0
+postconditions:
+none
+no repeat
 == mail_glitch/plans/01-celadon-setup.plan.json
 frlg 01-celadon-setup from anywhere outdoors: 6 game_action, 7 route, 1 talk, 1 scene
 fly_celadon: [fly] game_action {"town":"CeladonCity"} => CeladonCity (48, 12) south

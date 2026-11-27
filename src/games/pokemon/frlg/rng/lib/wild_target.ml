@@ -30,12 +30,12 @@ let sooner a b =
   | Some x, Some y -> if total_ms y < total_ms x then b else a
 
 (* The soonest hit of one seed: the first wanted advance whose timings pass. *)
-let first_hit model calibrations slots ~species ~tid_xor_sid ~max_advance
-    ~table_delay_ms ~seed ~min_advance =
+let first_hit model calibrations ~super_rod slots ~species ~tid_xor_sid
+    ~max_advance ~table_delay_ms ~seed ~min_advance =
   let rec walk (state : Rng_state.t) =
     if state.advance > max_advance then None
     else
-      let e = Wild_encounter.pokemon_of_state state slots ~super_rod:false in
+      let e = Wild_encounter.pokemon_of_state state slots ~super_rod in
       let hit =
         if wanted ~species ~tid_xor_sid e then
           timed model calibrations ~table_delay_ms ~seed state e
@@ -45,11 +45,11 @@ let first_hit model calibrations slots ~species ~tid_xor_sid ~max_advance
   in
   walk (Rng_state.of_seed ~seed ~advance:min_advance Method1)
 
-let find ?(calibrations = Rng_timings.no_calibrations) model ~delays ~seeds
-    slots ~species ~tid_xor_sid ~min_advance ~max_advance =
+let find ?(calibrations = Rng_timings.no_calibrations) ?(super_rod = false)
+    model ~delays ~seeds slots ~species ~tid_xor_sid ~min_advance ~max_advance =
   let row i =
-    first_hit model calibrations slots ~species ~tid_xor_sid ~max_advance
-      ~table_delay_ms:delays.(i) ~seed:seeds.(i) ~min_advance
+    first_hit model calibrations ~super_rod slots ~species ~tid_xor_sid
+      ~max_advance ~table_delay_ms:delays.(i) ~seed:seeds.(i) ~min_advance
   in
   let rows = min (Array.length delays) (Array.length seeds) in
   List.fold_left

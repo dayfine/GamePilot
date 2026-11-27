@@ -608,6 +608,66 @@ let deposit_cases =
       "";
   ]
 
+let test_rng_party_room_and_needs () =
+  let decode source json =
+    Result.get_ok (Plan_file.decode ~source (Yojson.Safe.from_string json))
+  in
+  let check name cond =
+    if not cond then (
+      Printf.eprintf "FAIL %s\n%!" name;
+      exit 1)
+  in
+  let wild_plan =
+    decode "wild"
+      {|{"format": "gamepilot-checkpoint/1", "game": "frlg",
+         "checkpoint": {"id": "wild", "title": "Wild RNG catch",
+           "events": [
+             {"id": "c", "kind": "game_action", "action": "wild_rng",
+              "args": {"method": "surf", "species": "psyduck",
+                       "location": "viridian_city"}},
+             {"id": "d", "kind": "game_action", "action": "pc_deposit",
+              "args": {"species": ["psyduck"]}}]},
+         "execution": {"menu": "full"}}|}
+  in
+  let gift_plan =
+    decode "gift"
+      {|{"format": "gamepilot-checkpoint/1", "game": "frlg",
+         "checkpoint": {"id": "gift", "title": "Gift RNG prize",
+           "events": [
+             {"id": "g", "kind": "game_action", "action": "gift_rng",
+              "args": {"species": "scyther", "prize_row": "3"}},
+             {"id": "d", "kind": "game_action", "action": "pc_deposit",
+              "args": {"species": ["scyther"]}}]},
+         "execution": {"menu": "full"}}|}
+  in
+  let wild_room = chain_need [ wild_plan ] in
+  check "wild_rng needs 1 free slot" (Party_room.free_needed wild_room = 1);
+  check "wild_rng precondition is 1 free slot"
+    (Party_room.precondition wild_room = { Room_policy.free_slots = 1 });
+  check "wild_rng joins psyduck" (wild_room.joins = [ ("psyduck", "wild") ]);
+  check "wild_rng does not require caught species in start party"
+    (wild_room.used = []);
+  let wild_needs =
+    Result.get_ok (Plan_needs.needs stocks ~before:None wild_plan)
+  in
+  check "wild_rng Plan_needs requires ball and no start member"
+    (wild_needs
+    = [
+        Need.Item_at_least { item = "poke-ball"; count = 1; for_ = "wild_rng" };
+      ]);
+  let gift_room = chain_need [ gift_plan ] in
+  check "gift_rng needs 1 free slot" (Party_room.free_needed gift_room = 1);
+  check "gift_rng precondition is 1 free slot"
+    (Party_room.precondition gift_room = { Room_policy.free_slots = 1 });
+  check "gift_rng joins scyther" (gift_room.joins = [ ("scyther", "gift") ]);
+  check "gift_rng does not require prize species in start party"
+    (gift_room.used = []);
+  let gift_needs =
+    Result.get_ok (Plan_needs.needs stocks ~before:None gift_plan)
+  in
+  check "gift_rng Plan_needs requires no start member" (gift_needs = [])
+
 let () =
+  test_rng_party_room_and_needs ();
   Table_test.run "console start"
     (start_cases @ preflight_cases @ deposit_cases @ room_cases @ room_row_cases)

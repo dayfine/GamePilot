@@ -272,11 +272,35 @@
       "stand": [7, 4],
       "facing": "north"
     },
+    "vermilion_shore": {
+      "map": "VermilionCity",
+      "object": {"not_in_maps": "the north shore of Vermilion City harbor (x 15, y 11), facing south into water for Super Rod fishing"},
+      "stand": [15, 11],
+      "facing": "south"
+    },
+    "viridian_center_outside": {
+      "map": "ViridianCity",
+      "object": {"warp": "warp_0", "to_map": "ViridianCity_PokemonCenter_1F"},
+      "stand": [26, 27],
+      "facing": "south"
+    },
+    "viridian_center_pc": {
+      "map": "ViridianCity_PokemonCenter_1F",
+      "object": {"not_in_maps": "the Pokemon Center's PC, at the counter's east end"},
+      "stand": [11, 2],
+      "facing": "north"
+    },
     "viridian_nurse": {
       "map": "ViridianCity_PokemonCenter_1F",
       "object": {"npc": "ViridianCity_PokemonCenter_1F_EventScript_Nurse"},
       "stand": [7, 4],
       "facing": "north"
+    },
+    "viridian_pond_shore": {
+      "map": "ViridianCity",
+      "object": {"not_in_maps": "the east shore of Viridian City's pond (x 17, y 27), facing west into water to surf for Psyduck"},
+      "stand": [17, 27],
+      "facing": "west"
     }
   },
   "towns": {
@@ -291,6 +315,6 @@
     "route4": {"nurse": "route4_nurse", "fly": "Route4", "pc": "route4_center_pc", "outside": "route4_center_outside"},
     "saffron": {"nurse": "saffron_nurse", "fly": "SaffronCity", "pc": "saffron_center_pc", "outside": "saffron_center_outside"},
     "vermilion": {"nurse": "vermilion_nurse", "fly": "VermilionCity", "pc": "vermilion_center_pc", "outside": "vermilion_center_outside"},
-    "viridian": {"nurse": "viridian_nurse", "fly": "ViridianCity"}
+    "viridian": {"nurse": "viridian_nurse", "fly": "ViridianCity", "pc": "viridian_center_pc", "outside": "viridian_center_outside"}
   }
 }

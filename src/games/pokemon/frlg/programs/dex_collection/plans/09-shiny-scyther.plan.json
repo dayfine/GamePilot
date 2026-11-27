@@ -1,0 +1,17 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "checkpoint": {
+    "id": "09-shiny-scyther",
+    "title": "From anywhere outdoors: shiny Scyther prize at Celadon Game Corner, deposited",
+    "start": {"anywhere": "outdoors"},
+    "events": [
+      {
+        "id": "scyther",
+        "fragment": "gift_rng_prize",
+        "args": {"town": "celadon", "counter": "celadon_prize_room_mon_clerk", "species": "scyther", "prize_row": "3"}
+      }
+    ]
+  },
+  "execution": {"menu": "full"}
+}

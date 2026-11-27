@@ -26,6 +26,9 @@ type options = {
   program_options : Run_options.t;
       (** The program's options (gamepilot run --options), for its game actions
           ({!Frlg_actions.Checkpoint_game.config}). *)
+  default_frame_model : string;
+      (** Default RNG frame model (["mgba"] or ["switch"]) when a plan omits
+          ["frame_model"]. *)
   log : string -> unit;
 }
 

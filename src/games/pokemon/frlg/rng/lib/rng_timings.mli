@@ -47,6 +47,10 @@ val continue_screen_frames : int
 val sweet_scent_fixed_duration_ms : int
 (** 7400: the Sweet Scent presses' own share of the in-game wait, in ms. *)
 
+val gift_fixed_duration_ms : int
+(** 5000: the Game Corner prize-claim presses' own share of the in-game wait, in
+    ms. *)
+
 type calibrations = {
   seed_offset : int;
       (** Frames added to the title screen's wait, to hit the target seed. *)
@@ -87,3 +91,14 @@ val sweet_scent :
     delay, [advances] the target's (the continue screen's 200 included). Error
     when a wait comes out negative or under the C++'s minimums (continue screen
     3200 ms, title screen 29650 ms, room for the Sweet Scent presses). *)
+
+val gift :
+  frame_model ->
+  seed_delay_ms:int ->
+  advances:int ->
+  use_teachy_tv:bool ->
+  calibrations ->
+  (t, string) result
+(** The waits for a Method 1 gift target (such as a Celadon Game Corner prize):
+    same title-screen and continue-screen timing as {!sweet_scent}, without the
+    Sweet Scent advance offset and checked against {!gift_fixed_duration_ms}. *)
