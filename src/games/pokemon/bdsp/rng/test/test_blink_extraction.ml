@@ -141,7 +141,12 @@ let npc_result_text (r : State_solver.blink_solve_result) =
     r.failure_reason
 
 let sample_text (s : State_solver.blink_sample) =
-  let kind = Option.fold ~none:'?' ~some:type_char s.blink_type in
+  let kind =
+    match s.observation with
+    | State_solver.Blinked (Some t) -> type_char t
+    | State_solver.Blinked None -> '?'
+    | State_solver.No_blink | State_solver.Unknown -> '-'
+  in
   Printf.sprintf " %d%c" s.advance kind
 
 let build inputs =
@@ -150,7 +155,12 @@ let build inputs =
   | Error reason -> "fail reason=" ^ reason
   | Ok samples ->
       Printf.sprintf "ok %d%s\n  solve %s" (List.length samples)
-        (List.filter (fun (s : State_solver.blink_sample) -> s.blinked) samples
+        (List.filter
+           (fun (s : State_solver.blink_sample) ->
+             match s.observation with
+             | State_solver.Blinked _ -> true
+             | State_solver.No_blink | State_solver.Unknown -> false)
+           samples
         |> List.map sample_text |> String.concat "")
         (npc_result_text
            (Result.get_ok (State_solver.solve_state_from_samples samples)))

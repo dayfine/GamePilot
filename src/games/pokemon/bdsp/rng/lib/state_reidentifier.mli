@@ -42,3 +42,8 @@ val reidentify_advances : request -> result
     types: the run of blinks on one NPC's rolls starting there must have the
     observed types; refused up front when fewer types than the range needs (one
     bit per blink). Succeeds only on exactly one match. *)
+
+val reidentify_with_pokemon_models :
+  Mixed_reidentifier.request -> Mixed_reidentifier.result
+(** [1PK] re-identification with one player and one 3D Pokemon model; delegates
+    to {!Mixed_reidentifier.reidentify}. *)

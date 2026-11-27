@@ -28,6 +28,23 @@ type tick_fit = {
 (** [TickFit]: the period whose tick grid the event gaps fit best, with the RMS
     and worst distance to a whole tick. *)
 
+type frame_gap = {
+  start_seconds : float;  (** Timestamp of the last frame before the gap. *)
+  stop_seconds : float;  (** Timestamp of the first frame after the gap. *)
+}
+(** A capture gap between two consecutive frame samples that exceeded the
+    maximum safe spacing (in seconds from the stream origin). *)
+
+val default_max_gap_seconds : float
+(** 0.065: default maximum spacing between adjacent samples (~2 frames at 30 fps
+    or ~4 frames at 60 fps) before a capture gap is flagged. *)
+
+val find_frame_gaps :
+  ?origin:float -> ?max_gap_seconds:float -> match_sample list -> frame_gap list
+(** Every adjacent pair of samples separated by more than [max_gap_seconds]
+    (default {!default_max_gap_seconds}), expressed as seconds from [origin]
+    (default the first sample's timestamp). *)
+
 val auto_blink_threshold : match_sample list -> float option
 (** How far the match has to fall below its resting level (the median) to count
     as a blink: the middle, on a log scale, of the widest band of 40 thresholds

@@ -27,6 +27,20 @@ type gender = Male | Female | Genderless  (** A generated Pokemon's gender. *)
 val gender_name : gender -> string
 (** ["Male"], ["Female"] or ["Genderless"]. *)
 
+type 'a per_stat = {
+  hp : 'a;  (** Hit Points. *)
+  attack : 'a;  (** Attack. *)
+  defense : 'a;  (** Defense. *)
+  spatk : 'a;  (** Special Attack. *)
+  spdef : 'a;  (** Special Defense. *)
+  speed : 'a;  (** Speed. *)
+}
+(** Six values in the game's stat order: HP, Attack, Defense, Sp. Atk, Sp. Def,
+    Speed. *)
+
+type base_stats = int per_stat
+(** A species' six base stats, in the game's stat order. *)
+
 type ivs = {
   hp : int;
   attack : int;
