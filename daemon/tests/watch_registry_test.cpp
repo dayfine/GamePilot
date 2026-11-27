@@ -220,7 +220,22 @@ void check_hub_pass_through() {
     return hub_request(hub, run, "GET " + path + " HTTP/1.1\r\n\r\n", want);
   };
   check_assets(get, base, watch_page());
-  check_assets(get, "/", hub_page());
+  const std::string root_default =
+      hub_request(hub, run, "GET / HTTP/1.1\r\n\r\n", "\r\n\r\n");
+  CHECK(root_default.starts_with("HTTP/1.1 302 Found"));
+  CHECK(root_default.find("Location: http://127.0.0.1:47902/\r\n") !=
+        std::string::npos);
+  const std::string root_host = hub_request(
+      hub, run, "GET / HTTP/1.1\r\nHost: Mac-mini.local:47901\r\n\r\n",
+      "\r\n\r\n");
+  CHECK(root_host.starts_with("HTTP/1.1 302 Found"));
+  CHECK(root_host.find("Location: http://Mac-mini.local:47902/\r\n") !=
+        std::string::npos);
+  const std::string root_bare_host = hub_request(
+      hub, run, "GET / HTTP/1.1\r\nHost: 192.168.1.10\r\n\r\n", "\r\n\r\n");
+  CHECK(root_bare_host.starts_with("HTTP/1.1 302 Found"));
+  CHECK(root_bare_host.find("Location: http://192.168.1.10:47902/\r\n") !=
+        std::string::npos);
   CHECK(hub_request(hub, run,
                     "POST " + base + "stop?token=t0 HTTP/1.1\r\n\r\n", "}")
             .ends_with("{\"stopped\":true}"));

@@ -2,7 +2,9 @@
    Local HTTP control hub (docs/design/Release-and-Onboarding.md): binds a
    localhost TCP socket and dispatches HTTP requests to Ui_hub.Http_router. *)
 
-let usage = "  gamepilot ui [--port N] [--listen ADDR] [--config FILE]\n"
+let usage =
+  "  gamepilot ui [--port N] [--listen ADDR] [--config FILE] [--runs-dir DIR]\n"
+
 let default_port = 47902
 let default_listen = "127.0.0.1"
 let read_buf_size = 8192
@@ -11,7 +13,12 @@ let client_read_timeout_s = 1.0
 let backlog = 16
 let http_bad_request = 400
 
-type flags = { port : int; listen : string; config : string option }
+type flags = {
+  port : int;
+  listen : string;
+  config : string option;
+  runs_dir : string option;
+}
 
 let rec parse f = function
   | [] -> Ok f
@@ -21,6 +28,7 @@ let rec parse f = function
       | _ -> Error ("ui: bad --port " ^ p))
   | "--listen" :: addr :: rest -> parse { f with listen = addr } rest
   | "--config" :: p :: rest -> parse { f with config = Some p } rest
+  | "--runs-dir" :: d :: rest -> parse { f with runs_dir = Some d } rest
   | a :: _ -> Error ("ui: unknown argument " ^ a)
 
 let write_all fd text =
@@ -79,7 +87,10 @@ let serve (f : flags) =
   let config_path =
     Option.value f.config ~default:(Console_config.default_path ())
   in
-  let st = Ui_hub.Run_manager.create ~config_path ~listen:f.listen () in
+  let st =
+    Ui_hub.Run_manager.create ~config_path ?runs_dir:f.runs_dir ~listen:f.listen
+      ()
+  in
   let sock = Unix.socket Unix.PF_INET Unix.SOCK_STREAM 0 in
   Unix.setsockopt sock Unix.SO_REUSEADDR true;
   let addr = Unix.inet_addr_of_string f.listen in
@@ -102,6 +113,11 @@ let serve (f : flags) =
 
 let main args =
   let defaults =
-    { port = default_port; listen = default_listen; config = None }
+    {
+      port = default_port;
+      listen = default_listen;
+      config = None;
+      runs_dir = None;
+    }
   in
   Result.map serve (parse defaults args)

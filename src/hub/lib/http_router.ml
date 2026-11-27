@@ -53,6 +53,11 @@ let handle_stop st path =
       | Ok j -> json_resp http_ok j
       | Error (code, msg) -> err_resp code msg)
 
+let handle_get_history st =
+  let runs_dir = Run_manager.runs_dir st in
+  let entries = Run_history.load ~runs_dir () in
+  json_resp http_ok (Run_history.to_json ~runs_dir entries)
+
 let serve_asset ctype load =
   match load () with
   | Ok body -> (http_ok, ctype, body)
@@ -72,6 +77,7 @@ let route st meth path body =
   | "GET", "/api/consoles" -> handle_get_consoles st
   | "POST", "/api/consoles" -> handle_post_console st body
   | "GET", "/api/runs" -> json_resp http_ok (Run_manager.all_runs_json st)
+  | "GET", "/api/history" -> handle_get_history st
   | "POST", "/api/runs" -> handle_post_run st body
   | "POST", p -> handle_stop st p
   | _ -> err_resp http_not_found ("not found: " ^ meth ^ " " ^ path)

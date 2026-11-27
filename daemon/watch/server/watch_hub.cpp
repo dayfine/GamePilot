@@ -110,6 +110,28 @@ const RegistryEntry* newest(const std::vector<RegistryEntry>& entries,
   return best;
 }
 
+// Control Hub port that `GET /` redirects to.
+constexpr std::uint16_t kControlHubPort = 47902;
+
+std::string control_hub_url(const HttpRequest& request) {
+  std::string host = header_value(request.headers, "Host");
+  if (!host.empty() && host.front() == '[') {
+    const std::size_t close = host.find(']');
+    if (close != std::string::npos) {
+      host.resize(close + 1);
+    }
+  } else {
+    const std::size_t colon = host.find(':');
+    if (colon != std::string::npos) {
+      host.resize(colon);
+    }
+  }
+  if (host.empty()) {
+    host = "127.0.0.1";
+  }
+  return "http://" + host + ":" + std::to_string(kControlHubPort) + "/";
+}
+
 std::string redirect(std::string_view location) {
   return http_response(302, "text/plain", "",
                        "Location: " + std::string(location) + "\r\n");
@@ -321,7 +343,7 @@ void WatchHub::respond(Connection& connection, const HttpRequest& request) {
   } else if (!get) {
     response = http_response(405, "text/plain", "method not allowed\n");
   } else if (path == "/") {
-    response = http_response(200, "text/html; charset=utf-8", hub_page());
+    response = redirect(control_hub_url(request));
   } else if (const auto asset = watch_asset(path.substr(1))) {
     response = http_response(200, asset->type, asset->bytes, kNoCache);
   } else if (path == "/runs.json") {

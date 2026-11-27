@@ -4,11 +4,8 @@
 // is the daemon started with `--hub`, no backend, serving only HTTP with the
 // same pieces as the watch page (http.h, net.h):
 //
-//   GET /              the page (watch/page/hub.html, compiled in): the live
-//                      runs, each with its checkpoint, mode and trial (from the
-//                      run's /summary.json), elapsed time and state; then
-//                      every run in the runs folder, with filters kept in the
-//                      URL's query (Watch-Page.md, Runs list)
+//   GET /              redirects (302) to the Control Hub on port 47902
+//                      (http://<host>:47902/)
 //   GET /NAME, /runs/RUN/NAME, /series/ID/NAME
 //                      the pages' scripts and styles (watch_assets.h), from
 //                      the hub's build like the pages
@@ -150,8 +147,6 @@ class WatchHub {
   std::map<std::string, std::pair<std::uintmax_t, std::string>> timelines_;
 };
 
-// The page, compiled in from watch/page/hub.html (hub_page.cpp is generated).
-std::string_view hub_page();
 // A finished run's page, from watch/page/run.html (run_page.cpp is generated).
 std::string_view run_page();
 
