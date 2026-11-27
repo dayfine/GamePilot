@@ -7,6 +7,7 @@ let default_port = 47902
 let default_listen = "127.0.0.1"
 let read_buf_size = 8192
 let poll_timeout_s = 0.25
+let client_read_timeout_s = 1.0
 let backlog = 16
 let http_bad_request = 400
 
@@ -53,9 +54,11 @@ let dispatch_raw st raw =
     ctype (String.length body) body
 
 let handle_client st client =
-  let buf = Bytes.create read_buf_size in
-  let n = Unix.read client buf 0 read_buf_size in
-  if n > 0 then write_all client (dispatch_raw st (Bytes.sub_string buf 0 n));
+  let ready, _, _ = Unix.select [ client ] [] [] client_read_timeout_s in
+  (if ready <> [] then
+     let buf = Bytes.create read_buf_size in
+     let n = Unix.read client buf 0 read_buf_size in
+     if n > 0 then write_all client (dispatch_raw st (Bytes.sub_string buf 0 n)));
   Unix.close client
 
 let serve (f : flags) =
