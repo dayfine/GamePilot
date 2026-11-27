@@ -76,6 +76,7 @@ void check_names_and_files() {
       {"story.log", true, true},
       {"failure.png", true, true},
       {"watch_plan.json", true, true},
+      {"watch_counters.json", true, true},
       {"frames/index.jsonl", false, true},
       {"frames/000012.jpg", false, true},
       {"frames/../wire.jsonl", false, false},

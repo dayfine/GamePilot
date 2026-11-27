@@ -73,6 +73,7 @@ type _ Effect.t +=
   | Show_plan : Wire.Watch.plan -> unit Effect.t
   | Show_log : string -> unit Effect.t
   | Show_run : Wire.Watch_run.t -> unit Effect.t
+  | Show_counters : Wire.Watch.counter list -> unit Effect.t
 
 (** {1 Ops} *)
 
@@ -203,6 +204,9 @@ val show_log : string -> unit
 
 val show_run : Wire.Watch_run.t -> unit
 (** The chain of checkpoints and the current one's trials. *)
+
+val show_counters : Wire.Watch.counter list -> unit
+(** Live key-value counters shown in the watch page's Counters card. *)
 
 (** {1 Helpers for readers} *)
 

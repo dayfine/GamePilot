@@ -260,6 +260,8 @@ void check_server() {
   server.set_run("{\"r\":2}");
   server.set_plan("{\"p\":1}");
   server.set_plan("{\"p\":2}");
+  server.set_counters("{\"items\":[{\"label\":\"Digs\",\"value\":\"1\"}]}");
+  server.set_counters("{\"items\":[{\"label\":\"Digs\",\"value\":\"2\"}]}");
   server.add_log("{\"line\":\"one\"}");
   server.broadcast("status", "{\"s\":0}");  // not kept
   Socket viewer = connect_local(server.port());
@@ -271,6 +273,8 @@ void check_server() {
   CHECK(snapshot.find("event: run\ndata: {\"r\":2}") != std::string::npos);
   CHECK(snapshot.find("{\"p\":1}") == std::string::npos);
   CHECK(snapshot.find("event: plan\ndata: {\"p\":2}") != std::string::npos);
+  CHECK(snapshot.find("\"value\":\"1\"") == std::string::npos);
+  CHECK(snapshot.find("event: counters\ndata: {\"items\":[{\"label\":\"Digs\",\"value\":\"2\"}]}") != std::string::npos);
   CHECK(snapshot.find("\"s\":0") == std::string::npos);
   CHECK(server.has_viewers());
   CHECK(server.take_joined());

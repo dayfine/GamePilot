@@ -166,6 +166,7 @@ type notification = Jsonrpc.notification =
   | Watch_plan of Watch.plan
   | Watch_log of string
   | Watch_run of Watch_run.t
+  | Watch_counters of Watch.counter list
   | Stop of string
   | Keepawake of { key : string; idle_ms : int }
 
