@@ -2,11 +2,14 @@ module J = Json_field
 module R = Frlg_rng
 module CS = Pokemon_catch.Catch_state
 
+type encounter_method = Grass | Surf | Super_rod
+
 type catch_mode =
   | Throw_only
   | Catch_policy of { policy : CS.policy; config : Battle_catch_steps.config }
 
 type t = {
+  encounter_method : encounter_method;
   species : string;
   location : string;
   tid : int;
@@ -25,36 +28,33 @@ type t = {
 
 type trainer_ids = { tid : int option; sid : int option }
 
-type limits = {
-  max_id : int;
-  seed_mask : int;
-  default_min_advance : int;
-  default_max_advance : int;
-  default_attempts : int;
-  max_attempts : int;
-  max_ingame_offset : int;
-  throw_only_max_turns : int;
-}
-
-let limits =
-  {
-    max_id = 0xffff;
-    seed_mask = 0xffff;
-    default_min_advance = 900;
-    default_max_advance = 4000;
-    default_attempts = 1;
-    max_attempts = 99;
-    max_ingame_offset = 99;
-    throw_only_max_turns = 80;
-  }
-
+let max_id = 0xffff
+let seed_mask = 0xffff
+let default_min_advance = 900
+let default_max_advance = 4000
+let default_attempts = 1
+let max_attempts = 99
+let max_ingame_offset = 99
+let throw_only_max_turns = 80
 let no_trainer_ids = { tid = None; sid = None }
 let assets = "src/games/pokemon/frlg/assets/"
 let encounter_slots = assets ^ "encounter_slots_firered.json"
+let default_seeds = "rng_seeds_mgba_sevii_save.json"
+let default_frame_model = "mgba"
 let column = "Mono / Help / A"
 let config_env = "GAMEPILOT_FRLG_CONFIG"
 let config_file = "trainer_ids.json"
 let ( let* ) = Result.bind
+
+let encounter_method_to_string = function
+  | Grass -> "grass"
+  | Surf -> "surf"
+  | Super_rod -> "super_rod"
+
+let encounter_table_kind = function
+  | Grass -> "grass"
+  | Surf -> "surfing"
+  | Super_rod -> "superrod"
 
 let default_catch_config : Battle_catch_steps.config =
   {
@@ -73,7 +73,7 @@ let throw_only_policy (capture : Capture_plan.t) : CS.policy =
     foe_hp_target = 1.0;
     foe_hp_rechip = 1.0;
     reapply_status = false;
-    max_turns = limits.throw_only_max_turns;
+    max_turns = throw_only_max_turns;
     send_in_order = [ 1; 2; 3; 4; 5 ];
   }
 
@@ -83,8 +83,8 @@ let env_var = function
   | name -> "GAMEPILOT_FRLG_" ^ String.uppercase_ascii name
 
 let check_id ~label n =
-  if n < 0 || n > limits.max_id then
-    Error (Printf.sprintf "%s is %d, not 0..%d" label n limits.max_id)
+  if n < 0 || n > max_id then
+    Error (Printf.sprintf "%s is %d, not 0..%d" label n max_id)
   else Ok n
 
 let env_id name =
@@ -94,8 +94,7 @@ let env_id name =
   | Some raw -> (
       match int_of_string_opt (String.trim raw) with
       | Some n -> Result.map Option.some (check_id ~label:var n)
-      | None ->
-          Error (Printf.sprintf "%s is %S, not 0..%d" var raw limits.max_id))
+      | None -> Error (Printf.sprintf "%s is %S, not 0..%d" var raw max_id))
 
 let json_id ~path name fields =
   match List.assoc_opt name fields with
@@ -118,7 +117,7 @@ let file_trainer_ids () =
     | _ -> Error (path ^ ": expected a JSON object")
 
 let pick primary secondary =
-  match primary with Some _ -> primary | None -> secondary
+  if Option.is_some primary then primary else secondary
 
 let load_trainer_ids () =
   let* env_tid = env_id "tid" in
@@ -132,46 +131,40 @@ let load_trainer_ids () =
 let frame_models =
   [ ("mgba", R.Rng_timings.mgba); ("switch", R.Rng_timings.switch) ]
 
-let id ~where name args =
-  let n = J.int ~where name args in
-  if n < 0 || n > limits.max_id then
-    J.fail "%s%s is %d, not 0..65535" where name n
-  else n
+let find_frame_model name = List.assoc_opt name frame_models
 
-let seed_shift ~where args =
-  match J.find "seed_shift" args with
-  | None -> 0
-  | Some _ -> id ~where "seed_shift" args
-
-let ingame_offset ~where args =
-  match J.find "ingame_offset" args with
-  | None -> 0
+let opt_int ~where ~default ~low ~high name args =
+  match J.find name args with
+  | None -> default
   | Some _ ->
-      let n = J.int ~where "ingame_offset" args in
-      if abs n > limits.max_ingame_offset then
-        J.fail "%singame_offset is %d, not -%d..%d" where n
-          limits.max_ingame_offset limits.max_ingame_offset
+      let n = J.int ~where name args in
+      if n < low || n > high then
+        J.fail "%s%s is %d, not %d..%d" where name n low high
       else n
+
+let id ~where name args =
+  opt_int ~where ~default:0 ~low:0 ~high:max_id name args
 
 let advances ~where args =
   match J.list_opt ~where "advances" args with
-  | None -> (limits.default_min_advance, limits.default_max_advance)
+  | None -> (default_min_advance, default_max_advance)
   | Some [ `Int low; `Int high ] when 0 <= low && low <= high -> (low, high)
   | Some _ -> J.fail "%sadvances is not [min, max]" where
 
 let frame_model ~where args =
-  let name = J.string ~where "frame_model" args in
-  if List.mem_assoc name frame_models then name
-  else J.fail "%sframe_model is %s, not mgba or switch" where name
+  match J.string_opt ~where "frame_model" args with
+  | None -> default_frame_model
+  | Some name ->
+      if List.mem_assoc name frame_models then name
+      else J.fail "%sframe_model is %s, not mgba or switch" where name
 
-let attempts ~where args =
-  match J.find "attempts" args with
-  | None -> limits.default_attempts
-  | Some _ ->
-      let n = J.int ~where "attempts" args in
-      if n < 1 || n > limits.max_attempts then
-        J.fail "%sattempts is %d, not 1..%d" where n limits.max_attempts
-      else n
+let encounter_method ~where args =
+  match J.string_opt ~where "method" args with
+  | None | Some "grass" -> Grass
+  | Some "surf" -> Surf
+  | Some "super_rod" -> Super_rod
+  | Some other ->
+      J.fail "%smethod is %s, not grass, surf, or super_rod" where other
 
 let policy_mode policy = Catch_policy { policy; config = default_catch_config }
 
@@ -189,10 +182,9 @@ let parse_catch_mode ~where (capture : Capture_plan.t) = function
       J.fail "%scatch_mode is %s, not throw_only, phase1, or phase2" where other
 
 let catch_mode ~where capture args =
-  match J.find "catch_mode" args with
+  match J.string_opt ~where "catch_mode" args with
   | None -> Throw_only
-  | Some _ ->
-      parse_catch_mode ~where capture (J.string ~where "catch_mode" args)
+  | Some s -> parse_catch_mode ~where capture s
 
 let visual_shiny_check ~where args =
   match J.find "visual_shiny_check" args with
@@ -200,10 +192,13 @@ let visual_shiny_check ~where args =
   | Some (`Bool b) -> b
   | Some _ -> J.fail "%svisual_shiny_check is not a boolean" where
 
-(* The capture's own args: species, ball, balls; one encounter per attempt. *)
 let capture ~where args =
   let plan = Capture_plan.read ~where args in
-  { plan with max_encounters = attempts ~where args; catches = 1 }
+  let max_encounters =
+    opt_int ~where ~default:default_attempts ~low:1 ~high:max_attempts
+      "attempts" args
+  in
+  { plan with max_encounters; catches = 1 }
 
 let resolved_id ~where ~options ~fallback name args =
   match (Run_options.int options name, J.find name args, fallback) with
@@ -220,14 +215,18 @@ let read ~options ~fallback ~where args =
   let sid = resolved_id ~where ~options ~fallback:fallback.sid "sid" args in
   let cap = Capture_plan.apply_options options (capture ~where args) in
   {
+    encounter_method = encounter_method ~where args;
     species = J.string ~where "species" args;
     location = J.string ~where "location" args;
     tid;
     sid;
-    seeds = J.string ~where "seeds" args;
+    seeds =
+      Option.value ~default:default_seeds (J.string_opt ~where "seeds" args);
     boot_offset_ms = 0;
-    seed_shift = seed_shift ~where args;
-    ingame_offset = ingame_offset ~where args;
+    seed_shift = opt_int ~where ~default:0 ~low:0 ~high:max_id "seed_shift" args;
+    ingame_offset =
+      opt_int ~where ~default:0 ~low:(-max_ingame_offset)
+        ~high:max_ingame_offset "ingame_offset" args;
     frame_model = frame_model ~where args;
     min_advance;
     max_advance;
@@ -240,7 +239,7 @@ let apply_calibration (entry : R.Switch_rng_calibration.entry) t =
   {
     t with
     boot_offset_ms = t.boot_offset_ms + entry.boot_offset_ms;
-    seed_shift = (t.seed_shift + entry.seed_shift) land limits.seed_mask;
+    seed_shift = (t.seed_shift + entry.seed_shift) land seed_mask;
     ingame_offset = t.ingame_offset + entry.ingame_offset;
   }
 
@@ -252,47 +251,50 @@ let json path =
   | None -> Error (path ^ " not found from the working directory")
   | Some file -> Repo_io.Json_file.read file
 
-let seed_column t =
-  let* j = json (assets ^ t.seeds) in
+let seed_column_of ~seeds ~seed_shift =
+  let* j = json (assets ^ seeds) in
   let* db = R.Seeds_database.of_json j in
   let has_col (c : R.Seeds_database.column) = c.name = column in
   match List.find_opt has_col db.columns with
   | Some c ->
-      let shift s = (s + t.seed_shift) land limits.seed_mask in
+      let shift s = (s + seed_shift) land seed_mask in
       Ok (db.delays, Array.map shift c.seeds)
-  | None -> Error (t.seeds ^ " has no column " ^ column)
+  | None -> Error (seeds ^ " has no column " ^ column)
 
 let slots t =
+  let kind = encounter_table_kind t.encounter_method in
   let* j = json encounter_slots in
   let* db = R.Encounters_database.of_json j in
   Option.to_result
-    ~none:("no grass slots for " ^ t.location)
-    (R.Encounters_database.slots db ~kind:"grass" ~location:t.location)
+    ~none:("no " ^ kind ^ " slots for " ^ t.location)
+    (R.Encounters_database.slots db ~kind ~location:t.location)
 
 let no_target t =
   Printf.sprintf "no shiny %s in %s at advances %d..%d" t.species t.seeds
     t.min_advance t.max_advance
 
-let calibrations_of t (model : R.Rng_timings.frame_model) =
+let calibrations_of_offsets ~boot_offset_ms ~ingame_offset
+    (model : R.Rng_timings.frame_model) =
   let seed_offset =
-    if t.boot_offset_ms = 0 then 0
+    if boot_offset_ms = 0 then 0
     else
       int_of_float
-        (Float.round (float_of_int t.boot_offset_ms /. model.frame_duration_ms))
+        (Float.round (float_of_int boot_offset_ms /. model.frame_duration_ms))
   in
-  {
-    R.Rng_timings.no_calibrations with
-    seed_offset;
-    ingame_offset = t.ingame_offset;
-  }
+  { R.Rng_timings.no_calibrations with seed_offset; ingame_offset }
 
 let search t (delays, seeds) slots =
   let model = List.assoc t.frame_model frame_models in
-  R.Wild_target.find ~calibrations:(calibrations_of t model) model ~delays
-    ~seeds slots ~species:t.species ~tid_xor_sid:(t.tid lxor t.sid)
+  let calibrations =
+    calibrations_of_offsets ~boot_offset_ms:t.boot_offset_ms
+      ~ingame_offset:t.ingame_offset model
+  in
+  let super_rod = t.encounter_method = Super_rod in
+  R.Wild_target.find ~calibrations ~super_rod model ~delays ~seeds slots
+    ~species:t.species ~tid_xor_sid:(t.tid lxor t.sid)
     ~min_advance:t.min_advance ~max_advance:t.max_advance
 
 let target t =
-  let* column = seed_column t in
+  let* column = seed_column_of ~seeds:t.seeds ~seed_shift:t.seed_shift in
   let* slots = slots t in
   Option.to_result ~none:(no_target t) (search t column slots)

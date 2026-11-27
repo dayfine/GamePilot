@@ -10,16 +10,33 @@
     fork's shiny check is the shiny sound in battle; GamePilot has no audio, so
     the catch's summary is read instead ({!Frlg_readers.Shiny_star}). *)
 
-val blind_presses : Frlg_rng.Rng_timings.t -> Wire.command list
+val title_presses : Frlg_rng.Rng_timings.t -> Wire.command list
 (** From the reset: the title screen's wait, A held 3 s (the seed), the continue
-    screen's rest, A (continue) and B (the recap), then Start, the party, the
-    last member's menu and Sweet Scent, its A after the in-game wait. The Sweet
-    Scent user is the party's last member, Sweet Scent its menu's second row. *)
+    screen's rest, A (continue) and B (the recap). Shared with {!Gift_rng}. *)
+
+val blind_presses : Frlg_rng.Rng_timings.t -> Wire.command list
+(** From the reset: {!title_presses}, then Start, the party, the last member's
+    menu and Sweet Scent, its A after the in-game wait. The Sweet Scent user is
+    the party's last member, Sweet Scent its menu's second row. *)
+
+val super_rod_presses : Frlg_rng.Rng_timings.t -> Wire.command list
+(** From the reset: {!title_presses}, the in-game wait, then Select to cast the
+    registered Super Rod facing water. *)
+
+val blind_presses_for :
+  Wild_rng_plan.encounter_method -> Frlg_rng.Rng_timings.t -> Wire.command list
+(** Selects {!blind_presses} for [Grass] / [Surf] (Sweet Scent) or
+    {!super_rod_presses} for [Super_rod]. *)
 
 val find_encounter :
-  log:(string -> unit) -> Frlg_rng.Rng_timings.t -> unit -> bool
-(** The reset, {!blind_presses}, and the wild battle's screen within
-    {!battle_timeout_ms}. *)
+  log:(string -> unit) ->
+  ?encounter_method:Wild_rng_plan.encounter_method ->
+  Frlg_rng.Rng_timings.t ->
+  unit ->
+  bool
+(** The reset, {!blind_presses_for} [encounter_method] (default [Grass]),
+    optional bite confirmation for [Super_rod], and the wild battle's screen
+    within {!battle_timeout_ms}. *)
 
 val battle_timeout_ms : int
 (** 20 s: how long after the last press the wild battle's screen may take to
@@ -27,6 +44,7 @@ val battle_timeout_ms : int
 
 val game_steps :
   log:(string -> unit) ->
+  ?encounter_method:Wild_rng_plan.encounter_method ->
   Frlg_rng.Rng_timings.t ->
   Capture_plan.t ->
   Capture.game_steps
@@ -36,6 +54,7 @@ val game_steps :
 
 val policy_catch_steps :
   log:(string -> unit) ->
+  ?encounter_method:Wild_rng_plan.encounter_method ->
   timings:Frlg_rng.Rng_timings.t ->
   ?visual_shiny_check:bool ->
   ?on_miss:(unit -> unit) ->

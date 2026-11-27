@@ -94,6 +94,7 @@ let body ctx (request : R.t) () =
   | Spin_for_encounter { max_batches } ->
       Spin_for_encounter.spin ~log ~facing:(facing ctx) ~max_batches
   | Cut_tree d -> Cut_tree.cut ~log d
+  | Surf -> Surf.surf ~log
   | Pc_deposit deposit ->
       let species = deposited ctx deposit in
       Pc_deposit.deposit ~log species;

@@ -381,6 +381,83 @@ let decisions =
       ": wild_rng_party_full";
   ]
 
+let method_decoding =
+  let decode_method json () =
+    match Wild_rng_plan.decode (obj json) with
+    | Ok t ->
+        Printf.sprintf "%s at %s (%s, %s, %s)" t.species t.location
+          (Wild_rng_plan.encounter_method_to_string t.encounter_method)
+          t.seeds t.frame_model
+    | Error c -> Pokemon_engine.Failure.cause_to_string c
+  in
+  let super_rod_blind () =
+    Wild_rng_steps.blind_presses_for Wild_rng_plan.Super_rod
+      {
+        seed_delay_ms = 33033;
+        csf_delay_ms = 3348;
+        teachy_delay_ms = 0;
+        ingame_delay_ms = 10129;
+      }
+    |> List.map command_text |> String.concat ", "
+  in
+  let check_surf_target () =
+    let args =
+      obj
+        {|{"method": "surf", "species": "psyduck", "location": "viridian_city",
+           "tid": 12345, "sid": 54321}|}
+    in
+    match
+      Result.bind (Wild_rng_plan.decode args) (fun p ->
+          Result.map_error
+            (Pokemon_engine.Failure.cause "target")
+            (Wild_rng_plan.target p))
+    with
+    | Ok t -> t.encounter.species
+    | Error c -> Pokemon_engine.Failure.cause_to_string c
+  in
+  let check_super_rod_target () =
+    let args =
+      obj
+        {|{"method": "super_rod", "species": "shellder",
+           "location": "vermilion_city", "tid": 12345, "sid": 54321}|}
+    in
+    match
+      Result.bind (Wild_rng_plan.decode args) (fun p ->
+          Result.map_error
+            (Pokemon_engine.Failure.cause "target")
+            (Wild_rng_plan.target p))
+    with
+    | Ok t -> t.encounter.species
+    | Error c -> Pokemon_engine.Failure.cause_to_string c
+  in
+  [
+    case "surf method with default seeds and frame_model"
+      (decode_method
+         {|{"method": "surf", "species": "psyduck",
+            "location": "viridian_city", "tid": 1, "sid": 2}|})
+      "psyduck at viridian_city (surf, rng_seeds_mgba_sevii_save.json, mgba)";
+    case "super_rod method with default seeds and frame_model"
+      (decode_method
+         {|{"method": "super_rod", "species": "shellder",
+            "location": "vermilion_city", "tid": 1, "sid": 2}|})
+      "shellder at vermilion_city (super_rod, rng_seeds_mgba_sevii_save.json, \
+       mgba)";
+    case "invalid method rejected"
+      (decode_method
+         {|{"method": "old_rod", "species": "magikarp",
+            "location": "vermilion_city", "tid": 1, "sid": 2}|})
+      "bad_args: wild_rng: method is old_rod, not grass, surf, or super_rod";
+    case "super_rod blind presses cast registered rod with Select"
+      super_rod_blind
+      "wait 33033, A 3000/0, wait 348, A 50/1450, B 50/2450, wait 9629, Select \
+       200/300";
+    case "surf target search finds shiny psyduck in viridian_city"
+      check_surf_target "psyduck";
+    case "super_rod target search finds shiny shellder in vermilion_city"
+      check_super_rod_target "shellder";
+  ]
+
 let () =
   Table_test.run "wild_rng"
-    (decoding @ policy_decoding @ presses @ decisions @ policy_decisions)
+    (decoding @ policy_decoding @ method_decoding @ presses @ decisions
+   @ policy_decisions)

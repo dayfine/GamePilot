@@ -8,6 +8,12 @@
     Scent targets only, on a grass location, with the game's sound on Mono and
     its button mode on Help (the seed column ["Mono / Help / A"]). *)
 
+(** How {!Wild_rng} triggers a wild encounter after the RNG reset. *)
+type encounter_method =
+  | Grass  (** Sweet Scent in tall grass or indoor encounter floors. *)
+  | Surf  (** Sweet Scent while surfing on water. *)
+  | Super_rod  (** Registered Super Rod ([Select]) facing water + bite A. *)
+
 (** How {!Wild_rng} catches a wild encounter once it begins. *)
 type catch_mode =
   | Throw_only
@@ -24,8 +30,11 @@ type catch_mode =
           {!Battle_catch_steps} and {!Pokemon_catch.Catch_runner}. *)
 
 type t = {
+  encounter_method : encounter_method;
+      (** How the encounter is triggered and which encounter table is searched
+          (default {!Grass}). *)
   species : string;  (** The species to catch shiny: ["ekans"]. *)
-  location : string;  (** The grass table's key: ["route_10"]. *)
+  location : string;  (** The encounter table's key: ["route_10"]. *)
   tid : int;
       (** The trainer ID: the public number on the trainer card, 0..65535. *)
   sid : int;
@@ -75,6 +84,32 @@ type trainer_ids = {
 
 val no_trainer_ids : trainer_ids
 (** No fallback trainer IDs. *)
+
+val encounter_method_to_string : encounter_method -> string
+(** ["grass"], ["surf"], or ["super_rod"]. *)
+
+val default_seeds : string
+(** Default seed table filename when ["seeds"] is omitted from a plan. *)
+
+val default_frame_model : string
+(** Default frame model (["mgba"]) when ["frame_model"] is omitted. *)
+
+val find_frame_model : string -> Frlg_rng.Rng_timings.frame_model option
+(** Looks up a frame model by name (["mgba"] or ["switch"]). *)
+
+val seed_column_of :
+  seeds:string -> seed_shift:int -> (int array * int array, string) result
+(** Reads the ["Mono / Help / A"] column from [seeds] under
+    [src/games/pokemon/frlg/assets/], shifting every seed by [seed_shift]
+    (wrapping 16-bit). *)
+
+val calibrations_of_offsets :
+  boot_offset_ms:int ->
+  ingame_offset:int ->
+  Frlg_rng.Rng_timings.frame_model ->
+  Frlg_rng.Rng_timings.calibrations
+(** Builds {!Frlg_rng.Rng_timings.calibrations} from boot and in-game offsets.
+*)
 
 val default_catch_config : Battle_catch_steps.config
 (** Default {!Battle_catch_steps.config} (active slot 1, bag rows 0, 30 s

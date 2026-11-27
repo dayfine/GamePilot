@@ -21,6 +21,7 @@ type t =
   | Ingame_trade of { offer : string; receive : string option }
   | Spin_for_encounter of { max_batches : int }
   | Cut_tree of Grid_geometry.Direction.t
+  | Surf
   | Verify_mail_glitch of Action_args.member
   | Pc_deposit of deposit
   | Pc_withdraw
