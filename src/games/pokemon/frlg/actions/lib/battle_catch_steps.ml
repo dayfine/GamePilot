@@ -100,6 +100,7 @@ let state_of_frame tr m : CS.t =
     fainted = [];
     setup_uses_done = 0;
     wall_move_heals_done = 0;
+    status_uses_done = 0;
   }
 
 let read_action_state tr = state_of_frame tr (Effects.read ())

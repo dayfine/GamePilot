@@ -44,9 +44,7 @@ type party_slots = {
 let default_ball_name = "Luxury Ball"
 let default_max_balls = 60
 let default_max_turns = 80
-let default_status_floor = 0.35
-let default_swiper_floor = 0.40
-let default_wall_floor = 0.45
+let default_hp_floor = 0.40
 let default_foe_target = 0.15
 let kyogre_rechip = 0.35
 let groudon_rechip = 0.40
@@ -118,19 +116,21 @@ let read_action_state cfg tr m : CS.t =
     fainted = [];
     setup_uses_done = 0;
     wall_move_heals_done = 0;
+    status_uses_done = 0;
   }
 
 let is_not_black m = if not (B.shown m) then Some () else None
 
 let wait_battle_end ~log cfg tr =
   let t = cfg.timing in
-  if tr.balls_thrown > 0 then (
+  if tr.balls_thrown <= 0 then
+    Ok (CR.Unexpected "black screen before any ball was thrown")
+  else (
     log "Battle faded to black after ball throw; waiting for fade clear...";
     ignore
       (H.wait_for ~timeout_ms:t.event_timeout_ms
          (H.held t.black_hold_ms is_not_black));
     Ok (CR.Caught : CR.event))
-  else Ok (CR.Unexpected "black screen before any ball was thrown")
 
 let inspect_frame ~log cfg tr m =
   let t = cfg.timing in
@@ -252,7 +252,7 @@ let status_role s : CS.role_config =
   {
     slot = s.status_setter;
     move_slot = s.status_move;
-    hp_floor = default_status_floor;
+    hp_floor = default_hp_floor;
   }
 
 let swiper_role s : CS.false_swipe_config =
@@ -260,14 +260,14 @@ let swiper_role s : CS.false_swipe_config =
     slot = s.false_swiper;
     move_slot = s.false_swipe_move;
     require_status = true;
-    hp_floor = default_swiper_floor;
+    hp_floor = default_hp_floor;
   }
 
 let wall_role s : CS.wall_config =
   {
     slot = s.wall;
     heal_move_slot = s.wall_heal_move;
-    hp_floor = default_wall_floor;
+    hp_floor = default_hp_floor;
   }
 
 let build_policy ~ball_name ~max_balls ~max_turns ~foe_hp_rechip ~heavy_chipper

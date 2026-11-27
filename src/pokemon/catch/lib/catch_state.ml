@@ -14,6 +14,7 @@ type t = {
   fainted : int list;
   setup_uses_done : int;
   wall_move_heals_done : int;
+  status_uses_done : int;
 }
 
 type setup_config = {

@@ -34,10 +34,25 @@ let is_setup_move (policy : Catch_state.policy) (state : Catch_state.t) slot =
   | Some su -> state.active_slot = su.slot && su.move_slot = slot
   | None -> false
 
-type counters = { summary : summary; setup_uses : int; wall_move_heals : int }
+let is_status_move (policy : Catch_state.policy) (state : Catch_state.t) slot =
+  match policy.status_setter with
+  | Some ss -> state.active_slot = ss.slot && ss.move_slot = slot
+  | None -> false
+
+type counters = {
+  summary : summary;
+  setup_uses : int;
+  wall_move_heals : int;
+  status_uses : int;
+}
 
 let empty_counters =
-  { summary = empty_summary; setup_uses = 0; wall_move_heals = 0 }
+  {
+    summary = empty_summary;
+    setup_uses = 0;
+    wall_move_heals = 0;
+    status_uses = 0;
+  }
 
 let bump_turn s = { s with turns = s.turns + 1 }
 
@@ -64,6 +79,8 @@ let record_command policy state c = function
       { c with summary; wall_move_heals = c.wall_move_heals + 1 }
   | Use_move slot when is_setup_move policy state slot ->
       { c with summary = bump_turn c.summary; setup_uses = c.setup_uses + 1 }
+  | Use_move slot when is_status_move policy state slot ->
+      { c with summary = bump_turn c.summary; status_uses = c.status_uses + 1 }
   | Use_move _ | Pause_for_user _ -> { c with summary = bump_turn c.summary }
 
 let merge_fainted state_fainted tracked =
@@ -79,6 +96,7 @@ let sync_state (state : Catch_state.t) fainted c =
     fainted = merge_fainted state.fainted fainted;
     setup_uses_done = max state.setup_uses_done c.setup_uses;
     wall_move_heals_done = max state.wall_move_heals_done c.wall_move_heals;
+    status_uses_done = max state.status_uses_done c.status_uses;
   }
 
 let handle_action_menu ~log steps policy fainted c state =

@@ -37,6 +37,9 @@ type t = {
       (** Number of times the wall's self-healing move (e.g. Synthesis, 5 PP)
           has been used so far; once exhausted, survival falls back to
           {!Heal_active}. *)
+  status_uses_done : int;
+      (** Number of times the status move (e.g. Sleep Powder, 15 PP) has been
+          used so far; once exhausted, the policy stops selecting it. *)
 }
 (** Observed battle state at an action menu. *)
 

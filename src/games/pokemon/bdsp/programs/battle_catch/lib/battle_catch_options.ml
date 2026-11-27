@@ -57,10 +57,10 @@ type floors = {
 
 let hp_floors =
   {
-    status_hp = 0.35;
-    chipper_hp = 0.40;
-    swiper_hp = 0.35;
-    wall_hp = 0.40;
+    status_hp = 0.55;
+    chipper_hp = 0.45;
+    swiper_hp = 0.55;
+    wall_hp = 0.55;
     foe_target = 0.15;
     foe_rechip = 0.35;
     pct_divisor = 100.0;

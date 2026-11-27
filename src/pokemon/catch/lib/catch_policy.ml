@@ -25,6 +25,10 @@ let needs_status state =
   | None -> false
 
 let wall_heal_move_pp = 5
+let status_move_pp = 15
+
+let status_available state (ss : role_config) =
+  (not (is_fainted state ss.slot)) && state.status_uses_done < status_move_pp
 
 let survival_for_wall policy state =
   match policy.wall with
@@ -45,7 +49,7 @@ let survival_command policy state =
 
 let status_or_pause policy state =
   match policy.status_setter with
-  | Some ss when not (is_fainted state ss.slot) ->
+  | Some ss when status_available state ss ->
       Some
         (use_or_switch ~active_slot:state.active_slot ~target_slot:ss.slot
            ~move_slot:ss.move_slot)
@@ -85,7 +89,8 @@ let heavy_chip_command policy state =
   | _ -> None
 
 let chip_for_swiper policy state (fs : false_swipe_config) =
-  if is_fainted state fs.slot then None
+  if is_fainted state fs.slot then
+    Some (Pause_for_user "foe above HP target and false swiper fainted")
   else if fs.require_status && needs_status state then
     status_or_pause policy state
   else
@@ -108,7 +113,7 @@ let status_command policy state =
   match policy.status_setter with
   | Some ss
     when policy.reapply_status && needs_status state
-         && not (is_fainted state ss.slot) ->
+         && status_available state ss ->
       Some
         (use_or_switch ~active_slot:state.active_slot ~target_slot:ss.slot
            ~move_slot:ss.move_slot)
