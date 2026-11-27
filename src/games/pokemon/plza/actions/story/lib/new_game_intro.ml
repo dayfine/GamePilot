@@ -229,7 +229,7 @@ let wait_for_keyboard steps =
   else
     Error (failed "the name keyboard did not show within 20 s of the look's A.")
 
-let typing_steps steps : Switch_home.Keyboard_typing.game_steps =
+let typing_steps steps : Switch.Keyboard_typing.game_steps =
   {
     read_cursor = (fun () -> (steps.read_screen ()).keyboard_cursor);
     read_text_pixels = (fun () -> (steps.read_screen ()).text_pixels);
@@ -281,7 +281,7 @@ let type_name steps (c : Choices.t) =
   let* () =
     Result.map_error
       (fun e -> failed e)
-      (Switch_home.Keyboard_typing.type_text (typing_steps steps) c.name)
+      (Switch.Keyboard_typing.type_text (typing_steps steps) c.name)
   in
   submit_name steps 1
 

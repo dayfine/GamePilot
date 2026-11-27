@@ -1,4 +1,4 @@
-module T = Switch_home.Timed_press
+module T = Switch.Timed_press
 module B = Box_view
 module M = Home_menus
 
@@ -134,7 +134,7 @@ let live_game_steps ~log ~picture : game_steps =
     close =
       (fun () ->
         log "Closing Pokémon HOME.";
-        Switch_home.Game_entry.close_game ~log ~picture Home_tile.tile_color);
+        Switch.Game_entry.close_game ~log ~picture Home_tile.tile_color);
     log;
   }
 
@@ -164,5 +164,5 @@ let not_native =
    native"
 
 let run ~log ~picture (t : templates) mode =
-  if not (Switch_home.Picture_box.native picture) then Error not_native
+  if not (Switch.Picture_box.native picture) then Error not_native
   else launch_and_act ~log ~picture t mode

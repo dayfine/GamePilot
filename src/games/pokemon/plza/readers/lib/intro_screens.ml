@@ -1,4 +1,4 @@
-module Solid_color = Switch_home.Solid_color
+module Solid_color = Switch.Solid_color
 
 let channels = 3.0
 let brightness (s : Box_color.stats) = Solid_color.sum s.mean /. channels

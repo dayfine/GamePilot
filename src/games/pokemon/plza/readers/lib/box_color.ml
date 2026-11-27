@@ -1,4 +1,4 @@
-module Solid_color = Switch_home.Solid_color
+module Solid_color = Switch.Solid_color
 
 type stats = Solid_color.stats
 

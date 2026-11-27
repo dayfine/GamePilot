@@ -2,7 +2,7 @@
    console B (Scripted_home) whose screens
    are captures: to the red Caution button, and the confirm from there. *)
 
-open Switch_home
+open Switch
 module S = Scripted_home
 
 type console = {

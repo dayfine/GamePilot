@@ -7,7 +7,7 @@
    does not take failing, and a character with no key refused before any
    press. *)
 
-open Switch_home
+open Switch
 module T = Keyboard_typing
 
 let letter (m : T.move) =

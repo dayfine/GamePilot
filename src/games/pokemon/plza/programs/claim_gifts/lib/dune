@@ -5,7 +5,7 @@
   gamepilot.wire
   gamepilot.effects
   gamepilot.screen_graph
-  gamepilot.switch_home
+  gamepilot.switch
   gamepilot.engine_run
   gamepilot.plza_readers
   gamepilot.plza_screens

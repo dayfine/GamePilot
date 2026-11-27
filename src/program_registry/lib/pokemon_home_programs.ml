@@ -5,7 +5,7 @@ let game =
     game_id = "pokemon_home";
     game_name = "Pokémon HOME";
     delete_save_icons = [];
-    switch_home = None;
+    switch = None;
   }
 
 let plza_bank_home =

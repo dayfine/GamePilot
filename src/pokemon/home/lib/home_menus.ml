@@ -1,5 +1,5 @@
 module F = Frame_box
-open Switch_home.Solid_color
+open Switch.Solid_color
 
 let menu_id = "home.main_menu"
 let menu_box : F.t = { x = 1075; y = 238; w = 653; h = 130 }
@@ -80,7 +80,7 @@ let probes ~game_icon =
 let min_menu_orange = 0.45
 
 let holds m id test =
-  Option.fold ~none:false ~some:test (Switch_home.Color_share.read m id)
+  Option.fold ~none:false ~some:test (Switch.Color_share.read m id)
 
 let main_menu m = holds m menu_id (fun s -> s > min_menu_orange)
 

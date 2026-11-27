@@ -58,8 +58,8 @@ val problem : t -> string option
 (** Why 00.00-new-game cannot play the choices, before any press: a look outside
     1 to 8, an empty name, a name longer than the language takes (counted in
     characters), a keyboard 00.00-new-game does not type on, or a character not
-    on the keyboard's first page ({!Switch_home.Keyboard_typing.key_of_char});
-    [None] when it can. *)
+    on the keyboard's first page ({!Switch.Keyboard_typing.key_of_char}); [None]
+    when it can. *)
 
 val by_hand_hint : string
 (** What every refusal and failure of 00.00-new-game ends with: make the choices

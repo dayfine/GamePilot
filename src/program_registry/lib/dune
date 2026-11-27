@@ -3,6 +3,6 @@
  (public_name gamepilot.program_registry)
  (libraries
   gamepilot.repo_io
-  gamepilot.switch_home
+  gamepilot.switch
   gamepilot.run_options
   gamepilot.plza_story))

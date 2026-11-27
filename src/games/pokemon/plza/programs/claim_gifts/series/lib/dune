@@ -3,7 +3,7 @@
  (public_name gamepilot.plza_claim_gifts_series)
  (libraries
   gamepilot.effects
-  gamepilot.switch_home
+  gamepilot.switch
   gamepilot.watch_report
   gamepilot.run_options
   gamepilot.plza_engine

@@ -1,4 +1,4 @@
-module T = Switch_home.Timed_press
+module T = Switch.Timed_press
 
 type cell = Filled | Empty | Not_read of string
 type t = { mutable row : int; mutable col : int }

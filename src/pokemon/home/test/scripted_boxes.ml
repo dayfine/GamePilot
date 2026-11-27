@@ -2,7 +2,7 @@
    results come from a capture (fixtures/home.probes.jsonl), its cursor
    probes' results swapped to put the cursor elsewhere, and a reaction to
    each press shows the next screen. One frame per ms. A trimmed copy of
-   core/switch_home/test/scripted_home.ml's player. *)
+   core/switch/test/scripted_home.ml's player. *)
 
 type screen =
   | Before  (** box 152, the game's row full, the cursor on HOME's first slot *)

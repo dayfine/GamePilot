@@ -1,14 +1,14 @@
 open Descriptor
 
 (* plza's icon is cut from console B's capture of that page
-   (core/switch_home/test/images/delete-save/za-page-delete-save-data-for-user.png). *)
+   (core/switch/test/images/delete-save/za-page-delete-save-data-for-user.png). *)
 let game =
   {
     game_id = "plza";
     game_name = "Pokémon Legends: Z-A";
     delete_save_icons =
       [ ("plza", "src/games/pokemon/plza/assets/delete-save-icon.png") ];
-    switch_home = None;
+    switch = None;
   }
 
 let autostory =
