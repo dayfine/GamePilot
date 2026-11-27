@@ -10,6 +10,13 @@ type look = {
 
 type press = A | B | Up | Down | Left | Right | Wait | Done | Fail of string
 
+type panel_phase =
+  | Rewind  (** Move UP to slot 0 before scanning a new target. *)
+  | Scan of int list
+      (** Scanning DOWN from 0; matching slots, highest first. *)
+  | Select of int list
+      (** Stepping to the highest remaining match to press A. *)
+
 type t = {
   targets : string list;  (** Still to store, the next first. *)
   stored : string list;  (** Newest first. *)
@@ -20,8 +27,8 @@ type t = {
   next_box : bool;  (** The box was full: RIGHT once the question is back. *)
   boxes : int;
   message_seen : bool;  (** The last settled look read a message: B now. *)
+  panel : panel_phase;
   saw_mail : bool;  (** A slot for the current target held Mail. *)
-  skip_mail : bool;  (** Just dismissed Mail dialog: DOWN past this slot. *)
 }
 
 let pc_list_tops = [ "SOMEONE'S PC"; "BILL'S PC" ]
@@ -43,8 +50,8 @@ let start targets =
     next_box = false;
     boxes = 0;
     message_seen = false;
+    panel = Rewind;
     saw_mail = false;
-    skip_mail = false;
   }
 
 let deposited t = List.rev t.stored
@@ -85,6 +92,34 @@ let holds_mail target =
   target
   ^ " holds Mail: the game will not store it (\"Please remove the MAIL.\")"
 
+let drop_mail_match = function Select (_ :: rest) -> rest | _ -> []
+
+let select_match t target cursor matches =
+  match matches with
+  | [] when t.saw_mail -> (t, Fail (holds_mail target))
+  | [] -> (t, Fail ("no " ^ target ^ " in the party panel"))
+  | m :: _ when cursor = m -> ({ t with panel = Select matches }, A)
+  | m :: _ when cursor > m -> ({ t with panel = Select matches }, Up)
+  | _ -> ({ t with panel = Select matches }, Down)
+
+let add_match target cursor species matches =
+  if species = Some target && not (List.mem cursor matches) then
+    cursor :: matches
+  else matches
+
+let scan_slot t target cursor species matches =
+  let matches = add_match target cursor species matches in
+  if cursor = last_slot then select_match t target cursor matches
+  else ({ t with panel = Scan matches }, Down)
+
+let panel_step t target cursor species =
+  match t.panel with
+  | Rewind when cursor > 0 -> (t, Up)
+  | Rewind -> scan_slot t target cursor species []
+  | Scan matches when cursor > last_slot -> select_match t target cursor matches
+  | Scan matches -> scan_slot t target cursor species matches
+  | Select matches -> select_match t target cursor matches
+
 let party_panel t (look : look) =
   let t =
     if t.storing then
@@ -93,22 +128,17 @@ let party_panel t (look : look) =
         storing = false;
         stored = List.hd t.targets :: t.stored;
         targets = List.tl t.targets;
+        panel = Rewind;
         saw_mail = false;
-        skip_mail = false;
       }
     else t
   in
   match (t.targets, look.view.cursor) with
   | _ :: _, _ when look.remove_mail ->
-      ({ t with saw_mail = true; skip_mail = true }, B)
+      ({ t with panel = Select (drop_mail_match t.panel); saw_mail = true }, B)
   | [], _ -> (t, B)
-  | _ :: _, Some c when t.skip_mail && c < last_slot ->
-      ({ t with skip_mail = false }, Down)
-  | target :: _, _ when t.skip_mail -> (t, Fail (holds_mail target))
-  | target :: _, Some _ when look.species = Some target -> (t, A)
-  | _ :: _, Some c when c < last_slot -> (t, Down)
-  | target :: _, _ when t.saw_mail -> (t, Fail (holds_mail target))
-  | target :: _, _ -> (t, Fail ("no " ^ target ^ " in the party panel"))
+  | target :: _, Some cursor -> panel_step t target cursor look.species
+  | target :: _, None -> (t, Fail ("no " ^ target ^ " in the party panel"))
 
 let mon_menu t (look : look) =
   if finished t then (t, B)
