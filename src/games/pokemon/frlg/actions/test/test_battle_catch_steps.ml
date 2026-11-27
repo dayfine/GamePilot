@@ -173,7 +173,8 @@ let test_phase1_two_mon_catch () =
       hud_frame ~foe_filled:12 ~player_filled:12 ~asleep:true;
       (* Turn 3: Slot 2 (Farfetch'd) uses False Swipe (move 0). *)
       hud_frame ~foe_filled:12 ~player_filled:12 ~asleep:true;
-      (* Turn 4: foe at 1/12 HP -> retreat to wall Slot 1 (0-based 0). *)
+      (* Turn 4: foe at 1/12 HP -> retreat to wall Slot 1, which swapped into
+         battle party position 1 when Slot 2 switched in. *)
       hud_frame ~foe_filled:1 ~player_filled:12 ~asleep:true;
       (* Turn 5: Slot 1 throws Luxury Ball (Poke_balls row 2). *)
       hud_frame ~foe_filled:1 ~player_filled:12 ~asleep:true;
@@ -193,7 +194,7 @@ let test_phase1_two_mon_catch () =
     (Catch_runner.Caught
        { turns = 5; balls_thrown = 1; switches = 2; heals = 0 });
   assert_eq "phase1 actions" (get_actions ())
-    [ Move 0; Switch 1; Move 0; Switch 0; Item (Bag.Poke_balls, 2, None) ];
+    [ Move 0; Switch 1; Move 0; Switch 1; Item (Bag.Poke_balls, 2, None) ];
   assert_eq "never calls Run" (List.mem Run (get_actions ())) false;
   assert_eq "probes subscribed once" (sub_count > 0) true
 
