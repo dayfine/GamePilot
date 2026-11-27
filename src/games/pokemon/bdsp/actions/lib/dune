@@ -6,5 +6,7 @@
   gamepilot.effects
   gamepilot.screen_graph
   gamepilot.switch
+  gamepilot.grid_geometry
+  gamepilot.grid_maps
   gamepilot.bdsp_readers
   gamepilot.bdsp_underground))

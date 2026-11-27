@@ -1,21 +1,20 @@
 (** Primitive overworld, Grand Underground doorway, menu, dialog, and battle-
-    escape actions for BDSP, built on
-    {!Bdsp_underground.Corridor_nav.bdsp_move_mechanics} (fork PR #402) and
+    escape actions for BDSP, built on {!Grid_maps.Move_mechanics.bdsp} and
     {!Switch.Switch_presses}. *)
 
 open Bdsp_underground
 
-val button_of_dir : Corridor_nav.direction -> Wire.button
-(** Map a cardinal {!Corridor_nav.direction} to its Switch D-pad button. *)
+val button_of_dir : Grid_geometry.Direction.t -> Wire.button
+(** Map a cardinal {!Grid_geometry.Direction.t} to its Switch D-pad button. *)
 
-val turn : Corridor_nav.direction -> unit
+val turn : Grid_geometry.Direction.t -> unit
 (** 50 ms turn tap in place. *)
 
-val step_tap : Corridor_nav.direction -> int -> unit
+val step_tap : Grid_geometry.Direction.t -> int -> unit
 (** Walk [n] tiles using BDSP step taps (160 ms hold / 640 ms release) to avoid
     open-leg drift. *)
 
-val run_hold : Corridor_nav.direction -> hold_ms:int -> unit
+val run_hold : Grid_geometry.Direction.t -> hold_ms:int -> unit
 (** Hold B + D-pad in [dir] for [hold_ms] (for wall-bounded corridor slides). *)
 
 val pulse_radar : unit -> unit

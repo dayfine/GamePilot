@@ -5,10 +5,10 @@ module H = Screen_graph.Held_screen
 module P = Switch.Switch_presses
 
 let ( let* ) = Result.bind
-let mech = Corridor_nav.bdsp_move_mechanics
+let mech = Grid_maps.Move_mechanics.bdsp
 
 let button_of_dir = function
-  | Corridor_nav.North -> Wire.Up
+  | Grid_geometry.Direction.North -> Wire.Up
   | South -> Wire.Down
   | East -> Wire.Right
   | West -> Wire.Left
@@ -20,7 +20,7 @@ let turn dir =
 let step_tap dir count =
   let btn = button_of_dir dir in
   for _ = 1 to max 0 count do
-    P.press ~hold_ms:mech.step_tap_hold_ms ~cooldown_ms:mech.step_tap_release_ms
+    P.press ~hold_ms:mech.walk.tap.hold_ms ~cooldown_ms:mech.walk.tap.release_ms
       btn
   done
 
@@ -66,8 +66,9 @@ let cross_door ~dir ~hold_ms =
   walk_to_door ~btn ~max_steps 0
 
 let perp_dirs = function
-  | Corridor_nav.East | West -> (Corridor_nav.South, Corridor_nav.North)
-  | North | South -> (Corridor_nav.East, Corridor_nav.West)
+  | Grid_geometry.Direction.East | West ->
+      (Grid_geometry.Direction.South, Grid_geometry.Direction.North)
+  | North | South -> (East, West)
 
 let nudge_and_enter ~dir ~nudge_dir ~nudge_ms =
   P.press ~hold_ms:nudge_ms ~cooldown_ms:act.cooldown_ms
