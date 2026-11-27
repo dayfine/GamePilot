@@ -5,7 +5,8 @@
   test_wild_encounter
   test_seeds_database
   test_rng_timings
-  test_wild_target)
+  test_wild_target
+  test_switch_rng_calibration)
  (modules
   fixture_lines
   search_fixture
@@ -14,7 +15,8 @@
   test_wild_encounter
   test_seeds_database
   test_rng_timings
-  test_wild_target)
+  test_wild_target
+  test_switch_rng_calibration)
  (deps
   (glob_files fixtures/*.txt)
   ../../assets/rng_seeds_mgba_sevii_save.json)

@@ -61,6 +61,26 @@ let game_steps ~log t plan =
     flee = (fun () -> true);
   }
 
+let policy_catch_steps ~log ~timings ?(visual_shiny_check = false)
+    ?(on_miss = ignore) ~config ~policy () : Wild_rng.policy_catch_steps =
+  let detect_shiny =
+    if visual_shiny_check then
+      Some (fun () -> Frlg_readers.Shiny_encounter_detector.detect ())
+    else None
+  in
+  let catch_battle () =
+    Pokemon_catch.Catch_runner.run ~log
+      (Battle_catch_steps.make ~log config)
+      policy
+  in
+  {
+    find_encounter = find_encounter ~log timings;
+    detect_shiny;
+    on_miss;
+    catch_battle;
+    finish_catch = Capture_steps.finish_catch ~log;
+  }
+
 let read_star () =
   match
     Effects.await ~timeout_ms:star_timeout_ms Frlg_readers.Shiny_star.shiny

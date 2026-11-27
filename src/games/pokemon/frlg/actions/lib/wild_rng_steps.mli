@@ -34,6 +34,20 @@ val game_steps :
     encounter, and no flee: a foe that is not the target is left in its battle,
     and the next attempt's reset ends it. *)
 
+val policy_catch_steps :
+  log:(string -> unit) ->
+  timings:Frlg_rng.Rng_timings.t ->
+  ?visual_shiny_check:bool ->
+  ?on_miss:(unit -> unit) ->
+  config:Battle_catch_steps.config ->
+  policy:Pokemon_catch.Catch_state.policy ->
+  unit ->
+  Wild_rng.policy_catch_steps
+(** Builds {!Wild_rng.policy_catch_steps} combining {!find_encounter}, optional
+    {!Frlg_readers.Shiny_encounter_detector.detect}, {!Battle_catch_steps.make}
+    with {!Pokemon_catch.Catch_runner.run}, and {!Capture_steps.finish_catch}.
+*)
+
 val shiny_at : log:(string -> unit) -> slot:int -> bool
 (** From the overworld: the member's summary, its first page's star read, back
     to the overworld. Fails as [no_party], [no_member_menu] or [no_summary]. *)
