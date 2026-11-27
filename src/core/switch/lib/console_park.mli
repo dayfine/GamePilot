@@ -29,6 +29,16 @@ val park :
     HOME press there would resume the game), dimmed or not. On the user select:
     B back to HOME. *)
 
+val park_and_close :
+  log:(string -> unit) ->
+  picture:Wire.box ->
+  ?tile:Home_screen.tile_color ->
+  unit ->
+  (unit, string) result
+(** Returns to the Switch HOME menu ({!park}) and closes the running game
+    ({!Game_entry.close_game}). Already on HOME with no game running: succeeds
+    after checking for the close-game popup. *)
+
 val resume :
   log:(string -> unit) ->
   picture:Wire.box ->

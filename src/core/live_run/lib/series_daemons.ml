@@ -75,3 +75,47 @@ let finish t ~runs_dir run ~summary ending =
   Series_watch.run_ended t.watched run ending
 
 let finished t ~passed = Series_watch.finished t.watched ~passed
+
+type close_game_action = Close_game | Skip_failed_run | No_close
+
+let close_game_action ~close_game ~backend ~passed =
+  match (close_game, backend, passed) with
+  | true, Daemon_process.Switch _, true -> Close_game
+  | true, Daemon_process.Switch _, false -> Skip_failed_run
+  | false, _, _ | true, Daemon_process.Mgba _, _ -> No_close
+
+let run_ephemeral_session t ~checkpoint body =
+  let log_dir = Filename.get_temp_dir_name () in
+  let file ext = Filename.concat log_dir ("gamepilot-" ^ checkpoint ^ ext) in
+  let failed ({ reason; _ } : Daemon_run.failed) = Error reason in
+  let started =
+    Daemon_process.start
+      ~flags:(t.flags @ [ "--no-record" ])
+      ~daemon:t.daemon ~backend:t.backend ~port:0 ~wire_log:(file ".wire.jsonl")
+      ~out_file:(file ".daemon.out") ~checkpoint ()
+  in
+  Daemon_run.with_daemon ~failed started (fun daemon ->
+      Daemon_run.in_session ~failed ~dir:log_dir (fun () ->
+          Live.run_with_backend ~port:daemon.port body))
+
+let close_game_now t ?tile () =
+  let step (b : Wire.backend) =
+    Switch.Console_park.park_and_close ~log:print_endline ~picture:b.viewport
+      ?tile ()
+  in
+  match run_ephemeral_session t ~checkpoint:"close-game" step with
+  | Ok () ->
+      print_endline "[Close game] done";
+      true
+  | Error e ->
+      print_endline ("[Close game] failed: " ^ e);
+      false
+
+let close_game_after_pass t ~close_game ?tile ~passed () =
+  match close_game_action ~close_game ~backend:t.backend ~passed with
+  | Close_game -> close_game_now t ?tile ()
+  | Skip_failed_run ->
+      print_endline
+        "[Close game] skipped (run did not pass; keeping console state)";
+      true
+  | No_close -> true

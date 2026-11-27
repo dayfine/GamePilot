@@ -15,6 +15,9 @@ type setup = {
   save_after_pass : bool;
       (** On the Switch: save in the game after a pass
           (Checkpoints_series.Console_runs). *)
+  close_game : bool;
+      (** On the Switch: return to HOME and close the running game after a
+          passing series ([--close-game]). *)
   home_tile : Switch.Home_screen.tile_color option;
       (** The game's Switch HOME tile colour, for resuming from HOME before a
           Switch run ({!Switch.Initial_screen.check}). *)

@@ -170,3 +170,11 @@ let resumed_to_string = function
   | Already_in_game -> "already in the game"
   | Resumed -> "resumed the suspended game"
   | Launched -> "launched the game"
+
+(* A valid [min <= max] RGB range used when the caller does not need to match a
+   specific game tile on HOME; the daemon rejects probes with [min > max]. *)
+let no_tile : H.tile_color = { min = (0, 0, 0); max = (0, 0, 0) }
+
+let park_and_close ~log ~picture ?(tile = no_tile) () =
+  let* () = park ~log ~picture tile in
+  Game_entry.close_game ~log ~picture tile

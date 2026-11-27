@@ -283,4 +283,8 @@ let run_series program ~program_fields ~options ~viewport plan_dir args =
   in
   let* code = chain setup ~chained:false plans in
   Live_run.Series_daemons.finished setup.daemons ~passed:(code = 0);
-  Ok code
+  let closed =
+    Live_run.Series_daemons.close_game_after_pass setup.daemons
+      ~close_game:f.close_game ~passed:(code = 0) ()
+  in
+  Ok (if code = 0 && not closed then 1 else code)

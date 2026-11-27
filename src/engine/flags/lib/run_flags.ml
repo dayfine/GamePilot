@@ -17,6 +17,9 @@ type 'game flags = {
   capture : string option;
   replay : string option;  (** A recorded video for a dry run (fake board). *)
   save_after_pass : bool;  (** Switch: save in the game after a pass. *)
+  close_game : bool;
+      (** Switch: return to HOME and close the running game after a passing
+          series ([--close-game]); false by default. *)
   preflight : bool;
   max_rounds : int option;  (** A repeating checkpoint's rounds, at most. *)
   from_event : string option;
@@ -66,6 +69,7 @@ let defaults game =
     capture = None;
     replay = None;
     save_after_pass = true;
+    close_game = false;
     preflight = false;
     max_rounds = None;
     from_event = None;
@@ -186,6 +190,7 @@ let rec parse game f = function
       parse game { f with save_after_pass = true } rest
   | "--no-save-after-pass" :: rest ->
       parse game { f with save_after_pass = false } rest
+  | "--close-game" :: rest -> parse game { f with close_game = true } rest
   | "--preflight" :: rest -> parse game { f with preflight = true } rest
   | (("--record" | "--no-record") as flag) :: rest ->
       parse game { f with daemon_flags = f.daemon_flags @ [ flag ] } rest
@@ -207,7 +212,8 @@ let required name = function
 let daemon_backend f mode =
   match (f.backend, f.serial, f.capture, f.replay, mode) with
   | "mgba", None, None, None, _ ->
-      Ok (Daemon_process.Mgba { port = f.mgba_port })
+      if f.close_game then Error "--close-game needs --backend switch"
+      else Ok (Daemon_process.Mgba { port = f.mgba_port })
   | "mgba", _, _, _, _ ->
       Error "--serial, --capture and --replay need --backend switch"
   | "switch", _, _, _, Checkpoint_trials.Verification ->

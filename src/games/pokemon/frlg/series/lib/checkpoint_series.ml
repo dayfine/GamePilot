@@ -282,4 +282,8 @@ let run ~plan_dir (setup : Run.setup) ids ~after =
   in
   let code = chain_from ~plan_dir setup ids chain ~after in
   Series_daemons.finished setup.daemons ~passed:(code = 0);
-  code
+  let closed =
+    Series_daemons.close_game_after_pass setup.daemons
+      ~close_game:setup.close_game ?tile:setup.home_tile ~passed:(code = 0) ()
+  in
+  if code = 0 && not closed then 1 else code
