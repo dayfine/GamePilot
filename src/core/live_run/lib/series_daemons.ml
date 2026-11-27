@@ -27,6 +27,31 @@ let create ~daemon ~backend ~flags ~port ~watch series =
   in
   { series; watched; daemon; backend; flags; port; watch; bound = ref None }
 
+let create_for_runs ~daemon ~runs_dir ~backend ~viewport ?(program_flags = [])
+    ~daemon_flags ~port ~watch series =
+  let flags =
+    Daemon_process.viewport_args backend viewport @ program_flags @ daemon_flags
+  in
+  let watch = Watch_hub.for_runs_dir ~daemon ~runs_dir watch in
+  create ~daemon ~backend ~flags ~port ~watch series
+
+let run_name ?(unit_name = "run") ?attempts ~id ~n ~attempt () =
+  let base = Printf.sprintf "%s %s %d" id unit_name n in
+  match attempts with
+  | Some total when total > 1 ->
+      Printf.sprintf "%s attempt %d/%d" base attempt total
+  | Some _ -> base
+  | None ->
+      if attempt > 1 then Printf.sprintf "%s attempt %d" base attempt else base
+
+let format_ending ~name ?(suffix = "") = function
+  | Ok () ->
+      ( "PASS " ^ name ^ suffix,
+        { Run_record.result = "pass"; at = ""; reason = "" } )
+  | Error (at, reason) ->
+      ( Printf.sprintf "FAIL %s at %s: %s%s" name at reason suffix,
+        { Run_record.result = "fail"; at; reason } )
+
 let series t = t.series
 
 let start t record ~checkpoint (port, watch) =
@@ -74,16 +99,34 @@ let finish t ~runs_dir run ~summary ending =
   Daemon_run.finish ~runs_dir run ~summary ending;
   Series_watch.run_ended t.watched run ending
 
+let run_live_in ~failed (run : Run_record.run) ~log body
+    (daemon : Daemon_process.t) =
+  Daemon_run.run_live ~failed ~dir:run.record.dir ~port:daemon.port (body ~log)
+
 let run_in t ~runs_dir ~failed ~ending ~banner (run : Run_record.run) ~n body =
   let log, close = Run_record.run_log run.record in
   let outcome =
     Fun.protect ~finally:close (fun () ->
         log banner;
-        with_daemon t ~failed run ~n (body ~log))
+        with_daemon t ~failed run ~n (run_live_in ~failed run ~log body))
   in
   let summary, run_ending = ending outcome in
   finish t ~runs_dir run ~summary run_ending;
   outcome
+
+let with_record body record ~log backend = body ~log record backend
+
+let start_and_run t ?attempt ?events ~runs_dir ~checkpoint ~mode ~n ~failed
+    ~ending ~banner body =
+  let ( let* ) = Result.bind in
+  let* run =
+    Run_record.start ?attempt ?events ~runs_dir t.series.info ~checkpoint ~mode
+  in
+  let outcome =
+    run_in t ~runs_dir ~failed ~ending ~banner run ~n
+      (with_record body run.record)
+  in
+  Ok (run.record, outcome)
 
 let finished t ~passed = Series_watch.finished t.watched ~passed
 
@@ -130,3 +173,8 @@ let close_game_after_pass t ~close_game ?tile ~passed () =
         "[Close game] skipped (run did not pass; keeping console state)";
       true
   | No_close -> true
+
+let finish_series t ~close_game ?tile ~passed () =
+  finished t ~passed;
+  let closed = close_game_after_pass t ~close_game ?tile ~passed () in
+  if passed && closed then 0 else 1

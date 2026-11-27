@@ -152,12 +152,6 @@ let check_from_event f mode ~checkpoints =
   | Some _ ->
       Event_range.check ~mode ~keeps_states:(f.backend = "mgba") ~checkpoints
 
-(* Each run's daemon: the program's --viewport, then the user's flags. *)
-let daemons f backend ~viewport series =
-  Series_daemons.create ~daemon:f.daemon ~backend ~port:f.port
-    ~flags:(Daemon_process.viewport_args backend viewport @ f.daemon_flags)
-    ~watch:(watch_of f) series
-
 let from_event f = Option.map (fun first -> (first, f.to_event)) f.from_event
 
 let filter_for_target ~plan_dir options ids =
@@ -186,36 +180,43 @@ let run_series program plan_dir (f : Pokemon_flags.flags) =
       (preflight_setup program plan_dir f backend ~viewport ~from_id)
   in
   let* policy = Checkpoint_trials.policy ?runs:f.runs mode in
-  let* ids = Plan_dir.checkpoint_ids plan_dir in
-  let* selected, after = Plan_dir.select ids ~from_id ~to_id in
-  let* selected = filter_for_target ~plan_dir program.options selected in
+  let* range = Plan_dir.select_range ~plan_dir ~from_id ~to_id in
+  let* selected = filter_for_target ~plan_dir program.options range.selected in
   let* () = check_from_event f mode ~checkpoints:(List.length selected) in
   let* world = Frlg_checkpoints.Checkpoint_run.load_world () in
-  let info = run_info program plan_dir f Checkpoints ~from_id ~to_id in
+  let info =
+    run_info program plan_dir f Checkpoints ~from_id:range.from_id
+      ~to_id:range.to_id
+  in
   let mode_name = Checkpoint_trials.mode_to_string mode in
   let series : Series_daemons.series =
     { info; mode = mode_name; checkpoints = selected }
   in
-  Ok
-    (Checkpoint_series.run ~plan_dir
-       {
-         states = f.states;
-         runs_dir = f.runs_dir;
-         backend;
-         common = { f.game.common with port = f.port };
-         mode;
-         policy;
-         world;
-         info;
-         program_options = program.options;
-         daemons = daemons f backend ~viewport series;
-         save_after_pass = f.save_after_pass;
-         close_game = f.close_game;
-         home_tile = program.home_tile;
-         max_rounds = f.max_rounds;
-         from_event = from_event f;
-       }
-       selected ~after)
+  let daemons =
+    Series_daemons.create_for_runs ~daemon:f.daemon ~runs_dir:f.runs_dir
+      ~backend ~viewport ~daemon_flags:f.daemon_flags ~port:f.port
+      ~watch:f.watch series
+  in
+  let setup : Live_checkpoint.setup =
+    {
+      states = f.states;
+      runs_dir = f.runs_dir;
+      backend;
+      common = { f.game.common with port = f.port };
+      mode;
+      policy;
+      world;
+      info;
+      program_options = program.options;
+      daemons;
+      save_after_pass = f.save_after_pass;
+      close_game = f.close_game;
+      home_tile = program.home_tile;
+      max_rounds = f.max_rounds;
+      from_event = from_event f;
+    }
+  in
+  Ok (Checkpoint_series.run ~plan_dir setup selected ~after:range.after)
 
 let preflight program plan_dir f =
   let* from_id = required "--from" f.from_id in

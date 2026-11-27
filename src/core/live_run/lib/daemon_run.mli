@@ -28,6 +28,13 @@ val run_live :
     inside {!in_session}, turning any unexpected exception into a non-repeating
     failure at ["raised"] so the run folder and watch run always close. *)
 
+val guard_session :
+  on_stop:(string -> 'o) -> on_raised:(exn -> 'o) -> (unit -> 'o) -> 'o
+(** [guard_session ~on_stop ~on_raised body] runs [body ()] inside a live
+    session: re-raises {!Effects.Disconnected} so {!in_session} handles it, maps
+    {!Effects.Stop_requested} through [on_stop], and maps any other exception
+    through [on_raised]. *)
+
 val finish :
   runs_dir:string ->
   Run_record.run ->

@@ -24,10 +24,15 @@ let resolve ids id =
         Error
           (id ^ " names more than one checkpoint: " ^ String.concat ", " named)
 
-let select ids ~from_id ~to_id =
-  let ( let* ) = Result.bind in
-  let* from_id = resolve ids from_id in
-  let* to_id = resolve ids to_id in
+type selection = {
+  from_id : string;
+  to_id : string;
+  selected : string list;
+  after : string option;
+  all : string list;
+}
+
+let select_resolved ids ~from_id ~to_id =
   let from = drop_until from_id ids in
   match (from, drop_until to_id from) with
   | [], _ -> Error ("no checkpoint " ^ from_id)
@@ -35,6 +40,20 @@ let select ids ~from_id ~to_id =
   | _, _ :: after ->
       let n = List.length from - List.length after in
       Ok (List.filteri (fun i _ -> i < n) from, List.nth_opt after 0)
+
+let select ids ~from_id ~to_id =
+  let ( let* ) = Result.bind in
+  let* from_id = resolve ids from_id in
+  let* to_id = resolve ids to_id in
+  select_resolved ids ~from_id ~to_id
+
+let select_range ~plan_dir ~from_id ~to_id =
+  let ( let* ) = Result.bind in
+  let* all = checkpoint_ids plan_dir in
+  let* from_id = resolve all from_id in
+  let* to_id = resolve all to_id in
+  let* selected, after = select_resolved all ~from_id ~to_id in
+  Ok { from_id; to_id; selected; after; all }
 
 let plan_file ~plan_dir id = Filename.concat plan_dir (id ^ plan_suffix)
 

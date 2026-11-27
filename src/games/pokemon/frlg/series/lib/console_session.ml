@@ -66,27 +66,27 @@ let start_check ~log ~frame_path ~start_path party =
 
 let ( let* ) = Result.bind
 
-let reset_to_save ~log ~picture ~home_tile =
-  let* () =
-    Switch.Initial_screen.check ~log ~picture (In_game_or_resume home_tile)
-  in
+let reset_to_save ~log =
   log "[Console] back to the last save";
   Result.map_error
     (fun c -> "could not return to the last save: " ^ cause c)
     (Frlg_actions.Soft_reset.return_to_save ~log ())
 
-let before_step ~log ~picture ~home_tile = function
-  | Console_runs.Return_to_save -> reset_to_save ~log ~picture ~home_tile
+let before_step ~log = function
+  | Console_runs.Return_to_save -> reset_to_save ~log
   | Save_in_game | Keep_start_frame -> Ok ()
 
 let before ~log ~picture ~home_tile ~frame_path ~start_path ~steps party =
-  if steps = [] then
-    log "[Console] continuing from previous pass (skipping soft reset)";
+  let already_at_start = not (List.mem Console_runs.Return_to_save steps) in
+  let* () =
+    Switch.Initial_screen.check_unless_chained ~already_at_start ~log ~picture
+      (In_game_or_resume home_tile)
+  in
   let* () =
     List.fold_left
       (fun done_ s ->
         let* () = done_ in
-        before_step ~log ~picture ~home_tile s)
+        before_step ~log s)
       (Ok ()) steps
   in
   start_check ~log ~frame_path ~start_path party
