@@ -65,6 +65,11 @@ let resume_from_home ~log ~picture tile =
       Ok ()
   | Error e -> Error ("could not resume the game from HOME: " ^ e)
 
+let verify_via_home ~log ~picture tile =
+  match Console_park.park ~log ~picture tile with
+  | Error e -> Error ("could not reach HOME to verify the game: " ^ e)
+  | Ok () -> resume_from_home ~log ~picture tile
+
 let tile_of = function
   | In_game_or_resume tile -> tile
   | In_game_read_only | In_game_or_home -> None
@@ -74,6 +79,7 @@ let check ~log ~picture expectation =
   log ("[Screen] " ^ screen_to_string screen);
   match (screen, expectation) with
   | (Black | No_frame), _ -> Error (unexpected_screen screen)
+  | In_game, In_game_or_resume (Some tile) -> verify_via_home ~log ~picture tile
   | In_game, _ -> Ok ()
   | (Home _ | Home_dimmed | User_select), In_game_or_home -> Ok ()
   | (Home _ | Home_dimmed | User_select), In_game_or_resume (Some tile) ->

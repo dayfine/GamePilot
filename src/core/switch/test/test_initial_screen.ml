@@ -10,6 +10,8 @@ let console () =
  fun t b screen ->
   let show after s = S.show t ~after s in
   match (b, screen) with
+  | Wire.Home, S.Game -> show 800 S.Home_fire_red_last
+  | Wire.Home, S.Intro -> show 800 S.Home_bdsp_last
   | _, S.Home_dimmed -> show 300 S.Home_fire_red_last
   | Wire.Right, S.Home_bdsp_last -> show 200 S.Home_on_fire_red
   | Wire.A, S.Home_fire_red_last -> show 800 S.Game
@@ -88,9 +90,12 @@ let () =
          select";
       case "read-only: no frame fails fast" (check_no_frame read_only)
         "error: no frame received from the capture card";
-      case "resume: in game passes with no presses"
+      case "resume: in game verifies via HOME and resumes FireRed"
         (check_screen resume_fr S.Game)
-        "ok; no press; ends on game";
+        "ok; Home, A; ends on game";
+      case "resume: wrong app/game presses HOME and launches FireRed"
+        (check_screen resume_fr S.Intro)
+        "ok; Home, Right, A, A; ends on intro";
       case "resume: black / asleep fails fast with no presses"
         (check_screen resume_fr S.Black)
         "error: console appears asleep or capture shows a black screen; no \
