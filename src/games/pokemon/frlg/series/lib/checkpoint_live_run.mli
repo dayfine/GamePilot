@@ -18,8 +18,12 @@ val run :
   checkpoint ->
   int ->
   attempt:int ->
+  already_at_start:bool ->
   progress:(Engine_run.Checkpoint_trials.run option -> Wire.Watch_run.t) ->
   (Run_record.t * outcome, string) result
 (** Attempt [attempt] of run [n] of the checkpoint: its folder and how it ended;
-    [Error] when its folder could not be made. [progress] is the chain for the
-    watch page before the attempt ([None]) and after it. *)
+    [Error] when its folder could not be made. [already_at_start] is [true] on
+    the Switch when continuing directly from a passing checkpoint or round,
+    skipping the redundant initial-screen check and soft reset while still
+    running the start check. [progress] is the chain for the watch page before
+    the attempt ([None]) and after it. *)
