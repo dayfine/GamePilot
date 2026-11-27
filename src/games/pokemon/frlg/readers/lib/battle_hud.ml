@@ -60,14 +60,15 @@ let hp_thresh : hp_thresholds =
   { min_chroma = 35.; min_brightness = 115.; max_stddev_sum = 250. }
 
 (* On Switch 1080p, the 20x8 status probe (x 16..36, y 31..39) includes the
-   grey SLP badge with white letters plus cream border (sum ~603.6, ch ~36.2),
-   while Healthy with a caught Poké Ball icon reads sum ~650.5 (uncaught ~732). *)
+   grey SLP badge with white letters plus cream border (caught sum ~603.6,
+   ch ~36.2; uncaught sum ~628.5, ch ~29.1), while Healthy reads sum ~650.5
+   for caught species and ~746.5 for uncaught species. *)
 let status_thresh : status_thresholds =
   {
-    healthy_min_sum = 625.;
+    healthy_min_sum = 640.;
     healthy_max_chroma = 65.;
     sleep_min_sum = 260.;
-    sleep_max_sum = 620.;
+    sleep_max_sum = 638.;
     sleep_max_chroma = 42.;
     par_min_chroma = 40.;
     par_min_r_share = 0.38;

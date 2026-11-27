@@ -116,6 +116,12 @@ let test_foe_status () =
   assert_eq "Switch SLP badge with cream border is Asleep"
     (Battle_hud.foe_status (with_status (212.3, 213.8, 177.6)))
     (Some Battle_hud.Asleep);
+  assert_eq "Switch uncaught SLP badge is Asleep"
+    (Battle_hud.foe_status (with_status (218.2, 219.7, 190.6)))
+    (Some Battle_hud.Asleep);
+  assert_eq "Switch uncaught Healthy is Healthy"
+    (Battle_hud.foe_status (with_status (255.0, 255.0, 236.5)))
+    (Some Battle_hud.Healthy);
   assert_eq "foe_asleep true on SLP"
     (Battle_hud.foe_asleep (with_status (148., 152., 148.)))
     (Some true);
