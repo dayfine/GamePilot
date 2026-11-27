@@ -17,6 +17,329 @@
           "kind": "heal"
         }
       ]
+    },
+    "wild_rng_grass_catch": {
+      "params": {
+        "town": "town",
+        "spot": "place",
+        "location": "string",
+        "species": "string"
+      },
+      "events": [
+        {
+          "id": "fly",
+          "kind": "game_action",
+          "action": "fly",
+          "args": {"town": "{town.fly}"},
+          "declared_after": {"place": "{town.outside}"},
+          "why": "Fly to {town}."
+        },
+        {
+          "id": "to_spot",
+          "kind": "route",
+          "action": "run",
+          "args": {"target": {"place": "{spot}"}},
+          "why": "Walk to {spot} for {species}."
+        },
+        {
+          "id": "save_before",
+          "kind": "game_action",
+          "action": "save_game",
+          "args": {},
+          "why": "Save at {spot} so the RNG reset boots here."
+        },
+        {
+          "id": "catch",
+          "kind": "game_action",
+          "action": "wild_rng",
+          "args": {
+            "method": "grass",
+            "species": "{species}",
+            "location": "{location}"
+          },
+          "why": "Timed Wild RNG encounter and shiny catch for {species}."
+        },
+        {
+          "id": "save_catch",
+          "kind": "game_action",
+          "action": "save_game",
+          "args": {},
+          "why": "Keep the shiny {species}."
+        },
+        {
+          "id": "to_pc",
+          "kind": "route",
+          "action": "run",
+          "args": {"target": {"place": "{town.pc}"}},
+          "why": "Return to {town}'s Pokemon Center PC."
+        },
+        {
+          "id": "deposit",
+          "kind": "game_action",
+          "action": "pc_deposit",
+          "args": {"species": ["{species}"]},
+          "why": "Deposit {species} so party slot 6 is free again."
+        },
+        {
+          "id": "to_nurse",
+          "kind": "route",
+          "action": "run",
+          "args": {"target": {"place": "{town.nurse}"}},
+          "why": "Walk to {town}'s Pokemon Center nurse."
+        },
+        {
+          "id": "heal",
+          "kind": "heal"
+        },
+        {
+          "id": "outside",
+          "kind": "route",
+          "action": "run",
+          "args": {"target": {"place": "{town.outside}"}},
+          "why": "Step outdoors where the next checkpoint starts."
+        }
+      ]
+    },
+    "wild_rng_surf_catch": {
+      "params": {
+        "town": "town",
+        "shore": "place",
+        "location": "string",
+        "species": "string"
+      },
+      "events": [
+        {
+          "id": "fly",
+          "kind": "game_action",
+          "action": "fly",
+          "args": {"town": "{town.fly}"},
+          "declared_after": {"place": "{town.outside}"},
+          "why": "Fly to {town}."
+        },
+        {
+          "id": "to_shore",
+          "kind": "route",
+          "action": "run",
+          "args": {"target": {"place": "{shore}"}},
+          "why": "Walk to {shore} to surf for {species}."
+        },
+        {
+          "id": "surf",
+          "kind": "game_action",
+          "action": "surf",
+          "args": {},
+          "why": "Surf onto water at {shore}."
+        },
+        {
+          "id": "save_before",
+          "kind": "game_action",
+          "action": "save_game",
+          "args": {},
+          "why": "Save on water at {shore} so the RNG reset boots here."
+        },
+        {
+          "id": "catch",
+          "kind": "game_action",
+          "action": "wild_rng",
+          "args": {
+            "method": "surf",
+            "species": "{species}",
+            "location": "{location}"
+          },
+          "why": "Timed Wild RNG Surf encounter and shiny catch for {species}."
+        },
+        {
+          "id": "save_catch",
+          "kind": "game_action",
+          "action": "save_game",
+          "args": {},
+          "why": "Keep the shiny {species}."
+        },
+        {
+          "id": "to_pc",
+          "kind": "route",
+          "action": "run",
+          "args": {"target": {"place": "{town.pc}"}},
+          "why": "Return to {town}'s Pokemon Center PC."
+        },
+        {
+          "id": "deposit",
+          "kind": "game_action",
+          "action": "pc_deposit",
+          "args": {"species": ["{species}"]},
+          "why": "Deposit {species} so party slot 6 is free again."
+        },
+        {
+          "id": "to_nurse",
+          "kind": "route",
+          "action": "run",
+          "args": {"target": {"place": "{town.nurse}"}},
+          "why": "Walk to {town}'s Pokemon Center nurse."
+        },
+        {
+          "id": "heal",
+          "kind": "heal"
+        },
+        {
+          "id": "outside",
+          "kind": "route",
+          "action": "run",
+          "args": {"target": {"place": "{town.outside}"}},
+          "why": "Step outdoors where the next checkpoint starts."
+        }
+      ]
+    },
+    "wild_rng_fish_catch": {
+      "params": {
+        "town": "town",
+        "shore": "place",
+        "location": "string",
+        "species": "string"
+      },
+      "events": [
+        {
+          "id": "fly",
+          "kind": "game_action",
+          "action": "fly",
+          "args": {"town": "{town.fly}"},
+          "declared_after": {"place": "{town.outside}"},
+          "why": "Fly to {town}."
+        },
+        {
+          "id": "to_shore",
+          "kind": "route",
+          "action": "run",
+          "args": {"target": {"place": "{shore}"}},
+          "why": "Walk to {shore} to fish for {species}."
+        },
+        {
+          "id": "save_before",
+          "kind": "game_action",
+          "action": "save_game",
+          "args": {},
+          "why": "Save at {shore} so the RNG reset boots here."
+        },
+        {
+          "id": "catch",
+          "kind": "game_action",
+          "action": "wild_rng",
+          "args": {
+            "method": "super_rod",
+            "species": "{species}",
+            "location": "{location}"
+          },
+          "why": "Timed Wild RNG Super Rod encounter and shiny catch for {species}."
+        },
+        {
+          "id": "save_catch",
+          "kind": "game_action",
+          "action": "save_game",
+          "args": {},
+          "why": "Keep the shiny {species}."
+        },
+        {
+          "id": "to_pc",
+          "kind": "route",
+          "action": "run",
+          "args": {"target": {"place": "{town.pc}"}},
+          "why": "Return to {town}'s Pokemon Center PC."
+        },
+        {
+          "id": "deposit",
+          "kind": "game_action",
+          "action": "pc_deposit",
+          "args": {"species": ["{species}"]},
+          "why": "Deposit {species} so party slot 6 is free again."
+        },
+        {
+          "id": "to_nurse",
+          "kind": "route",
+          "action": "run",
+          "args": {"target": {"place": "{town.nurse}"}},
+          "why": "Walk to {town}'s Pokemon Center nurse."
+        },
+        {
+          "id": "heal",
+          "kind": "heal"
+        },
+        {
+          "id": "outside",
+          "kind": "route",
+          "action": "run",
+          "args": {"target": {"place": "{town.outside}"}},
+          "why": "Step outdoors where the next checkpoint starts."
+        }
+      ]
+    },
+    "gift_rng_prize": {
+      "params": {
+        "town": "town",
+        "counter": "place",
+        "species": "string",
+        "prize_row": "string"
+      },
+      "events": [
+        {
+          "id": "fly",
+          "kind": "game_action",
+          "action": "fly",
+          "args": {"town": "{town.fly}"},
+          "declared_after": {"place": "{town.outside}"},
+          "why": "Fly to {town}."
+        },
+        {
+          "id": "to_counter",
+          "kind": "route",
+          "action": "run",
+          "args": {"target": {"place": "{counter}"}},
+          "why": "Walk to {counter} to claim {species}."
+        },
+        {
+          "id": "save_before",
+          "kind": "game_action",
+          "action": "save_game",
+          "args": {},
+          "why": "Save at {counter} so the RNG reset boots here."
+        },
+        {
+          "id": "claim",
+          "kind": "game_action",
+          "action": "gift_rng",
+          "args": {
+            "species": "{species}",
+            "prize_row": "{prize_row}"
+          },
+          "why": "Timed Gift RNG prize claim for shiny {species}."
+        },
+        {
+          "id": "save_claim",
+          "kind": "game_action",
+          "action": "save_game",
+          "args": {},
+          "why": "Keep the shiny {species}."
+        },
+        {
+          "id": "to_pc",
+          "kind": "route",
+          "action": "run",
+          "args": {"target": {"place": "{town.pc}"}},
+          "why": "Return to {town}'s Pokemon Center PC."
+        },
+        {
+          "id": "deposit",
+          "kind": "game_action",
+          "action": "pc_deposit",
+          "args": {"species": ["{species}"]},
+          "why": "Deposit {species} so party slot 6 is free again."
+        },
+        {
+          "id": "outside",
+          "kind": "route",
+          "action": "run",
+          "args": {"target": {"place": "{town.outside}"}},
+          "why": "Step outdoors where the next checkpoint starts."
+        }
+      ]
     }
   }
 }

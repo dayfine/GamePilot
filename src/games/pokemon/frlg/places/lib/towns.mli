@@ -8,6 +8,10 @@ type town = {
   fly : string;
       (** Fly's name for it, the map Fly lands on: ["LavenderTown"]. *)
   mart : string option;  (** The place in front of its Mart clerk, if listed. *)
+  pc : string option;
+      (** The place in front of its Pokemon Center PC, if listed. *)
+  outside : string option;
+      (** The place outside its Pokemon Center door, if listed. *)
 }
 (** One town of the table. *)
 
@@ -16,8 +20,9 @@ type t
 
 val parse :
   where:string -> places:string list -> Yojson.Safe.t -> (t, string) result
-(** The [towns] object; [where] prefixes errors (["places.json: "]). A nurse or
-    mart that is not one of [places] is an error. *)
+(** The [towns] object; [where] prefixes errors (["places.json: "]). Any
+    referenced place ([nurse], [mart], [pc], [outside]) that is not one of
+    [places] is an error. *)
 
 val empty : t
 (** No towns: a table without a [towns] section. *)
@@ -33,4 +38,4 @@ val find_by_fly : t -> string -> town option
 
 val field : t -> string -> field:string option -> (string, string) result
 (** A [town] parameter's value: the key itself ([None]), or its ["nurse"],
-    ["fly"] or ["mart"]. *)
+    ["fly"], ["mart"], ["pc"], or ["outside"]. *)

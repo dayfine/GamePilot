@@ -36,7 +36,8 @@ let options_of pairs =
       };
       {
         key = "ball";
-        value = One_of [ "poke-ball"; "great-ball"; "ultra-ball" ];
+        value =
+          One_of [ "poke-ball"; "great-ball"; "ultra-ball"; "luxury-ball" ];
         presence = Optional;
         doc = "";
       };

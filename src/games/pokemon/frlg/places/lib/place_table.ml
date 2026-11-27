@@ -153,8 +153,20 @@ let routes t : Checkpoints_expand.Place_routes.game =
     ride = Lift_stops.ride;
   }
 
+let resolve_place t value ~field =
+  match field with
+  | None -> Result.map (fun p -> p.name) (find t value)
+  | Some f -> Error (Printf.sprintf "a place has no %s" f)
+
+let resolve_string value ~field =
+  match field with
+  | None -> Ok value
+  | Some f -> Error (Printf.sprintf "a string has no %s" f)
+
 let resolve t : Engine_expand.Fragment_calls.resolve =
  fun ~kind value ~field ->
   match kind with
   | "town" -> Towns.field t.towns value ~field
-  | other -> Error ("no parameter kind " ^ other ^ " (town)")
+  | "place" -> resolve_place t value ~field
+  | "string" -> resolve_string value ~field
+  | other -> Error ("no parameter kind " ^ other ^ " (town, place, string)")
