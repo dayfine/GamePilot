@@ -1,19 +1,5 @@
 module Walk_args = Walk_args
-
-module Pose = struct
-  type zone = { place : string; spot : string option }
-  type t = zone
-  type observed = zone
-
-  let matches pose observed =
-    pose.place = observed.place
-    && (pose.spot = None || pose.spot = observed.spot)
-
-  let to_string { place; spot } =
-    match spot with Some s -> place ^ "/" ^ s | None -> place
-
-  let observed_to_string = to_string
-end
+module Pose = Engine_rules.Zone_pose
 
 module Action = struct
   type t = Walk of Walk_args.t
