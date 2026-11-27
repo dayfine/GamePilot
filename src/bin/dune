@@ -23,6 +23,7 @@
   gamepilot.live
   gamepilot.bdsp_actions
   gamepilot.bdsp_rules
+  gamepilot.bdsp_engine
   gamepilot.bdsp_checkpoint_series
   gamepilot.program_registry
   gamepilot.guide_page

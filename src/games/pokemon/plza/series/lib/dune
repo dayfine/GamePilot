@@ -9,7 +9,6 @@
   gamepilot.live_run
   gamepilot.run_record
   gamepilot.watch_report
-  gamepilot.guide_page
   gamepilot.engine_run
   gamepilot.engine_series
   gamepilot.run_flags
