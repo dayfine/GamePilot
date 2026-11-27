@@ -53,11 +53,13 @@ type outcome = {
 val decode :
   ?options:Run_options.t ->
   ?fallback:Wild_rng_plan.trainer_ids ->
+  ?default_frame_model:string ->
   Json_field.obj ->
   (plan, Pokemon_engine.Failure.cause) result
 (** Decodes ["species"], ["prize_row"] (int or decimal string 0..4), optional
     ["tid"], ["sid"], ["seeds"], ["seed_shift"], ["ingame_offset"],
-    ["frame_model"], ["advances"], and ["attempts"]. *)
+    ["frame_model"] (defaults to [default_frame_model], itself ["mgba"]),
+    ["advances"], and ["attempts"]. *)
 
 val apply_calibration : Frlg_rng.Switch_rng_calibration.entry -> plan -> plan
 (** Applies a persisted per-console Switch calibration entry to [plan]. *)

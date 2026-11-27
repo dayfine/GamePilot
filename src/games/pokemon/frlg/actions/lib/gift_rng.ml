@@ -54,7 +54,8 @@ let prize_row ~where args =
     J.fail "%sprize_row is %d, not 0..%d" where raw (Game_corner.prize_slots - 1)
   else raw
 
-let read ~options ~(fallback : Wild_rng_plan.trainer_ids) ~where args =
+let read ~options ~(fallback : Wild_rng_plan.trainer_ids) ~default_frame_model
+    ~where args =
   let module W = Wild_rng_plan in
   let min_advance, max_advance = W.advances ~where args in
   {
@@ -70,7 +71,7 @@ let read ~options ~(fallback : Wild_rng_plan.trainer_ids) ~where args =
     ingame_offset =
       W.opt_int ~where ~default:0 ~low:(-W.max_ingame_offset)
         ~high:W.max_ingame_offset "ingame_offset" args;
-    frame_model = W.frame_model ~where args;
+    frame_model = W.frame_model ~default:default_frame_model ~where args;
     min_advance;
     max_advance;
     attempts =
@@ -79,8 +80,11 @@ let read ~options ~(fallback : Wild_rng_plan.trainer_ids) ~where args =
   }
 
 let decode ?(options = Run_options.none)
-    ?(fallback = Wild_rng_plan.no_trainer_ids) args =
-  Action_args.decode ~action:"gift_rng" (read ~options ~fallback) args
+    ?(fallback = Wild_rng_plan.no_trainer_ids)
+    ?(default_frame_model = Wild_rng_plan.default_frame_model) args =
+  Action_args.decode ~action:"gift_rng"
+    (read ~options ~fallback ~default_frame_model)
+    args
 
 let apply_calibration (entry : R.Switch_rng_calibration.entry) p =
   {

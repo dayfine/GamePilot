@@ -41,6 +41,11 @@ let assets = "src/games/pokemon/frlg/assets/"
 let encounter_slots = assets ^ "encounter_slots_firered.json"
 let default_seeds = "rng_seeds_mgba_sevii_save.json"
 let default_frame_model = "mgba"
+
+let frame_model_for_backend = function
+  | "switch" -> "switch"
+  | _ -> default_frame_model
+
 let column = "Mono / Help / A"
 let config_env = "GAMEPILOT_FRLG_CONFIG"
 let config_file = "trainer_ids.json"
@@ -77,10 +82,7 @@ let throw_only_policy (capture : Capture_plan.t) : CS.policy =
     send_in_order = [ 1; 2; 3; 4; 5 ];
   }
 
-let env_var = function
-  | "tid" -> "GAMEPILOT_FRLG_TID"
-  | "sid" -> "GAMEPILOT_FRLG_SID"
-  | name -> "GAMEPILOT_FRLG_" ^ String.uppercase_ascii name
+let env_var name = "GAMEPILOT_FRLG_" ^ String.uppercase_ascii name
 
 let check_id ~label n =
   if n < 0 || n > max_id then
@@ -91,10 +93,11 @@ let env_id name =
   let var = env_var name in
   match Sys.getenv_opt var with
   | None | Some "" -> Ok None
-  | Some raw -> (
-      match int_of_string_opt (String.trim raw) with
-      | Some n -> Result.map Option.some (check_id ~label:var n)
-      | None -> Error (Printf.sprintf "%s is %S, not 0..%d" var raw max_id))
+  | Some raw ->
+      Option.fold
+        (int_of_string_opt (String.trim raw))
+        ~none:(Error (Printf.sprintf "%s is %S, not 0..%d" var raw max_id))
+        ~some:(fun n -> Result.map Option.some (check_id ~label:var n))
 
 let json_id ~path name fields =
   match List.assoc_opt name fields with
@@ -104,8 +107,9 @@ let json_id ~path name fields =
   | Some _ -> Error (Printf.sprintf "%s: %s is not an integer" path name)
 
 let file_trainer_ids () =
-  let dir = Repo_io.Repo_files.data_dir config_env "frlg" in
-  let path = Filename.concat dir config_file in
+  let path =
+    Filename.concat (Repo_io.Repo_files.data_dir config_env "frlg") config_file
+  in
   if not (Sys.file_exists path) then Ok no_trainer_ids
   else
     let* json = Repo_io.Json_file.read path in
@@ -138,9 +142,8 @@ let opt_int ~where ~default ~low ~high name args =
   | None -> default
   | Some _ ->
       let n = J.int ~where name args in
-      if n < low || n > high then
-        J.fail "%s%s is %d, not %d..%d" where name n low high
-      else n
+      if n >= low && n <= high then n
+      else J.fail "%s%s is %d, not %d..%d" where name n low high
 
 let id ~where name args =
   opt_int ~where ~default:0 ~low:0 ~high:max_id name args
@@ -151,12 +154,10 @@ let advances ~where args =
   | Some [ `Int low; `Int high ] when 0 <= low && low <= high -> (low, high)
   | Some _ -> J.fail "%sadvances is not [min, max]" where
 
-let frame_model ~where args =
-  match J.string_opt ~where "frame_model" args with
-  | None -> default_frame_model
-  | Some name ->
-      if List.mem_assoc name frame_models then name
-      else J.fail "%sframe_model is %s, not mgba or switch" where name
+let frame_model ?(default = default_frame_model) ~where args =
+  let name = Option.value ~default (J.string_opt ~where "frame_model" args) in
+  if List.mem_assoc name frame_models then name
+  else J.fail "%sframe_model is %s, not mgba or switch" where name
 
 let encounter_method ~where args =
   match J.string_opt ~where "method" args with
@@ -166,25 +167,18 @@ let encounter_method ~where args =
   | Some other ->
       J.fail "%smethod is %s, not grass, surf, or super_rod" where other
 
-let policy_mode policy = Catch_policy { policy; config = default_catch_config }
-
-let parse_catch_mode ~where (capture : Capture_plan.t) = function
-  | "throw_only" -> Throw_only
-  | "phase1" ->
-      policy_mode
-        (Battle_catch_steps.phase1_policy ~ball_name:capture.ball
-           ~max_balls:capture.max_balls Battle_catch_steps.default_phase1_slots)
-  | "phase2" ->
-      policy_mode
-        (Battle_catch_steps.phase2_policy ~ball_name:capture.ball
-           ~max_balls:capture.max_balls Battle_catch_steps.default_phase2_slots)
-  | other ->
-      J.fail "%scatch_mode is %s, not throw_only, phase1, or phase2" where other
-
-let catch_mode ~where capture args =
+let catch_mode ~where (c : Capture_plan.t) args =
+  let module B = Battle_catch_steps in
+  let wrap policy = Catch_policy { policy; config = default_catch_config } in
+  let ball_name = c.ball and max_balls = c.max_balls in
   match J.string_opt ~where "catch_mode" args with
-  | None -> Throw_only
-  | Some s -> parse_catch_mode ~where capture s
+  | None | Some "throw_only" -> Throw_only
+  | Some "phase1" ->
+      wrap (B.phase1_policy ~ball_name ~max_balls B.default_phase1_slots)
+  | Some "phase2" ->
+      wrap (B.phase2_policy ~ball_name ~max_balls B.default_phase2_slots)
+  | Some other ->
+      J.fail "%scatch_mode is %s, not throw_only, phase1, or phase2" where other
 
 let visual_shiny_check ~where args =
   match J.find "visual_shiny_check" args with
@@ -209,7 +203,7 @@ let resolved_id ~where ~options ~fallback name args =
       J.fail "%smissing %s (pass --options %s=N, set %s, or set it in %s)" where
         name name (env_var name) config_file
 
-let read ~options ~fallback ~where args =
+let read ~options ~fallback ~default_frame_model ~where args =
   let min_advance, max_advance = advances ~where args in
   let tid = resolved_id ~where ~options ~fallback:fallback.tid "tid" args in
   let sid = resolved_id ~where ~options ~fallback:fallback.sid "sid" args in
@@ -227,7 +221,7 @@ let read ~options ~fallback ~where args =
     ingame_offset =
       opt_int ~where ~default:0 ~low:(-max_ingame_offset)
         ~high:max_ingame_offset "ingame_offset" args;
-    frame_model = frame_model ~where args;
+    frame_model = frame_model ~default:default_frame_model ~where args;
     min_advance;
     max_advance;
     capture = cap;
@@ -243,8 +237,10 @@ let apply_calibration (entry : R.Switch_rng_calibration.entry) t =
     ingame_offset = t.ingame_offset + entry.ingame_offset;
   }
 
-let decode ?(options = Run_options.none) ?(fallback = no_trainer_ids) args =
-  Action_args.decode ~action:"wild_rng" (read ~options ~fallback) args
+let decode ?(options = Run_options.none) ?(fallback = no_trainer_ids)
+    ?(default_frame_model = default_frame_model) args =
+  let f = read ~options ~fallback ~default_frame_model in
+  Action_args.decode ~action:"wild_rng" f args
 
 let json path =
   match Repo_io.Repo_files.locate path with

@@ -11,6 +11,7 @@ type config = {
   center : Pokemon_engine.Pose.grid option;
   reload : unit -> (unit, Failure.cause) result;
   program_options : Run_options.t;
+  default_frame_model : string;
   log : string -> unit;
 }
 
@@ -292,8 +293,11 @@ let load_wild_rng_fallback options =
 let wild_rng t (_ : Pokemon_engine.Plan.event) args =
   let ( let* ) = Result.bind in
   let options = t.config.program_options in
+  let default_frame_model = t.config.default_frame_model in
   let* fallback = load_wild_rng_fallback options in
-  let* plan = Wild_rng_plan.decode ~options ~fallback args in
+  let* plan =
+    Wild_rng_plan.decode ~options ~fallback ~default_frame_model args
+  in
   let* plan = apply_switch_calibration plan in
   Menu_input.run (run_wild_rng t plan)
 
@@ -331,8 +335,9 @@ let run_gift_rng t (plan : Gift_rng.plan) () =
 let gift_rng t (_ : Pokemon_engine.Plan.event) args =
   let ( let* ) = Result.bind in
   let options = t.config.program_options in
+  let default_frame_model = t.config.default_frame_model in
   let* fallback = load_wild_rng_fallback options in
-  let* plan = Gift_rng.decode ~options ~fallback args in
+  let* plan = Gift_rng.decode ~options ~fallback ~default_frame_model args in
   let* plan = apply_gift_switch_calibration plan in
   Menu_input.run (run_gift_rng t plan)
 

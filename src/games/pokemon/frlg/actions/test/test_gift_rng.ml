@@ -187,8 +187,82 @@ let test_surf_request () =
       failwith
         ("surf decode failed: " ^ Pokemon_engine.Failure.cause_to_string c)
 
+let test_frame_model_auto_selection () =
+  let fallback : Wild_rng_plan.trainer_ids =
+    { tid = Some 12345; sid = Some 54321 }
+  in
+  check_eq ~show:Fun.id "switch backend -> switch model" "switch"
+    (Wild_rng_plan.frame_model_for_backend "switch");
+  check_eq ~show:Fun.id "mgba backend -> mgba model" "mgba"
+    (Wild_rng_plan.frame_model_for_backend "mgba");
+  check_eq ~show:Fun.id "other backend -> mgba model" "mgba"
+    (Wild_rng_plan.frame_model_for_backend "view");
+  let wild_omitted =
+    obj
+      {|{"method": "surf", "species": "psyduck", "location": "viridian_city"}|}
+  in
+  let wild_on_switch =
+    Result.get_ok
+      (Wild_rng_plan.decode ~fallback ~default_frame_model:"switch" wild_omitted)
+  in
+  check_eq ~show:Fun.id "wild_rng omitted on switch" "switch"
+    wild_on_switch.frame_model;
+  let wild_on_mgba =
+    Result.get_ok
+      (Wild_rng_plan.decode ~fallback ~default_frame_model:"mgba" wild_omitted)
+  in
+  check_eq ~show:Fun.id "wild_rng omitted on mgba" "mgba"
+    wild_on_mgba.frame_model;
+  let wild_explicit_mgba =
+    Result.get_ok
+      (Wild_rng_plan.decode ~fallback ~default_frame_model:"switch"
+         (obj
+            {|{"species": "ekans", "location": "route_10",
+               "frame_model": "mgba"}|}))
+  in
+  check_eq ~show:Fun.id "wild_rng explicit mgba preserved on switch" "mgba"
+    wild_explicit_mgba.frame_model;
+  let wild_explicit_switch =
+    Result.get_ok
+      (Wild_rng_plan.decode ~fallback ~default_frame_model:"mgba"
+         (obj
+            {|{"species": "ekans", "location": "route_10",
+               "frame_model": "switch"}|}))
+  in
+  check_eq ~show:Fun.id "wild_rng explicit switch preserved on mgba" "switch"
+    wild_explicit_switch.frame_model;
+  let gift_omitted = obj {|{"species": "scyther", "prize_row": "3"}|} in
+  let gift_on_switch =
+    Result.get_ok
+      (Gift_rng.decode ~fallback ~default_frame_model:"switch" gift_omitted)
+  in
+  check_eq ~show:Fun.id "gift_rng omitted on switch" "switch"
+    gift_on_switch.frame_model;
+  let gift_on_mgba =
+    Result.get_ok
+      (Gift_rng.decode ~fallback ~default_frame_model:"mgba" gift_omitted)
+  in
+  check_eq ~show:Fun.id "gift_rng omitted on mgba" "mgba"
+    gift_on_mgba.frame_model;
+  let gift_explicit_mgba =
+    Result.get_ok
+      (Gift_rng.decode ~fallback ~default_frame_model:"switch"
+         (obj {|{"species": "scyther", "prize_row": 3, "frame_model": "mgba"}|}))
+  in
+  check_eq ~show:Fun.id "gift_rng explicit mgba preserved on switch" "mgba"
+    gift_explicit_mgba.frame_model;
+  let gift_explicit_switch =
+    Result.get_ok
+      (Gift_rng.decode ~fallback ~default_frame_model:"mgba"
+         (obj
+            {|{"species": "scyther", "prize_row": 3, "frame_model": "switch"}|}))
+  in
+  check_eq ~show:Fun.id "gift_rng explicit switch preserved on mgba" "switch"
+    gift_explicit_switch.frame_model
+
 let () =
   test_decode ();
+  test_frame_model_auto_selection ();
   test_target_and_presses ();
   test_run ();
   test_surf_request ();

@@ -96,6 +96,10 @@ val default_seeds : string
 val default_frame_model : string
 (** Default frame model (["mgba"]) when ["frame_model"] is omitted. *)
 
+val frame_model_for_backend : string -> string
+(** Default frame model for a daemon backend kind: ["switch"] for ["switch"],
+    {!default_frame_model} otherwise. *)
+
 val max_id : int
 (** Maximum valid 16-bit trainer ID, secret ID, or seed shift ([65535]). *)
 
@@ -138,9 +142,9 @@ val advances : where:string -> Json_field.obj -> int * int
 (** Reads optional ["advances"] as [[min, max]] with [0 <= min <= max],
     defaulting to [(900, 4000)]. *)
 
-val frame_model : where:string -> Json_field.obj -> string
+val frame_model : ?default:string -> where:string -> Json_field.obj -> string
 (** Reads optional ["frame_model"] (["mgba"] or ["switch"]), defaulting to
-    {!default_frame_model}. *)
+    [default] (itself {!default_frame_model}). *)
 
 val find_frame_model : string -> Frlg_rng.Rng_timings.frame_model option
 (** Looks up a frame model by name (["mgba"] or ["switch"]). *)
@@ -181,16 +185,18 @@ val apply_calibration : Frlg_rng.Switch_rng_calibration.entry -> t -> t
 val decode :
   ?options:Run_options.t ->
   ?fallback:trainer_ids ->
+  ?default_frame_model:string ->
   Json_field.obj ->
   (t, Pokemon_engine.Failure.cause) result
 (** ["method"] (["grass"] | ["surf"] | ["super_rod"], default ["grass"]),
     ["species"], ["location"] (["route_10"]), ["tid"], ["sid"] (0..65535, from
     [--options], else the plan, else [fallback]), ["seeds"], ["seed_shift"]
     (0..65535, default 0), ["ingame_offset"] (-99..99, default 0),
-    ["frame_model"] (["mgba"]), ["advances"] ([[min, max]], default
-    [[900, 4000]]), ["ball"] (["poke-ball"]), ["balls"] (5), ["attempts"] (1),
-    ["catch_mode"] (["throw_only"] | ["phase1"] | ["phase2"], default
-    ["throw_only"]), ["visual_shiny_check"] ([false]). *)
+    ["frame_model"] (defaults to [default_frame_model], itself ["mgba"]),
+    ["advances"] ([[min, max]], default [[900, 4000]]), ["ball"]
+    (["poke-ball"]), ["balls"] (5), ["attempts"] (1), ["catch_mode"]
+    (["throw_only"] | ["phase1"] | ["phase2"], default ["throw_only"]),
+    ["visual_shiny_check"] ([false]). *)
 
 val encounter_slots : string
 (** The file the encounter slots are read from, FireRed's:
