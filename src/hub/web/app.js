@@ -12,6 +12,11 @@ function esc(s) {
   }[c]));
 }
 
+function watchHref(url) {
+  if (!url || typeof window === 'undefined' || !window.location) return url;
+  return url.replace(/^http:\/\/127\.0\.0\.1(?=[:/])/, 'http://' + window.location.hostname);
+}
+
 function toggleAdd() {
   const sec = document.getElementById('addSection');
   sec.classList.toggle('hidden');
@@ -87,7 +92,7 @@ async function loadConsoles() {
           <span class="pill ${esc(c.status)}">${esc(c.status)}</span>
         </div>
         <div class="muted">${esc(c.backend.toUpperCase())} &mdash; ${esc(c.detail)}</div>
-        ${c.active_run ? `<div class="muted" style="margin-top:6px">Running: <strong>${esc(c.active_run.program)}</strong>${c.active_run.external ? ` (external, pid ${esc(c.active_run.pid)})` : ''}${c.active_run.watch_url ? ` &middot; <a href="${esc(c.active_run.watch_url)}" target="_blank" onclick="event.stopPropagation()">Open Watch Page</a>` : ''}</div>` : ''}
+        ${c.active_run ? `<div class="muted" style="margin-top:6px">Running: <strong>${esc(c.active_run.program)}</strong>${c.active_run.external ? ` (external, pid ${esc(c.active_run.pid)})` : ''}${c.active_run.watch_url ? ` &middot; <a href="${esc(watchHref(c.active_run.watch_url))}" target="_blank" onclick="event.stopPropagation()">Open Watch Page</a>` : ''}</div>` : ''}
       </div>`)
       .join('');
   }
@@ -199,7 +204,7 @@ async function loadRuns() {
       <div class="card-top">
         <div><strong>${esc(run.program)}</strong> on <strong>${esc(run.console)}</strong> <span class="muted">(${esc(run.id)})</span></div>
         <div class="row">
-          ${run.watch_url ? `<a href="${esc(run.watch_url)}" target="_blank">Open Watch Page</a>` : ''}
+          ${run.watch_url ? `<a href="${esc(watchHref(run.watch_url))}" target="_blank">Open Watch Page</a>` : ''}
           ${run.external ? '<span class="pill stopped">external</span>' : ''}
           <span class="pill ${esc(run.status)}">${esc(run.status)}</span>
           ${run.status === 'running' && !run.external ? `<button class="danger" onclick="stopRun('${esc(run.id)}')">Stop</button>` : ''}
