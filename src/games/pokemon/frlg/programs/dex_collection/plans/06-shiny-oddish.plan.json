@@ -1,0 +1,17 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "checkpoint": {
+    "id": "06-shiny-oddish",
+    "title": "From anywhere outdoors: shiny Oddish in Route 7 grass, deposited and healed",
+    "start": {"anywhere": "outdoors"},
+    "events": [
+      {
+        "id": "oddish",
+        "fragment": "wild_rng_grass_catch",
+        "args": {"town": "saffron", "spot": "route7_grass", "location": "route_7", "species": "oddish"}
+      }
+    ]
+  },
+  "execution": {"menu": "full"}
+}

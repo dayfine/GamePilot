@@ -2,6 +2,18 @@
   "format": "gamepilot-places/1",
   "game": "frlg",
   "places": {
+    "celadon_center_outside": {
+      "map": "CeladonCity",
+      "object": {"warp": "warp_4", "to_map": "CeladonCity_PokemonCenter_1F"},
+      "stand": [48, 12],
+      "facing": "south"
+    },
+    "celadon_center_pc": {
+      "map": "CeladonCity_PokemonCenter_1F",
+      "object": {"not_in_maps": "the Pokemon Center's PC, at the counter's east end"},
+      "stand": [11, 2],
+      "facing": "north"
+    },
     "celadon_dept_store_1f_save": {
       "map": "CeladonCity_DepartmentStore_1F",
       "object": {"not_in_maps": "a save spot below the lift door, where su-01 ends and tt-01 starts"},
@@ -86,6 +98,18 @@
       "stand": [13, 12],
       "facing": "north"
     },
+    "lavender_center_outside": {
+      "map": "LavenderTown",
+      "object": {"warp": "warp_1", "to_map": "LavenderTown_PokemonCenter_1F"},
+      "stand": [6, 6],
+      "facing": "south"
+    },
+    "lavender_center_pc": {
+      "map": "LavenderTown_PokemonCenter_1F",
+      "object": {"not_in_maps": "the Pokemon Center's PC, at the counter's east end"},
+      "stand": [11, 2],
+      "facing": "north"
+    },
     "lavender_mart_clerk": {
       "map": "LavenderTown_Mart",
       "object": {"npc": "LavenderTown_Mart_EventScript_Clerk"},
@@ -114,6 +138,12 @@
       "map": "PewterCity_PokemonCenter_1F",
       "object": {"npc": "PewterCity_PokemonCenter_1F_EventScript_Nurse"},
       "stand": [7, 4],
+      "facing": "north"
+    },
+    "power_plant_floor": {
+      "map": "PowerPlant",
+      "object": {"not_in_maps": "the first encounter floor tile north of Power Plant's main entrance warp (5, 38), where Sweet Scent finds Electabuzz"},
+      "stand": [5, 37],
       "facing": "north"
     },
     "route10_center_outside": {
@@ -170,6 +200,24 @@
       "stand": [19, 6],
       "facing": "north"
     },
+    "route7_grass": {
+      "map": "Route7",
+      "object": {"not_in_maps": "the south edge of Route 7's grass patch (x 11 to 18, y 2 to 6), one step north of the open path, so walking from Celadon or Saffron and back crosses no grass"},
+      "stand": [11, 6],
+      "facing": "north"
+    },
+    "saffron_center_outside": {
+      "map": "SaffronCity",
+      "object": {"warp": "warp_6", "to_map": "SaffronCity_PokemonCenter_1F"},
+      "stand": [24, 39],
+      "facing": "south"
+    },
+    "saffron_center_pc": {
+      "map": "SaffronCity_PokemonCenter_1F",
+      "object": {"not_in_maps": "the Pokemon Center's PC, at the counter's east end"},
+      "stand": [11, 2],
+      "facing": "north"
+    },
     "saffron_nurse": {
       "map": "SaffronCity_PokemonCenter_1F",
       "object": {"npc": "SaffronCity_PokemonCenter_1F_EventScript_Nurse"},
@@ -220,16 +268,16 @@
     }
   },
   "towns": {
-    "celadon": {"nurse": "celadon_nurse", "fly": "CeladonCity"},
+    "celadon": {"nurse": "celadon_nurse", "fly": "CeladonCity", "pc": "celadon_center_pc", "outside": "celadon_center_outside"},
     "cerulean": {"nurse": "cerulean_nurse", "fly": "CeruleanCity"},
     "cinnabar": {"nurse": "cinnabar_nurse", "fly": "CinnabarIsland"},
     "fuchsia": {"nurse": "fuchsia_nurse", "fly": "FuchsiaCity"},
     "indigo_plateau": {"nurse": "indigo_plateau_nurse", "fly": "IndigoPlateau", "mart": "indigo_plateau_mart_clerk"},
-    "lavender": {"nurse": "lavender_nurse", "fly": "LavenderTown", "mart": "lavender_mart_clerk"},
+    "lavender": {"nurse": "lavender_nurse", "fly": "LavenderTown", "mart": "lavender_mart_clerk", "pc": "lavender_center_pc", "outside": "lavender_center_outside"},
     "pewter": {"nurse": "pewter_nurse", "fly": "PewterCity"},
     "route10": {"nurse": "route10_nurse", "fly": "Route10", "pc": "route10_center_pc", "outside": "route10_center_outside"},
     "route4": {"nurse": "route4_nurse", "fly": "Route4", "pc": "route4_center_pc"},
-    "saffron": {"nurse": "saffron_nurse", "fly": "SaffronCity"},
+    "saffron": {"nurse": "saffron_nurse", "fly": "SaffronCity", "pc": "saffron_center_pc", "outside": "saffron_center_outside"},
     "vermilion": {"nurse": "vermilion_nurse", "fly": "VermilionCity", "pc": "vermilion_center_pc", "outside": "vermilion_center_outside"},
     "viridian": {"nurse": "viridian_nurse", "fly": "ViridianCity"}
   }
