@@ -84,18 +84,18 @@ let () =
   Table_test.run "ui_api"
     [
       case "programs_json includes frlg.supplies" programs_has_supplies "true";
-      case "build_run_argv default mode omits --mode"
+      case "build_run_argv default mode uses --mode testing for checkpoints"
         (build_run
            {|{"console":"console-a","program":"frlg.supplies","from":"su-01","to":"su-01","mode":"default","options":{"retro-mail":"20","super-repel":"0"}}|})
         "gamepilot run frlg.supplies --backend switch --capture 0 --serial \
-         /dev/cu.usbserial-1 --from su-01 --to su-01 --watch --options \
-         retro-mail=20 --options super-repel=0";
-      case "build_run_argv explicit testing mode passes --mode"
-        (build_run
-           {|{"console":"console-a","program":"frlg.supplies","from":"su-01","to":"su-01","mode":"testing","options":{"retro-mail":"20","super-repel":"0"}}|})
-        "gamepilot run frlg.supplies --backend switch --capture 0 --serial \
          /dev/cu.usbserial-1 --from su-01 --to su-01 --mode testing --watch \
          --options retro-mail=20 --options super-repel=0";
+      case "build_run_argv explicit verification mode passes --mode"
+        (build_run
+           {|{"console":"console-a","program":"frlg.supplies","from":"su-01","to":"su-01","mode":"verification","options":{"retro-mail":"20","super-repel":"0"}}|})
+        "gamepilot run frlg.supplies --backend switch --capture 0 --serial \
+         /dev/cu.usbserial-1 --from su-01 --to su-01 --mode verification \
+         --watch --options retro-mail=20 --options super-repel=0";
       case "build_run_argv for preflight omits --watch"
         (build_run
            {|{"console":"console-a","program":"frlg.supplies","from":"su-01","preflight":true}|})

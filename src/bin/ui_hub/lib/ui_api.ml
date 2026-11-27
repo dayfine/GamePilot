@@ -209,7 +209,9 @@ let range_args (p : Program_registry.t) (req : launch_request) =
   let to_id = match req.to_id with Some _ as t -> t | None -> last in
   match (from_id, to_id) with
   | Some f, _ when req.preflight -> Ok [ "--preflight"; "--from"; f ]
-  | Some f, Some t -> Ok ([ "--from"; f; "--to"; t ] @ mode_args req.mode)
+  | Some f, Some t ->
+      let mode = Option.value req.mode ~default:"testing" in
+      Ok [ "--from"; f; "--to"; t; "--mode"; mode ]
   | None, None -> Ok (mode_args req.mode)
   | _ -> Error (p.id ^ " has incomplete checkpoint range")
 
