@@ -7,7 +7,7 @@ let probe ~id box range =
   Wire.color_count_probe ~id ~box ~delivery:Every ~min:(triple range.low)
     ~max:(triple range.high)
 
-let share = Switch_home.Color_share.read
+let share = Switch.Color_share.read
 
 let mean m id =
   match Effects.probe m id with

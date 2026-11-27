@@ -3,6 +3,6 @@
  (public_name gamepilot.plza_walk)
  (libraries
   gamepilot.wire
-  gamepilot.switch_home
+  gamepilot.switch
   gamepilot.engine_run
   gamepilot.plza_rules))

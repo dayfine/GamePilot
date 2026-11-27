@@ -87,7 +87,7 @@ and exit presses:
 
 ## The library
 
-`src/core/screen_graph/lib`, beside `screen_state` (pure scene rules) and `switch_home`
+`src/core/screen_graph/lib`, beside `screen_state` (pure scene rules) and `switch`
 (`Held_screen`, `Timed_press`). Not `engine/`: the engine is the checkpoint engine and knows plans,
 not screens; this is what a game action calls, and Switch HOME (a `core` library) is a user too.
 
@@ -237,7 +237,7 @@ Each step its own PR; the first two change no behaviour.
    goes with `Menu_input.Action_failed`'s conversion, not before it.
 6. FRLG PC (`Pc_box.open_next`, `leave_next`): the look-alike rule replaces `opening`.
 
-Stays hand-written: ported fork code, which keeps the C++'s steps (`Switch_home.Game_entry`, the
+Stays hand-written: ported fork code, which keeps the C++'s steps (`Switch.Game_entry`, the
 talk and scene rules in `screen_state`, battles); anything timed rather than read (RNG presses,
 ACE); walking (the navigation grid is its own graph); typing (`Code_keyboard`); work inside one
 screen (the Y, move, Y of `Gift_boxes`); and menus with no cursor reader (a bag item's menu, a
@@ -253,6 +253,6 @@ The user took each recommendation (2026-11-26, "take the doc's recommendation").
 3. **Plans do not name screens yet**: a format change that belongs with composing programs
    (`Story-Flags.md`, decision 5).
 4. **`Held_screen` moves to `screen_graph`** in step 1 (a rename, structural); its users are
-   `switch_home` and claim-gifts.
+   `switch` and claim-gifts.
 5. **PLZA first**: steps 2 to 4 (gifts, the gift loop, Boxes/Save/HOME), then FRLG's party once
    `Action_failed` is a `Result`.

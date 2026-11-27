@@ -38,9 +38,9 @@ type category =
   | Gifts  (** Mystery Gift claiming. *)
   | Storage  (** Pokémon HOME box transfers. *)
 
-type switch_home = {
+type switch = {
   title : string;  (** As the ctl usage names it: ["FireRed"]. *)
-  home_tile : Switch_home.Home_screen.tile_color;
+  home_tile : Switch.Home_screen.tile_color;
   lab_panel : string;  (** ["PokemonFRLG:AutoStory"]. *)
 }
 (** A game on the lab's Switch: the title the HOME steps (park, resume,
@@ -54,9 +54,9 @@ type game = {
   game_name : string;
   delete_save_icons : (string * string) list;
       (** Its Switch titles' icons on their "Delete Save Data for <user>" page
-          (Switch_home.Delete_save), each a repo path, by the key
+          (Switch.Delete_save), each a repo path, by the key
           [gamepilot ctl delete-save] takes: [firered] for FRLG. *)
-  switch_home : switch_home option;
+  switch : switch option;
       (** [None] while none of its HOME tiles was measured. *)
 }
 
@@ -85,12 +85,12 @@ val games : game list
 (** Every game with a program or a Switch title GamePilot knows, PLZA (no
     program yet) first, as [gamepilot ctl delete-save] lists their keys. *)
 
-val lab_game : string option -> (game * switch_home, string) result
+val lab_game : string option -> (game * switch, string) result
 (** The game the lab's console runs, by its id; with none, the one game that has
     Switch HOME data. An unknown id, a game without it, or (no id) not exactly
     one such game is an error naming the ids to pick from. *)
 
-val lab_game_of_env : unit -> (game * switch_home, string) result
+val lab_game_of_env : unit -> (game * switch, string) result
 (** {!lab_game} of $GAMEPILOT_LAB_GAME (unset or empty: none). *)
 
 val all : t list

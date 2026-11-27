@@ -74,8 +74,7 @@ let empty_slot_probes ~picture =
 
 let brightness m edge part =
   Option.map
-    (fun (s : Box_color.stats) ->
-      Switch_home.Solid_color.sum s.mean /. channels)
+    (fun (s : Box_color.stats) -> Switch.Solid_color.sum s.mean /. channels)
     (Box_color.read m (id edge part))
 
 type margin = { inside : float; outside : float }

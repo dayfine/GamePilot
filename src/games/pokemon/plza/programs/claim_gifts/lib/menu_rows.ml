@@ -1,4 +1,4 @@
-module T = Switch_home.Timed_press
+module T = Switch.Timed_press
 module R = Plza_readers.Main_menu_row
 
 let open_x : T.t = { button = X; hold_ms = 100; cooldown_ms = 1500 }

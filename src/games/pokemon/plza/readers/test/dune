@@ -1,11 +1,7 @@
 (executable
  (name write_probe_spec)
  (modules write_probe_spec)
- (libraries
-  yojson
-  gamepilot.wire
-  gamepilot.switch_home
-  gamepilot.plza_readers))
+ (libraries yojson gamepilot.wire gamepilot.switch gamepilot.plza_readers))
 
 (tests
  (names
@@ -50,5 +46,5 @@
  (libraries
   gamepilot.wire
   gamepilot.table_test
-  gamepilot.switch_home
+  gamepilot.switch
   gamepilot.plza_readers))

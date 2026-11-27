@@ -13,7 +13,7 @@ let poll screens () =
         l
     | [] -> (0.0, false, false)
   in
-  let steps : _ Switch_home.Screen_poll.game_steps =
+  let steps : _ Switch.Screen_poll.game_steps =
     {
       read_screen;
       wait = (fun ms -> said := Printf.sprintf "wait %d" ms :: !said);
@@ -22,7 +22,7 @@ let poll screens () =
   let at_ms (t, _, _) = t and home_menu (_, h, _) = h in
   let outcome =
     match
-      Switch_home.Screen_poll.until steps ~at_ms ~home_menu ~poll_ms:250
+      Switch.Screen_poll.until steps ~at_ms ~home_menu ~poll_ms:250
         ~timeout_ms:1000 (fun (_, _, holds) -> holds)
     with
     | Holds (t, _, _) -> Printf.sprintf "holds at %g" t

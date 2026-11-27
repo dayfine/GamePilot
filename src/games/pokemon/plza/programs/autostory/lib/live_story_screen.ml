@@ -4,7 +4,7 @@ module L = Plza_story.Look
 let probes ~picture ~assets =
   List.concat
     [
-      Switch_home.Home_screen.probes ~picture Game_reload.tile_color;
+      Switch.Home_screen.probes ~picture Game_reload.tile_color;
       Story_screen.probes ~picture ~assets;
       Confirm_choices.probes ~picture;
       Frame_cells.probes ~picture;
@@ -25,7 +25,7 @@ let fresh () =
   | Timeout -> Effects.read ()
 
 let home m =
-  match Switch_home.Home_screen.read m with
+  match Switch.Home_screen.read m with
   | Home _ | Home_dimmed | User_select -> true
   | Elsewhere -> false
 

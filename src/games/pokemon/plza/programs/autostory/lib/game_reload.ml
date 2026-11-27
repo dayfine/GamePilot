@@ -1,4 +1,4 @@
-module G = Switch_home.Game_entry
+module G = Switch.Game_entry
 
 let tile_color = Plza_readers.Switch_home_tile.tile_color
 let start_game_wait_ms = 40_000
@@ -33,7 +33,7 @@ let through_black ~log =
       not_entering
   in
   log "[Reload] entered game";
-  Ok (Switch_home.Switch_presses.wait settle_ms)
+  Ok (Switch.Switch_presses.wait settle_ms)
 
 (* What stopped the mash: in the fork's watcher order. *)
 type title = Entering | Dialog | Backup_save_arrow | Other
@@ -48,12 +48,12 @@ let stops m = title m <> Other
 let title_rounds = 10
 
 let tap button =
-  Switch_home.Switch_presses.press ~hold_ms:press_hold_ms
+  Switch.Switch_presses.press ~hold_ms:press_hold_ms
     ~cooldown_ms:press_release_ms button
 
 let mash_until_black () =
   Effects.race
-    (Switch_home.Switch_presses.mash_presses Wire.A mash_ms
+    (Switch.Switch_presses.mash_presses Wire.A mash_ms
     @ [ Wire.Wait { wait_ms = enter_game_wait_ms } ])
     ~stop:stops
 
