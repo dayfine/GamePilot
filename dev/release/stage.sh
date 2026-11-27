@@ -91,6 +91,11 @@ if [ -d "third_party/PokemonSimulation/data/games/frlg/maps" ]; then
   copy_tree "third_party/PokemonSimulation/data/games/frlg/maps"
 fi
 
+# Local Control Hub static web assets (HTML/CSS/JS)
+if [ -d "src/hub/web" ]; then
+  copy_tree "src/hub/web"
+fi
+
 cat > "$OUT_DIR/README.txt" <<'EOF'
 GamePilot release bundle
 ========================

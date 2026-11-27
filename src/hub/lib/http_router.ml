@@ -53,11 +53,20 @@ let handle_stop st path =
       | Ok j -> json_resp http_ok j
       | Error (code, msg) -> err_resp code msg)
 
+let serve_asset ctype load =
+  match load () with
+  | Ok body -> (http_ok, ctype, body)
+  | Error e -> err_resp http_server_error e
+
 let route st meth path body =
   Run_manager.reap_all st;
   match (meth, path) with
   | "GET", ("/" | "/index.html") ->
-      (http_ok, "text/html; charset=utf-8", Ui_page.html)
+      serve_asset "text/html; charset=utf-8" Ui_page.index_html
+  | "GET", "/style.css" ->
+      serve_asset "text/css; charset=utf-8" Ui_page.style_css
+  | "GET", "/app.js" ->
+      serve_asset "application/javascript; charset=utf-8" Ui_page.app_js
   | "GET", "/api/programs" -> json_resp http_ok (Ui_api.programs_json ())
   | "GET", "/api/devices" -> json_resp http_ok (Ui_api.devices_json ())
   | "GET", "/api/consoles" -> handle_get_consoles st
