@@ -1,4 +1,4 @@
-module T = Switch_home.Timed_press
+module T = Switch.Timed_press
 module D = Plza_readers.Save_dialog
 module R = Plza_readers.Main_menu_row
 

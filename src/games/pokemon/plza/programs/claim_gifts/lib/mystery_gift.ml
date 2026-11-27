@@ -1,6 +1,6 @@
-module T = Switch_home.Timed_press
+module T = Switch.Timed_press
 module S = Plza_readers.Mystery_gift_screen
-module K = Switch_home.Code_keyboard
+module K = Switch.Code_keyboard
 
 let ( let* ) = Result.bind
 

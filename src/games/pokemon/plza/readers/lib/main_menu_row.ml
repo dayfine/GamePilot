@@ -104,8 +104,7 @@ let channels = 3.
 (* A box's brightness: its mean's channels averaged. *)
 let brightness m name =
   Option.map
-    (fun (s : Box_color.stats) ->
-      Switch_home.Solid_color.sum s.mean /. channels)
+    (fun (s : Box_color.stats) -> Switch.Solid_color.sum s.mean /. channels)
     (Box_color.read m (edge_id name))
 
 let link_play_step m =

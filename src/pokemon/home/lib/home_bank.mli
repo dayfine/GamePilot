@@ -3,7 +3,7 @@
     ({!Home_launch}), each move made ({!Box_moves}), then + (100 ms, released
     1.5 s) and A on "save and quit"; the saving banner must show within 10 s and
     then the saved banner or the main menu within 60 s, A (3.5 s) on the saved
-    banner; then Pokémon HOME is closed ({!Switch_home.Game_entry.close_game}).
+    banner; then Pokémon HOME is closed ({!Switch.Game_entry.close_game}).
 
     How a mid-batch failure is handled is chosen by {!on_failure}: leave HOME
     open unsaved ({!Stop_open}), close HOME without saving ({!Quit_discard}), or

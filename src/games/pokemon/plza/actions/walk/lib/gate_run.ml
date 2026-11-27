@@ -6,12 +6,12 @@ let runs = 2
 
 (* B held with the stick for the whole slice, as PokemonLZA_BasicNavigation.cpp's
    run to a gate holds it. *)
-let run_whole = { Switch_home.Stick_tilt.button = Wire.B; speedup = 1.0 }
+let run_whole = { Switch.Stick_tilt.button = Wire.B; speedup = 1.0 }
 let ( let* ) = Result.bind
 
 let slice (steps : Walk.game_steps) =
   match
-    Switch_home.Stick_tilt.tilt ~run:run_whole ~degrees:0. ~duration_ms:slice_ms
+    Switch.Stick_tilt.tilt ~run:run_whole ~degrees:0. ~duration_ms:slice_ms
       ~release_ms:0 ()
   with
   | Ok input -> Ok (steps.submit input)

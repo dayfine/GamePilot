@@ -154,7 +154,7 @@ let read k () : S.t =
         name_keyboard = true;
         keyboard_cursor =
           (if k.col = ring - 1 || k.row = bottom_row then None
-           else Some { Switch_home.Code_keyboard.row = k.row; col = k.col });
+           else Some { Switch.Code_keyboard.row = k.row; col = k.col });
         text_pixels = 110 * String.length k.text;
       }
   | Confirm -> { S.nothing with confirm_choices = true }
@@ -302,7 +302,7 @@ let runs =
         let k = pinyin () in
         k.phase <- Keyboard { since = -1000.; pluses = 0 };
         ignore
-          (Switch_home.Keyboard_typing.type_text
+          (Switch.Keyboard_typing.type_text
              {
                read_cursor = (fun () -> (read k ()).keyboard_cursor);
                read_text_pixels = (fun () -> (read k ()).text_pixels);

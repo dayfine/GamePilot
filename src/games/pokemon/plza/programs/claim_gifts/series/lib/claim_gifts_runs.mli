@@ -1,11 +1,11 @@
 (** plza.claim-gifts' checkpoints on the Switch
     (Plza_checkpoint_series.Checkpoint_series), each attempt through
     {!Plza_claim_gifts.Live_gift_steps.game} and the engine: the PLZA readers'
-    templates uploaded, the screen woken ({!Switch_home.Stick_wake}), then the
-    plan's events, whose first reads its start (the main menu and the party).
-    Its plan has no [start] and no [retries]: one attempt, with no reload, which
-    would lose the gifts not yet saved. Its daemons keep the console awake with
-    the right stick, which does nothing in a menu
+    templates uploaded, the screen woken ({!Switch.Stick_wake}), then the plan's
+    events, whose first reads its start (the main menu and the party). Its plan
+    has no [start] and no [retries]: one attempt, with no reload, which would
+    lose the gifts not yet saved. Its daemons keep the console awake with the
+    right stick, which does nothing in a menu
     (Plza_checkpoint_series.Checkpoint_series.keepawake_stick). Every plan is
     checked ({!Plza_claim_gifts.Claim_gifts.check_plan}) before the console
     moves. *)

@@ -15,7 +15,7 @@
 # shift_frame.py needs Pillow ($SHIFT_PYTHON, default python3; e.g.
 # "uv run --with pillow python3").
 #
-#   sh core/switch_home/test/regen_fixture.sh
+#   sh core/switch/test/regen_fixture.sh
 #
 # run from src/, with probe_images at $PROBE_IMAGES (default the repo's
 # daemon/build/probe_images).
@@ -30,8 +30,8 @@ trap 'rm -rf "$work"' EXIT
 mkdir "$work/home" "$work/delete_save" "$work/shifted" "$work/shifted_delete_save"
 spec=$work/home/spec.json
 ds_spec=$work/delete_save/spec.json
-(cd "$SRC" && dune exec core/switch_home/test/write_probe_spec.exe) >"$spec"
-(cd "$SRC" && dune exec core/switch_home/test/write_probe_spec.exe delete-save) >"$ds_spec"
+(cd "$SRC" && dune exec core/switch/test/write_probe_spec.exe) >"$spec"
+(cd "$SRC" && dune exec core/switch/test/write_probe_spec.exe delete-save) >"$ds_spec"
 cp "$SRC/games/pokemon/plza/assets/delete-save-icon.png" "$work/delete_save/plza-icon.png"
 cp "$SRC/games/pokemon/frlg/assets/delete-save-icon-firered.png" "$work/delete_save/firered-icon.png"
 (cd "$HERE/images" && "$PROBE_IMAGES" --spec "$spec" --viewport nso-gba ./*.png) \
@@ -46,7 +46,7 @@ cp "$SRC/games/pokemon/frlg/assets/delete-save-icon-firered.png" "$work/delete_s
     >"$HERE/fixtures/delete_save.shifted.probes.jsonl"
 kb_spec=$work/code_keyboard.json
 mkdir "$work/kb" "$work/shifted_kb"
-(cd "$SRC" && dune exec core/switch_home/test/write_probe_spec.exe code-keyboard) >"$kb_spec"
+(cd "$SRC" && dune exec core/switch/test/write_probe_spec.exe code-keyboard) >"$kb_spec"
 cp "$HERE"/images/keyboard/*.png "$HERE"/images/home-cursor-on-last-played.png "$HERE"/images/user-select.png "$work/kb/"
 (cd "$work/kb" && "$PROBE_IMAGES" --spec "$kb_spec" --viewport native ./*.png) \
     >"$HERE/fixtures/code_keyboard.probes.jsonl"

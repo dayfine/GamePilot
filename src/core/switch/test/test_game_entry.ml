@@ -2,7 +2,7 @@
    NintendoSwitch_GameEntry steps), on a scripted console B (Scripted_home)
    whose screens are captures. *)
 
-open Switch_home
+open Switch
 module S = Scripted_home
 
 (* X on a running FireRed's tile opens the close popup (later X there do

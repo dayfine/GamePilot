@@ -107,8 +107,4 @@ let caught m b =
   else
     match Effects.probe m mark_id with
     | Some (Wire.Find { blobs }) -> Some (ball blobs)
-    | Some
-        ( Wire.Color_stats _ | Wire.Template_match _ | Wire.Color_count _
-        | Wire.Line_shares _ | Wire.Other _ )
-    | None ->
-        None
+    | _ -> None

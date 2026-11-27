@@ -155,7 +155,7 @@ let () =
   let submits =
     List.filter_map
       (function
-        | Wire.Submit { batch_id; commands } -> Some (batch_id, commands)
+        | Wire.Submit { batch_id; commands; _ } -> Some (batch_id, commands)
         | _ -> None)
       (calls !sent)
   in

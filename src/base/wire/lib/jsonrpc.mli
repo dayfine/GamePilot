@@ -30,9 +30,14 @@ type call =
       (** [subscribe]: start running these probes on every frame *)
   | Unsubscribe of string list
       (** [unsubscribe]: stop the probes with these ids *)
-  | Submit of { batch_id : string; commands : Command.command list }
+  | Submit of {
+      batch_id : string;
+      start_at_t_ms : float option;
+      commands : Command.command list;
+    }
       (** [submit]: queue a batch of commands, named [batch_id] in its
-          [batch_done] *)
+          [batch_done], starting no earlier than [start_at_t_ms] on the daemon
+          clock when given (v1.21) *)
   | Cancel  (** [cancel]: drop every queued batch and release every button *)
   | Cancel_then of { batch_id : string; commands : Command.command list }
       (** [cancel] with [then]: drop the queued batches and run this one in
@@ -49,11 +54,18 @@ type request = { id : int; call : call }
 type response = { id : int; outcome : (json, error) result }
 (** The answer to the request with this [id]: its result object, or an error. *)
 
+type gap = { from_seq : int; to_seq : int; from_t_ms : float; to_t_ms : float }
+(** A [gap] notification (v1.21): frame sequence numbers [from_seq..to_seq]
+    (inclusive) were missed while an [every] probe was subscribed, between the
+    frame captured at [from_t_ms] and the next frame captured at [to_t_ms]. *)
+
 (** A message no one answers. *)
 type notification =
   | Frame of { load : int; frame : Probe.frame }
       (** [frame], from the daemon: the subscribed probes' results on a new
           frame, and how many loads had succeeded when it was taken *)
+  | Gap of gap
+      (** [gap], from the daemon: skipped frames under [delivery: "every"] *)
   | Batch_done of Command.batch_done
       (** [batch_done], from the daemon: a submitted batch has run *)
   | Watch_plan of Watch.plan

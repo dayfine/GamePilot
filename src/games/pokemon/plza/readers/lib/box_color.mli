@@ -1,9 +1,9 @@
 (** Whether a box is one solid colour or white, from its [core.color_stats@1]
     result, as the fork tests it (CommonTools/Images/SolidColorTest.cpp) with
-    the limits the PLZA readers pass ({!Switch_home.Solid_color} keeps the
-    fork's defaults only). *)
+    the limits the PLZA readers pass ({!Switch.Solid_color} keeps the fork's
+    defaults only). *)
 
-type stats = Switch_home.Solid_color.stats
+type stats = Switch.Solid_color.stats
 (** A box's mean and stddev per channel. *)
 
 val probe :

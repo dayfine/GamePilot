@@ -6,7 +6,7 @@
    Software's page for Z-A has the same header and icon as its delete-save
    page and must not read as it. *)
 
-open Switch_home
+open Switch
 module S = Delete_save_screen
 
 let fixtures = Wire.read_image_probes "delete_save.probes.jsonl"

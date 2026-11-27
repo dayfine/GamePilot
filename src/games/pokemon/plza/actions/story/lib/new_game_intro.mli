@@ -20,7 +20,7 @@
     + the name keyboard must show within 20 s, then 1 s for it to slide in;
     + in Simplified Chinese, the keyboard's English (letters) key first
       ({!Letters_mode});
-    + the name is typed ({!Switch_home.Keyboard_typing});
+    + the name is typed ({!Switch.Keyboard_typing});
     + + (80 ms, 500 after), at most 3 times (Chinese keyboards take one to
       accept the text), until Confirm Choices reads within 5 s of one, stopping
       when the keyboard is gone; then Confirm Choices within 15 s.

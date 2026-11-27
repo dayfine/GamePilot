@@ -19,7 +19,7 @@ let shifted ?(dx = 0) ?(dy = 0) b = { b with x = b.x + dx; y = b.y + dy }
 
 let probe_box ~picture b =
   let across = float_of_int frame_width and down = float_of_int frame_height in
-  Switch_home.Picture_box.whole ~picture
+  Switch.Picture_box.whole ~picture
     {
       x = float_of_int b.x /. across;
       y = float_of_int b.y /. down;

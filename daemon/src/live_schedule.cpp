@@ -6,8 +6,12 @@ namespace gamepilot {
 
 double LiveSchedule::submit(std::string batch_id,
                             const std::vector<InputCommand>& commands,
-                            double now_ms) {
-  const double start = batches_.empty() ? now_ms : std::max(now_ms, end_ms_);
+                            double now_ms,
+                            std::optional<double> start_at_t_ms) {
+  double start = batches_.empty() ? now_ms : std::max(now_ms, end_ms_);
+  if (start_at_t_ms) {
+    start = std::max(start, *start_at_t_ms);
+  }
   double t = start;
   const auto add = [&](KeyMask keys, const Sticks& sticks, double ms) {
     segments_.push_back(KeySegment{t, ms, keys, sticks});

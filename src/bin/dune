@@ -6,6 +6,7 @@
   (:standard -open Live_run))
  (libraries
   gamepilot.live_run
+  gamepilot.console_config
   gamepilot.run_options
   gamepilot.wire
   gamepilot.effects
@@ -16,7 +17,7 @@
   gamepilot.engine_series
   gamepilot.frlg_ctl_readers
   gamepilot.ctl_script
-  gamepilot.switch_home
+  gamepilot.switch
   gamepilot.pokemon_home
   gamepilot.repo_io
   gamepilot.frlg_series

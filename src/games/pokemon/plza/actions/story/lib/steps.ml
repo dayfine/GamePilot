@@ -44,8 +44,7 @@ let walk_game_steps steps : Plza_walk.Walk.game_steps =
   }
 
 let game_not_running =
-  Failure.cause ~repeats:true "game_not_running"
-    Switch_home.Screen_poll.not_running
+  Failure.cause ~repeats:true "game_not_running" Switch.Screen_poll.not_running
 
 type waited =
   | Matched of { look : Look.t; looks : int; elapsed_ms : float }

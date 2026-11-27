@@ -1,7 +1,7 @@
 module Failure = Engine_run.Failure
 module Game = Plza_engine.Game
 module Plan = Plza_engine.Plan
-module Title = Switch_home.Home_title
+module Title = Switch.Home_title
 module Tile = Plza_readers.Switch_home_tile
 
 type templates = {
@@ -46,7 +46,7 @@ let title_shows () =
 
 let find_plza_tile ~log =
   Title.find_tile
-    { title_shows; press = Switch_home.Timed_press.press; log }
+    { title_shows; press = Switch.Timed_press.press; log }
     walk ~name:"Legends: Z-A"
 
 let start_check ~log (t : templates) =
