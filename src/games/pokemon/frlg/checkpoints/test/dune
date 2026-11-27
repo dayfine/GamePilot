@@ -45,6 +45,16 @@
  (copy ../../programs/supplies/plans/su-01.plan.json su-01.plan.json))
 
 (rule
+ (copy
+  ../../programs/catcher_prep/plans/01-catch-paras.plan.json
+  01-catch-paras.plan.json))
+
+(rule
+ (copy
+  ../../programs/catcher_prep/plans/02-train-catchers.plan.json
+  02-train-catchers.plan.json))
+
+(rule
  (target mg04_walk_two_fled_battles.wire.jsonl)
  (deps mg04_walk_two_fled_battles.wire.jsonl.gz)
  (action
@@ -208,6 +218,18 @@
  (libraries
   gamepilot.table_test
   gamepilot.pokemon_engine
+  gamepilot.frlg_checkpoints))
+
+(test
+ (name test_catcher_prep_plans)
+ (modules test_catcher_prep_plans)
+ (deps 01-catch-paras.plan.json 02-train-catchers.plan.json)
+ (libraries
+  gamepilot.grid_geometry
+  gamepilot.grid_maps
+  gamepilot.pokemon_engine
+  gamepilot.frlg_overworld
+  gamepilot.frlg_actions
   gamepilot.frlg_checkpoints))
 
 (test
