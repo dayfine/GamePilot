@@ -24,7 +24,7 @@ type t = {
   menu : bool;
   battle : bool;
   sparkles : Minimap_sparkles.nearby;
-  wall_sparkle : Bdsp_underground.Corridor_nav.direction option;
+  wall_sparkle : Grid_geometry.Direction.t option;
       (** Direction of a bright magenta/white sparkle star on the tunnel wall
           near the player, when in the free overworld. *)
 }
