@@ -1,10 +1,7 @@
 open Blink_model
 
-type blink_sample = {
-  advance : int;
-  blinked : bool;
-  blink_type : blink_type option;
-}
+type observation = Blinked of blink_type option | No_blink | Unknown
+type blink_sample = { advance : int; observation : observation }
 
 type blink_solve_result = {
   success : bool;
@@ -22,25 +19,29 @@ let blink_type_row = blink_bit_row_first + blink_zero_bits
 let unknowns = Gf2_matrix.dimension
 let zero_state = { Xorshift128.s0 = 0; s1 = 0; s2 = 0; s3 = 0 }
 
+let check_blink_type where roll = function
+  | Some seen when npc_blink_type roll <> seen ->
+      Error
+        ("Recovered state disagrees with the blink type at advance " ^ where
+       ^ ".")
+  | Some _ | None -> Ok ()
+
 (* One watched roll against what was seen there. *)
 let check_roll sample roll =
   let blinked = npc_blinks roll in
   let where = string_of_int sample.advance in
-  let type_differs =
-    match sample.blink_type with
-    | Some seen -> blinked && npc_blink_type roll <> seen
-    | None -> false
-  in
-  if blinked <> sample.blinked then
-    Error
-      (if blinked then
-         "Recovered state blinks at advance " ^ where
-         ^ ", where nothing was seen."
-       else "Recovered state does not blink at advance " ^ where ^ ".")
-  else if type_differs then
-    Error
-      ("Recovered state disagrees with the blink type at advance " ^ where ^ ".")
-  else Ok ()
+  match sample.observation with
+  | Unknown -> Ok ()
+  | No_blink ->
+      if blinked then
+        Error
+          ("Recovered state blinks at advance " ^ where
+         ^ ", where nothing was seen.")
+      else Ok ()
+  | Blinked expected_type ->
+      if not blinked then
+        Error ("Recovered state does not blink at advance " ^ where ^ ".")
+      else check_blink_type where roll expected_type
 
 (* Double checks the observations against a candidate state. *)
 let verify_samples state samples =
@@ -61,7 +62,7 @@ let verify_samples state samples =
 (* A blink's equations, read off the transition to its roll: bits 3, 2 and 1
    are zero whenever a blink happens at all, and bit 0 is the single/double
    distinction, which the detector may not have. *)
-let blink_equations transition sample =
+let blink_equations transition blink_type =
   let zero_bit bit =
     (Gf2_matrix.row transition (blink_bit_row_first + bit), false)
   in
@@ -69,7 +70,13 @@ let blink_equations transition sample =
     (Gf2_matrix.row transition blink_type_row, seen = Double)
   in
   List.init blink_zero_bits zero_bit
-  @ Option.to_list (Option.map type_bit sample.blink_type)
+  @ Option.to_list (Option.map type_bit blink_type)
+
+let advance_transition transition at target =
+  if target > !at then (
+    transition :=
+      Gf2_matrix.mul (Xorshift128.transition_power (target - !at)) !transition;
+    at := target)
 
 (* Each blink constrains the four low bits of one roll. Returns the equations
    and the number of blinks. The samples are sorted by advance. *)
@@ -79,16 +86,13 @@ let npc_equations samples =
   let at = ref 0 in
   let blinks = ref 0 in
   let take sample =
-    if sample.blinked && sample.advance > !at then (
-      transition :=
-        Gf2_matrix.mul
-          (Xorshift128.transition_power (sample.advance - !at))
-          !transition;
-      at := sample.advance);
-    if sample.blinked then (
-      incr blinks;
-      equations :=
-        List.rev_append (blink_equations !transition sample) !equations)
+    match sample.observation with
+    | No_blink | Unknown -> ()
+    | Blinked blink_type ->
+        advance_transition transition at sample.advance;
+        incr blinks;
+        equations :=
+          List.rev_append (blink_equations !transition blink_type) !equations
   in
   List.iter take samples;
   (Array.of_list (List.rev !equations), !blinks)
@@ -105,7 +109,10 @@ let npc_failure ?(equations_used = 0) ?(null_space_dimension = 0) reason =
 
 let last_blink_advance samples =
   List.fold_left
-    (fun last sample -> if sample.blinked then sample.advance else last)
+    (fun last sample ->
+      match sample.observation with
+      | Blinked _ -> sample.advance
+      | No_blink | Unknown -> last)
     0 samples
 
 (* The candidates left by a consistent, small enough solution. *)

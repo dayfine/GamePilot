@@ -21,7 +21,7 @@ val nature_adjustment : nature:int -> stat_index:int -> adjustment
     Speed, Sp. Atk, Sp. Def (the game's nature table); [Neutral] for an index or
     nature out of range and for the five neutral natures. *)
 
-type 'a per_stat = {
+type 'a per_stat = 'a Static_encounter.per_stat = {
   hp : 'a;
   attack : 'a;
   defense : 'a;
@@ -71,15 +71,18 @@ type miss = {
 (** Why no single advance was found. *)
 
 val identify_hit_advance :
+  ?synchronize_nature:int option ->
   Xorshift128.state ->
   Static_encounter.template ->
   intended_advance:int ->
   radius:int ->
   observed ->
   (hit, miss) result
-(** [identify_hit_advance]: the one advance within [radius] of the intended one
-    (TSV 0, no Synchronize) whose Pokemon is {!consistent_with} the reading.
-    [Error] when none or several are, with the C++'s [failure_reason]. *)
+(** [identify_hit_advance ?synchronize_nature state template ~intended_advance
+     ~radius observed]: the one advance within [radius] of the intended one (TSV
+    0, with [synchronize_nature] defaulting to [None]) whose Pokemon is
+    {!consistent_with} the reading. [Error] when none or several are, with the
+    C++'s [failure_reason]. *)
 
 val advances_between :
   from:Xorshift128.state ->

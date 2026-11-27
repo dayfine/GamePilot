@@ -8,6 +8,37 @@ type tick_fit = {
   worst_ticks : float;
 }
 
+type frame_gap = { start_seconds : float; stop_seconds : float }
+
+let default_max_gap_seconds = 0.065
+
+let gap_between ~origin ~max_gap_seconds a b =
+  if b.timestamp -. a.timestamp > max_gap_seconds then
+    Some
+      {
+        start_seconds = a.timestamp -. origin;
+        stop_seconds = b.timestamp -. origin;
+      }
+  else None
+
+let rec scan_frame_gaps ~origin ~max_gap_seconds acc = function
+  | a :: (b :: _ as rest) ->
+      let acc =
+        match gap_between ~origin ~max_gap_seconds a b with
+        | Some gap -> gap :: acc
+        | None -> acc
+      in
+      scan_frame_gaps ~origin ~max_gap_seconds acc rest
+  | [ _ ] | [] -> List.rev acc
+
+let find_frame_gaps ?origin ?(max_gap_seconds = default_max_gap_seconds) samples
+    =
+  match samples with
+  | [] | [ _ ] -> []
+  | first :: _ ->
+      let origin = Option.value origin ~default:first.timestamp in
+      scan_frame_gaps ~origin ~max_gap_seconds [] samples
+
 let threshold_lowest = 0.04
 let threshold_highest = 0.60
 let threshold_steps = 40
