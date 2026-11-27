@@ -83,17 +83,46 @@ let cases =
          ])
       "A A A A B RIGHT A B";
     case
-      "viridian-forest run 1 (2026-11-25): Farfetch'd holds Retro Mail, the \
-       game refuses: fail, not STORE again"
+      "viridian-forest run 1 (2026-11-25): Farfetch'd holds Retro Mail, no \
+       other copy below: dismiss, step past, fail at end"
       (presses [ "farfetchd" ]
          (to_panel
          @ [
              look Party_panel ~cursor:2 ~species:"farfetchd";
              look Mon_menu ~cursor:0 ~label:"STORE";
              look Party_panel ~cursor:6 ~species:"farfetchd" ~remove_mail:true;
+             look Party_panel ~cursor:2 ~species:"farfetchd";
+             look Party_panel ~cursor:3 ~species:"pidgey";
+             look Party_panel ~cursor:4 ~species:"oddish";
+             look Party_panel ~cursor:5 ~species:"rattata";
            ]))
-      "A wait B A wait B DOWN A wait A A fail: farfetchd holds Mail: the game \
-       will not store it (\"Please remove the MAIL.\")";
+      "A wait B A wait B DOWN A wait A A B DOWN DOWN DOWN fail: farfetchd \
+       holds Mail: the game will not store it (\"Please remove the MAIL.\")";
+    case
+      "two oddish in party: slot 4 holds Mail, slot 5 has no Mail -> skip slot \
+       4 and store slot 5"
+      (presses [ "oddish" ]
+         (to_panel
+         @ [
+             look Party_panel ~cursor:4 ~species:"oddish";
+             look Mon_menu ~cursor:0 ~label:"STORE";
+             look Party_panel ~cursor:6 ~species:"oddish" ~remove_mail:true;
+             look Party_panel ~cursor:4 ~species:"oddish";
+           ]
+         @ store "oddish" 5
+         @ [ look Party_panel ~cursor:4 ]))
+      "A wait B A wait B DOWN A wait A A B DOWN A A A B";
+    case "single oddish holding Mail at last slot: dismiss and fail"
+      (presses [ "oddish" ]
+         [
+           look Overworld;
+           look Party_panel ~cursor:5 ~species:"oddish";
+           look Mon_menu ~cursor:0 ~label:"STORE";
+           look Party_panel ~cursor:6 ~species:"oddish" ~remove_mail:true;
+           look Party_panel ~cursor:5 ~species:"oddish";
+         ])
+      "A A A B fail: oddish holds Mail: the game will not store it (\"Please \
+       remove the MAIL.\")";
     case "the member is not in the party: fail at the last slot"
       (presses [ "eevee" ]
          [
