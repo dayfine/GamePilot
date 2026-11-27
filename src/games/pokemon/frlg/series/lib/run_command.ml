@@ -210,6 +210,7 @@ let run_series program plan_dir (f : Pokemon_flags.flags) =
          program_options = program.options;
          daemons = daemons f backend ~viewport series;
          save_after_pass = f.save_after_pass;
+         close_game = f.close_game;
          home_tile = program.home_tile;
          max_rounds = f.max_rounds;
          from_event = from_event f;

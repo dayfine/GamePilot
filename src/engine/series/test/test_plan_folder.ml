@@ -91,12 +91,6 @@ let () =
           ^ " / "
           ^ Option.value (F.previous ids "mg-01") ~default:"none")
         "mg-05a / none";
-      case "the id after one, none after the last"
-        (fun () ->
-          Option.value (F.next ids "mg-05") ~default:"none"
-          ^ " / "
-          ^ Option.value (F.next ids "mg-06") ~default:"none")
-        "mg-06 / none";
       case "a checkpoint's plan file: <id>.plan.json in the folder"
         (fun () ->
           string_of_bool

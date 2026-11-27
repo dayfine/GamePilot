@@ -28,29 +28,6 @@ val run_live :
     inside {!in_session}, turning any unexpected exception into a non-repeating
     failure at ["raised"] so the run folder and watch run always close. *)
 
-val guard_attempt :
-  failed:(failed -> 'o) ->
-  ?on_stop:(string -> unit) ->
-  ?on_exn:(unit -> unit) ->
-  (unit -> 'o) ->
-  'o
-(** [guard_attempt ~failed ?on_stop ?on_exn body] runs [body ()] inside a live
-    session: {!Effects.Disconnected} is re-raised for {!in_session},
-    {!Effects.Stop_requested} runs [on_stop] and fails at ["stopped"]
-    (repeating), and any other exception runs [on_exn] and fails at ["raised"]
-    (not repeating). *)
-
-val check_initial_screen :
-  log:(string -> unit) ->
-  picture:Wire.box ->
-  already_at_start:bool ->
-  Switch.Initial_screen.expectation ->
-  (unit, string) result
-(** [check_initial_screen ~log ~picture ~already_at_start expectation] runs
-    {!Switch.Initial_screen.check} when [not already_at_start]; when
-    [already_at_start] holds, it logs that the check is skipped and returns
-    [Ok ()]. *)
-
 val finish :
   runs_dir:string ->
   Run_record.run ->

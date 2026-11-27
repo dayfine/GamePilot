@@ -50,19 +50,6 @@ let () =
     ~show:show_bool ~expected:false
     ~actual:(S.already_at_start ~continuing_from_pass:false ~trial:2 ~attempt:1);
 
-  (* round_trial *)
-  let cold_round = S.round_trial ~continuing_from_pass:false in
-  let cont_round = S.round_trial ~continuing_from_pass:true in
-  check_eq "round 1 on cold start: not already at start" ~show:show_bool
-    ~expected:false
-    ~actual:(S.trial_already_at_start cold_round ~attempt:1);
-  check_eq "round continuing from pass, attempt 1: already at start"
-    ~show:show_bool ~expected:true
-    ~actual:(S.trial_already_at_start cont_round ~attempt:1);
-  check_eq "round continuing from pass, retry attempt 2: not already at start"
-    ~show:show_bool ~expected:false
-    ~actual:(S.trial_already_at_start cont_round ~attempt:2);
-
   (* run_chain: empty *)
   let seen = ref [] in
   let ok =
@@ -147,76 +134,6 @@ let () =
   check_eq "trial error stops before trial 3" ~show:(show_list show_trial_at)
     ~expected:[ (1, 1, false); (2, 1, false) ]
     ~actual:(List.rev !seen);
-
-  (* run_attempts: retry succeeds on attempt 2, only attempt 1 is already at start *)
-  let seen_attempts = ref [] in
-  let show_attempt_verdict = function
-    | Checkpoint_trials.Attempt_again -> "Attempt_again"
-    | Run_passed -> "Run_passed"
-    | Run_failed { at; repeats; why } ->
-        Printf.sprintf "Run_failed {at=%S; repeats=%b; why=%S}" at repeats why
-  in
-  let show_attempt_res = function
-    | Error e -> Printf.sprintf "Error %S" e
-    | Ok (n, tag, v) ->
-        Printf.sprintf "Ok (%d, %S, %s)" n tag (show_attempt_verdict v)
-  in
-  let res =
-    S.run_attempts ~retries:2
-      { number = 1; continuing_from_pass = true }
-      ~attempt:(function
-        | "pass" -> Checkpoint_trials.Attempt_passed
-        | _ ->
-            Checkpoint_trials.Attempt_failed
-              { at = "#1"; reason = "transient"; repeats = false })
-      (fun ~attempt ~already_at_start ->
-        seen_attempts := (1, attempt, already_at_start) :: !seen_attempts;
-        Ok (if attempt = 2 then "pass" else "fail"))
-  in
-  check_eq "run_attempts passes on attempt 2" ~show:show_attempt_res
-    ~expected:(Ok (2, "pass", Checkpoint_trials.Run_passed))
-    ~actual:res;
-  check_eq "run_attempts: retry attempt 2 is not already at start"
-    ~show:(show_list show_trial_at)
-    ~expected:[ (1, 1, true); (1, 2, false) ]
-    ~actual:(List.rev !seen_attempts);
-
-  (* run_attempts: error aborts immediately *)
-  let res_err =
-    S.run_attempts ~retries:2
-      { number = 1; continuing_from_pass = false }
-      ~attempt:(fun _ -> Checkpoint_trials.Attempt_passed)
-      (fun ~attempt:_ ~already_at_start:_ -> Error "disk full")
-  in
-  check_eq "run_attempts propagates error" ~show:show_attempt_res
-    ~expected:(Error "disk full") ~actual:res_err;
-
-  (* run_rounds: threads state and continuing_from_pass across rounds *)
-  let seen_rounds = ref [] in
-  let show_round_seen (state, num, cont) =
-    Printf.sprintf "(state=%S, round=%d, continuing=%b)" state num cont
-  in
-  let show_round_decision d = Round_trials.decision_to_string d in
-  let decision, done_rounds =
-    S.run_rounds ~max_rounds:4 ~capped:false ~continuing_from_pass:false
-      ~round:(fun (_, goal_met) -> Round_trials.Round_passed { goal_met })
-      ~next_state:(fun _ (tag, _) -> tag)
-      "start.ss"
-      (fun state ~number t ->
-        seen_rounds := (state, number, t.continuing_from_pass) :: !seen_rounds;
-        Ok (Printf.sprintf "r%d.ss" number, number = 2))
-  in
-  check_eq "run_rounds meets goal on round 2" ~show:show_round_decision
-    ~expected:(Round_trials.Goal_met { rounds = 2 })
-    ~actual:decision;
-  check_eq "run_rounds returns completed rounds in order"
-    ~show:(show_list (fun (s, g) -> Printf.sprintf "(%S, %b)" s g))
-    ~expected:[ ("r1.ss", false); ("r2.ss", true) ]
-    ~actual:done_rounds;
-  check_eq "run_rounds threads state and continuing_from_pass"
-    ~show:(show_list show_round_seen)
-    ~expected:[ ("start.ss", 1, false); ("r1.ss", 2, true) ]
-    ~actual:(List.rev !seen_rounds);
 
   (* verdict_outcome *)
   let show_verdict_out (passed, line) =

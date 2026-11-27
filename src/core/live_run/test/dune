@@ -21,12 +21,7 @@
   yojson))
 
 (test
- (name test_daemon_run)
+ (name test_close_game_action)
  (flags
   (:standard -open Live_run))
- (libraries
-  gamepilot.table_test
-  gamepilot.live_run
-  gamepilot.effects
-  gamepilot.switch
-  gamepilot.wire))
+ (libraries gamepilot.table_test gamepilot.live_run))

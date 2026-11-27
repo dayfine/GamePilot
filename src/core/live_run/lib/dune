@@ -2,11 +2,12 @@
  (name live_run)
  (public_name gamepilot.live_run)
  (libraries
+  gamepilot.wire
   gamepilot.effects
   gamepilot.live
+  gamepilot.switch
   gamepilot.repo_io
   gamepilot.run_record
   gamepilot.strings
-  gamepilot.switch
   unix
   yojson))

@@ -54,9 +54,6 @@ val with_daemon :
     ports change. The series' record has the run going
     ({!Series_watch.run_started}) before the daemon starts. *)
 
-val run_name : id:string -> n:int -> attempt:int -> string
-(** ["<id> run <n>"], with [" attempt <a>"] appended when [attempt > 1]. *)
-
 val run_in :
   t ->
   runs_dir:string ->
@@ -84,3 +81,34 @@ val finish :
 val finished : t -> passed:bool -> unit
 (** The series ended, [passed] as its policy decided (not by its last run). The
     series' record says so ({!Series_watch.finished}). *)
+
+(** What post-series [--close-game] should do once a series finishes. *)
+type close_game_action =
+  | Close_game
+      (** [--close-game] was given on a passing Switch series: return to HOME
+          and close the running game. *)
+  | Skip_failed_run
+      (** [--close-game] was given on a Switch series that did not pass: skip so
+          the console keeps its failure state for debugging. *)
+  | No_close
+      (** [--close-game] was not given, or the backend is not a Switch. *)
+
+val close_game_action :
+  close_game:bool ->
+  backend:Daemon_process.backend ->
+  passed:bool ->
+  close_game_action
+(** Decides whether to close the running Switch game after a series finishes. *)
+
+val close_game_after_pass :
+  t ->
+  close_game:bool ->
+  ?tile:Switch.Home_screen.tile_color ->
+  passed:bool ->
+  unit ->
+  bool
+(** When [--close-game] is set on a passing Switch series, starts a short-lived
+    daemon (without recording or a watch page), returns to Switch HOME and
+    closes the running game ({!Switch.Console_park.park_and_close}), and stops
+    the daemon afterward. Returns [true] on success or when skipped/no-op, and
+    [false] if closing the game failed. *)

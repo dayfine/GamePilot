@@ -145,4 +145,58 @@ let () =
         (resume S.Home_fire_red_last (console ~a_ignored:true ()))
         "error: the game did not show after A on HOME; A; ends on HOME \
          (FireRed last)";
-    ]
+    ];
+  let close_console ?(running = true) ?(popup_stuck = false) () =
+    let running = ref running in
+    fun t b screen ->
+      let show after s = S.show t ~after s in
+      match (b, screen) with
+      | Wire.Home, S.Game -> show 600 S.Home_fire_red_last
+      | Wire.X, S.Home_fire_red_last when !running -> show 300 S.Close_popup
+      | Wire.A, S.Close_popup when popup_stuck -> show 100 S.Close_popup
+      | Wire.A, S.Close_popup ->
+          running := false;
+          show 1000 S.Home_bdsp_last
+      | _ -> ()
+  in
+  let check_park_and_close name ~start ~react ~expected_result ~expected_screen
+      =
+    let t = S.create ~start react in
+    let res =
+      S.run t (fun () ->
+          Console_park.park_and_close ~log ~picture:Fire_red.nso_gba_picture ())
+    in
+    let final_screen = S.screen_at t t.clock_ms in
+    let actual = (res, final_screen) in
+    let expected = (expected_result, expected_screen) in
+    Table_test.report name
+      (if actual = expected then Ok ()
+       else
+         let show (r, s) =
+           let rs = match r with Ok () -> "Ok ()" | Error e -> "Error " ^ e in
+           Printf.sprintf "(%s, %s)" rs (S.screen_name s)
+         in
+         Error
+           (Printf.sprintf "expected %s, got %s" (show expected) (show actual)))
+  in
+  check_park_and_close "park_and_close: from game, parks to HOME and closes"
+    ~start:S.Game ~react:(close_console ()) ~expected_result:(Ok ())
+    ~expected_screen:S.Home_bdsp_last;
+  check_park_and_close "park_and_close: already on HOME with running game"
+    ~start:S.Home_fire_red_last ~react:(close_console ())
+    ~expected_result:(Ok ()) ~expected_screen:S.Home_bdsp_last;
+  check_park_and_close "park_and_close: already on HOME with game closed"
+    ~start:S.Home_bdsp_last
+    ~react:(close_console ~running:false ())
+    ~expected_result:(Ok ()) ~expected_screen:S.Home_bdsp_last;
+  check_park_and_close "park_and_close: HOME never shows returns error"
+    ~start:S.Game
+    ~react:(fun _ _ _ -> ())
+    ~expected_result:(Error "the HOME menu did not show")
+    ~expected_screen:S.Game;
+  check_park_and_close "park_and_close: stuck close popup returns error"
+    ~start:S.Game
+    ~react:(close_console ~popup_stuck:true ())
+    ~expected_result:(Error "the game did not close in 20 rounds")
+    ~expected_screen:S.Close_popup;
+  Table_test.finish ()

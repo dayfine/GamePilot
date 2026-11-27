@@ -19,6 +19,10 @@ type 'game flags = {
   capture : string option;
   replay : string option;  (** A recorded video for a dry run (fake board). *)
   save_after_pass : bool;  (** Switch: save in the game after a pass. *)
+  close_game : bool;
+      (** Switch: return to HOME and close the running game after a passing
+          series ([--close-game]); false by default. Failed runs keep the
+          console state for debugging. *)
   preflight : bool;
   max_rounds : int option;  (** A repeating checkpoint's rounds, at most. *)
   from_event : string option;

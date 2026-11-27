@@ -54,15 +54,28 @@ let dispatch_raw st raw =
     (Ui_hub.Ui_api.status_text code)
     ctype (String.length body) body
 
-let handle_client st client =
+let close_quietly fd =
+  match Unix.close fd with () -> () | exception Unix.Unix_error _ -> ()
+
+let serve_client st client =
   let ready, _, _ = Unix.select [ client ] [] [] client_read_timeout_s in
-  (if ready <> [] then
-     let buf = Bytes.create read_buf_size in
-     let n = Unix.read client buf 0 read_buf_size in
-     if n > 0 then write_all client (dispatch_raw st (Bytes.sub_string buf 0 n)));
-  Unix.close client
+  if ready <> [] then
+    let buf = Bytes.create read_buf_size in
+    let n = Unix.read client buf 0 read_buf_size in
+    if n > 0 then write_all client (dispatch_raw st (Bytes.sub_string buf 0 n))
+
+let handle_client st client =
+  Fun.protect
+    ~finally:(fun () -> close_quietly client)
+    (fun () ->
+      match serve_client st client with
+      | () -> ()
+      | exception Unix.Unix_error ((Unix.EPIPE | Unix.ECONNRESET), _, _) -> ())
 
 let serve (f : flags) =
+  (* A browser closing an HTTP socket mid-response must raise EPIPE, not kill
+     the server with SIGPIPE (no SIGPIPE on Windows). *)
+  if not Sys.win32 then Sys.set_signal Sys.sigpipe Sys.Signal_ignore;
   let config_path =
     Option.value f.config ~default:(Console_config.default_path ())
   in

@@ -101,20 +101,34 @@ let finish_attempts cp n (attempt, (record, outcome), verdict) =
    decides; the last attempt's folder and the run's outcome, noted in that
    folder's summary.txt. [Error] when an attempt's folder could not be made. *)
 let attempts setup cp n ~trial_ctx ~progress =
-  let run_one ~attempt ~already_at_start =
-    Run.run setup cp n ~attempt ~already_at_start ~progress
+  let rec go tried =
+    let attempt = List.length tried + 1 in
+    let already_at_start =
+      Series_chain.trial_already_at_start trial_ctx ~attempt
+    in
+    let* res = Run.run setup cp n ~attempt ~already_at_start ~progress in
+    let tried = tried @ [ attempt_of (snd res) ] in
+    match Checkpoint_trials.attempts ~retries:cp.Run.plan.retries tried with
+    | Attempt_again -> go tried
+    | (Run_passed | Run_failed _) as verdict ->
+        Ok (finish_attempts cp n (attempt, res, verdict))
   in
-  Result.map (finish_attempts cp n)
-    (Series_chain.run_attempts ~retries:cp.Run.plan.retries trial_ctx
-       ~attempt:(fun (_, o) -> attempt_of o)
-       run_one)
+  go []
+
+let wire_progress started = function
+  | None -> Chain_progress.to_wire started ~now_ms:(now_ms ())
+  | Some r ->
+      let t = now_ms () in
+      Chain_progress.to_wire
+        (Chain_progress.end_trial started r ~now_ms:t)
+        ~now_ms:t
 
 (* One run of [cp], [chain] updated around it; [Error] (the checkpoint failed
    on the chain) when a folder could not be made. *)
 let trial setup cp n ~trial_ctx chain =
   chain := Chain_progress.begin_trial !chain;
   let started = !chain in
-  let progress = Chain_progress.wire_progress started ~now_ms in
+  let progress = wire_progress started in
   match attempts setup cp n ~trial_ctx ~progress with
   | Ok (_, outcome) as run ->
       chain :=
@@ -158,8 +172,7 @@ let keep_uncapped_end (setup : Run.setup) id ~next runs =
   match setup.common.grind_cap with
   | Some cap ->
       Printf.printf
-        "[Checkpoints] grind capped at %d: the end is not saved as the next \
-         start state\n\
+        "[Checkpoints] grind capped at %d: end not saved as next start state\n\
          %!"
         cap
   | None -> keep_end setup id ~next runs
@@ -230,18 +243,30 @@ let rounds_ended (setup : Run.setup) (cp : Run.checkpoint) chain ~next runs
 let repeat (setup : Run.setup) (cp : Run.checkpoint) ~from_pass chain ~next
     (r : Plan.repeat) =
   let max_rounds = Option.value setup.max_rounds ~default:r.max_rounds in
+  let capped = setup.common.grind_cap <> None in
   chain := Chain_progress.begin_rounds !chain ~max_rounds;
-  let decision, runs =
-    Series_chain.run_rounds ~max_rounds
-      ~capped:(setup.common.grind_cap <> None)
-      ~continuing_from_pass:from_pass
-      ~round:(fun (_, o) -> round_of o)
-      ~next_state:(after_round setup) cp
-      (fun cp ~number trial_ctx ->
-        Printf.printf "[Checkpoints] %s round %d of at most %d\n%!" cp.id number
-          max_rounds;
-        trial setup cp number ~trial_ctx chain)
+  let rec go cp ~from_pass runs =
+    match
+      Round_trials.decide ~max_rounds ~capped
+        (List.map (fun (_, o) -> round_of o) runs)
+    with
+    | Next_round number -> step cp ~from_pass runs ~number
+    | decision -> (decision, runs)
+  and step (cp : Run.checkpoint) ~from_pass runs ~number =
+    Printf.printf "[Checkpoints] %s round %d of at most %d\n%!" cp.id number
+      max_rounds;
+    let trial_ctx =
+      { Series_chain.number = 1; continuing_from_pass = from_pass }
+    in
+    match trial setup cp number ~trial_ctx chain with
+    | Ok ((_, outcome) as res) ->
+        let from_pass =
+          match outcome with Run.Passed _ -> true | _ -> false
+        in
+        go (after_round setup cp res) ~from_pass (runs @ [ res ])
+    | Error e -> (Round_trials.Stopped e, runs)
   in
+  let decision, runs = go cp ~from_pass [] in
   rounds_ended setup cp chain ~next runs decision
 
 let one ~plan_dir setup id ~from_pass chain ~next =
@@ -268,4 +293,8 @@ let run ~plan_dir (setup : Run.setup) ids ~after =
   in
   let code = if passed then 0 else 1 in
   Series_daemons.finished setup.daemons ~passed;
-  code
+  let closed =
+    Series_daemons.close_game_after_pass setup.daemons
+      ~close_game:setup.close_game ?tile:setup.home_tile ~passed ()
+  in
+  if code = 0 && not closed then 1 else code
