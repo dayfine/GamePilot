@@ -146,14 +146,10 @@ let in_session setup cp ~already_at_start ~progress record log
   Effects.show_run (progress (Some (trial outcome)));
   outcome
 
-let live setup cp ~already_at_start ~progress record log
+let live setup cp ~already_at_start ~progress record ~log
     (daemon : Daemon_process.t) =
-  Daemon_run.in_session ~failed ~dir:record.Run_record.dir (fun () ->
-      Live.run_with_backend ~port:daemon.port
-        (in_session setup cp ~already_at_start ~progress record log))
-
-let with_daemon setup run n body =
-  Series_daemons.with_daemon setup.daemons ~failed run ~n body
+  Daemon_run.run_live ~failed ~dir:record.Run_record.dir ~port:daemon.port
+    (in_session setup cp ~already_at_start ~progress record log)
 
 let capped_note setup cp =
   Run_line.capped_note ~grind_cap:setup.common.grind_cap cp.plan
@@ -184,33 +180,30 @@ let mode_name setup cp =
   | Some _ -> Event_range.mode_name
   | None -> Checkpoint_trials.mode_to_string setup.mode
 
-let record_outcome setup cp (run : Run_record.run) n ~attempt outcome =
-  let line = summary setup cp n ~attempt outcome in
+let ending_of setup cp n ~attempt outcome =
   let ending : Run_record.ending =
     match outcome with
     | Passed _ -> { result = "pass"; at = ""; reason = "" }
     | Failed { at; reason; _ } -> { result = "fail"; at; reason }
   in
-  Series_daemons.finish setup.daemons ~runs_dir:setup.runs_dir run ~summary:line
-    ending
+  (summary setup cp n ~attempt outcome, ending)
 
 (* The attempt in its folder: the folder and how it ended. *)
 let run_in setup cp n ~attempt ~already_at_start ~progress
     (run : Run_record.run) =
-  let record = run.record in
-  let log, close = Run_record.run_log record in
-  log
-    (Printf.sprintf "[Run] %s%s from %s"
-       (Run_line.run_name cp.id cp.plan n)
-       (Run_line.attempt_note cp.plan attempt)
-       cp.start_state);
-  let outcome =
-    with_daemon setup run n
-      (live setup cp ~already_at_start ~progress record log)
+  let banner =
+    Printf.sprintf "[Run] %s%s from %s"
+      (Run_line.run_name cp.id cp.plan n)
+      (Run_line.attempt_note cp.plan attempt)
+      cp.start_state
   in
-  close ();
-  record_outcome setup cp run n ~attempt outcome;
-  (record, outcome)
+  let outcome =
+    Series_daemons.run_in setup.daemons ~runs_dir:setup.runs_dir ~failed
+      ~ending:(ending_of setup cp n ~attempt)
+      ~banner run ~n
+      (live setup cp ~already_at_start ~progress run.record)
+  in
+  (run.record, outcome)
 
 (* Attempt [attempt] of run [n] of [cp]: its folder and how it ended; [Error]
    when its folder could not be made. [progress] is the chain for the watch

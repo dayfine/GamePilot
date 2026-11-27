@@ -53,89 +53,56 @@ let failed ?(repeats = false) ?(off_start = false) at reason =
 let of_runner ({ at; reason; repeats } : Daemon_run.failed) =
   failed ~repeats at reason
 
-(* The run fails on the page when it stops before its runner ended it. *)
-let watched attempt ~log ~picture ~reload report plan =
-  match attempt ~log ~picture ~reload report plan with
-  | outcome -> outcome
-  | exception Effects.Stop_requested why ->
-      Watch_report.end_run report ~passed:false;
-      failed ~repeats:true "stopped" why
-  | exception (Effects.Disconnected _ as e) -> raise e
-  | exception e ->
-      (* Any other exception ends the watch run here; the run fails as
-         [live] fails one. *)
-      Watch_report.end_run report ~passed:false;
-      failed "raised" (Printexc.to_string e)
-
-let check_initial setup ~log ~picture ~already_at_start plan =
-  if not already_at_start then
-    Switch.Initial_screen.check ~log ~picture (setup.initial_screen plan)
-  else (
-    log
-      "[Console] continuing from previous pass (skipping initial-screen check)";
-    Ok ())
-
 let in_session setup ~log ~reload ~already_at_start record plan
     (backend : Wire.backend) =
   let picture = backend.viewport in
   let log = Watch_report.log log in
   let report = P.Plan_watch.create plan.P.Plan.checkpoint in
+  let end_failed () = Watch_report.end_run report ~passed:false in
   let outcome =
-    match check_initial setup ~log ~picture ~already_at_start plan with
+    match
+      Daemon_run.check_initial_screen ~log ~picture ~already_at_start
+        (setup.initial_screen plan)
+    with
     | Error reason ->
-        Watch_report.end_run report ~passed:false;
+        end_failed ();
         failed ~repeats:true "start" reason
-    | Ok () -> watched setup.attempt ~log ~picture ~reload report plan
+    | Ok () ->
+        Daemon_run.guard_attempt ~failed:of_runner
+          ~on_stop:(fun _ -> end_failed ())
+          ~on_exn:end_failed
+          (fun () -> setup.attempt ~log ~picture ~reload report plan)
   in
   (match outcome with
   | Failed _ -> Daemon_run.save_failure ~log record ~save_states:false
   | Passed -> ());
   outcome
 
-(* Any exception Daemon_run.in_session passes on fails the run here, so the
-   story log, the run record and the watch run still close. *)
-let live setup ~log ~reload ~already_at_start record plan
-    (daemon : Daemon_process.t) =
-  let body () =
-    Live.run_with_backend ~port:daemon.port
-      (in_session setup ~log ~reload ~already_at_start record plan)
+let ending_of name outcome =
+  let summary =
+    match outcome with
+    | Passed -> "PASS " ^ name
+    | Failed { at; reason; _ } ->
+        Printf.sprintf "FAIL %s at %s: %s" name at reason
   in
-  match
-    Daemon_run.in_session ~failed:of_runner ~dir:record.Run_record.dir body
-  with
-  | outcome -> outcome
-  | exception e -> failed "raised" (Printexc.to_string e)
-
-(* "03.07 run 1", with " attempt 2" after the first. *)
-let run_name id n = function
-  | 1 -> Printf.sprintf "%s run %d" id n
-  | a -> Printf.sprintf "%s run %d attempt %d" id n a
-
-let summary name = function
-  | Passed -> "PASS " ^ name
-  | Failed { at; reason; _ } ->
-      Printf.sprintf "FAIL %s at %s: %s" name at reason
-
-(* Attempt [attempt] of run [n] of [plan] in its folder [run]. *)
-let run_in setup plan n ~attempt ~reload ~already_at_start
-    (run : Run_record.run) =
-  let id = plan.P.Plan.checkpoint.checkpoint_id in
-  let name = run_name id n attempt in
-  let log, close = Run_record.run_log run.record in
-  log ("[Run] " ^ name ^ if reload then " (after a reload)" else "");
-  let outcome =
-    Series_daemons.with_daemon setup.daemons ~failed:of_runner run ~n
-      (live setup ~log ~reload ~already_at_start run.record plan)
-  in
-  close ();
   let ending : Run_record.ending =
     match outcome with
     | Passed -> { result = "pass"; at = ""; reason = "" }
     | Failed { at; reason; _ } -> { result = "fail"; at; reason }
   in
-  Series_daemons.finish setup.daemons ~runs_dir:setup.flags.runs_dir run
-    ~summary:(summary name outcome) ending;
-  outcome
+  (summary, ending)
+
+let run_in_folder setup plan n ~attempt ~reload ~already_at_start
+    (run : Run_record.run) =
+  let id = plan.P.Plan.checkpoint.checkpoint_id in
+  let name = Series_daemons.run_name ~id ~n ~attempt in
+  let banner = "[Run] " ^ name ^ if reload then " (after a reload)" else "" in
+  let live ~log (daemon : Daemon_process.t) =
+    Daemon_run.run_live ~failed:of_runner ~dir:run.record.dir ~port:daemon.port
+      (in_session setup ~log ~reload ~already_at_start run.record plan)
+  in
+  Series_daemons.run_in setup.daemons ~runs_dir:setup.flags.runs_dir
+    ~failed:of_runner ~ending:(ending_of name) ~banner run ~n live
 
 let run_attempt setup plan n ~attempt ~reload ~already_at_start =
   let id = plan.P.Plan.checkpoint.checkpoint_id in
@@ -143,9 +110,9 @@ let run_attempt setup plan n ~attempt ~reload ~already_at_start =
     Run_record.start ~runs_dir:setup.flags.runs_dir setup.info ~checkpoint:id
       ~mode:"testing"
   with
-  | Ok run -> run_in setup plan n ~attempt ~reload ~already_at_start run
   | Error reason ->
       Failed { at = "run folder"; reason; repeats = true; off_start = false }
+  | Ok run -> run_in_folder setup plan n ~attempt ~reload ~already_at_start run
 
 let run setup (plan : P.Plan.t) (t : Chain.trial) ~reload =
   let id = plan.checkpoint.checkpoint_id in
@@ -176,20 +143,13 @@ let runs_of setup plan ~continuing_from_pass =
     Chain.run_trials setup.policy ~continuing_from_pass ~trial:Attempts.trial
       (run_trial setup plan)
   in
-  match verdict with
-  | Checkpoint_trials.Run_again -> false
-  | Checkpoint_passed { passes; runs } ->
-      Printf.printf "[Checkpoints] %s: passed (%d of %d runs)\n%!"
-        plan.checkpoint.checkpoint_id passes runs;
-      true
-  | Stopped why ->
-      Printf.printf "[Checkpoints] %s: stopped: %s\n%!"
-        plan.checkpoint.checkpoint_id why;
-      false
+  let passed, line =
+    Chain.verdict_outcome ~id:plan.checkpoint.checkpoint_id verdict
+  in
+  Option.iter print_endline line;
+  passed
 
-let rec next_id id = function
-  | a :: (b :: _ as rest) -> if a = id then Some b else next_id id rest
-  | [ _ ] | [] -> None
+let next_id id ids = Plan_folder.next ids id
 
 (* Each plan given its end place by the program, from the plan after it (the
    folder's next one after the last). *)

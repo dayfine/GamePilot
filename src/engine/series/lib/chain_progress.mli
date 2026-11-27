@@ -39,3 +39,9 @@ val fail_checkpoint : t -> now_ms:int -> t
     failed, the rest skipped. *)
 
 val to_wire : t -> now_ms:int -> Wire.Watch_run.t
+
+val wire_progress :
+  t -> now_ms:(unit -> int) -> Checkpoint_trials.run option -> Wire.Watch_run.t
+(** [wire_progress started ~now_ms] builds the progress callback for a trial
+    that started from [started]: [None] sends the in-progress chain, and
+    [Some r] sends the chain with that trial ended by [r]. *)

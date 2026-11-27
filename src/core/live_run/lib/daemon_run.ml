@@ -21,6 +21,33 @@ let in_session ~failed ~dir body =
           repeats = true;
         }
 
+let run_live ~failed ~dir ~port body =
+  match
+    in_session ~failed ~dir (fun () -> Live.run_with_backend ~port body)
+  with
+  | outcome -> outcome
+  | exception e ->
+      failed { at = "raised"; reason = Printexc.to_string e; repeats = false }
+
+let guard_attempt ~failed ?on_stop ?on_exn body =
+  match body () with
+  | outcome -> outcome
+  | exception (Effects.Disconnected _ as e) -> raise e
+  | exception Effects.Stop_requested reason ->
+      Option.iter (fun f -> f reason) on_stop;
+      failed { at = "stopped"; reason; repeats = true }
+  | exception e ->
+      Option.iter (fun f -> f ()) on_exn;
+      failed { at = "raised"; reason = Printexc.to_string e; repeats = false }
+
+let check_initial_screen ~log ~picture ~already_at_start expectation =
+  if not already_at_start then
+    Switch.Initial_screen.check ~log ~picture expectation
+  else (
+    log
+      "[Console] continuing from previous pass (skipping initial-screen check)";
+    Ok ())
+
 let finish ~runs_dir (run : Run_record.run) ~summary ending =
   print_endline ("[Run] " ^ run.record.dir ^ ": " ^ summary);
   Run_record.finish ~runs_dir run ~summary ending

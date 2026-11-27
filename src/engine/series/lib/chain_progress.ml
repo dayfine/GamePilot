@@ -103,3 +103,9 @@ let to_wire t ~now_ms =
     started_ms = t.started_ms;
     checkpoints = List.map checkpoint t.entries;
   }
+
+let wire_progress started ~now_ms = function
+  | None -> to_wire started ~now_ms:(now_ms ())
+  | Some r ->
+      let now_ms = now_ms () in
+      to_wire (end_trial started r ~now_ms) ~now_ms

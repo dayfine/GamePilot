@@ -52,8 +52,48 @@ val run_trials :
     through {!Engine_run.Checkpoint_trials.until_decided}, passing each trial's
     {!trial} context to [run]. *)
 
-val run_round_trial : continuing_from_pass:bool -> trial
+val run_attempts :
+  retries:int ->
+  trial ->
+  attempt:('r -> Engine_run.Checkpoint_trials.attempt) ->
+  (attempt:int -> already_at_start:bool -> ('r, string) result) ->
+  (int * 'r * Engine_run.Checkpoint_trials.attempt_verdict, string) result
+(** [run_attempts ~retries t ~attempt run] runs attempts [1, 2, ...] of trial
+    [t] until {!Engine_run.Checkpoint_trials.attempts} decides. Each attempt
+    receives its 1-based [attempt] number and
+    [already_at_start = trial_already_at_start t ~attempt]. Returns
+    [Ok (attempts, last, verdict)] on decision, or [Error e] when an attempt
+    could not start. *)
+
+val round_trial : continuing_from_pass:bool -> trial
 (** A repeating checkpoint's round trial context: [number = 1] with
     [continuing_from_pass], so the first attempt of a round continuing from a
     passing checkpoint or previous passing round is already at start, while
     retries ([attempt > 1]) are not. *)
+
+val run_rounds :
+  max_rounds:int ->
+  capped:bool ->
+  continuing_from_pass:bool ->
+  round:('r -> Round_trials.round) ->
+  next_state:('s -> 'r -> 's) ->
+  's ->
+  ('s -> number:int -> trial -> ('r, string) result) ->
+  Round_trials.decision * 'r list
+(** [run_rounds ~max_rounds ~capped ~continuing_from_pass ~round ~next_state
+     init run] runs rounds of a repeating checkpoint until
+    {!Round_trials.decide} stops or meets its goal. Each round receives the
+    current state (updated by [next_state]), its 1-based round [number], and its
+    {!round_trial} context; an [Error e] from [run] stops with
+    [Round_trials.Stopped e]. Returns the final decision and all completed
+    rounds, oldest first. *)
+
+val verdict_outcome :
+  ?note:string ->
+  id:string ->
+  Engine_run.Checkpoint_trials.verdict ->
+  bool * string option
+(** [verdict_outcome ?note ~id verdict] turns a checkpoint's trial verdict into
+    [(passed, line)], where [line] is the [[Checkpoints]] summary line for
+    [Checkpoint_passed] (with optional trailing [note]) or [Stopped], and [None]
+    for [Run_again]. *)

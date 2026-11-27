@@ -44,3 +44,8 @@ let previous ids id =
     | x :: rest -> if x = id then prev else go (Some x) rest
   in
   go None ids
+
+let rec next ids id =
+  match ids with
+  | a :: (b :: _ as rest) -> if a = id then Some b else next rest id
+  | [ _ ] | [] -> None

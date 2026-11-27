@@ -19,3 +19,14 @@
   gamepilot.run_record
   unix
   yojson))
+
+(test
+ (name test_daemon_run)
+ (flags
+  (:standard -open Live_run))
+ (libraries
+  gamepilot.table_test
+  gamepilot.live_run
+  gamepilot.effects
+  gamepilot.switch
+  gamepilot.wire))

@@ -7,5 +7,6 @@
   gamepilot.repo_io
   gamepilot.run_record
   gamepilot.strings
+  gamepilot.switch
   unix
   yojson))
