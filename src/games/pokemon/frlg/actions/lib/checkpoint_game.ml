@@ -220,8 +220,23 @@ let capture t (_ : Pokemon_engine.Plan.event) args =
       let plan = Capture_plan.apply_options t.config.program_options plan in
       Menu_input.run (run_capture t plan))
 
-(* The wild RNG catch ({!Wild_rng}): the target searched for, then the capture
-   on the blind steps and the summary's star. *)
+(* The wild RNG catch ({!Wild_rng}): the target searched for, then either the
+   legacy throw-only capture or optional visual shiny detection + policy catch
+   ({!Battle_catch_steps}), and finally the summary's star. *)
+let wild_rng_policy_catch ~log ~timings (plan : Wild_rng_plan.t) =
+  let make ~visual_shiny_check ~config ~policy =
+    Some
+      (Wild_rng_steps.policy_catch_steps ~log ~timings ~visual_shiny_check
+         ~config ~policy ())
+  in
+  match (plan.catch_mode, plan.visual_shiny_check) with
+  | Wild_rng_plan.Throw_only, false -> None
+  | Wild_rng_plan.Throw_only, true ->
+      make ~visual_shiny_check:true ~config:Wild_rng_plan.default_catch_config
+        ~policy:(Wild_rng_plan.throw_only_policy plan.capture)
+  | Wild_rng_plan.Catch_policy { policy; config }, visual_shiny_check ->
+      make ~visual_shiny_check ~config ~policy
+
 let run_wild_rng t (plan : Wild_rng_plan.t) () =
   let log = t.config.log in
   let target =
@@ -236,8 +251,14 @@ let run_wild_rng t (plan : Wild_rng_plan.t) () =
           (Wild_rng_steps.game_steps ~log target.timings capture)
           capture ~party)
   in
+  let policy_catch = wild_rng_policy_catch ~log ~timings:target.timings plan in
   let game_steps : Wild_rng.game_steps =
-    { catch; shiny_at = (fun slot -> Wild_rng_steps.shiny_at ~log ~slot); log }
+    {
+      catch;
+      policy_catch;
+      shiny_at = (fun slot -> Wild_rng_steps.shiny_at ~log ~slot);
+      log;
+    }
   in
   let r =
     Wild_rng.run game_steps plan.capture ~party:(Party_roster.size !(t.party))
@@ -248,18 +269,29 @@ let run_wild_rng t (plan : Wild_rng_plan.t) () =
     (fun code -> Menu_input.fail code (Wild_rng.message r))
     (Wild_rng.failure_code r.end_)
 
+let apply_switch_calibration (plan : Wild_rng_plan.t) =
+  if plan.frame_model <> "switch" then Ok plan
+  else
+    Frlg_rng.Switch_rng_calibration.load_console ()
+    |> Result.map_error (Failure.cause ~repeats:true "bad_args")
+    |> Result.map (function
+         | Some entry -> Wild_rng_plan.apply_calibration entry plan
+         | None -> plan)
+
+let load_wild_rng_fallback options =
+  match (Run_options.int options "tid", Run_options.int options "sid") with
+  | Some _, Some _ -> Ok Wild_rng_plan.no_trainer_ids
+  | _ ->
+      Wild_rng_plan.load_trainer_ids ()
+      |> Result.map_error (Failure.cause ~repeats:true "bad_args")
+
 let wild_rng t (_ : Pokemon_engine.Plan.event) args =
+  let ( let* ) = Result.bind in
   let options = t.config.program_options in
-  let fallback =
-    match (Run_options.int options "tid", Run_options.int options "sid") with
-    | Some _, Some _ -> Ok Wild_rng_plan.no_trainer_ids
-    | _ ->
-        Wild_rng_plan.load_trainer_ids ()
-        |> Result.map_error (Failure.cause ~repeats:true "bad_args")
-  in
-  Result.bind fallback (fun fallback ->
-      Result.bind (Wild_rng_plan.decode ~options ~fallback args) (fun plan ->
-          Menu_input.run (run_wild_rng t plan)))
+  let* fallback = load_wild_rng_fallback options in
+  let* plan = Wild_rng_plan.decode ~options ~fallback args in
+  let* plan = apply_switch_calibration plan in
+  Menu_input.run (run_wild_rng t plan)
 
 (* The game saved from the Start menu, as between loop rounds: what a hard
    reset ({!Effects.reset}) boots from. *)
