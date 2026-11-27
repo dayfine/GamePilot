@@ -18,8 +18,14 @@ let fake_game_steps ~dig_script ~battle_on_walk_idx ~battle_on_refresh_idx =
         (fun () ->
           Ok
             [
-              { Corridor_nav.offset_tiles = 3; wall_side = North };
-              { Corridor_nav.offset_tiles = 7; wall_side = South };
+              {
+                Corridor_nav.offset_tiles = 3;
+                wall_side = Grid_geometry.Direction.North;
+              };
+              {
+                Corridor_nav.offset_tiles = 7;
+                wall_side = Grid_geometry.Direction.South;
+              };
             ]);
       walk_to_sparkle =
         (fun _ ->
@@ -57,7 +63,12 @@ let test_session_reaches_goal_with_refresh_and_battle_recovery () =
     fake_game_steps ~dig_script:script ~battle_on_walk_idx:2
       ~battle_on_refresh_idx:1
   in
-  let anchor = { Corridor_nav.enter_dir = North; exit_dir = South } in
+  let anchor =
+    {
+      Corridor_nav.enter_dir = Grid_geometry.Direction.North;
+      exit_dir = Grid_geometry.Direction.South;
+    }
+  in
   match
     Corridor_nav.run_session ~goal:(Mining_goal.Slates 2) ~anchor ~save_every:2
       ~max_refreshes:10 ~steps
@@ -71,7 +82,7 @@ let test_session_reaches_goal_with_refresh_and_battle_recovery () =
       assert_eq_int "battles escaped" 2 summary.battles_escaped;
       assert_eq_int "saves" 2 summary.saves;
       assert_eq_int "move mechanics turn tap" 50
-        Corridor_nav.bdsp_move_mechanics.turn_tap_ms
+        Grid_maps.Move_mechanics.bdsp.turn_tap_ms
 
 let () =
   test_session_reaches_goal_with_refresh_and_battle_recovery ();
