@@ -32,10 +32,10 @@ let timing : shop_timing =
     press_hold_ms = 120;
     nav_hold_ms = 80;
     nav_cooldown_ms = 140;
-    dialog_wait_ms = 900;
-    menu_wait_ms = 700;
-    exit_presses = 3;
-    exit_cooldown_ms = 600;
+    dialog_wait_ms = 1300;
+    menu_wait_ms = 800;
+    exit_presses = 4;
+    exit_cooldown_ms = 900;
   }
 
 let validate_purchase (p : purchase) =

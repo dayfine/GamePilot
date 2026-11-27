@@ -95,40 +95,39 @@ let step_pocket ~from ~to_ =
       repeat_press Wire.Left n;
       P.wait timing.pocket_wait_ms
 
-let live_game_steps ~log ~picture =
+let press_confirm n =
+  for _ = 1 to n do
+    P.press ~hold_ms:timing.press_hold_ms ~cooldown_ms:timing.confirm_wait_ms
+      Wire.A
+  done
+
+let live_replace_move ~log ~picture = function
+  | None -> Overworld_actions.advance_dialog ~log ~picture ()
+  | Some move_slot ->
+      press_confirm 4;
+      repeat_press Wire.Down (move_slot - 1);
+      press_confirm 2;
+      Overworld_actions.advance_dialog ~log ~picture ()
+
+let live_game_steps ~start_pocket ~log ~picture =
   let open_tm_pocket () =
     log "Opening Bag -> TMs pocket...";
     let* () = Overworld_actions.open_menu ~log ~picture () in
     let* () = Overworld_actions.menu_select ~log ~picture ~dx:0 ~dy:0 () in
     P.wait Overworld_timing.dlg.bag_open_wait_ms;
-    step_pocket ~from:Medicine ~to_:Tms;
+    step_pocket ~from:start_pocket ~to_:Tms;
     Ok ()
   in
   let select_tm tm_row =
     repeat_press Wire.Down tm_row;
-    P.press ~hold_ms:timing.press_hold_ms ~cooldown_ms:timing.confirm_wait_ms
-      Wire.A;
-    P.press ~hold_ms:timing.press_hold_ms ~cooldown_ms:timing.confirm_wait_ms
-      Wire.A
+    press_confirm 2
   in
   let choose_party_slot slot =
     repeat_press Wire.Down (slot - 1);
-    P.press ~hold_ms:timing.press_hold_ms ~cooldown_ms:timing.confirm_wait_ms
-      Wire.A;
+    press_confirm 1;
     Ok ()
   in
-  let replace_move = function
-    | None -> Overworld_actions.advance_dialog ~log ~picture ()
-    | Some move_slot ->
-        P.press ~hold_ms:timing.press_hold_ms
-          ~cooldown_ms:timing.confirm_wait_ms Wire.A;
-        repeat_press Wire.Down (move_slot - 1);
-        P.press ~hold_ms:timing.press_hold_ms
-          ~cooldown_ms:timing.confirm_wait_ms Wire.A;
-        P.press ~hold_ms:timing.press_hold_ms
-          ~cooldown_ms:timing.confirm_wait_ms Wire.A;
-        Overworld_actions.advance_dialog ~log ~picture ()
-  in
+  let replace_move = live_replace_move ~log ~picture in
   let close_to_overworld () =
     log "Closing Bag back to overworld...";
     for _ = 1 to Overworld_timing.bag.exit_presses do

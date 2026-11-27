@@ -30,6 +30,10 @@ val run : game_steps -> request -> (unit, string) result
     [replace_move_slot] in [1..4]), open the TMs pocket, teach the TM, and close
     back to the overworld. *)
 
-val live_game_steps : log:(string -> unit) -> picture:Wire.box -> game_steps
+val live_game_steps :
+  start_pocket:Bdsp_readers.Bag_pocket_reader.pocket ->
+  log:(string -> unit) ->
+  picture:Wire.box ->
+  game_steps
 (** Live BDSP Switch steps for {!run}, starting from the overworld with Bag
     selected on the X menu and the Bag opening on the Medicine pocket. *)
