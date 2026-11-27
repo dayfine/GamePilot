@@ -22,10 +22,13 @@ let html =
   .card-top { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; flex-wrap:wrap; }
   .card-title { font-weight:600; font-size:15px; }
   .pill { font-size:11px; font-weight:600; padding:2px 8px; border-radius:99px; text-transform:uppercase; }
-  .pill.ready, .pill.passed { background:rgba(58,210,159,.15); color:var(--ok); }
+  .pill.ready, .pill.passed, .pill.pass { background:rgba(58,210,159,.15); color:var(--ok); }
   .pill.running { background:rgba(77,163,255,.18); color:var(--accent); }
-  .pill.offline, .pill.failed { background:rgba(255,92,119,.16); color:var(--err); }
+  .pill.offline, .pill.failed, .pill.fail { background:rgba(255,92,119,.16); color:var(--err); }
   .pill.stopped { background:rgba(246,183,60,.16); color:var(--warn); }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { text-align:left; padding:7px 8px; border-bottom:1px solid var(--border); vertical-align:top; word-break:break-word; }
+  th { color:var(--muted); font-weight:600; font-size:12px; }
   .row { display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end; }
   label { display:flex; flex-direction:column; gap:4px; font-size:12px; color:var(--muted); min-width:140px; max-width:100%; flex:1 1 160px; }
   input, select { background:#0d1118; color:var(--text); border:1px solid var(--border); border-radius:6px; padding:7px 9px; font:inherit; max-width:100%; }
@@ -107,6 +110,11 @@ let html =
   <section>
     <h2><span>Active &amp; Recent Runs</span><span id="runCount" class="muted"></span></h2>
     <div id="runsList" class="muted">No runs launched yet.</div>
+  </section>
+
+  <section>
+    <h2><span>Run History</span><span id="historyDir" class="muted"></span></h2>
+    <div id="historyList" class="muted">Loading history...</div>
   </section>
 </main>
 <script>
@@ -261,7 +269,25 @@ async function loadRuns() {
     </div>`).join('');
 }
 
-async function refreshAll() { await Promise.all([loadConsoles(), loadRuns()]); }
+async function loadHistory() {
+  const r = await fetch('/api/history');
+  if (!r.ok) return;
+  const j = await r.json();
+  document.getElementById('historyDir').textContent = j.runs_dir || '';
+  const entries = j.entries || [];
+  const el = document.getElementById('historyList');
+  if (!entries.length) { el.innerHTML = '<div class="muted">No recorded runs in RESULTS.tsv yet.</div>'; return; }
+  el.innerHTML = `<table><thead><tr><th>Time</th><th>Program / Checkpoint</th><th>Mode</th><th>Result</th><th>Detail</th></tr></thead><tbody>${entries.map(e => `
+    <tr>
+      <td class="muted">${esc(e.time)}</td>
+      <td><strong>${esc(e.checkpoint)}</strong><div class="muted">${esc(e.run)}</div></td>
+      <td class="muted">${esc(e.mode)}</td>
+      <td><span class="pill ${esc(e.result)}">${esc(e.result)}</span></td>
+      <td class="muted">${esc([e.at, e.reason].filter(Boolean).join(' — '))}</td>
+    </tr>`).join('')}</tbody></table>`;
+}
+
+async function refreshAll() { await Promise.all([loadConsoles(), loadRuns(), loadHistory()]); }
 loadPrograms();
 refreshAll();
 setInterval(refreshAll, 2000);

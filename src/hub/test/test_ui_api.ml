@@ -40,7 +40,7 @@ let with_temp_router f =
   let dir = Filename.temp_file "ui_hub_test_" "" in
   Sys.remove dir;
   let path = Filename.concat dir "consoles.json" in
-  let mgr = Run_manager.create ~config_path:path in
+  let mgr = Run_manager.create ~config_path:path ~runs_dir:dir () in
   let res = f mgr in
   if Sys.file_exists path then Sys.remove path;
   if Sys.file_exists dir then Sys.rmdir dir;
@@ -127,4 +127,18 @@ let () =
         router_console_roundtrip "200:200:200:true";
       case "http_router returns expected 400/404 status codes"
         router_error_codes "400:404:404:404";
+      case "run_history parses RESULTS.tsv newest-first with limit"
+        (fun () ->
+          let tsv =
+            "time\trun\tcheckpoint\tmode\tresult\tat\treason\n\
+             2026-11-26T01:00:00\trun-1\tsu-01\ttesting\tpass\t\t\n\
+             2026-11-26T02:00:00\trun-2\tbdsp.underground\trun\tfail\t#1\tbad \
+             fade\n"
+          in
+          let entries = Run_history.parse_tsv ~limit:1 tsv in
+          match entries with
+          | [ e ] ->
+              Printf.sprintf "%s:%s:%s:%s" e.run e.checkpoint e.result e.reason
+          | _ -> "bad count")
+        "run-2:bdsp.underground:fail:bad fade";
     ]

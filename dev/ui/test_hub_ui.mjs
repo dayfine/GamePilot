@@ -80,6 +80,8 @@ function createHubSandbox(mockRoutes) {
     'launchErr',
     'runCount',
     'runsList',
+    'historyDir',
+    'historyList',
   ];
   const els = Object.fromEntries(ids.map((id) => [id, makeFakeElement(id)]));
   els.addSection.classList.toggle('hidden', true);
@@ -208,6 +210,22 @@ const sampleFixtures = () => ({
       capture_devices: [{ index: '0', device_id: '0x1100', name: 'USB Video' }],
     },
   },
+  'GET /api/history': {
+    json: {
+      runs_dir: '/tmp/runs',
+      entries: [
+        {
+          time: '2026-11-26T15:14:19',
+          run: '2026-11-26-bdsp.underground-run-15',
+          checkpoint: 'bdsp.underground',
+          mode: 'run',
+          result: 'pass',
+          at: '',
+          reason: '',
+        },
+      ],
+    },
+  },
 });
 
 test('Hub HTML offers default and verification modes', () => {
@@ -226,6 +244,7 @@ test('Initial load renders Console A external run + Watch link and Console B rea
   assert.match(els.consolesGrid.innerHTML, /Console B/);
   assert.equal(els.runCount.textContent, '1 run(s)');
   assert.doesNotMatch(els.runsList.innerHTML, /stopRun\('ext-80610'\)/);
+  assert.match(els.historyList.innerHTML, /2026-11-26-bdsp\.underground-run-15/);
 });
 
 test('Opening + Add Console loads /api/devices into datalists', async () => {
