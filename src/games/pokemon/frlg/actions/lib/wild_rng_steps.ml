@@ -10,6 +10,8 @@ let menu_hold_ms = 200
 let menu_release_ms = 300
 let party_open_ms = 1000
 let sweet_scent_release_ms = 800
+let super_rod_fixed_duration_ms = 500
+let bite_timeout_ms = 12000
 let battle_timeout_ms = 20000
 let star_timeout_ms = 1000
 let hold = M.hold
@@ -42,27 +44,68 @@ let sweet_scent_presses (t : T.t) =
 
 let blind_presses t = title_presses t @ sweet_scent_presses t
 
-let find_encounter ~log t () =
-  let seq = Effects.reset () in
-  log (Printf.sprintf "Wild RNG: reset (seq %d), the blind presses." seq);
-  ignore (Effects.submit (blind_presses t) : Wire.batch_done);
-  match
-    Effects.await ~timeout_ms:battle_timeout_ms
-      Frlg_readers.Battle_screen.battle_shows
-  with
-  | Holds _ -> true
-  | Timeout -> false
+(* Registered Super Rod on Select, cast after the in-game wait. *)
+let super_rod_presses (t : T.t) =
+  let wait_ms = max 0 (t.ingame_delay_ms - super_rod_fixed_duration_ms) in
+  title_presses t
+  @ [
+      Wire.Wait { wait_ms };
+      hold ~hold_ms:menu_hold_ms ~cooldown_ms:menu_release_ms Wire.Select;
+    ]
 
-let game_steps ~log t plan =
+let blind_presses_for (m : Wild_rng_plan.encounter_method) t =
+  match m with
+  | Grass | Surf -> blind_presses t
+  | Super_rod -> super_rod_presses t
+
+let await_bite ~log () =
+  match
+    Effects.await ~timeout_ms:bite_timeout_ms Frlg_readers.Dialog.dialog_up
+  with
+  | Holds _ ->
+      log "Wild RNG: fishing bite dialog shown, pressing A.";
+      M.press Wire.A;
+      true
+  | Timeout ->
+      log "Wild RNG: timed out waiting for fishing bite.";
+      false
+
+let confirm_bite ~log () =
+  Effects.with_probes Frlg_readers.Dialog.probes (await_bite ~log)
+
+let find_encounter ~log ?(encounter_method = Wild_rng_plan.Grass) t () =
+  let seq = Effects.reset () in
+  log
+    (Printf.sprintf "Wild RNG (%s): reset (seq %d), the blind presses."
+       (Wild_rng_plan.encounter_method_to_string encounter_method)
+       seq);
+  ignore
+    (Effects.submit (blind_presses_for encounter_method t) : Wire.batch_done);
+  let bite_ok =
+    match encounter_method with
+    | Super_rod -> confirm_bite ~log ()
+    | Grass | Surf -> true
+  in
+  if not bite_ok then false
+  else
+    match
+      Effects.await ~timeout_ms:battle_timeout_ms
+        Frlg_readers.Battle_screen.battle_shows
+    with
+    | Holds _ -> true
+    | Timeout -> false
+
+let game_steps ~log ?encounter_method t plan =
   let spot = ref (Pacing.on_patch None) in
   {
     (Capture_steps.make ~log ~spot plan) with
-    find_encounter = find_encounter ~log t;
+    find_encounter = find_encounter ~log ?encounter_method t;
     flee = (fun () -> true);
   }
 
-let policy_catch_steps ~log ~timings ?(visual_shiny_check = false)
-    ?(on_miss = ignore) ~config ~policy () : Wild_rng.policy_catch_steps =
+let policy_catch_steps ~log ?encounter_method ~timings
+    ?(visual_shiny_check = false) ?(on_miss = ignore) ~config ~policy () :
+    Wild_rng.policy_catch_steps =
   let detect_shiny =
     if visual_shiny_check then
       Some (fun () -> Frlg_readers.Shiny_encounter_detector.detect ())
@@ -74,7 +117,7 @@ let policy_catch_steps ~log ~timings ?(visual_shiny_check = false)
       policy
   in
   {
-    find_encounter = find_encounter ~log timings;
+    find_encounter = find_encounter ~log ?encounter_method timings;
     detect_shiny;
     on_miss;
     catch_battle;

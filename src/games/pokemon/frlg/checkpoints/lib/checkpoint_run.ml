@@ -13,6 +13,7 @@ type options = {
   gait : Frlg_overworld.Route_legs.gait;
   end_check_only : bool;
   program_options : Run_options.t;
+  default_frame_model : string;
   log : string -> unit;
 }
 
@@ -162,6 +163,7 @@ let config options ~center world : A.Checkpoint_game.config =
     center;
     reload = reload options.state;
     program_options = options.program_options;
+    default_frame_model = options.default_frame_model;
     log = options.log;
   }
 

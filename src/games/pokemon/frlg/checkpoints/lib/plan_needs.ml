@@ -104,7 +104,7 @@ let of_request stocks action acc : A.Action_requests.t -> acc = function
   | Ingame_trade { offer; receive } ->
       let acc = use_member action acc offer in
       { acc with brought = Option.to_list receive @ acc.brought }
-  | Cut_tree _ -> field_move action (use_badge action acc)
+  | Cut_tree _ | Surf -> field_move action (use_badge action acc)
   | Verify_mail_glitch member -> use_action_member action acc member
   | Pc_deposit Holding_no_mail ->
       let first = Option.value acc.without_mail ~default:action in
@@ -160,6 +160,11 @@ let game_action ~options stocks ~where action args acc =
         (fun plan ->
           of_capture action acc (A.Capture_plan.apply_options options plan))
         (A.Capture_plan.decode args)
+  | "gift_rng" ->
+      let decode ~where a = Json_field.string ~where "species" a in
+      map
+        (fun s -> { acc with brought = s :: acc.brought })
+        (A.Action_args.decode ~action decode args)
   | "duplicate_item" ->
       map (of_duplicate action acc)
         (A.Action_args.decode ~action (decode_duplicate ~options) args)
