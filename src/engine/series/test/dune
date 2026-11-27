@@ -4,13 +4,15 @@
   test_chain_progress
   test_checkpoint_order
   test_plan_folder
-  test_series_chain)
+  test_series_chain
+  test_series_runner)
  (modules
   test_round_trials
   test_chain_progress
   test_checkpoint_order
   test_plan_folder
-  test_series_chain)
+  test_series_chain
+  test_series_runner)
  (libraries
   gamepilot.table_test
   gamepilot.wire

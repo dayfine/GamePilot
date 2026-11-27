@@ -62,11 +62,12 @@ val run_in :
   banner:string ->
   Run_record.run ->
   n:int ->
-  (log:(string -> unit) -> Daemon_process.t -> 'o) ->
+  (log:(string -> unit) -> Wire.backend -> 'o) ->
   'o
 (** [run_in t ~runs_dir ~failed ~ending ~banner run ~n body] opens the run's
-    log, writes [banner], runs [body ~log] inside {!with_daemon}, closes the
-    log, and finishes the run with [ending outcome] via {!finish}. *)
+    log, writes [banner], runs [body ~log] inside {!with_daemon} and
+    {!Daemon_run.run_live}, closes the log, and finishes the run with
+    [ending outcome] via {!finish}. *)
 
 val finish :
   t ->
@@ -112,3 +113,14 @@ val close_game_after_pass :
     closes the running game ({!Switch.Console_park.park_and_close}), and stops
     the daemon afterward. Returns [true] on success or when skipped/no-op, and
     [false] if closing the game failed. *)
+
+val finish_series :
+  t ->
+  close_game:bool ->
+  ?tile:Switch.Home_screen.tile_color ->
+  passed:bool ->
+  unit ->
+  int
+(** Marks the series finished ({!finished}), runs post-series [--close-game]
+    handling ({!close_game_after_pass}), and returns the process exit code ([0]
+    when [passed] and closing succeeded or was not needed, [1] otherwise). *)

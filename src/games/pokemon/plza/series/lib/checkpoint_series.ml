@@ -28,7 +28,6 @@ type program = {
 
 type setup = {
   flags : Flags.t;
-  policy : Checkpoint_trials.policy;
   info : Run_record.info;
   daemons : Live_run.Series_daemons.t;
   initial_screen : P.Plan.t -> Switch.Initial_screen.expectation;
@@ -61,17 +60,6 @@ let check_initial_screen ~log ~picture ~already_at_start expectation =
       "[Console] continuing from previous pass (skipping initial-screen check)";
     Ok ())
 
-let guard_attempt ~end_failed body =
-  match body () with
-  | outcome -> outcome
-  | exception (Effects.Disconnected _ as e) -> raise e
-  | exception Effects.Stop_requested reason ->
-      end_failed ();
-      failed ~repeats:true "stopped" reason
-  | exception e ->
-      end_failed ();
-      failed "raised" (Printexc.to_string e)
-
 let run_guarded setup ~log ~picture ~reload ~already_at_start report plan =
   let end_failed () = Watch_report.end_run report ~passed:false in
   match
@@ -82,8 +70,14 @@ let run_guarded setup ~log ~picture ~reload ~already_at_start report plan =
       end_failed ();
       failed ~repeats:true "start" reason
   | Ok () ->
-      guard_attempt ~end_failed (fun () ->
-          setup.attempt ~log ~picture ~reload report plan)
+      Daemon_run.guard_session
+        ~on_stop:(fun reason ->
+          end_failed ();
+          failed ~repeats:true "stopped" reason)
+        ~on_raised:(fun e ->
+          end_failed ();
+          failed "raised" (Printexc.to_string e))
+        (fun () -> setup.attempt ~log ~picture ~reload report plan)
 
 let in_session setup ~log ~reload ~already_at_start record plan
     (backend : Wire.backend) =
@@ -122,12 +116,9 @@ let run_in_folder setup plan n ~attempt ~reload ~already_at_start
   let id = plan.P.Plan.checkpoint.checkpoint_id in
   let name = run_name ~id ~n ~attempt in
   let banner = "[Run] " ^ name ^ if reload then " (after a reload)" else "" in
-  let live ~log (daemon : Daemon_process.t) =
-    Daemon_run.run_live ~failed:of_runner ~dir:run.record.dir ~port:daemon.port
-      (in_session setup ~log ~reload ~already_at_start run.record plan)
-  in
   Series_daemons.run_in setup.daemons ~runs_dir:setup.flags.runs_dir
-    ~failed:of_runner ~ending:(ending_of name) ~banner run ~n live
+    ~failed:of_runner ~ending:(ending_of name) ~banner run ~n (fun ~log ->
+      in_session setup ~log ~reload ~already_at_start run.record plan)
 
 let run_attempt setup plan n ~attempt ~reload ~already_at_start =
   let id = plan.P.Plan.checkpoint.checkpoint_id in
@@ -157,22 +148,11 @@ let run setup (plan : P.Plan.t) (t : Chain.trial) ~reload =
 let reload_when_chained (plan : P.Plan.t) =
   List.assoc_opt "reload_when_chained" plan.execution = Some (`Bool true)
 
-let run_trial setup plan (t : Chain.trial) =
+let run_trial setup plan (t : Chain.trial) ~progress:_ =
   let reload =
     t.number > 1 || (t.continuing_from_pass && reload_when_chained plan)
   in
   Ok (run setup plan t ~reload)
-
-let runs_of setup plan ~continuing_from_pass =
-  let verdict, _ =
-    Chain.run_trials setup.policy ~continuing_from_pass ~trial:Attempts.trial
-      (run_trial setup plan)
-  in
-  let passed, line =
-    Chain.verdict_outcome ~id:plan.checkpoint.checkpoint_id verdict
-  in
-  Option.iter print_endline line;
-  passed
 
 let rec next_id id = function
   | a :: (b :: _ as rest) -> if a = id then Some b else next_id id rest
@@ -219,7 +199,7 @@ let daemons (f : Flags.t) backend ~viewport ~program_flags series =
     series
 
 let setup_of program (f : Flags.t) ~program_fields ~options ~from_id ~to_id ~ids
-    ~backend ~viewport policy =
+    ~backend ~viewport =
   let info : Run_record.info =
     {
       kind = Checkpoints;
@@ -233,7 +213,6 @@ let setup_of program (f : Flags.t) ~program_fields ~options ~from_id ~to_id ~ids
   let mode = Checkpoint_trials.mode_to_string Testing in
   {
     flags = f;
-    policy;
     info;
     daemons =
       daemons f backend ~viewport ~program_flags:program.daemon_flags
@@ -267,16 +246,22 @@ let run_series program ~program_fields ~options ~viewport plan_dir args =
   let* plans = load_checked program ~plan_dir ~all ids in
   let setup =
     setup_of program f ~program_fields ~options ~from_id ~to_id ~ids ~backend
-      ~viewport policy
+      ~viewport
+  in
+  let hooks : (P.Plan.t, P.Plan.t, outcome) Series_runner.hooks =
+    {
+      entry_id = (fun (p : P.Plan.t) -> p.checkpoint.checkpoint_id);
+      prepare = (fun plan ~next:_ -> Ok plan);
+      run_trial = run_trial setup;
+      trial_of = Attempts.trial;
+      verdict_note = (fun _ -> "");
+      on_pass = (fun _ ~next:_ _ -> ());
+    }
   in
   let passed =
-    Chain.run_chain plans (fun item ->
-        runs_of setup item.value ~continuing_from_pass:item.continuing_from_pass)
+    Series_runner.run ~mode:Testing ~policy ~now_ms:Run_record.now_ms
+      ~log:print_endline hooks plans
   in
-  let code = if passed then 0 else 1 in
-  Series_daemons.finished setup.daemons ~passed;
-  let closed =
-    Series_daemons.close_game_after_pass setup.daemons ~close_game:f.close_game
-      ~passed ()
-  in
-  Ok (if code = 0 && not closed then 1 else code)
+  Ok
+    (Series_daemons.finish_series setup.daemons ~close_game:f.close_game ~passed
+       ())

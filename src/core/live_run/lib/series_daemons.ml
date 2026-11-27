@@ -74,12 +74,16 @@ let finish t ~runs_dir run ~summary ending =
   Daemon_run.finish ~runs_dir run ~summary ending;
   Series_watch.run_ended t.watched run ending
 
+let run_live_in ~failed (run : Run_record.run) ~log body
+    (daemon : Daemon_process.t) =
+  Daemon_run.run_live ~failed ~dir:run.record.dir ~port:daemon.port (body ~log)
+
 let run_in t ~runs_dir ~failed ~ending ~banner (run : Run_record.run) ~n body =
   let log, close = Run_record.run_log run.record in
   let outcome =
     Fun.protect ~finally:close (fun () ->
         log banner;
-        with_daemon t ~failed run ~n (body ~log))
+        with_daemon t ~failed run ~n (run_live_in ~failed run ~log body))
   in
   let summary, run_ending = ending outcome in
   finish t ~runs_dir run ~summary run_ending;
@@ -130,3 +134,8 @@ let close_game_after_pass t ~close_game ?tile ~passed () =
         "[Close game] skipped (run did not pass; keeping console state)";
       true
   | No_close -> true
+
+let finish_series t ~close_game ?tile ~passed () =
+  finished t ~passed;
+  let closed = close_game_after_pass t ~close_game ?tile ~passed () in
+  if passed && closed then 0 else 1
