@@ -7,11 +7,14 @@
     select screen, a game screen, or no frame at all.
 
     On a black screen or missing frame, {!check} fails fast with an immediate
-    error instead of retrying soft resets. On HOME or user select, what happens
-    next follows the caller's {!expectation}: fail fast without pressing
-    anything ({!In_game_read_only}, used by [--preflight]), resume or launch the
-    target game via {!Console_park.resume} ({!In_game_or_resume}), or proceed as
-    is for programs that start on HOME ({!In_game_or_home}). *)
+    error instead of retrying soft resets. Otherwise, what happens next follows
+    the caller's {!expectation}: fail fast on HOME or user select without
+    pressing anything ({!In_game_read_only}, used by [--preflight]); verify or
+    resume the target game via {!Console_park} ({!In_game_or_resume} — when a
+    tile colour is given, HOME/user select resumes directly, and an unknown
+    non-HOME screen presses HOME via {!Console_park.park} first to verify the
+    target game's tile before {!Console_park.resume}); or proceed as is for
+    programs that start on HOME ({!In_game_or_home}). *)
 
 (** What the Switch screen shows when a program starts. *)
 type screen =
@@ -34,9 +37,14 @@ type expectation =
       (** Must already be in a game; fail fast on black, no frame, HOME, dimmed
           HOME, or user select without pressing any button. *)
   | In_game_or_resume of Home_screen.tile_color option
-      (** Must be in a game; fail fast on black or no frame. When on HOME,
-          dimmed HOME, or user select: resume or launch the target game via
-          {!Console_park.resume} if its tile colour is given, else fail fast. *)
+      (** Must be in the target game; fail fast on black or no frame. When a
+          tile colour is given: on HOME, dimmed HOME, or user select, resume or
+          launch the target game via {!Console_park.resume}; on {!In_game} (any
+          non-HOME screen, which might be a different game or Switch Album),
+          press HOME via {!Console_park.park} to verify/select the target game's
+          tile and then {!Console_park.resume}. When [None]: accept {!In_game}
+          without pressing buttons and fail fast on HOME, dimmed HOME, or user
+          select. *)
   | In_game_or_home
       (** May start either in the game or on HOME / user select (e.g. programs
           that navigate from HOME themselves); fail fast on black or no frame.
