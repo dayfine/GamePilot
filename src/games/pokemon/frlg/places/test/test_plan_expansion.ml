@@ -270,4 +270,77 @@ let () =
     (Error
        "t: checkpoint.events[0]: no place \"route10_north_gras\"; did you mean \
         route10_north_grass?")
-    (decode_events ~start:outdoors [ bad_spot ])
+    (decode_events ~start:outdoors [ bad_spot ]);
+  let world = Result.get_ok (Frlg_checkpoints.Checkpoint_run.load_world ()) in
+  let route_ok from (target : Pokemon_engine.Pose.grid) =
+    match
+      Frlg_overworld.Route_target.place_of world from |> fun r ->
+      Result.bind r (fun start ->
+          Frlg_overworld.Route_target.plan world ~from:start ~facing:None target)
+    with
+    | Ok _ -> Ok ()
+    | Error e -> Error e
+  in
+  let pose_of (g : Pokemon_engine.Pose.grid) : Pokemon_engine.Pose.observed =
+    { at_map = g.map; at_tile = List.hd g.tiles; faces = g.facing }
+  in
+  let verify_plan_routes (plan : PE.t) =
+    let step (pos, errs) (e : PE.event) =
+      match (e.kind, e.declared_after) with
+      | PE.Game (Route { target; _ }), _ ->
+          let errs =
+            match pos with
+            | None -> (e.id ^ ": no starting pose") :: errs
+            | Some from -> (
+                match route_ok from target with
+                | Ok () -> errs
+                | Error msg -> (e.id ^ ": " ^ msg) :: errs)
+          in
+          (Some (pose_of target), errs)
+      | _, Some (Grid g) -> (Some (pose_of g), errs)
+      | _ -> (pos, errs)
+    in
+    List.rev (snd (List.fold_left step (None, []) plan.checkpoint.events))
+  in
+  let check_dex_plan rel ~expected_id ~expected_town ~expected_species =
+    let path = Option.get (Repo_io.Repo_files.locate rel) in
+    let plan = Result.get_ok (Frlg_checkpoints.Plan_file.load path) in
+    check_eq ~show:Fun.id (expected_id ^ " id") expected_id
+      plan.checkpoint.checkpoint_id;
+    check_eq ~show:string_of_int
+      (expected_id ^ " expands to 10 events")
+      10
+      (List.length plan.checkpoint.events);
+    let fly_town =
+      match (List.hd plan.checkpoint.events).kind with
+      | PE.Named_action args -> List.assoc_opt "town" args
+      | _ -> None
+    in
+    check_eq
+      ~show:(Option.fold ~none:"None" ~some:Yojson.Safe.to_string)
+      (expected_id ^ " flies to " ^ expected_town)
+      (Some (`String expected_town))
+      fly_town;
+    let catch_species =
+      match (List.nth plan.checkpoint.events 3).kind with
+      | PE.Named_action args -> List.assoc_opt "species" args
+      | _ -> None
+    in
+    check_eq
+      ~show:(Option.fold ~none:"None" ~some:Yojson.Safe.to_string)
+      (expected_id ^ " catches " ^ expected_species)
+      (Some (`String expected_species))
+      catch_species;
+    check_eq
+      ~show:(fun xs -> "[" ^ String.concat "; " xs ^ "]")
+      (expected_id ^ " routes validly on PokemonSimulation maps")
+      [] (verify_plan_routes plan)
+  in
+  check_dex_plan
+    "src/games/pokemon/frlg/programs/dex_collection/plans/05-shiny-growlithe.plan.json"
+    ~expected_id:"05-shiny-growlithe" ~expected_town:"CeladonCity"
+    ~expected_species:"growlithe";
+  check_dex_plan
+    "src/games/pokemon/frlg/programs/dex_collection/plans/06-shiny-oddish.plan.json"
+    ~expected_id:"06-shiny-oddish" ~expected_town:"SaffronCity"
+    ~expected_species:"oddish"

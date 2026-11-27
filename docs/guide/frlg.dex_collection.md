@@ -5,9 +5,10 @@ he gives you the National Pokedex, and every catch is shiny: each one is timed w
 of [Wild RNG](frlg.wild_rng.md), so the Pokemon Sweet Scent brings out is a shiny one chosen in
 advance.
 
-So far: a shiny Voltorb and a shiny Ekans in Route 10's grass, and a shiny Drowzee in Route 11's.
+So far: a shiny Voltorb and a shiny Ekans in Route 10's grass, a shiny Drowzee in Route 11's,
+and a shiny Growlithe and a shiny Oddish in Route 7's.
 Each catch flies to its route, saves in the grass, restarts the game at the timed moment, catches
-the shiny with Ultra Balls, saves it, stores it in the Pokemon Center's PC and heals at the nurse.
+the shiny with the configured ball, saves it, stores it in the Pokemon Center's PC and heals at the nurse.
 
 <!-- generated:backends -->
 Runs on: mGBA.
@@ -30,6 +31,7 @@ Runs on: mGBA.
 - a member knows fly (fly)
 - the thunder badge (fly)
 - money at least ¥24000 (all the purchases)
+- poke-ball at least x2 (wild_rng)
 - at the start, anywhere outdoors where Fly works
 <!-- /generated -->
 
@@ -51,7 +53,7 @@ Give each as `--options KEY=VALUE`:
 <!-- generated:commands -->
 ```sh
 # mGBA: each checkpoint three times from its start state, two must pass
-sh run/run_checkpoints_on_mgba.sh frlg.dex_collection --from 01-ultra-balls --to 04-shiny-ekans --mode verification
+sh run/run_checkpoints_on_mgba.sh frlg.dex_collection --from 01-ultra-balls --to 06-shiny-oddish --mode verification
 ```
 <!-- /generated -->
 
@@ -64,8 +66,10 @@ sh run/run_checkpoints_on_mgba.sh frlg.dex_collection --from 01-ultra-balls --to
 | 02-shiny-voltorb | From anywhere outdoors: a shiny Voltorb in Route 10's grass by the wild RNG, stored in the PC, back to the nurse |
 | 03-shiny-drowzee | From anywhere outdoors: a shiny Drowzee in Route 11's grass by the wild RNG, stored in the PC, back to the nurse |
 | 04-shiny-ekans | From anywhere outdoors: a shiny Ekans in Route 10's grass by the wild RNG, stored in the PC, back to the nurse |
+| 05-shiny-growlithe | From anywhere outdoors: shiny Growlithe in Route 7 grass, deposited and healed |
+| 06-shiny-oddish | From anywhere outdoors: shiny Oddish in Route 7 grass, deposited and healed |
 
-<!-- plans: b4a62405fce3 -->
+<!-- plans: 5a56bcaa6c39 -->
 <!-- /generated -->
 
 
@@ -78,6 +82,8 @@ sh run/run_checkpoints_on_mgba.sh frlg.dex_collection --from 01-ultra-balls --to
 | 02-shiny-voltorb | a member holds no Mail (pc_deposit); a member knows fly (fly); the thunder badge (fly); ultra-ball at least x1 (wild_rng); at the start, anywhere outdoors where Fly works |
 | 03-shiny-drowzee | a member knows fly (fly); the thunder badge (fly); ultra-ball at least x1 (wild_rng); at the start, anywhere outdoors where Fly works |
 | 04-shiny-ekans | a member knows fly (fly); the thunder badge (fly); ultra-ball at least x1 (wild_rng); at the start, anywhere outdoors where Fly works |
+| 05-shiny-growlithe | a member knows fly (fly); the thunder badge (fly); poke-ball at least x1 (wild_rng); at the start, anywhere outdoors where Fly works |
+| 06-shiny-oddish | a member knows fly (fly); the thunder badge (fly); poke-ball at least x1 (wild_rng); at the start, anywhere outdoors where Fly works |
 <!-- /generated -->
 
 ## Known limits
@@ -87,7 +93,7 @@ sh run/run_checkpoints_on_mgba.sh frlg.dex_collection --from 01-ultra-balls --to
   has been saved, so each catch's plan holds a `seed_shift` measured for its own grass save in
   this chain. Started from another save, a catch misses: the checkpoint fails before saving
   (`wild_rng_not_shiny`).
-- Three species so far, in grass only. Fishing, surfing, static encounters and gifts come later.
+- Five species so far, in grass only. Fishing, surfing, Power Plant, static encounters and gifts come later.
 - A catch started where its Fly lands (outside that route's Center) fails at once: Fly to the town
   the player stands in lands where it took off, which the fly action takes for no landing. The
   order of the checkpoints never flies twice in a row to one town.

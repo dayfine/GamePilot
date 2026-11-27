@@ -117,10 +117,10 @@ let () =
     [
       case "every place's object is in the maps, usable from its stand tile"
         (fun () -> failures resolves)
-        "36 places, all pass";
+        "44 places, all pass";
       case "every place's stand tile is walked to from a warp"
         (fun () -> failures reachable)
-        "36 places, all pass";
+        "44 places, all pass";
       case "every town's Fly name is one Fly knows" towns_fly
         "12 towns, all pass";
       case "every town's nurse and mart start with the town's key" towns_prefix
@@ -175,8 +175,20 @@ let () =
     (resolve ~kind:"town" "route10" ~field:(Some "pc"));
   check_res "town.outside resolves" (Ok "route10_center_outside")
     (resolve ~kind:"town" "route10" ~field:(Some "outside"));
-  check_res "town without pc errors" (Error "lavender has no pc place")
+  check_res "celadon.pc resolves" (Ok "celadon_center_pc")
+    (resolve ~kind:"town" "celadon" ~field:(Some "pc"));
+  check_res "celadon.outside resolves" (Ok "celadon_center_outside")
+    (resolve ~kind:"town" "celadon" ~field:(Some "outside"));
+  check_res "saffron.pc resolves" (Ok "saffron_center_pc")
+    (resolve ~kind:"town" "saffron" ~field:(Some "pc"));
+  check_res "saffron.outside resolves" (Ok "saffron_center_outside")
+    (resolve ~kind:"town" "saffron" ~field:(Some "outside"));
+  check_res "lavender.pc resolves" (Ok "lavender_center_pc")
     (resolve ~kind:"town" "lavender" ~field:(Some "pc"));
+  check_res "lavender.outside resolves" (Ok "lavender_center_outside")
+    (resolve ~kind:"town" "lavender" ~field:(Some "outside"));
+  check_res "town without pc errors" (Error "pewter has no pc place")
+    (resolve ~kind:"town" "pewter" ~field:(Some "pc"));
   check_res "place resolves valid place" (Ok "route10_north_grass")
     (resolve ~kind:"place" "route10_north_grass" ~field:None);
   check_res "place rejects field" (Error "a place has no pc")
