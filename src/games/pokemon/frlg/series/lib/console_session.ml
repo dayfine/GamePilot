@@ -64,11 +64,22 @@ let start_check ~log ~frame_path ~start_path party =
       Ok ()
   | l -> Error ("not at the checkpoint's start: " ^ String.concat "; " l)
 
-let before ~log ~frame_path ~start_path party =
-  log "[Console] back to the last save";
-  match Frlg_actions.Soft_reset.return_to_save ~log () with
-  | Error c -> Error ("could not return to the last save: " ^ cause c)
-  | Ok () -> start_check ~log ~frame_path ~start_path party
+let before_step ~log = function
+  | Console_runs.Return_to_save ->
+      log "[Console] back to the last save";
+      Result.map_error
+        (fun c -> "could not return to the last save: " ^ cause c)
+        (Frlg_actions.Soft_reset.return_to_save ~log ())
+  | Save_in_game | Keep_start_frame -> Ok ()
+
+let before ~log ~frame_path ~start_path ~steps party =
+  if steps = [] then
+    log "[Console] continuing from previous pass (skipping soft reset)";
+  Result.bind
+    (List.fold_left
+       (fun done_ s -> Result.bind done_ (fun () -> before_step ~log s))
+       (Ok ()) steps)
+    (fun () -> start_check ~log ~frame_path ~start_path party)
 
 let return_to_save ~log =
   match Frlg_actions.Soft_reset.return_to_save ~log () with

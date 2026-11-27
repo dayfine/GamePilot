@@ -1,11 +1,13 @@
 (** What the checkpoint runner does around a run on a console, where there are
-    no save states (the Switch): the game's own save is the start. Before each
-    run it returns to the last save and checks the start; after it, a run that
-    passed, its end checks included, is saved in the game (when the series saves
-    after a pass) and its end kept as the next start's frame; a run that failed
-    returns to the last save, so the console is left at the checkpoint's start
-    for a rerun once the code is fixed; a run stopped from the watch page is
-    left where it stopped. A failed or stopped run never saves.
+    no save states (the Switch): the game's own save is the start. Before a run
+    it returns to the last save unless the console is already at the start
+    (continuing directly from a passing checkpoint or round in the same series),
+    then checks the start; after it, a run that passed, its end checks included,
+    is saved in the game (when the series saves after a pass) and its end kept
+    as the next start's frame; a run that failed returns to the last save, so
+    the console is left at the checkpoint's start for a rerun once the code is
+    fixed; a run stopped from the watch page is left where it stopped. A failed
+    or stopped run never saves.
 
     The fork's AutoStory on the console does the same per checkpoint: its
     [frlg_save_policy] saves after a passing checkpoint and its
@@ -27,8 +29,16 @@ type step =
   | Save_in_game
   | Keep_start_frame  (** The frame now, as the next checkpoint's start. *)
 
-val before_run : step list
-(** [Return_to_save]: the start check follows it. *)
+val already_at_start :
+  continuing_from_pass:bool -> trial:int -> attempt:int -> bool
+(** Whether the console is already at the run's start: [true] only on the first
+    trial and first attempt when continuing directly from a passing checkpoint
+    or round. Cold starts, retries ([attempt > 1]), and later trials
+    ([trial > 1]) always reload the save. *)
+
+val before_run : already_at_start:bool -> step list
+(** [Return_to_save] unless [already_at_start] is [true]; the start check always
+    follows. *)
 
 val after_run : save_after_pass:bool -> outcome -> step list
 

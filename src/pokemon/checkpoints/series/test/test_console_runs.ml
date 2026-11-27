@@ -12,10 +12,28 @@ let steps l =
 let case name input expectation = { Table_test.name; input; expectation }
 let after save outcome () = steps (C.after_run ~save_after_pass:save outcome)
 
+let before ~continuing_from_pass ~trial ~attempt () =
+  let already_at_start =
+    C.already_at_start ~continuing_from_pass ~trial ~attempt
+  in
+  steps (C.before_run ~already_at_start)
+
 let cases =
   [
-    case "before every run: back to the last save"
-      (fun () -> steps C.before_run)
+    case "cold start (first checkpoint): back to the last save"
+      (before ~continuing_from_pass:false ~trial:1 ~attempt:1)
+      (steps [ C.Return_to_save ]);
+    case "continuing from a passing checkpoint: skip soft reset"
+      (before ~continuing_from_pass:true ~trial:1 ~attempt:1)
+      "nothing";
+    case "retry after failure: back to the last save"
+      (before ~continuing_from_pass:true ~trial:1 ~attempt:2)
+      (steps [ C.Return_to_save ]);
+    case "verification trial after trial 1: back to the last save"
+      (before ~continuing_from_pass:true ~trial:2 ~attempt:1)
+      (steps [ C.Return_to_save ]);
+    case "verification trial after trial 1 on cold start: back to the last save"
+      (before ~continuing_from_pass:false ~trial:2 ~attempt:1)
       (steps [ C.Return_to_save ]);
     case "passed, saving after a pass: save in game, keep the frame"
       (after true C.Passed)

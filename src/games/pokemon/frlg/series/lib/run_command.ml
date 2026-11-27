@@ -49,10 +49,12 @@
    --capture (gamepilot switch-devices prints the lab's); --replay VIDEO
    alone, without --serial, is a dry run on the daemon's fake board. The
    game's own save is the start, so there are no start states and only --mode
-   testing runs: before each run the runner soft-resets to the last save and
-   checks the start; a run that passes is saved in the game
-   (--save-after-pass, the default; --no-save-after-pass), a failed one
-   soft-resets back to the last save (Checkpoints_series.Console_runs, Console_session).
+   testing runs: before a cold start, retry, or later trial the runner
+   soft-resets to the last save (skipping the reset when continuing directly
+   from a passing checkpoint or round), then checks the start; a run that passes
+   is saved in the game (--save-after-pass, the default; --no-save-after-pass),
+   a failed one soft-resets back to the last save (Checkpoints_series.Console_runs,
+   Console_session).
 
    Each run reads the party from the members' summaries before its first
    action that finds a member by its species, so a save whose other members

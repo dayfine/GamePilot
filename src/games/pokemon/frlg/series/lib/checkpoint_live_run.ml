@@ -75,19 +75,21 @@ let start_frame_path setup cp =
   | Some (Anywhere _) -> None
   | Some (Grid _ | Zone _) | None -> Some (frame_path setup cp.id)
 
-(* On the Switch: back to the last save and the start check, then the run. *)
-let console_run setup cp log =
+(* On the Switch: back to the last save (unless already at start) and the start
+   check, then the run. *)
+let console_run setup cp ~already_at_start log =
   let roster =
     Frlg_actions.Party_roster.(to_list (of_string setup.common.party))
   in
   let party = Console_session.start_party ~roster cp.before in
+  let steps = Console_runs.before_run ~already_at_start in
   match
     Console_session.before ~log
       ~frame_path:(start_frame_path setup cp)
       ~start_path:
         (Frlg_checkpoints.Start_check.start_file ~states:setup.states
            cp.plan.checkpoint.start)
-      party
+      ~steps party
   with
   | Error reason ->
       log ("[Console] " ^ reason);
@@ -121,27 +123,29 @@ let emulator_run setup cp log record =
   | Passed _ -> ());
   outcome
 
-let switch_run setup cp log record =
-  let ((outcome, _) as ended) = console_run setup cp log in
+let switch_run setup cp ~already_at_start log record =
+  let ((outcome, _) as ended) = console_run setup cp ~already_at_start log in
   (match outcome with
   | Failed _ -> Daemon_run.save_failure ~log record ~save_states:false
   | Passed _ -> ());
   console_after setup cp log ended
 
-let in_session setup cp ~progress record log () =
+let in_session setup cp ~already_at_start ~progress record log () =
   let log = Watch_report.log log in
   Effects.show_run (progress None);
   let outcome =
     match setup.backend with
     | Mgba _ -> emulator_run setup cp log record
-    | Switch _ -> switch_run setup cp log record
+    | Switch _ -> switch_run setup cp ~already_at_start log record
   in
   Effects.show_run (progress (Some (trial outcome)));
   outcome
 
-let live setup cp ~progress record log (daemon : Daemon_process.t) =
+let live setup cp ~already_at_start ~progress record log
+    (daemon : Daemon_process.t) =
   Daemon_run.in_session ~failed ~dir:record.Run_record.dir (fun () ->
-      Live.run ~port:daemon.port (in_session setup cp ~progress record log))
+      Live.run ~port:daemon.port
+        (in_session setup cp ~already_at_start ~progress record log))
 
 let with_daemon setup run n body =
   Series_daemons.with_daemon setup.daemons ~failed run ~n body
@@ -186,7 +190,8 @@ let record_outcome setup cp (run : Run_record.run) n ~attempt outcome =
     ending
 
 (* The attempt in its folder: the folder and how it ended. *)
-let run_in setup cp n ~attempt ~progress (run : Run_record.run) =
+let run_in setup cp n ~attempt ~already_at_start ~progress
+    (run : Run_record.run) =
   let record = run.record in
   let log, close = Run_record.run_log record in
   log
@@ -194,7 +199,10 @@ let run_in setup cp n ~attempt ~progress (run : Run_record.run) =
        (Run_line.run_name cp.id cp.plan n)
        (Run_line.attempt_note cp.plan attempt)
        cp.start_state);
-  let outcome = with_daemon setup run n (live setup cp ~progress record log) in
+  let outcome =
+    with_daemon setup run n
+      (live setup cp ~already_at_start ~progress record log)
+  in
   close ();
   record_outcome setup cp run n ~attempt outcome;
   (record, outcome)
@@ -202,10 +210,10 @@ let run_in setup cp n ~attempt ~progress (run : Run_record.run) =
 (* Attempt [attempt] of run [n] of [cp]: its folder and how it ended; [Error]
    when its folder could not be made. [progress] is the chain for the watch
    page before the attempt ([None]) and after it. *)
-let run setup cp n ~attempt ~progress =
+let run setup cp n ~attempt ~already_at_start ~progress =
   let attempts = cp.plan.retries + 1 in
   Result.map
-    (run_in setup cp n ~attempt ~progress)
+    (run_in setup cp n ~attempt ~already_at_start ~progress)
     (Run_record.start
        ?attempt:(if attempts > 1 then Some (attempt, attempts) else None)
        ?events:(events cp) ~runs_dir:setup.runs_dir setup.info ~checkpoint:cp.id

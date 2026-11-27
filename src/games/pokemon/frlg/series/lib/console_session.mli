@@ -16,13 +16,15 @@ val before :
   log:(string -> unit) ->
   frame_path:string option ->
   start_path:string option ->
+  steps:Checkpoints_series.Console_runs.step list ->
   Postconditions.party option ->
   (unit, string) result
-(** Back to the last save, then the start check against the party and the frame
-    kept under the checkpoint's id ([frame_path]) or at its start
-    ([start_path]), keeping the frame read where none was kept. With neither (a
-    checkpoint that starts anywhere outdoors has no one frame), the party only.
-*)
+(** Runs [steps] (typically [Return_to_save] on a cold start, retry, or later
+    trial, or empty when continuing directly from a passing checkpoint), then
+    the start check against the party and the frame kept under the checkpoint's
+    id ([frame_path]) or at its start ([start_path]), keeping the frame read
+    where none was kept. With neither (a checkpoint that starts anywhere
+    outdoors has no one frame), the party only. *)
 
 val after :
   log:(string -> unit) ->
