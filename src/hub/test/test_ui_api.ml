@@ -199,9 +199,72 @@ let check_run_history_merge () =
         (Error
            (Printf.sprintf "expected 2 entries, got %d" (List.length entries)))
 
+let check_series_entry (e : Run_history.entry) =
+  check_str "run_history series kind" ~expected:"series" ~actual:e.kind;
+  check_str "run_history series run id" ~expected:"2026-11-26-su-01-su-02-42"
+    ~actual:e.run;
+  check_str "run_history series game" ~expected:"frlg" ~actual:e.game;
+  check_str "run_history series program" ~expected:"frlg.supplies"
+    ~actual:e.program;
+  check_str "run_history series from" ~expected:"su-01" ~actual:e.from;
+  check_str "run_history series to" ~expected:"su-02" ~actual:e.to_;
+  check_str "run_history series focus checkpoint" ~expected:"su-02"
+    ~actual:e.checkpoint;
+  check_str "run_history series result" ~expected:"fail" ~actual:e.result;
+  check_str "run_history series failure at" ~expected:"#3 mart" ~actual:e.at;
+  check_str "run_history series failure reason" ~expected:"menu timed out"
+    ~actual:e.reason;
+  check_bool "run_history series recorded from child" ~expected:true
+    ~actual:e.recorded
+
+let check_run_history_series () =
+  let dir = Filename.temp_file "ui_hub_series_" "" in
+  Sys.remove dir;
+  Unix.mkdir dir 0o755;
+  let watch_dir = Filename.concat dir ".watch" in
+  let series_dir = Filename.concat watch_dir "series" in
+  Unix.mkdir watch_dir 0o755;
+  Unix.mkdir series_dir 0o755;
+  let c1 = Filename.concat dir "2026-11-26-su-01-testing-1" in
+  let c2 = Filename.concat dir "2026-11-26-su-02-testing-1" in
+  let solo = Filename.concat dir "2026-11-26-bdsp.underground-run-1" in
+  Unix.mkdir c1 0o755;
+  Unix.mkdir (Filename.concat c1 "frames") 0o755;
+  Unix.mkdir c2 0o755;
+  Unix.mkdir solo 0o755;
+  write_file (Filename.concat (Filename.concat c1 "frames") "index.jsonl") "";
+  write_file
+    (Filename.concat solo "run.json")
+    {|{"game":"bdsp","program":"bdsp.underground","checkpoint":"bdsp.underground","backend":"switch","mode":"run","result":"pass","started_ms":1700000000000,"ended_ms":1700000010000}|};
+  write_file
+    (Filename.concat dir "RESULTS.tsv")
+    "time\trun\tcheckpoint\tmode\tresult\tat\treason\n\
+     2026-11-26T10:00:00\t2026-11-26-su-01-testing-1\tsu-01\ttesting\tpass\t\t\n\
+     2026-11-26T10:05:00\t2026-11-26-su-02-testing-1\tsu-02\ttesting\tfail\t#3 \
+     mart\tmenu timed out\n\
+     2026-11-26T10:06:00\t2026-11-26-su-02-testing-tsv-only\tsu-02\ttesting\tfail\t#4\ttsv \
+     child\n";
+  write_file
+    (Filename.concat series_dir "2026-11-26-su-01-su-02-42.json")
+    {|{"series":"2026-11-26-su-01-su-02-42","pid":42,"game":"frlg","game_name":"Pokemon FireRed / LeafGreen","program":"frlg.supplies","program_name":"Supplies","group":"Farming","from":"su-01","to":"su-02","mode":"testing","backend":"switch","started_ms":1700000200000,"ended_ms":1700000260000,"result":"fail","checkpoints":[{"id":"su-01","state":"passed","runs":[{"run":"2026-11-26-su-01-testing-1","result":"pass"}]},{"id":"su-02","state":"failed","runs":[{"run":"2026-11-26-su-02-testing-1","result":"fail","at":"#3 mart","reason":"menu timed out"},{"run":"2026-11-26-su-02-testing-tsv-only","result":"fail","at":"#4","reason":"tsv child"}]}]}|};
+  let entries = Run_history.load ~runs_dir:dir () in
+  rm_rf dir;
+  match entries with
+  | [ series_entry; solo_entry ] ->
+      check_series_entry series_entry;
+      check_str "run_history series leaves standalone run intact"
+        ~expected:"2026-11-26-bdsp.underground-run-1" ~actual:solo_entry.run;
+      check_str "run_history standalone run kind" ~expected:"checkpoints"
+        ~actual:solo_entry.kind
+  | _ ->
+      Table_test.report "run_history series collapses child runs into 1 row"
+        (Error
+           (Printf.sprintf "expected 2 entries, got %d" (List.length entries)))
+
 let () =
   check_parse_tsv ();
   check_run_history_merge ();
+  check_run_history_series ();
   Table_test.run "ui_api"
     [
       case "programs_json includes frlg.supplies" programs_has_supplies "true";

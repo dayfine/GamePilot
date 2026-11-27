@@ -6,7 +6,8 @@ type entry = {
   run : string;
       (** Run folder name (e.g. ["2026-11-26-bdsp.underground-run-15"]). *)
   kind : string;
-      (** Run kind (["checkpoints"], ["preflight"], ["daemon"], etc.). *)
+      (** Run kind (["series"], ["checkpoints"], ["preflight"], ["daemon"],
+          etc.). *)
   game : string;  (** Game identifier (e.g. ["frlg"], ["plza"], ["bdsp"]). *)
   game_name : string;  (** Display name of the game, or [""]. *)
   program : string;

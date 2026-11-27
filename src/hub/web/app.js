@@ -399,6 +399,8 @@ function matchesHistory(row, f) {
       row.program,
       row.program_name,
       row.checkpoint,
+      row.from,
+      row.to,
       row.reason,
       row.at,
     ]
@@ -499,7 +501,13 @@ function pageHistory(delta) {
 }
 
 function renderHistoryRow(row) {
-  const runUrl = watchHubBase() + '/runs/' + encodeURIComponent(row.run) + '/';
+  const isSeries = row.kind === 'series';
+  const runUrl =
+    watchHubBase() +
+    (isSeries ? '/series/' : '/runs/') +
+    encodeURIComponent(row.run) +
+    '/';
+  const seriesTag = isSeries ? '<span class="tag">series</span>' : '';
   const framesTag = row.recorded ? '<span class="tag">frames</span>' : '';
   const why =
     row.result === 'fail' && row.reason
@@ -512,7 +520,7 @@ function renderHistoryRow(row) {
   const end = runEndMs(row);
   const dur = row.started_ms && end ? formatDuration(end - row.started_ms) : '–';
   return `<tr>
-    <td><a href="${esc(runUrl)}" target="_blank">${esc(row.run)}</a>${framesTag}${why}</td>
+    <td><a href="${esc(runUrl)}" target="_blank">${esc(row.run)}</a>${seriesTag}${framesTag}${why}</td>
     <td class="nowrap"${gameTitle}>${esc(row.game_name || row.game || '–')}</td>
     <td class="nowrap"${progTitle}>${esc(row.program_name || row.program || '–')}</td>
     <td class="range">${formatRangeHtml(row)}</td>

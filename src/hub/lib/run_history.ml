@@ -19,6 +19,8 @@ type entry = {
   recorded : bool;
 }
 
+module String_set = Set.Make (String)
+
 let default_limit = 500
 let watch_hub_port = 47901
 let initial_tbl_size = 64
@@ -60,10 +62,10 @@ let apply_program e (p : Program_registry.t) =
   }
 
 let enrich_program e =
+  let cp = fallback_str e.checkpoint e.from in
   let e =
     match
-      Run_history_parse.lookup_program ~program:e.program
-        ~checkpoint:e.checkpoint
+      Run_history_parse.lookup_program ~program:e.program ~checkpoint:cp
     with
     | Some p -> apply_program e p
     | None -> e
@@ -72,7 +74,7 @@ let enrich_program e =
     fallback_str e.game
       (fallback_str
          (Run_history_parse.infer_game_from_id e.program)
-         (Run_history_parse.infer_game_from_id e.checkpoint))
+         (Run_history_parse.infer_game_from_id cp))
   in
   let game_name =
     fallback_str e.game_name (Run_history_parse.game_name_of_id game)
@@ -90,20 +92,8 @@ let apply_tsv_row e (row : Run_history_parse.tsv_row) =
     ended_ms = (if row.ended_ms > 0 then row.ended_ms else e.ended_ms);
   }
 
-let json_str fields k =
-  match List.assoc_opt k fields with Some (`String s) -> s | _ -> ""
-
-let json_int fields k d =
-  match List.assoc_opt k fields with
-  | Some (`Int n) -> n
-  | Some (`Float f) -> int_of_float f
-  | _ -> d
-
-let json_bool fields k d =
-  match List.assoc_opt k fields with Some (`Bool b) -> b | _ -> d
-
 let apply_run_json e fields =
-  let s k cur = overlay_str cur (json_str fields k) in
+  let s k cur = overlay_str cur (Run_history_parse.json_str fields k) in
   {
     e with
     kind = s "kind" e.kind;
@@ -120,42 +110,33 @@ let apply_run_json e fields =
     result = s "result" e.result;
     at = s "at" e.at;
     reason = s "reason" e.reason;
-    started_ms = json_int fields "started_ms" e.started_ms;
-    ended_ms = json_int fields "ended_ms" e.ended_ms;
-    recorded = e.recorded || json_bool fields "recorded" false;
+    started_ms = Run_history_parse.json_int fields "started_ms" e.started_ms;
+    ended_ms = Run_history_parse.json_int fields "ended_ms" e.ended_ms;
+    recorded = e.recorded || Run_history_parse.json_bool fields "recorded" false;
   }
 
-let read_json_assoc path =
-  if not (Sys.file_exists path) then None
-  else
-    match Repo_io.Json_file.read path with
-    | Ok (`Assoc fs) -> Some fs
-    | _ -> None
-
 let apply_daemon_json e dir =
-  match read_json_assoc (Filename.concat dir "daemon.json") with
+  match
+    Run_history_parse.read_json_assoc (Filename.concat dir "daemon.json")
+  with
   | None -> e
   | Some fs ->
-      let started = json_int fs "clock_zero_unix_ms" e.started_ms in
+      let started =
+        Run_history_parse.json_int fs "clock_zero_unix_ms" e.started_ms
+      in
       {
         e with
-        backend = fallback_str e.backend (json_str fs "backend");
+        backend =
+          fallback_str e.backend (Run_history_parse.json_str fs "backend");
         started_ms = (if e.started_ms > 0 then e.started_ms else started);
       }
-
-let classify_summary text =
-  if String.starts_with ~prefix:"PASS" text then "pass"
-  else if String.starts_with ~prefix:"FAIL" text then "fail"
-  else ""
 
 let result_of_summary dir =
   let path = Filename.concat dir "summary.txt" in
   if Sys.file_exists path && not (Sys.is_directory path) then
-    classify_summary (In_channel.with_open_text path In_channel.input_all)
+    Run_history_parse.classify_summary
+      (In_channel.with_open_text path In_channel.input_all)
   else ""
-
-let has_recorded_frames dir =
-  Sys.file_exists (Filename.concat (Filename.concat dir "frames") "index.jsonl")
 
 let dir_mtime_ms dir =
   int_of_float ((Unix.stat dir).Unix.st_mtime *. float_of_int ms_per_sec)
@@ -196,21 +177,13 @@ let read_run_dir runs_dir tsv name =
   let e = apply_daemon_json e dir in
   let e =
     Option.fold ~none:e ~some:(apply_run_json e)
-      (read_json_assoc (Filename.concat dir "run.json"))
+      (Run_history_parse.read_json_assoc (Filename.concat dir "run.json"))
   in
   let started_ms =
     if e.started_ms > 0 then e.started_ms else dir_mtime_ms dir
   in
-  finalize_entry
-    { e with started_ms; recorded = e.recorded || has_recorded_frames dir }
-
-let take n xs =
-  let rec go acc k = function
-    | [] -> List.rev acc
-    | _ when k <= 0 -> List.rev acc
-    | x :: rest -> go (x :: acc) (k - 1) rest
-  in
-  go [] n xs
+  let recorded = e.recorded || Run_history_series.has_recorded_frames dir in
+  finalize_entry { e with started_ms; recorded }
 
 let compare_newest a b =
   let c = Int.compare b.started_ms a.started_ms in
@@ -229,19 +202,40 @@ let parse_tsv ?(limit = default_limit) text =
   |> List.filter_map Run_history_parse.parse_tsv_line
   |> List.rev
   |> List.map (fun (run, row) -> entry_of_tsv run row)
-  |> take limit
+  |> Run_history_parse.take limit
 
-let read_tsv_file runs_dir =
-  let path = Filename.concat runs_dir "RESULTS.tsv" in
-  if Sys.file_exists path && not (Sys.is_directory path) then
-    Run_history_parse.tsv_table
-      (In_channel.with_open_text path In_channel.input_all)
-  else Hashtbl.create 0
+let raw_series_entry (s : Run_history_series.t) ~at ~reason ~recorded =
+  {
+    run = s.series;
+    kind = "series";
+    game = s.game;
+    game_name = s.game_name;
+    program = s.program;
+    program_name = s.program_name;
+    group = s.group;
+    checkpoint = Run_history_series.focus_checkpoint s;
+    from = s.from;
+    to_ = s.to_;
+    backend = s.backend;
+    mode = s.mode;
+    result = s.result;
+    at;
+    reason;
+    started_ms = s.started_ms;
+    ended_ms = s.ended_ms;
+    recorded;
+  }
 
-let scan_dir_entry runs_dir tsv seen name =
+let entry_of_series runs_dir s =
+  let at, reason = Run_history_series.failure s in
+  let recorded = Run_history_series.any_recorded ~runs_dir s in
+  finalize_entry (raw_series_entry s ~at ~reason ~recorded)
+
+let scan_dir_entry runs_dir tsv seen covered name =
   let path = Filename.concat runs_dir name in
   if
-    Run_history_parse.valid_run_name name
+    (not (String_set.mem name covered))
+    && Run_history_parse.valid_run_name name
     && Sys.file_exists path && Sys.is_directory path
   then (
     Hashtbl.replace seen name ();
@@ -251,16 +245,22 @@ let scan_dir_entry runs_dir tsv seen name =
 let load ?(limit = default_limit) ~runs_dir () =
   if not (Sys.file_exists runs_dir && Sys.is_directory runs_dir) then []
   else
-    let tsv = read_tsv_file runs_dir in
+    let tsv = Run_history_parse.read_tsv_file runs_dir in
+    let series = Run_history_series.read_dir ~runs_dir in
+    let covered = Run_history_series.covered_runs series in
+    let series_entries = List.map (entry_of_series runs_dir) series in
     let seen = Hashtbl.create initial_tbl_size in
     let dirs =
       Sys.readdir runs_dir |> Array.to_list
-      |> List.filter_map (scan_dir_entry runs_dir tsv seen)
+      |> List.filter_map (scan_dir_entry runs_dir tsv seen covered)
     in
     let add_tsv run row acc =
-      if Hashtbl.mem seen run then acc else entry_of_tsv run row :: acc
+      if Hashtbl.mem seen run || String_set.mem run covered then acc
+      else entry_of_tsv run row :: acc
     in
-    List.sort compare_newest (dirs @ Hashtbl.fold add_tsv tsv []) |> take limit
+    List.sort compare_newest
+      (series_entries @ dirs @ Hashtbl.fold add_tsv tsv [])
+    |> Run_history_parse.take limit
 
 let entry_to_json e =
   `Assoc

@@ -77,8 +77,8 @@ the input lease's holder), and Stop: it releases every button and sends every cl
 Port 0 (for `--watch-port` and `--port`) binds a free port; the daemon prints both before its
 "listening" line. Stop takes the token (`--watch-token`, else a random one): the page served to
 this machine carries it, another machine's viewer needs `?token=` in the URL. With `--registry` the
-daemon lists its page there (`<pid>.json`, removed on exit) for the hub: `--hub` serves the list of
-live runs (`watch/page/hub.html`) in a session of its own, and exits at once when its port is taken.
+daemon lists its page there (`<pid>.json`, removed on exit) for the hub: `--hub` proxies
+live and finished run pages and redirects `/` to the Control Hub (`:47902`), exiting at once when its port is taken.
 The page is `watch/page/watch.html` with its scripts and style beside it (`watch_*.js`, `watch.css`),
 compiled in. The 10 s rate line on mGBA adds what the page costs
 the frame loop (stream viewers, frames polled, ms spent); the stream prints its own 10 s line

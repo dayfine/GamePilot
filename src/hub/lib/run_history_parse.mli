@@ -41,3 +41,28 @@ val lookup_program :
 
 val game_name_of_id : string -> string
 (** Returns the registered display name for a game id, or [""] if unknown. *)
+
+val json_str : (string * Yojson.Safe.t) list -> string -> string
+(** Returns the string field [k] from a JSON object association list, or [""].
+*)
+
+val json_int : (string * Yojson.Safe.t) list -> string -> int -> int
+(** Returns the integer (or truncated float) field [k], or default [d]. *)
+
+val json_bool : (string * Yojson.Safe.t) list -> string -> bool -> bool
+(** Returns the boolean field [k], or default [d]. *)
+
+val read_json_assoc : string -> (string * Yojson.Safe.t) list option
+(** Reads a JSON object file as an association list, or [None] if missing or not
+    an object. *)
+
+val read_tsv_file : string -> (string, tsv_row) Hashtbl.t
+(** Loads [<runs_dir>/RESULTS.tsv] into a lookup table, or an empty table if
+    missing. *)
+
+val classify_summary : string -> string
+(** Returns ["pass"] or ["fail"] from the leading line of [summary.txt], or
+    [""]. *)
+
+val take : int -> 'a list -> 'a list
+(** Returns at most the first [n] elements of a list. *)

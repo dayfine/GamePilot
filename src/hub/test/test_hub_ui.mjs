@@ -409,3 +409,40 @@ test('Launch posts default mode and surfaces 409 conflict error banner', async (
   assert.equal(post.body.mode, 'default');
   assert.match(els.launchErr.textContent, /busy with external run/);
 });
+
+test('Series Run History entry links to /series/<id>/ with series tag', async () => {
+  const routes = sampleFixtures();
+  routes['GET /api/history'].json.entries.unshift({
+    run: '2026-11-26-su-01-su-02-42',
+    kind: 'series',
+    game: 'frlg',
+    game_name: 'Pokemon FireRed / LeafGreen',
+    program: 'frlg.supplies',
+    program_name: 'Supplies',
+    group: 'Farming',
+    checkpoint: 'su-02',
+    from: 'su-01',
+    to: 'su-02',
+    backend: 'switch',
+    mode: 'testing',
+    result: 'fail',
+    at: '#3 mart',
+    reason: 'menu timed out',
+    started_ms: 1795800000000,
+    ended_ms: 1795800090000,
+    recorded: true,
+  });
+  const { sandbox, els } = createHubSandbox(routes);
+  await sandbox.refreshAll();
+  assert.equal(els.historyCount.textContent, '3 of 3 runs');
+  assert.match(
+    els.historyList.innerHTML,
+    /http:\/\/Mac-mini\.local:47901\/series\/2026-11-26-su-01-su-02-42\//
+  );
+  assert.doesNotMatch(
+    els.historyList.innerHTML,
+    /\/runs\/2026-11-26-su-01-su-02-42\//
+  );
+  assert.match(els.historyList.innerHTML, /<span class="tag">series<\/span>/);
+  assert.match(els.historyList.innerHTML, /su-01 → <b>su-02<\/b>/);
+});

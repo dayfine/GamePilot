@@ -172,3 +172,41 @@ let tsv_table text =
   in
   List.iter add (String.split_on_char '\n' text);
   tbl
+
+let json_str fields k =
+  match List.assoc_opt k fields with Some (`String s) -> s | _ -> ""
+
+let json_int fields k d =
+  match List.assoc_opt k fields with
+  | Some (`Int n) -> n
+  | Some (`Float f) -> int_of_float f
+  | _ -> d
+
+let json_bool fields k d =
+  match List.assoc_opt k fields with Some (`Bool b) -> b | _ -> d
+
+let read_json_assoc path =
+  if not (Sys.file_exists path) then None
+  else
+    match Repo_io.Json_file.read path with
+    | Ok (`Assoc fs) -> Some fs
+    | _ -> None
+
+let read_tsv_file runs_dir =
+  let path = Filename.concat runs_dir "RESULTS.tsv" in
+  if Sys.file_exists path && not (Sys.is_directory path) then
+    tsv_table (In_channel.with_open_text path In_channel.input_all)
+  else Hashtbl.create 0
+
+let classify_summary text =
+  if String.starts_with ~prefix:"PASS" text then "pass"
+  else if String.starts_with ~prefix:"FAIL" text then "fail"
+  else ""
+
+let take n xs =
+  let rec go acc k = function
+    | [] -> List.rev acc
+    | _ when k <= 0 -> List.rev acc
+    | x :: rest -> go (x :: acc) (k - 1) rest
+  in
+  go [] n xs
