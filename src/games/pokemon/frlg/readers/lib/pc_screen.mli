@@ -20,11 +20,14 @@
     Where we differ: an arrow's dark pixels are counted with every channel at
     most 110 (the wire's color ranges are per channel; the fork sums the three
     under 330), and a party slot's hand white with every channel 235 and over
-    (the fork also bounds the spread to 20). The box grid (WITHDRAW) is not
-    read: a deposit never shows it. GamePilot's own: under WITHDRAW, a box
-    Pokémon's menu (WITHDRAW, SUMMARY, ...) is wider and its arrow
-    {!withdraw_shift} pixels left; its cursor is read there when STORE's column
-    shows none. *)
+    (the fork also bounds the spread to 20). The box chooser's yellow patch sits
+    at [(136, 69, 48, 6)], in the solid-yellow margin above the box name (glyphs
+    start at [y = 76]): the fork's [(160, 68, 30, 18)] overlaps long (up to
+    8-character) box names and misclassifies ["Deposit in which BOX?"] as
+    [Box_grid]. The box grid (WITHDRAW) is not read: a deposit never shows it.
+    GamePilot's own: under WITHDRAW, a box Pokémon's menu (WITHDRAW, SUMMARY,
+    ...) is wider and its arrow {!withdraw_shift} pixels left; its cursor is
+    read there when STORE's column shows none. *)
 
 type screen =
   | Overworld
