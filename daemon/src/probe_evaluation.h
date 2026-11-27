@@ -18,8 +18,8 @@ struct FrameProbe {
   ProbeSpec spec;
   Viewport viewport;
   cv::Rect pixels;  // the box in frame pixels
-  // core.template_match@1 only: the template scaled to frame pixels, BGR, or
-  // with ink its mask.
+  // core.template_match@1 (BGR, or with ink its mask) and core.template_ncc@1
+  // (8-bit grayscale): the template scaled to frame pixels.
   cv::Mat template_image;
   // core.template_match@1 with skip_seams only: the template's whole pixels
   // (whole_pixels), the ones compared.

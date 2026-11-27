@@ -1,13 +1,14 @@
 (** Every watcher's blink events placed on one grid of advances: the watched
     rolls {!State_solver} reads, and anchors for the advance of a later blink.
 
-    Port of the second half of the fork's
+    Port of the second half of
     [PokemonBDSP/Inference/Rng/PokemonBDSP_BlinkExtraction.{h,cpp}]
-    ([assign_tick_indices], [build_samples], [last_blink_anchor],
-    [step_blink_anchor]; R21: same origin, same rounding, same messages); the
-    first half is {!Blink_extraction}. A [false] return with out-parameters
-    becomes a [result] or an option. Advances, slots and NPC counts are OCaml
-    [int]s (the C++ narrows the stream count to 8 bits). *)
+    (https://github.com/PokemonAutomation/Arduino-Source; [assign_tick_indices],
+    [build_samples], [last_blink_anchor], [step_blink_anchor]; R21: same origin,
+    same rounding, same messages); the first half is {!Blink_extraction}. A
+    [false] return with out-parameters becomes a [result] or an option.
+    Advances, slots and NPC counts are OCaml [int]s (the C++ narrows the stream
+    count to 8 bits). *)
 
 val build_samples :
   Blink_extraction.blink_event list list ->

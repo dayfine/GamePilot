@@ -1,0 +1,10 @@
+{
+  "jsonrpc": "2.0",
+  "method": "gap",
+  "params": {
+    "from_seq": 1002,
+    "to_seq": 1004,
+    "from_t_ms": 16683.3,
+    "to_t_ms": 16750.0
+  }
+}

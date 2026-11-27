@@ -313,4 +313,59 @@ let () =
   check_color_count dir;
   check_daemon_status dir;
   check_probe_constructors ();
-  check_image_probes ()
+  check_image_probes ();
+  (* v1.21: template_ncc, gap notification, submit start_at_t_ms. *)
+  let hash =
+    Wire.upload_template_result_of_json
+      (Yojson.Safe.Util.member "result"
+         (read_golden dir "16-upload_template.response.json"))
+  in
+  (match
+     Wire.message_of_json
+       (read_golden dir "56-subscribe.template_ncc.request.json")
+   with
+  | Wire.Request { call = Wire.Subscribe [ eye ]; _ } ->
+      let box = { Wire.x = 0.45; y = 0.4; w = 0.08; h = 0.08 } in
+      if
+        eye
+        <> Wire.template_ncc_probe ~id:"eye.player" ~box ~delivery:Every
+             ~template:hash
+      then failwith "FAILED template_ncc subscribe differs from constructor"
+  | _ -> failwith "FAILED template_ncc subscribe decoded wrong");
+  (match
+     Wire.message_of_json
+       (read_golden dir "57-frame.template_ncc.notification.json")
+   with
+  | Wire.Notification
+      (Wire.Frame
+         {
+           frame =
+             { probes = [ ("eye.player", Wire.Template_ncc { score; _ }) ]; _ };
+           _;
+         })
+    when score = 0.874215 ->
+      ()
+  | _ -> failwith "FAILED template_ncc frame decoded wrong");
+  (match Wire.message_of_json (read_golden dir "58-gap.notification.json") with
+  | Wire.Notification
+      (Wire.Gap
+         {
+           from_seq = 1002;
+           to_seq = 1004;
+           from_t_ms = 16683.3;
+           to_t_ms = 16750.0;
+         }) ->
+      ()
+  | _ -> failwith "FAILED gap notification decoded wrong");
+  (match
+     Wire.message_of_json (read_golden dir "59-submit.start_at.request.json")
+   with
+  | Wire.Request
+      {
+        call =
+          Wire.Submit { batch_id = "timed1"; start_at_t_ms = Some 25000.5; _ };
+        _;
+      } ->
+      ()
+  | _ -> failwith "FAILED submit start_at_t_ms decoded wrong");
+  print_endline "ok v1.21 template_ncc, gap, start_at_t_ms"

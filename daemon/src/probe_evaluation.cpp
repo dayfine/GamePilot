@@ -1,5 +1,7 @@
 #include "probe_evaluation.h"
 
+#include <opencv2/imgproc.hpp>
+
 namespace gamepilot {
 
 namespace {
@@ -48,16 +50,21 @@ FrameProbe map_probe(const ProbeSpec& probe, const TemplateStore& templates,
         map_find_probe(*probe.find, templates, viewport, width, height);
     return mapped;
   }
-  if (probe.kind != kTemplateMatchKind) {
+  if (probe.kind != kTemplateMatchKind && probe.kind != kTemplateNccKind) {
     return mapped;
   }
   const cv::Mat* image = templates.find(probe.template_hash);
   if (image == nullptr) {
     throw RpcError(kInvalidParams, "unknown template: " + probe.template_hash);
   }
-  // A mask is made in game pixels, where the drawn colors are exact, and
-  // scaled after: a seam pixel then blends the masks, not the colors.
-  const cv::Mat game_pixels = probe.ink ? ink_mask(*image, *probe.ink) : *image;
+  cv::Mat game_pixels;
+  if (probe.kind == kTemplateNccKind) {
+    cv::cvtColor(*image, game_pixels, cv::COLOR_BGR2GRAY);
+  } else {
+    // A mask is made in game pixels, where the drawn colors are exact, and
+    // scaled after: a seam pixel then blends the masks, not the colors.
+    game_pixels = probe.ink ? ink_mask(*image, *probe.ink) : *image;
+  }
   mapped.template_image = scale_template(
       game_pixels,
       template_size_in_frame(viewport, image->size(), width, height));
@@ -83,6 +90,13 @@ ProbeResult evaluate_probe(const FrameProbe& probe, const cv::Mat& frame) {
             ? mask_match(frame, probe.template_image, probe.pixels,
                          *probe.spec.ink, probe.compared)
             : template_match(frame, probe.template_image, probe.pixels);
+    match.x = frame_x_to_picture(probe.viewport, match.x / frame.cols);
+    match.y = frame_y_to_picture(probe.viewport, match.y / frame.rows);
+    return match;
+  }
+  if (probe.spec.kind == kTemplateNccKind) {
+    TemplateNcc match =
+        template_ncc(frame, probe.template_image, probe.pixels);
     match.x = frame_x_to_picture(probe.viewport, match.x / frame.cols);
     match.y = frame_y_to_picture(probe.viewport, match.y / frame.rows);
     return match;
