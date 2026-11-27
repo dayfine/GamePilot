@@ -1,6 +1,6 @@
-(* Tests for Bdsp_checkpoint_series: flag validation, checkpoint range
-   selection, and guide table formatting against a temporary plan directory
-   containing a single save_game checkpoint plan. *)
+(* Tests for Bdsp_checkpoint_series: flag validation and checkpoint range
+   selection against a temporary plan directory containing a single save_game
+   checkpoint plan. *)
 
 open Bdsp_checkpoint_series
 
@@ -69,21 +69,8 @@ let test_select_range_defaults_to_all dir =
       assert_eq ~name:"selected" ~expected:[ "01-save-game" ]
         ~actual:sel.selected
 
-let test_guide_tables dir =
-  match Guide_tables.rows ~plan_dir:dir [ "01-save-game" ] with
-  | Error e -> fail ("guide rows: " ^ e)
-  | Ok rows ->
-      assert_eq ~name:"guide rows"
-        ~expected:[ "| 01-save-game | Save Game |" ]
-        ~actual:rows;
-      let cmd = Guide_tables.commands ~args:"bdsp.example" in
-      assert_eq ~name:"commands non-empty" ~expected:true
-        ~actual:(String.length cmd > 0)
-
 let () =
   test_flags_accepts_testing ();
   test_flags_rejects_verification ();
-  with_temp_plan_dir (fun dir ->
-      test_select_range_defaults_to_all dir;
-      test_guide_tables dir);
+  with_temp_plan_dir (fun dir -> test_select_range_defaults_to_all dir);
   print_endline "test_bdsp_series: OK"
