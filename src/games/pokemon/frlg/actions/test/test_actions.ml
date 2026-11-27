@@ -32,7 +32,7 @@ let talk ?then_ () =
    menu; A on FLY the fly map (no reader: the overworld's frame); the last A,
    on the fly map, the warp's black, then [lands] (the town, or the departure
    town again when the fly map closed and nothing happened). *)
-let fly_screen ~row ~fade ~lands ~black_ms screen (p : S.press) =
+let fly_screen ~row ~after_fly ~fade ~lands ~black_ms screen (p : S.press) =
   match p.buttons with
   | [ Wire.Start ] -> S.show screen ~at_ms:(p.at_ms + 100) (S.Start_menu row)
   | [ Wire.Up; Wire.Left ] -> S.show screen ~at_ms:p.at_ms S.Overworld
@@ -40,14 +40,15 @@ let fly_screen ~row ~fade ~lands ~black_ms screen (p : S.press) =
       match S.screen_at screen p.at_ms with
       | S.Start_menu _ -> S.show screen ~at_ms:(p.at_ms + 300) (S.Party 1)
       | S.Party _ -> S.show screen ~at_ms:(p.at_ms + 200) (S.Member_menu 0)
-      | S.Member_menu _ -> S.show screen ~at_ms:(p.at_ms + 300) S.Overworld
+      | S.Member_menu _ -> S.show screen ~at_ms:(p.at_ms + 300) after_fly
       | S.Overworld when fade ->
           S.show screen ~at_ms:(p.at_ms + 500) S.Black;
           S.show screen ~at_ms:(p.at_ms + 500 + black_ms) lands
       | _ -> ())
   | _ -> ()
 
-let fly ?(row = 1) ?(fade = true) ?(lands = S.Town) ?(black_ms = 2500) () =
+let fly_run ?(row = 1) ?(after_fly = S.Overworld) ?(fade = true)
+    ?(lands = S.Town) ?(black_ms = 2500) () =
   let plan =
     {
       Fly.town =
@@ -57,11 +58,17 @@ let fly ?(row = 1) ?(fade = true) ?(lands = S.Town) ?(black_ms = 2500) () =
       menu_row = 2;
     }
   in
-  let screen, result =
-    run ~react:(fly_screen ~row ~fade ~lands ~black_ms) (fun () ->
-        Fly.fly ~log:ignore plan)
-  in
+  run ~react:(fly_screen ~row ~after_fly ~fade ~lands ~black_ms) (fun () ->
+      Fly.fly ~log:ignore plan)
+
+let fly ?row ?after_fly ?fade ?lands ?black_ms () =
+  let screen, result = fly_run ?row ?after_fly ?fade ?lands ?black_ms () in
   Printf.sprintf "%s; %s" (outcome result) (S.presses_text screen)
+
+let fly_indoors_repeats () =
+  match snd (fly_run ~after_fly:(S.Party 3) ()) with
+  | Error cause -> string_of_bool cause.repeats
+  | Ok () -> "ok"
 
 let case name input expectation = { Table_test.name; input; expectation }
 
@@ -90,4 +97,10 @@ let () =
       case "Fly with no fade after the town's A fails" (fly ~fade:false)
         "failed fly_no_takeoff: PewterCity: no fade after the town's A; Start, \
          A, down x2, A, down, A, up+left 3000, right x4, down x4, A";
+      case "Fly indoors stays on the party and fails before moving the map"
+        (fly ~after_fly:(S.Party 3))
+        "failed fly_unavailable: PewterCity: party still open after FLY (slot \
+         3, row 2): the player must be outdoors; Start, A, down x2, A, down, A";
+      case "Fly indoors repeats so the runner does not retry"
+        fly_indoors_repeats "true";
     ]

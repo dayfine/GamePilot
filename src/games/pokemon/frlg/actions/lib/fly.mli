@@ -26,9 +26,11 @@ val fly_map_wait_ms : int
 val fly :
   log:(string -> unit) -> plan -> (unit, Pokemon_engine.Failure.cause) result
 (** Fails as [no_start_menu], [no_party], [no_member_menu] or, from the settle,
-    [battle] or [not_settled]; [fly_no_takeoff] when no fade follows the town's
-    A, [fly_no_landing] when the screen still shows the departure town (the fly
-    map closed and nothing happened). *)
+    [battle] or [not_settled]; [fly_unavailable] (repeats) when the party is
+    still open after choosing FLY (indoors, or the row did not open the fly
+    map); [fly_no_takeoff] when no fade follows the town's A; [fly_no_landing]
+    when the screen still shows the departure town (the fly map closed and
+    nothing happened). *)
 
 val takeoff_timeout_ms : int
 (** 10000: the fade after the town's A, watched from the press on. *)

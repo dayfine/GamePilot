@@ -3,6 +3,25 @@ type plan = { town : Fly_towns.town; slot : int; menu_row : int }
 let fly_map_wait_ms = 4000
 let member_menu_gone m = not (Party_actions.member_menu m)
 
+(* Indoors ("Can't use that here.") or when the chosen row did not open the
+   fly map, the party stays up: its bottom box may be covered by a wide
+   message, so the selected slot's orange border counts too. *)
+let still_on_party m =
+  Frlg_readers.Party_menu.party_menu m
+  || Option.is_some (Frlg_readers.Party_menu.selected_slot m)
+
+let unavailable_detail plan =
+  Printf.sprintf
+    "%s: party still open after FLY (slot %d, row %d): the player must be \
+     outdoors"
+    plan.town.name plan.slot plan.menu_row
+
+let ensure_fly_map plan =
+  match Effects.read () with
+  | Some m when still_on_party m ->
+      Menu_input.fail ~repeats:true "fly_unavailable" (unavailable_detail plan)
+  | Some _ | None -> ()
+
 let to_fly_map plan =
   Party_actions.open_party ();
   Party_actions.on_member_menu plan.slot (fun () ->
@@ -10,7 +29,8 @@ let to_fly_map plan =
         ~taken:member_menu_gone);
   ignore
     (Effects.submit [ Wire.Wait { wait_ms = fly_map_wait_ms } ]
-      : Wire.batch_done)
+      : Wire.batch_done);
+  ensure_fly_map plan
 
 let press button =
   Wire.press ~hold_ms:Menu_input.button_hold_ms ~cooldown_ms:0 [ button ]
