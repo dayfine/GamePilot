@@ -95,5 +95,5 @@ val live_calibrated_game_steps :
     each subsequent attempt and, on Switch ([plan.frame_model = "switch"]), read
     Summary Page 1 & Page 2 on misses, report the miss distance via
     {!Rng_miss_calibration}, update the in-memory plan offsets for the next
-    attempt (with ±1-frame oscillation damping), and persist the timing delta.
-*)
+    attempt (with a 10-attempt rolling average via
+    {!Frlg_rng.Rolling_calibrator}), and persist the timing delta. *)

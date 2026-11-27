@@ -129,3 +129,67 @@ let report_and_calibrate_wild ~log ~label ~species ~slots ~super_rod ~seeds
         ~seeds:seed_col ~target_seed_index ~target_advance obs
       |> finish_search ~log ~label ~target_seed ~target_delay_ms ~target_advance
            ~persist ~prev_seed_delta ?calibration_path
+
+let accept_rolling ~log ~label ~persist ~used_boot_offset_ms ~used_ingame_offset
+    ?calibration_path state (est : R.Rolling_calibrator.estimate) =
+  let boot_delta_ms = est.boot_offset_ms - used_boot_offset_ms in
+  let ingame_delta = est.ingame_offset - used_ingame_offset in
+  log
+    (Printf.sprintf
+       "%s calibration (history=%d): boot_offset_ms=%d (%+d ms), \
+        ingame_offset=%d (%+d adv)."
+       label est.sample_count est.boot_offset_ms boot_delta_ms est.ingame_offset
+       ingame_delta);
+  if persist && (boot_delta_ms <> 0 || ingame_delta <> 0) then
+    persist_delta ~log ~label ?calibration_path ~boot_delta_ms ~ingame_delta ();
+  Some (state, est)
+
+let reject_rolling ~log ~label ~calibrator ~seed_delta_frames ~advance_delta =
+  let n = R.Rolling_calibrator.count calibrator in
+  log
+    (Printf.sprintf
+       "%s calibration: ignored outlier (seed %+d frames, adv %+d); history=%d."
+       label seed_delta_frames advance_delta n);
+  None
+
+let apply_rolling_hit ~log ~label ~persist ~calibrator ~used_boot_offset_ms
+    ~used_ingame_offset ?calibration_path (h : MS.hit) =
+  match
+    R.Rolling_calibrator.record calibrator ~used_boot_offset_ms
+      ~used_ingame_offset ~seed_delta_frames:h.seed_delta_frames
+      ~advance_delta:h.advance_delta
+  with
+  | Rejected_outlier { seed_delta_frames; advance_delta } ->
+      reject_rolling ~log ~label ~calibrator ~seed_delta_frames ~advance_delta
+  | Accepted { state; estimate } ->
+      accept_rolling ~log ~label ~persist ~used_boot_offset_ms
+        ~used_ingame_offset ?calibration_path state estimate
+
+let finish_rolling_search ~log ~label ~target_seed ~target_delay_ms
+    ~target_advance ~persist ~calibrator ~used_boot_offset_ms
+    ~used_ingame_offset ?calibration_path hits =
+  log (MS.format_miss_report ~target_seed ~target_delay_ms ~target_advance hits);
+  match hits with
+  | [] -> None
+  | h :: _ ->
+      apply_rolling_hit ~log ~label ~persist ~calibrator ~used_boot_offset_ms
+        ~used_ingame_offset ?calibration_path h
+
+let report_and_calibrate_wild_rolling ~log ~label ~species ~slots ~super_rod
+    ~seeds ~seed_shift ~target_seed ~target_delay_ms ~target_advance ~persist
+    ~calibrator ~used_boot_offset_ms ~used_ingame_offset ?calibration_path obs =
+  log
+    (Printf.sprintf "%s: observed %s (%s)." label species
+       (MS.format_observation obs));
+  match
+    load_search_inputs ~species ~seeds ~seed_shift ~target_seed ~target_delay_ms
+  with
+  | Error e ->
+      log (Printf.sprintf "%s miss search skipped: %s" label e);
+      None
+  | Ok (base_stats, delays, seed_col, target_seed_index) ->
+      MS.search_wild ~slots ~super_rod ~species ~base_stats ~delays
+        ~seeds:seed_col ~target_seed_index ~target_advance obs
+      |> finish_rolling_search ~log ~label ~target_seed ~target_delay_ms
+           ~target_advance ~persist ~calibrator ~used_boot_offset_ms
+           ~used_ingame_offset ?calibration_path

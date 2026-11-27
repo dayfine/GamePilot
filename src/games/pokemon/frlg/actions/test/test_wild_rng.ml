@@ -634,6 +634,77 @@ let policy_decisions =
               (d.boot_delta_ms = expected_boot)
               (d.ingame_delta = expected_adv))
       "non_target=true boot_ok=true adv_ok=true";
+    case "rolling wild calibration logs history count and splits odd csf_offset"
+      (fun () ->
+        let plan =
+          Result.get_ok
+            (Wild_rng_plan.decode
+               (obj
+                  {|{"species": "ekans", "location": "route_10", "tid": 12345,
+                     "sid": 54321, "frame_model": "switch"}|}))
+        in
+        let tgt = Result.get_ok (Wild_rng_plan.target plan) in
+        let slots = Result.get_ok (Wild_rng_plan.slots plan) in
+        let delays, seeds =
+          Result.get_ok
+            (Wild_rng_plan.seed_column_of ~seeds:plan.seeds
+               ~seed_shift:plan.seed_shift)
+        in
+        let idx =
+          Option.get
+            (Frlg_rng.Rng_miss_search.find_seed_index ~delays ~seeds
+               ~seed:tgt.seed ~table_delay_ms:tgt.table_delay_ms)
+        in
+        let miss_idx = idx + 1 in
+        let miss_adv = tgt.advance + 15 in
+        let st =
+          Frlg_rng.Rng_state.of_seed ~seed:seeds.(miss_idx) ~advance:miss_adv
+            Method1
+        in
+        let enc =
+          Frlg_rng.Wild_encounter.pokemon_of_state st slots ~super_rod:false
+        in
+        let db = Result.get_ok (Frlg_rng.Base_stats.load ()) in
+        let bs = Option.get (Frlg_rng.Base_stats.find db enc.species) in
+        let stats =
+          Frlg_rng.Base_stats.compute_stats ~base:bs.base
+            ~nature:enc.pokemon.nature ~ivs:enc.pokemon.ivs ~level:enc.level
+        in
+        let obs : Frlg_rng.Rng_miss_search.observation =
+          {
+            nature = Some enc.pokemon.nature;
+            gender = Unknown;
+            level = enc.level;
+            stats = Some stats;
+          }
+        in
+        let logs = ref [] in
+        match
+          Rng_miss_calibration.report_and_calibrate_wild_rolling
+            ~log:(fun s -> logs := s :: !logs)
+            ~label:"Wild RNG" ~species:enc.species ~slots ~super_rod:false
+            ~seeds:plan.seeds ~seed_shift:plan.seed_shift ~target_seed:tgt.seed
+            ~target_delay_ms:tgt.table_delay_ms ~target_advance:tgt.advance
+            ~persist:false ~calibrator:Frlg_rng.Rolling_calibrator.empty
+            ~used_boot_offset_ms:0 ~used_ingame_offset:0 obs
+        with
+        | None -> "none"
+        | Some (_cal, est) ->
+            let _, cals =
+              Wild_rng_plan.calibrated_model ~boot_offset_ms:est.boot_offset_ms
+                ~ingame_offset:est.ingame_offset Frlg_rng.Rng_timings.switch
+            in
+            let has_history_log =
+              List.exists
+                (fun s ->
+                  String.starts_with ~prefix:"Wild RNG calibration (history=1):"
+                    s)
+                !logs
+            in
+            Printf.sprintf "n=%d boot=%d ingame=%d csf=%d adj=%d logged=%b"
+              est.sample_count est.boot_offset_ms est.ingame_offset
+              cals.csf_offset cals.ingame_offset has_history_log)
+      "n=1 boot=-17 ingame=-15 csf=1 adj=-16 logged=true";
   ]
 
 let decisions =

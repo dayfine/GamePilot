@@ -170,29 +170,32 @@ let prepare_target ~log ~first_attempt ~current_plan ~current_target () =
       log ("Wild RNG: " ^ Frlg_rng.Wild_target.describe tgt ^ ".");
       Ok tgt
 
-let apply_miss_delta ~current_plan ~prev_seed_delta (p : Wild_rng_plan.t) =
-  function
-  | None -> ()
-  | Some (d : Rng_miss_calibration.delta) ->
-      prev_seed_delta := Some d.seed_delta_frames;
-      current_plan :=
-        Wild_rng_plan.apply_timing_delta ~boot_delta_ms:d.boot_delta_ms
-          ~ingame_delta:d.ingame_delta p
+let with_estimate (p : Wild_rng_plan.t)
+    (e : Frlg_rng.Rolling_calibrator.estimate) =
+  { p with boot_offset_ms = e.boot_offset_ms; ingame_offset = e.ingame_offset }
 
-let calibrate_miss ~log ~is_switch ~current_plan ~prev_seed_delta
+let apply_rolling_update ~current_plan ~calibrator p = function
+  | None -> ()
+  | Some (next_cal, est) ->
+      calibrator := next_cal;
+      current_plan := with_estimate p est
+
+let calibrate_miss ~log ~is_switch ~current_plan ~calibrator
     ~(tgt : Frlg_rng.Wild_target.t) (miss : Rng_miss_calibration.summary_miss) =
   let (p : Wild_rng_plan.t) = !current_plan in
-  let caught_species = Option.value ~default:p.species miss.species in
+  let species = Option.value ~default:p.species miss.species in
   match Wild_rng_plan.slots p with
   | Error e -> log ("Wild RNG miss search skipped: " ^ e)
   | Ok slots ->
-      Rng_miss_calibration.report_and_calibrate_wild ~log ~label:"Wild RNG"
-        ~species:caught_species ~slots
-        ~super_rod:(p.encounter_method = Wild_rng_plan.Super_rod)
-        ~seeds:p.seeds ~seed_shift:p.seed_shift ~target_seed:tgt.seed
+      let super_rod = p.encounter_method = Wild_rng_plan.Super_rod in
+      Rng_miss_calibration.report_and_calibrate_wild_rolling ~log
+        ~label:"Wild RNG" ~species ~slots ~super_rod ~seeds:p.seeds
+        ~seed_shift:p.seed_shift ~target_seed:tgt.seed
         ~target_delay_ms:tgt.table_delay_ms ~target_advance:tgt.advance
-        ~persist:is_switch ?prev_seed_delta:!prev_seed_delta miss.observation
-      |> apply_miss_delta ~current_plan ~prev_seed_delta p
+        ~persist:is_switch ~calibrator:!calibrator
+        ~used_boot_offset_ms:p.boot_offset_ms
+        ~used_ingame_offset:p.ingame_offset miss.observation
+      |> apply_rolling_update ~current_plan ~calibrator p
 
 let calibrated_find ~log ~reset_mode ~encounter_method ~prepare () =
   match prepare () with
@@ -237,13 +240,13 @@ let calibrated_catch ~log ~reset_mode ~encounter_method ~prepare capture ~party
       Effects.with_probes Frlg_battle.Battle_look.probes (fun () ->
           Capture.run steps capture ~party)
 
-let calibrated_shiny_at ~log ~is_switch ~current_plan ~prev_seed_delta
+let calibrated_shiny_at ~log ~is_switch ~current_plan ~calibrator
     ~current_target slot =
   match check_summary ~log ~slot ~read_miss:is_switch with
   | `Shiny -> true
   | `Not_shiny None -> false
   | `Not_shiny (Some miss) ->
-      calibrate_miss ~log ~is_switch ~current_plan ~prev_seed_delta
+      calibrate_miss ~log ~is_switch ~current_plan ~calibrator
         ~tgt:!current_target miss;
       false
 
@@ -252,15 +255,12 @@ let calibrated_shiny_at ~log ~is_switch ~current_plan ~prev_seed_delta
 let fast_calibration_on_miss ~log ~current_plan ~shiny_at ~party =
   log "Wild RNG: visual miss — fast throw-only catch for calibration.";
   let (p : Wild_rng_plan.t) = !current_plan in
-  let bag : Battle_catch_steps.bag_layout =
-    { ball_row = p.cal_ball_row; heal_row = 0 }
+  let bag = { Battle_catch_steps.ball_row = p.cal_ball_row; heal_row = 0 } in
+  let steps =
+    Battle_catch_steps.make ~log { Wild_rng_plan.default_catch_config with bag }
   in
-  let config = { Wild_rng_plan.default_catch_config with bag } in
-  let steps = Battle_catch_steps.make ~log config in
-  match
-    Pokemon_catch.Catch_runner.run ~log steps
-      (Wild_rng_plan.throw_only_policy p.capture)
-  with
+  let policy = Wild_rng_plan.throw_only_policy p.capture in
+  match Pokemon_catch.Catch_runner.run ~log steps policy with
   | Pokemon_catch.Catch_runner.Caught _ ->
       if Capture_steps.finish_catch ~log Party then
         ignore (shiny_at (party + 1) : bool)
@@ -268,18 +268,16 @@ let fast_calibration_on_miss ~log ~current_plan ~shiny_at ~party =
   | _ -> log "Wild RNG: fast calibration catch ended without catching."
 
 let live_calibrated_game_steps ~log ?(reset_mode = Rng_reset.Mgba)
-    (initial_plan : Wild_rng_plan.t) (initial_target : Frlg_rng.Wild_target.t) :
+    (plan : Wild_rng_plan.t) (tgt : Frlg_rng.Wild_target.t) :
     Wild_rng.game_steps =
-  let current_plan = ref initial_plan in
-  let current_target = ref initial_target in
-  let prev_seed_delta = ref None in
-  let first_attempt = ref true in
-  let is_switch = initial_plan.frame_model = "switch" in
+  let current_plan = ref plan and current_target = ref tgt in
+  let calibrator = ref Frlg_rng.Rolling_calibrator.empty in
+  let first_attempt = ref true and is_switch = plan.frame_model = "switch" in
   let prepare =
     prepare_target ~log ~first_attempt ~current_plan ~current_target
   in
   let shiny_at =
-    calibrated_shiny_at ~log ~is_switch ~current_plan ~prev_seed_delta
+    calibrated_shiny_at ~log ~is_switch ~current_plan ~calibrator
       ~current_target
   in
   let on_miss =
@@ -288,11 +286,11 @@ let live_calibrated_game_steps ~log ?(reset_mode = Rng_reset.Mgba)
   in
   {
     catch =
-      calibrated_catch ~log ~reset_mode
-        ~encounter_method:initial_plan.encounter_method ~prepare;
+      calibrated_catch ~log ~reset_mode ~encounter_method:plan.encounter_method
+        ~prepare;
     policy_catch =
-      calibrated_policy_catch ~log ~reset_mode ~timings:initial_target.timings
-        ~prepare ~on_miss initial_plan;
+      calibrated_policy_catch ~log ~reset_mode ~timings:tgt.timings ~prepare
+        ~on_miss plan;
     shiny_at;
     log;
   }
