@@ -43,7 +43,7 @@ val load_plan : plan_dir:string -> string -> (Bdsp_engine.Plan.t, string) result
 
 val select_range :
   plan_dir:string ->
-  Flags.t ->
+  unit Run_flags.flags ->
   (Engine_series.Plan_folder.selection, string) result
 (** Resolves the selected checkpoint range in [plan_dir]. When [--from] and
     [--to] are omitted, selects every checkpoint in [plan_dir] in run order. *)

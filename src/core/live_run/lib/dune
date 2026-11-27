@@ -8,6 +8,7 @@
   gamepilot.switch
   gamepilot.repo_io
   gamepilot.run_record
+  gamepilot.watch_report
   gamepilot.strings
   unix
   yojson))

@@ -14,6 +14,8 @@ module Action : sig
   (** One of BDSP's own checkpoint actions. *)
   type t =
     | Save_game  (** Save the game in-game ([X -> R -> A]). *)
+    | Underground_farm
+        (** Farm Mysterious Shards and treasures in the Grand Underground. *)
     | Static_rng
         (** Hunt a shiny static legendary using Munchlax boot-seed recovery,
             in-chamber 1PK re-identification, and timed encounter triggers. *)

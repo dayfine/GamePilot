@@ -12,6 +12,7 @@ let no_args_action action ~where args =
 
 let action_of_plan = function
   | "save_game" -> Some (no_args_action T.Action.Save_game)
+  | "underground_farm" -> Some (no_args_action T.Action.Underground_farm)
   | "static_rng" -> Some (no_args_action T.Action.Static_rng)
   | _ -> None
 

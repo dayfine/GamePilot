@@ -149,4 +149,23 @@ let () =
      with
     | Error _ -> Ok ()
     | Ok _ -> Error "expected Error for missing folder");
+  (* Typed tests for Plan_folder.load_all. *)
+  let check_loaded name actual expected =
+    Table_test.report name
+      (if actual = expected then Ok ()
+       else Error "load_all result did not match expected value")
+  in
+  let load ~plan_dir id =
+    if id = "bad" then Error ("bad plan: " ^ plan_dir)
+    else Ok (plan_dir ^ "/" ^ id)
+  in
+  check_loaded "load_all loads ids in order"
+    (F.load_all ~load ~plan_dir:"plans" [ "01"; "02"; "03" ])
+    (Ok [ "plans/01"; "plans/02"; "plans/03" ]);
+  check_loaded "load_all stops at first error"
+    (F.load_all ~load ~plan_dir:"plans" [ "01"; "bad"; "03" ])
+    (Error "bad plan: plans");
+  check_loaded "load_all on empty list returns Ok []"
+    (F.load_all ~load ~plan_dir:"plans" [])
+    (Ok []);
   Table_test.finish ()
