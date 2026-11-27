@@ -3,9 +3,12 @@
   test_mining_grid
   test_minimap_sparkles
   test_wall_sparkle
-  test_eye_blink_reader)
+  test_eye_blink_reader
+  test_shiny_encounter_reader
+  test_shiny_encounter_detector)
  (libraries
   gamepilot.wire
+  gamepilot.effects
   gamepilot.switch
   gamepilot.bdsp_underground
   gamepilot.bdsp_readers))
