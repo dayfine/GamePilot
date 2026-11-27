@@ -1,7 +1,12 @@
 include Descriptor
 
 let games =
-  [ Plza_programs.game; Frlg_programs.game; Pokemon_home_programs.game ]
+  [
+    Plza_programs.game;
+    Frlg_programs.game;
+    Pokemon_home_programs.game;
+    Bdsp_programs.game;
+  ]
 
 let with_home (g : game) = Option.map (fun h -> (g, h)) g.switch
 
@@ -34,7 +39,9 @@ let lab_game_of_env () =
     | Some "" | None -> None
     | id -> id)
 
-let all = Frlg_programs.all @ Plza_programs.all @ Pokemon_home_programs.all
+let all =
+  Frlg_programs.all @ Plza_programs.all @ Pokemon_home_programs.all
+  @ Bdsp_programs.all
 
 let short_id p =
   let prefix = p.game.game_id ^ "." in

@@ -1,0 +1,21 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "bdsp",
+  "execution": {},
+  "metadata": {
+    "phase": "testing",
+    "source": "ours: BDSP Workflow B static legendary RNG manipulation loop (Munchlax boot-seed recovery, in-chamber 1PK re-identification, timed trigger, visual shiny detection)",
+    "postconditions": {}
+  },
+  "checkpoint": {
+    "id": "01-static-rng",
+    "title": "Hunt a shiny static legendary with eye-blink RNG",
+    "events": [
+      {
+        "id": "static_rng",
+        "kind": "static_rng",
+        "why": "recover the 128-bit boot seed from Munchlax's intro blinks, enter the save facing the legendary, re-identify the 1PK advance anchor, trigger the earliest matching shiny advance, and stop parked on the shiny battle screen ready for capture"
+      }
+    ]
+  }
+}

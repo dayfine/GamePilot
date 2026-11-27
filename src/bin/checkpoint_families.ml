@@ -162,12 +162,26 @@ let plza_gifts =
     guide = { plza_guide with program_block = gifts_block };
   }
 
-let run_bdsp_action ~log ~picture ~options:_ = function
+let run_bdsp_static_rng ~log ~picture ~options =
+  match Bdsp_static_rng_run.load_templates () with
+  | Error msg ->
+      Error (Engine_run.Failure.cause ~repeats:false "static_rng_templates" msg)
+  | Ok templates ->
+      let passed, line =
+        Bdsp_static_rng.Static_rng.run ~picture ~templates ~options ()
+      in
+      log line;
+      if passed then Ok ()
+      else
+        Error (Engine_run.Failure.cause ~repeats:true "static_rng_failed" line)
+
+let run_bdsp_action ~log ~picture ~options = function
   | Bdsp_rules.Action.Save_game -> (
       match Bdsp_actions.Save_game.save_game ~log ~picture () with
       | Ok () -> Ok ()
       | Error msg ->
           Error (Engine_run.Failure.cause ~repeats:true "save_game_failed" msg))
+  | Bdsp_rules.Action.Static_rng -> run_bdsp_static_rng ~log ~picture ~options
 
 let bdsp_series plan_dir args =
   let* f = Bdsp_checkpoint_series.Flags.parse args in

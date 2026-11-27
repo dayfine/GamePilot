@@ -24,6 +24,7 @@
   gamepilot.bdsp_actions
   gamepilot.bdsp_rules
   gamepilot.bdsp_checkpoint_series
+  gamepilot.bdsp_static_rng
   gamepilot.program_registry
   gamepilot.guide_page
   gamepilot.run_record

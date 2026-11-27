@@ -18,6 +18,7 @@ Each page ends with "How it works", for developers: the ported files, the mechan
 | [AutoStory](plza.autostory.md) | `plza.autostory` | the Switch | Plays the story from a new game, checkpoint by checkpoint. |
 | [Claim Gifts](plza.claim-gifts.md) | `plza.claim-gifts` | the Switch | Claims the Mystery Gifts of its catalog that have not expired, puts their Pokémon in the Boxes and saves. |
 | [Bank PLZA in HOME](pokemon_home.bank-plza.md) | `pokemon_home.bank-plza` | the Switch | Moves the claimed gifts from the game's box into their Pokémon HOME boxes and saves HOME. |
+| [Static Legendary RNG](bdsp.static_rng.md) | `bdsp.static_rng` | the Switch | Hunts shiny static legendaries using Munchlax boot-seed recovery, in-chamber 1PK re-identification, and timed encounter triggers. |
 <!-- /generated -->
 
 The Mail Glitch has a second page for its last checkpoint:
