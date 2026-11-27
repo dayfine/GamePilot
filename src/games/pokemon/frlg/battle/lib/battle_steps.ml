@@ -116,14 +116,25 @@ let pocket_index : Bag_screen.pocket -> int = function
   | Key_items -> 1
   | Poke_balls -> 2
 
+let pocket_ready m = Option.is_some (Bag_screen.pocket m)
+
+(* Step one pocket at a time so both 2-pocket and 3-pocket bag layouts work
+   without overshooting, after waiting for the bag's pocket arrow to fade in. *)
 let turn_to pocket =
-  match Option.bind (Effects.read ()) Bag_screen.pocket with
-  | None -> false
-  | Some now ->
-      let d = pocket_index pocket - pocket_index now in
-      tap_all
-        (List.init (abs d) (fun _ -> if d > 0 then Wire.Right else Wire.Left));
-      shows (fun m -> Bag_screen.pocket m = Some pocket)
+  let rec step tries =
+    match Option.bind (Effects.read ()) Bag_screen.pocket with
+    | Some now when now = pocket -> true
+    | Some now when tries > 0 ->
+        let dir =
+          if pocket_index pocket > pocket_index now then Wire.Right
+          else Wire.Left
+        in
+        tap_all [ dir ];
+        ignore (shows (fun m -> Bag_screen.pocket m <> Some now) : bool);
+        step (tries - 1)
+    | _ -> false
+  in
+  shows ~timeout_ms:list_timeout_ms pocket_ready && step 3
 
 let pick_slot = function
   | None -> true
