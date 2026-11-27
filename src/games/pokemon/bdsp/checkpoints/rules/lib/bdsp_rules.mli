@@ -12,7 +12,10 @@ module Pose :
 (** BDSP's actions: its own event kinds. *)
 module Action : sig
   (** One of BDSP's own checkpoint actions. *)
-  type t = Save_game  (** Save the game in-game ([X -> R -> A]). *)
+  type t =
+    | Save_game  (** Save the game in-game ([X -> R -> A]). *)
+    | Underground_farm
+        (** Farm Mysterious Shards and treasures in the Grand Underground. *)
 
   include Engine_rules.ACTION with type t := t
 end

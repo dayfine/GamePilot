@@ -1,9 +1,11 @@
 module Pose = Engine_rules.Zone_pose
 
 module Action = struct
-  type t = Save_game
+  type t = Save_game | Underground_farm
 
-  let to_string = function Save_game -> "save_game"
+  let to_string = function
+    | Save_game -> "save_game"
+    | Underground_farm -> "underground_farm"
 end
 
 module Postconditions = struct

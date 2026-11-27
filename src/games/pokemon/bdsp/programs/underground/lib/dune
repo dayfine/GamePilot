@@ -1,0 +1,17 @@
+(library
+ (name bdsp_underground_program)
+ (public_name gamepilot.bdsp_underground_program)
+ (libraries
+  gamepilot.wire
+  gamepilot.run_options
+  gamepilot.effects
+  gamepilot.screen_state
+  gamepilot.screen_graph
+  gamepilot.watch_report
+  gamepilot.switch
+  gamepilot.grid_geometry
+  gamepilot.grid_maps
+  gamepilot.grid_planning
+  gamepilot.bdsp_readers
+  gamepilot.bdsp_underground
+  gamepilot.bdsp_actions))

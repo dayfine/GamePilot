@@ -1,3 +1,7 @@
 (test
  (name test_bdsp_engine)
- (libraries yojson gamepilot.bdsp_rules gamepilot.bdsp_engine))
+ (libraries
+  yojson
+  gamepilot.bdsp_rules
+  gamepilot.bdsp_engine
+  gamepilot.repo_io))

@@ -162,12 +162,18 @@ let plza_gifts =
     guide = { plza_guide with program_block = gifts_block };
   }
 
-let run_bdsp_action ~log ~picture ~options:_ = function
+let run_bdsp_action ~log ~picture ~options = function
   | Bdsp_rules.Action.Save_game -> (
       match Bdsp_actions.Save_game.save_game ~log ~picture () with
       | Ok () -> Ok ()
       | Error msg ->
           Error (Engine_run.Failure.cause ~repeats:true "save_game_failed" msg))
+  | Bdsp_rules.Action.Underground_farm ->
+      let passed, line = Bdsp_underground_program.Underground.run ~options () in
+      log line;
+      if passed then Ok ()
+      else
+        Error (Engine_run.Failure.cause ~repeats:true "underground_failed" line)
 
 let bdsp_series plan_dir args =
   let* f = Bdsp_checkpoint_series.Flags.parse args in

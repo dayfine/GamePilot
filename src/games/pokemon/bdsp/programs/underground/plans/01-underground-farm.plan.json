@@ -1,0 +1,21 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "bdsp",
+  "execution": {},
+  "metadata": {
+    "phase": "testing",
+    "source": "ours: BDSP Grand Underground Mysterious Shard farming loop. Starts outdoors or inside the Grand Underground",
+    "postconditions": {}
+  },
+  "checkpoint": {
+    "id": "01-underground-farm",
+    "title": "Farm Mysterious Shards and treasures in the Grand Underground",
+    "events": [
+      {
+        "id": "underground_farm",
+        "kind": "underground_farm",
+        "why": "transit to the Grand Underground if outdoors, refresh Hideaway doorways, route and lock onto sparkling walls, play the mining minigame until the slates or cycles goal is reached, auto-save, and leave the Underground"
+      }
+    ]
+  }
+}
