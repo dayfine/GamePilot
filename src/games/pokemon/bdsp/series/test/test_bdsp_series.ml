@@ -42,23 +42,25 @@ let with_temp_plan_dir f =
     (fun () -> f dir)
 
 let test_flags_accepts_testing () =
-  match Flags.parse [ "--mode"; "testing"; "--backend"; "switch" ] with
+  match
+    Run_flags.parse_no_game_flags [ "--mode"; "testing"; "--backend"; "switch" ]
+  with
   | Error e -> fail ("parse testing: " ^ e)
   | Ok f -> (
-      match Flags.takes f with
+      match Run_flags.require_testing_only ~game:"BDSP" f with
       | Ok () -> ()
       | Error e -> fail ("takes testing: " ^ e))
 
 let test_flags_rejects_verification () =
-  match Flags.parse [ "--mode"; "verification" ] with
+  match Run_flags.parse_no_game_flags [ "--mode"; "verification" ] with
   | Error e -> fail ("parse verification: " ^ e)
   | Ok f -> (
-      match Flags.takes f with
+      match Run_flags.require_testing_only ~game:"BDSP" f with
       | Ok () -> fail "expected verification mode to be rejected"
       | Error _ -> ())
 
 let test_select_range_defaults_to_all dir =
-  let f = Result.get_ok (Flags.parse []) in
+  let f = Result.get_ok (Run_flags.parse_no_game_flags []) in
   match Checkpoint_series.select_range ~plan_dir:dir f with
   | Error e -> fail ("select_range default: " ^ e)
   | Ok sel ->

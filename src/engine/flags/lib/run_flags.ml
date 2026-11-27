@@ -229,3 +229,47 @@ let daemon_backend f mode =
         "--backend switch needs --serial and --capture, or --replay alone (a \
          dry run on the fake board)"
   | b, _, _, _, _ -> Error ("bad --backend " ^ b)
+
+let no_game_flags : unit game_flags =
+  {
+    game_defaults = ();
+    game_switch = (fun () _ -> None);
+    game_valued = (fun () _ _ -> Not_game_flag);
+  }
+
+let parse_no_game_flags args = parse no_game_flags (defaults no_game_flags) args
+
+let require_testing_only ~game f =
+  let refused =
+    List.filter_map
+      (fun (given, flag) -> if given then Some flag else None)
+      [
+        (f.mode <> None && f.mode <> Some Checkpoint_trials.Testing, "--mode");
+        (f.preflight, "--preflight");
+        (f.from_event <> None, "--from-event");
+        (f.to_event <> None, "--to-event");
+        (f.max_rounds <> None, "--max-rounds");
+      ]
+  in
+  match refused with
+  | [] -> Ok ()
+  | flags ->
+      Error
+        (game ^ " runs whole checkpoints in testing mode only: no "
+       ^ String.concat ", " flags)
+
+let require_switch ~game = function
+  | Daemon_process.Mgba _ ->
+      Error (game ^ " runs on the Switch only: --backend switch")
+  | Daemon_process.Switch _ -> Ok ()
+
+let run_info ?(kind = Run_record.Checkpoints) ~program ~from_id ~to_id ~options
+    f : Run_record.info =
+  {
+    kind;
+    program;
+    from_id;
+    to_id;
+    backend = f.backend;
+    options = Run_options.pairs options;
+  }

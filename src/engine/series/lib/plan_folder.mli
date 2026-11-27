@@ -51,3 +51,11 @@ val plan_file : plan_dir:string -> string -> string
 
 val previous : string list -> string -> string option
 (** The id before this one in the list's order, if any. *)
+
+val load_all :
+  load:(plan_dir:string -> string -> ('a, string) result) ->
+  plan_dir:string ->
+  string list ->
+  ('a list, string) result
+(** Loads each checkpoint id in [ids] from [plan_dir] in order via [load],
+    stopping at the first [Error]. *)

@@ -27,8 +27,8 @@ type program = {
 }
 
 type setup = {
-  flags : Flags.t;
-  daemons : Live_run.Series_daemons.t;
+  flags : unit Run_flags.flags;
+  daemons : Series_daemons.t;
   initial_screen : P.Plan.t -> Switch.Initial_screen.expectation;
   attempt : attempt;
 }
@@ -48,59 +48,22 @@ let load_plan ~plan_dir id =
 let failed ?(repeats = false) ?(off_start = false) at reason =
   Failed { at; reason; repeats; off_start }
 
-let of_runner ({ at; reason; repeats } : Daemon_run.failed) =
-  failed ~repeats at reason
-
-let run_guarded setup ~log ~picture ~reload ~already_at_start report plan =
-  let end_failed () = Watch_report.end_run report ~passed:false in
-  match
-    Switch.Initial_screen.check_unless_chained ~already_at_start ~log ~picture
-      (setup.initial_screen plan)
-  with
-  | Error reason ->
-      end_failed ();
-      failed ~repeats:true "start" reason
-  | Ok () ->
-      Daemon_run.guard_session
-        ~on_stop:(fun reason ->
-          end_failed ();
-          failed ~repeats:true "stopped" reason)
-        ~on_raised:(fun e ->
-          end_failed ();
-          failed "raised" (Printexc.to_string e))
-        (fun () -> setup.attempt ~log ~picture ~reload report plan)
-
-let in_session setup ~reload ~already_at_start plan ~log record
-    (backend : Wire.backend) =
-  let picture = backend.viewport in
-  let log = Watch_report.log log in
-  let report = P.Plan_watch.create plan.P.Plan.checkpoint in
-  let outcome =
-    run_guarded setup ~log ~picture ~reload ~already_at_start report plan
-  in
-  (match outcome with
-  | Failed _ -> Daemon_run.save_failure ~log record ~save_states:false
-  | Passed -> ());
-  outcome
-
-let ending_of name = function
-  | Passed -> Series_daemons.format_ending ~name (Ok ())
-  | Failed { at; reason; _ } ->
-      Series_daemons.format_ending ~name (Error (at, reason))
+let result_of = function
+  | Passed -> Ok ()
+  | Failed { at; reason; _ } -> Error (at, reason)
 
 let run_attempt setup plan n ~attempt ~reload ~already_at_start =
-  let id = plan.P.Plan.checkpoint.checkpoint_id in
-  let name = Series_daemons.run_name ~id ~n ~attempt () in
-  let banner = "[Run] " ^ name ^ if reload then " (after a reload)" else "" in
-  match
-    Series_daemons.start_and_run setup.daemons ~runs_dir:setup.flags.runs_dir
-      ~checkpoint:id ~mode:"testing" ~n ~failed:of_runner
-      ~ending:(ending_of name) ~banner
-      (in_session setup ~reload ~already_at_start plan)
-  with
-  | Error reason ->
-      Failed { at = "run folder"; reason; repeats = true; off_start = false }
-  | Ok (_, outcome) -> outcome
+  let checkpoint_id = plan.P.Plan.checkpoint.checkpoint_id in
+  let banner_suffix = if reload then " (after a reload)" else "" in
+  Switch_series.run_attempt ~daemons:setup.daemons
+    ~runs_dir:setup.flags.runs_dir ~checkpoint_id ~n ~attempt ~banner_suffix
+    ~already_at_start
+    ~expectation:(setup.initial_screen plan)
+    ~create_report:(fun () -> P.Plan_watch.create plan.P.Plan.checkpoint)
+    ~failed:(fun ~repeats ~at ~reason -> failed ~repeats at reason)
+    ~result_of
+    (fun ~log ~picture report ->
+      setup.attempt ~log ~picture ~reload report plan)
 
 let run setup (plan : P.Plan.t) (t : Chain.trial) ~reload =
   let id = plan.checkpoint.checkpoint_id in
@@ -120,7 +83,7 @@ let run setup (plan : P.Plan.t) (t : Chain.trial) ~reload =
 let reload_when_chained (plan : P.Plan.t) =
   List.assoc_opt "reload_when_chained" plan.execution = Some (`Bool true)
 
-let run_trial setup plan (t : Chain.trial) ~progress:_ =
+let run_trial setup plan (t : Chain.trial) =
   let reload =
     t.number > 1 || (t.continuing_from_pass && reload_when_chained plan)
   in
@@ -148,78 +111,45 @@ let with_ends program ~plan_dir ~all plans =
 (* Every plan of the series, loaded in order, then checked before the
    console moves, then given its end place. *)
 let load_checked program ~plan_dir ~all ids =
-  let* plans =
-    List.fold_left
-      (fun plans id ->
-        let* plans = plans in
-        let* plan = load_plan ~plan_dir id in
-        Ok (plans @ [ plan ]))
-      (Ok []) ids
-  in
+  let* plans = Plan_folder.load_all ~load:load_plan ~plan_dir ids in
   let* () = program.check_plans plans in
   with_ends program ~plan_dir ~all plans
 
-let setup_of program (f : Flags.t) ~program_fields ~options ~from_id ~to_id ~ids
-    ~backend ~viewport =
-  let info : Run_record.info =
-    {
-      kind = Checkpoints;
-      program = program_fields;
-      from_id;
-      to_id;
-      backend = f.backend;
-      options = Run_options.pairs options;
-    }
-  in
-  let mode = Checkpoint_trials.mode_to_string Testing in
-  {
-    flags = f;
-    daemons =
-      Series_daemons.create_for_runs ~daemon:f.daemon ~runs_dir:f.runs_dir
-        ~backend ~viewport ~program_flags:program.daemon_flags
-        ~daemon_flags:f.daemon_flags ~port:f.port ~watch:f.watch
-        { info; mode; checkpoints = ids };
-    initial_screen = program.initial_screen;
-    attempt = program.attempt;
-  }
-
-let switch_only : Daemon_process.backend -> _ = function
-  | Mgba _ -> Error "PLZA runs on the Switch only: --backend switch"
-  | Switch _ -> Ok ()
-
 (* The checkpoints from --from to --to, in run order. *)
-let selected ~plan_dir (f : Flags.t) =
+let selected ~plan_dir (f : unit Run_flags.flags) =
   let* from_id = Run_flags.required "--from" f.from_id in
   let* to_id = Run_flags.required "--to" f.to_id in
   Plan_folder.select_range ~plan_dir ~from_id ~to_id
 
+let run_plans (program : program) flags ~policy plans daemons =
+  let setup =
+    {
+      flags;
+      daemons;
+      initial_screen = program.initial_screen;
+      attempt = program.attempt;
+    }
+  in
+  Series_runner.run_testing ~policy ~now_ms:Run_record.now_ms ~log:print_endline
+    ~entry_id:(fun (p : P.Plan.t) -> p.checkpoint.checkpoint_id)
+    ~run_trial:(run_trial setup) ~trial_of:Attempts.trial plans
+
 let run_series program ~program_fields ~options ~viewport plan_dir args =
-  let* f = Flags.parse args in
-  let* () = Flags.takes f in
+  let* f = Run_flags.parse_no_game_flags args in
+  let* () = Run_flags.require_testing_only ~game:"PLZA" f in
   let* range = selected ~plan_dir f in
   let* backend = Run_flags.daemon_backend f Testing in
-  let* () = switch_only backend in
+  let* () = Run_flags.require_switch ~game:"PLZA" backend in
   let* viewport = viewport in
   let* policy = Checkpoint_trials.policy ?runs:f.runs Testing in
   let* plans = load_checked program ~plan_dir ~all:range.all range.selected in
-  let setup =
-    setup_of program f ~program_fields ~options ~from_id:range.from_id
-      ~to_id:range.to_id ~ids:range.selected ~backend ~viewport
-  in
-  let hooks : (P.Plan.t, P.Plan.t, outcome) Series_runner.hooks =
-    {
-      entry_id = (fun (p : P.Plan.t) -> p.checkpoint.checkpoint_id);
-      prepare = (fun plan ~next:_ -> Ok plan);
-      run_trial = run_trial setup;
-      trial_of = Attempts.trial;
-      verdict_note = (fun _ -> "");
-      on_pass = (fun _ ~next:_ _ -> ());
-    }
-  in
-  let passed =
-    Series_runner.run ~mode:Testing ~policy ~now_ms:Run_record.now_ms
-      ~log:print_endline hooks plans
+  let info =
+    Run_flags.run_info ~program:program_fields ~from_id:range.from_id
+      ~to_id:range.to_id ~options f
   in
   Ok
-    (Series_daemons.finish_series setup.daemons ~close_game:f.close_game ~passed
-       ())
+    (Switch_series.run_series ~daemon:f.daemon ~runs_dir:f.runs_dir ~backend
+       ~viewport ~program_flags:program.daemon_flags
+       ~daemon_flags:f.daemon_flags ~port:f.port ~watch:f.watch
+       ~close_game:f.close_game ~info ~checkpoints:range.selected
+       (run_plans program f ~policy plans))
