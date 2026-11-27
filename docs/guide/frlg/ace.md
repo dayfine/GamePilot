@@ -1,6 +1,6 @@
 # ACE
 
-The second half of arbitrary code execution (ACE) in FireRed, after [ACE Setup](frlg.ace_setup.md):
+The second half of arbitrary code execution (ACE) in FireRed, after [ACE Setup](ace_setup.md):
 it types a short program as the names of the 14 PC boxes, then makes the game run them by swapping
 the glitch Pokémon 0x0351 in the PC. The program is Sleipnir17's "Get any item" code: it puts 999
 of one item in the PC's item storage. Each run makes one item; run it again for another.
@@ -17,7 +17,7 @@ Runs on: mGBA.
 
 What the save needs:
 
-- [ACE Setup](frlg.ace_setup.md) done: species 0x0351 (a male Lv 100 Pokémon with a ? picture) in
+- [ACE Setup](ace_setup.md) done: species 0x0351 (a male Lv 100 Pokémon with a ? picture) in
   Box 3 slot 1, standing below the Route 4 Pokémon Center's PC, facing it.
 - A Pokémon in Box 1 (MIMIEN on the Mail Glitch save), or already in Box 3 slot 2: the swap
   partner. The first Pokémon in Box 1 is used, whichever slot it is in.

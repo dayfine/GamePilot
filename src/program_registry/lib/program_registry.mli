@@ -97,6 +97,10 @@ val lab_game_of_env : unit -> (game * switch, string) result
 val all : t list
 (** By game, then group, then name. *)
 
+val short_id : t -> string
+(** The part of {!t.id} after [<game>.] (["mail_glitch"] for
+    ["frlg.mail_glitch"]). *)
+
 val find : string -> t option
 (** By id, or by the part after the game ([mail_glitch]) when only one program
     has it. *)

@@ -71,7 +71,7 @@ let underground =
     category = Farming;
     description =
       "Farms Mysterious Shards and treasures in the Grand Underground.";
-    doc = "docs/guide/bdsp.underground.md";
+    doc = "docs/guide/bdsp/underground.md";
     checkpoints = Some "src/games/pokemon/bdsp/programs/underground/plans";
     backends = [ Switch ];
     viewport = Native;
