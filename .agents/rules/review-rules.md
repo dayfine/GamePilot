@@ -568,6 +568,23 @@ keeping related values side by side.
       if n >= 15: print(f"{n:3d}  {f}")'
   ```
 
+### R28 Unit tests compare typed values, not formatted text
+
+Unit tests assert equality on typed values (records, variants, tuples) rather than formatting
+results to strings and comparing text. Formatters belong in the failure message (or in tests whose
+job is testing formatting/golden text fixtures).
+
+- Why: "I think we should prefer comparing values / records (derived eq anyway) over comparing text
+  forms" (user, 2026-11-26, on #307:
+  https://github.com/dayfine/GamePilot/pull/307#discussion_r4714122866).
+- Bad: `check_eq name ~expected:"80000809 08090809 2 31/31/8/9/1/31 0 2 22 70 67 66" ~actual:(pokemon_text p)`.
+- Good: `check_pokemon name ~expected:{ ec = 0x80000809; ... } ~actual:p` (formatting to text only
+  in the `Error` branch on mismatch).
+- Find: judgment; inspect unit tests that format domain records with `Printf.sprintf` or
+  `*_to_string` right before comparing against string literals (excluding golden text fixture
+  parsers and dedicated formatting tests):
+  `grep -rnE --include='test_*.ml' '\|> [a-z_]*(to_string|text|format)|Printf\.sprintf.*= "' src`.
+
 ## AGENTS.md hard rules no lint checks yet
 
 Each is stated in `AGENTS.md` (the name below is its bold lead); the auditor runs the recipe and
