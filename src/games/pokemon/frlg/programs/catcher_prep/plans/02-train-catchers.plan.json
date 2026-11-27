@@ -3,7 +3,7 @@
   "game": "frlg",
   "checkpoint": {
     "id": "02-train-catchers",
-    "title": "Level Paras into Spore Parasect (Lv 27) and Farfetch'd to False Swipe (Lv 46) with Rare Candies",
+    "title": "Level Paras into Spore Parasect (Lv 27) with Rare Candies",
     "start": {"map": "Route4", "tiles": [[12, 6]], "facing": "south"},
     "events": [
       {
@@ -21,41 +21,25 @@
         "why": "Evolve Paras into Parasect at Lv 24 and teach Spore at Lv 27 (Gen 3 FireRed learnset)."
       },
       {
-        "id": "level_farfetchd_false_swipe",
-        "kind": "game_action",
-        "action": "candy_level",
-        "args": {
-          "species": "farfetchd",
-          "target_level": 46,
-          "evolve": false,
-          "learn": [{"move": "false-swipe", "replacing": "leer"}],
-          "expect_species": "farfetchd",
-          "expect_moves": ["false-swipe"]
-        },
-        "why": "Level Farfetch'd to Lv 46 so it learns False Swipe (Gen 3 FireRed learnset)."
-      },
-      {
         "id": "save_catchers",
         "kind": "game_action",
         "action": "save_game",
         "args": {},
-        "why": "Save the trained Phase 1 catching pair."
+        "why": "Save the trained Spore Parasect."
       }
     ]
   },
   "execution": {"menu": "full"},
   "metadata": {
     "phase": "testing",
-    "notes": "Starts outside Route 4's Pokemon Center with Paras, Farfetch'd, and Rare Candies from frlg.team_training in the bag. Evolves Paras to Parasect with Spore (Lv 27) and levels Farfetch'd to False Swipe (Lv 46). Use frlg.team_training to stock Rare Candies and optionally level both higher (Lv 70-100) before running frlg.dex_collection.",
+    "notes": "Starts outside Route 4's Pokemon Center with Paras and Rare Candies from frlg.team_training in the bag. Evolves Paras to Parasect with Spore (Lv 27). Pair with Scyther from 09-shiny-scyther (arrives at Lv 25 already knowing False Swipe). Use frlg.team_training to stock Rare Candies and optionally level both higher (Lv 70-100) before running frlg.dex_collection.",
     "postconditions": {
-      "party_includes": ["parasect", "farfetchd"],
+      "party_includes": ["parasect"],
       "knows": [
-        {"species": "parasect", "moves": ["spore"]},
-        {"species": "farfetchd", "moves": ["false-swipe"]}
+        {"species": "parasect", "moves": ["spore"]}
       ],
       "levels": [
-        {"species": "parasect", "min": 27},
-        {"species": "farfetchd", "min": 46}
+        {"species": "parasect", "min": 27}
       ]
     }
   }

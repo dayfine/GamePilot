@@ -33,7 +33,7 @@
           "ball": "ultra-ball",
           "pace": "east"
         },
-        "skip_if": ["party_has_species:paras", "party_has_species:parasect"],
+        "skip_if": ["party_has_species:paras"],
         "why": "Catch 1 Paras in Mt. Moon B1F for the Phase 1 Spore catcher."
       },
       {

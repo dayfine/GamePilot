@@ -127,17 +127,7 @@ let test_train_catchers () =
     ~show:(Option.value ~default:"none")
     ~expected:(Some "parasect") ~actual:paras.species;
   check_eq "paras expect_moves" ~show:(String.concat ",") ~expected:[ "spore" ]
-    ~actual:paras.moves;
-  let farfetchd = candy_goal plan "level_farfetchd_false_swipe" in
-  check_eq "farfetchd target_level" ~show:string_of_int ~expected:46
-    ~actual:farfetchd.target_level;
-  check_eq "farfetchd does not evolve" ~show:string_of_bool ~expected:false
-    ~actual:farfetchd.use.policy.evolve;
-  check_eq "farfetchd expect_species"
-    ~show:(Option.value ~default:"none")
-    ~expected:(Some "farfetchd") ~actual:farfetchd.species;
-  check_eq "farfetchd expect_moves" ~show:(String.concat ",")
-    ~expected:[ "false-swipe" ] ~actual:farfetchd.moves
+    ~actual:paras.moves
 
 let () =
   test_catch_paras ();

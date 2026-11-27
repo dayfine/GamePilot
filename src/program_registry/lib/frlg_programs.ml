@@ -156,7 +156,7 @@ let team_training =
 let catcher_prep =
   program ~id:"frlg.catcher_prep" ~name:"Catcher Prep" ~category:Farming
     ~description:
-      "Catches and levels a Sleep and False Swipe catching pair for wild hunts."
+      "Catches Paras and levels it into a Spore Parasect for wild hunts."
     ~dir:"catcher_prep" ~backends:[ Mgba; Switch ] ()
 
 (* 16-bit trainer and secret IDs (0..65535). *)
