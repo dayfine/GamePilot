@@ -108,10 +108,13 @@ let test_foe_status () =
     (Battle_hud.foe_status (with_status (255., 255., 222.)))
     (Some Battle_hud.Healthy);
   assert_eq "caught mark on cream is still Healthy"
-    (Battle_hud.foe_status (with_status (235., 235., 205.)))
+    (Battle_hud.foe_status (with_status (231.0, 226.0, 193.6)))
     (Some Battle_hud.Healthy);
   assert_eq "grey SLP badge is Asleep"
     (Battle_hud.foe_status (with_status (148., 152., 148.)))
+    (Some Battle_hud.Asleep);
+  assert_eq "Switch SLP badge with cream border is Asleep"
+    (Battle_hud.foe_status (with_status (212.3, 213.8, 177.6)))
     (Some Battle_hud.Asleep);
   assert_eq "foe_asleep true on SLP"
     (Battle_hud.foe_asleep (with_status (148., 152., 148.)))
