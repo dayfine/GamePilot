@@ -39,84 +39,17 @@ jobs:
 
       - name: Plan release and check nightly diff
         id: plan
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
         shell: bash
-        run: |
-          HEAD_SHA=$(git rev-parse HEAD)
-          SHORT_SHA=$(git rev-parse --short HEAD)
-          echo "short_sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
-
-          if [ "${GITHUB_EVENT_NAME}" = "schedule" ]; then
-            VERSION="nightly-$(date -u +%Y-%m-%d)"
-            LAST_NIGHTLY=$(git tag -l 'nightly-*' --sort=-refname | head -n 1)
-            if [ -n "$LAST_NIGHTLY" ]; then
-              LAST_SHA=$(git rev-parse "${LAST_NIGHTLY}^{commit}")
-              if [ "$LAST_SHA" = "$HEAD_SHA" ]; then
-                echo "No new commits on main since ${LAST_NIGHTLY} (${HEAD_SHA}); skipping nightly."
-                echo "should_build=false" >> "$GITHUB_OUTPUT"
-                echo "should_publish=false" >> "$GITHUB_OUTPUT"
-                echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-                echo "release_kind=nightly" >> "$GITHUB_OUTPUT"
-                exit 0
-              fi
-            fi
-            if git rev-parse -q --verify "refs/tags/${VERSION}" >/dev/null 2>&1; then
-              echo "Tag ${VERSION} already exists; skipping duplicate nightly."
-              echo "should_build=false" >> "$GITHUB_OUTPUT"
-              echo "should_publish=false" >> "$GITHUB_OUTPUT"
-              echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-              echo "release_kind=nightly" >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
-            echo "should_build=true" >> "$GITHUB_OUTPUT"
-            echo "should_publish=true" >> "$GITHUB_OUTPUT"
-            echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-            echo "release_kind=nightly" >> "$GITHUB_OUTPUT"
-          elif [ "${GITHUB_REF_TYPE}" = "tag" ]; then
-            VERSION="${GITHUB_REF_NAME}"
-            echo "should_build=true" >> "$GITHUB_OUTPUT"
-            echo "should_publish=true" >> "$GITHUB_OUTPUT"
-            echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-            case "$VERSION" in
-              *-*) echo "release_kind=rc" >> "$GITHUB_OUTPUT" ;;
-              *)   echo "release_kind=stable" >> "$GITHUB_OUTPUT" ;;
-            esac
-          else
-            VERSION="${{ inputs.version || 'dev' }}"
-            echo "should_build=true" >> "$GITHUB_OUTPUT"
-            echo "should_publish=false" >> "$GITHUB_OUTPUT"
-            echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-            echo "release_kind=dry-run" >> "$GITHUB_OUTPUT"
-          fi
+        run: bash dev/release/plan_release.sh
 
       - name: Verify CI is green on target commit
         if: steps.plan.outputs.should_publish == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
-        run: |
-          RUNS_JSON=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs?head_sha=${GITHUB_SHA}&per_page=100")
-          CI_WORKFLOWS='[".github/workflows/ocaml.yml", ".github/workflows/daemon.yml", ".github/workflows/review-tools.yml"]'
-
-          MATCHED=$(echo "$RUNS_JSON" | jq --argjson wfs "$CI_WORKFLOWS" '
-            [.workflow_runs[] | select(.path as $p | $wfs | index($p))]
-            | group_by(.path)
-            | map(max_by(.id))
-          ')
-
-          COUNT=$(echo "$MATCHED" | jq 'length')
-          if [ "$COUNT" -eq 0 ]; then
-            echo "::error::No completed CI workflow runs found for ${GITHUB_SHA}; refusing to release."
-            exit 1
-          fi
-
-          echo "CI runs for ${GITHUB_SHA}:"
-          echo "$MATCHED" | jq -r '.[] | "  \(.path): status=\(.status) conclusion=\(.conclusion)"'
-
-          BAD=$(echo "$MATCHED" | jq '[.[] | select(.status != "completed" or .conclusion != "success")] | length')
-          if [ "$BAD" -ne 0 ]; then
-            echo "::error::One or more CI workflows are not green on ${GITHUB_SHA}; refusing to release."
-            exit 1
-          fi
+        run: bash dev/release/verify_ci_green.sh
 
   build:
     needs: preflight
@@ -247,6 +180,10 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
       - uses: actions/download-artifact@v4
         with:
           path: dist-artifacts
@@ -256,51 +193,11 @@ jobs:
         working-directory: dist-artifacts
         run: sha256sum * > SHA256SUMS.txt
 
-      - name: Create GitHub Release
+      - name: Publish GitHub Release and prune superseded prereleases
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ needs.preflight.outputs.version }}
+          RELEASE_VERSION: ${{ needs.preflight.outputs.version }}
           RELEASE_KIND: ${{ needs.preflight.outputs.release_kind }}
-          TARGET_SHA: ${{ github.sha }}
-        run: |
-          if [ "$RELEASE_KIND" = "stable" ]; then
-            gh release create "$TAG" dist-artifacts/* \
-              --title "GamePilot $TAG" \
-              --generate-notes \
-              --draft
-          elif [ "$RELEASE_KIND" = "nightly" ]; then
-            gh release create "$TAG" dist-artifacts/* \
-              --target "$TARGET_SHA" \
-              --title "GamePilot $TAG" \
-              --generate-notes \
-              --prerelease
-          else
-            gh release create "$TAG" dist-artifacts/* \
-              --title "GamePilot $TAG" \
-              --generate-notes \
-              --prerelease
-          fi
-
-      - name: Prune superseded prereleases
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ needs.preflight.outputs.version }}
-          RELEASE_KIND: ${{ needs.preflight.outputs.release_kind }}
-        run: |
-          if [ "$RELEASE_KIND" = "nightly" ]; then
-            gh release list --limit 200 --json tagName \
-              | jq -r '[.[] | .tagName | select(startswith("nightly-"))] | sort | reverse | .[7:] | .[]' \
-              | while IFS= read -r old_tag; do
-                  [ -n "$old_tag" ] || continue
-                  echo "Pruning old nightly release: $old_tag"
-                  gh release delete "$old_tag" --yes --cleanup-tag
-                done
-          elif [ "$RELEASE_KIND" = "stable" ]; then
-            gh release list --limit 200 --json tagName \
-              | jq -r --arg prefix "${TAG}-rc." '[.[] | .tagName | select(startswith($prefix))] | .[]' \
-              | while IFS= read -r rc_tag; do
-                  [ -n "$rc_tag" ] || continue
-                  echo "Pruning superseded RC release: $rc_tag"
-                  gh release delete "$rc_tag" --yes --cleanup-tag
-                done
-          fi
+          ARTIFACTS_DIR: dist-artifacts
+        shell: bash
+        run: bash dev/release/publish_release.sh
