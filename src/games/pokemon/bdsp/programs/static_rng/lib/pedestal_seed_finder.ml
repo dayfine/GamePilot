@@ -27,6 +27,7 @@ type timing_defaults = {
   lease_renew_s : float;
   keepawake_s : float;
   keepawake_press_ms : int;
+  log_period_s : float;
 }
 
 let defaults =
@@ -39,6 +40,7 @@ let defaults =
     lease_renew_s = 30.0;
     keepawake_s = 90.0;
     keepawake_press_ms = 50;
+    log_period_s = 30.0;
   }
 
 let default_config ~picture ~target =
@@ -54,6 +56,7 @@ type watch_state = {
   start_s : float;
   mutable last_lease_s : float;
   mutable last_keepawake_s : float;
+  mutable last_log_s : float;
   mutable last_check_s : float;
   mutable samples_rev : BE.match_sample list;
   mutable recovery : BR.t;
@@ -73,6 +76,7 @@ let make_watch config start_s =
     start_s;
     last_lease_s = start_s;
     last_keepawake_s = start_s;
+    last_log_s = start_s;
     last_check_s = start_s;
     samples_rev = [];
     recovery = BR.start br_cfg ~watchers:1 ~now:start_s;
@@ -117,11 +121,32 @@ let outcome_of_recovery watch now_s (r : BR.recovery) =
     elapsed_seconds = now_s -. watch.start_s;
   }
 
+let log_progress watch now_s (out : BR.outcome) =
+  let elapsed = now_s -. watch.start_s in
+  let ev_text =
+    match out.events with
+    | None -> "collecting"
+    | Some n -> Printf.sprintf "%d blinks" n
+  in
+  match out.decision with
+  | BR.Provisional { events; _ } ->
+      Effects.show_log
+        (Printf.sprintf
+           "pedestal_seed: PROVISIONAL seed at %d blinks (%.0fs), confirming..."
+           events elapsed);
+      watch.last_log_s <- now_s
+  | _ when now_s -. watch.last_log_s >= defaults.log_period_s ->
+      Effects.show_log
+        (Printf.sprintf "pedestal_seed: %.0fs elapsed (%s)" elapsed ev_text);
+      watch.last_log_s <- now_s
+  | _ -> ()
+
 let try_poll watch now_s =
   let samples = List.rev watch.samples_rev in
   let next_rec, out = BR.poll watch.recovery ~now:now_s [ samples ] in
   watch.recovery <- next_rec;
   apply_discard watch out.discard_before;
+  log_progress watch now_s out;
   match out.decision with
   | BR.Confirmed r -> Some (Ok (outcome_of_recovery watch now_s r))
   | BR.Gave_up reason -> Some (Error ("Pedestal_seed_finder: " ^ reason))
