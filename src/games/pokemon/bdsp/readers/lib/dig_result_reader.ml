@@ -11,12 +11,16 @@ let icon_blue_id = "bdsp_dig_icon_blue"
 let icon_red_id = "bdsp_dig_icon_red"
 let icon_green_id = "bdsp_dig_icon_green"
 let icon_gold_id = "bdsp_dig_icon_gold"
-let spot_left_box : Wire.box = { x = 0.36; y = 0.45; w = 0.08; h = 0.10 }
-let spot_right_box : Wire.box = { x = 0.56; y = 0.45; w = 0.08; h = 0.10 }
+
+(* Placed in the outer smooth tan margins so multi-item spotlights never
+   overlap the background probes (calibrated on run-12/001985 & run-16/006028:
+   mean ~ [152, 133, 103], std_sum ~ 10..12). *)
+let spot_left_box : Wire.box = { x = 0.24; y = 0.45; w = 0.08; h = 0.10 }
+let spot_right_box : Wire.box = { x = 0.68; y = 0.45; w = 0.08; h = 0.10 }
 let icon_box : Wire.box = { x = 0.44; y = 0.40; w = 0.12; h = 0.18 }
-let spot_min_r = 165.
-let spot_min_g = 155.
-let spot_min_b = 115.
+let spot_min_r = 140.
+let spot_min_g = 120.
+let spot_min_b = 90.
 let spot_min_r_over_b = 30.
 let spot_max_std = 65.
 let icon_min_std_sum = 20.
