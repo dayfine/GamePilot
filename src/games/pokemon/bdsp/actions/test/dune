@@ -1,5 +1,5 @@
 (tests
- (names test_battle_catch_steps)
+ (names test_battle_catch_steps test_mart_shop test_teach_tm test_check_bag)
  (libraries
   gamepilot.wire
   gamepilot.effects
