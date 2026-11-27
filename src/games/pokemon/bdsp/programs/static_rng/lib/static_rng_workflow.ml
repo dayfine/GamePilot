@@ -44,16 +44,40 @@ let log_phase ~steps ~attempt ~(opts : Opts.t) phase msg =
 
 let ( let* ) = Result.bind
 
+type precheck_window = { min_advances : int; max_advances : int }
+
+let precheck_cfg = { min_advances = 400; max_advances = 2500 }
+
+let check_seed_early_hit ~(opts : Opts.t) state =
+  let searcher =
+    E.searcher state opts.target.template ~tsv:0
+      ~synchronize_nature:opts.sync_nature
+  in
+  match
+    E.scan searcher ~min_advances:precheck_cfg.min_advances
+      ~max_advances:precheck_cfg.max_advances
+      ~accept:(Opts.accept_pokemon opts.shiny)
+  with
+  | hit :: _ -> Ok hit
+  | [] ->
+      Error
+        (Printf.sprintf
+           "no matching shiny in adv=[%d..%d] (pre-chamber seed check)"
+           precheck_cfg.min_advances precheck_cfg.max_advances)
+
 let run_attempt ~steps ~attempt ~(opts : Opts.t) =
   log_phase ~steps ~attempt ~opts "pedestal_seed"
     "Freezing player and recovering 128-bit seed from 0PK pedestal blinks...";
   let res =
     steps.freeze_player ();
     let* seed = steps.recover_pedestal_seed ~timeout_s:opts.seed_timeout_s in
+    let* preview = check_seed_early_hit ~opts seed.state in
     log_phase ~steps ~attempt ~opts "enter_chamber"
       (Printf.sprintf
-         "Seed confirmed (%d blinks, %.1fs, tick=%.4fs). Inserting slate..."
-         seed.events seed.elapsed_seconds seed.tick_seconds);
+         "Seed confirmed %s (%d blinks, %.1fs, tick=%.4fs; earliest hit \
+          adv=%d). Inserting slate..."
+         (Bdsp_rng.Xorshift128.state_to_string seed.state)
+         seed.events seed.elapsed_seconds seed.tick_seconds preview.advances);
     let* () = steps.enter_chamber () in
     log_phase ~steps ~attempt ~opts "reidentify_1pk"
       "Re-identifying in-chamber 1PK advance anchor...";
@@ -66,8 +90,11 @@ let run_attempt ~steps ~attempt ~(opts : Opts.t) =
     in
     log_phase ~steps ~attempt ~opts "detect_shiny"
       (Printf.sprintf
-         "Triggered adv=%d (%s, %s, IVs %s). Watching battle intro..."
-         trig.plan.hit.advances
+         "Triggered adv=%d (start=%d confirm=%.3fs span=%d ev=%d, %s, %s, IVs \
+          %s). Watching battle intro..."
+         trig.plan.hit.advances trig.plan.timeline_start_advance
+         trig.plan.schedule.confirm_seconds trig.plan.schedule.span
+         trig.plan.schedule.events_before_confirm
          (E.shiny_name trig.plan.hit.pokemon.shiny)
          (E.nature_name trig.plan.hit.pokemon.nature)
          (E.ivs_to_string trig.plan.hit.pokemon.ivs));

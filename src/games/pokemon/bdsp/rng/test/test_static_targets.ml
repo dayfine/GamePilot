@@ -118,7 +118,7 @@ let test_table_invariants () =
     Static_targets.find t.id = Some t
     && t.template.level >= 15 && t.template.level <= 80
     && (not t.template.shiny_locked)
-    && t.advances_after_accept = 84
+    && t.advances_after_accept >= 80 && t.advances_after_accept <= 90
     && bs.hp > 0 && bs.attack > 0 && bs.defense > 0 && bs.spatk > 0
     && bs.spdef > 0 && bs.speed > 0
   in

@@ -27,7 +27,7 @@ Give each as `--options KEY=VALUE`:
 | Key | Values | When not given | What it chooses |
 |---|---|---|---|
 | `target` | kyogre \| groudon \| rayquaza \| ho-oh \| lugia \| mewtwo \| regirock \| regice \| registeel \| articuno \| zapdos \| moltres \| raikou \| entei \| suicune \| latios \| latias \| dialga \| palkia \| uxie \| azelf \| giratina \| heatran \| regigigas \| darkrai \| arceus \| rotom | default `kyogre` | Static legendary target species slug from Static_targets.all. |
-| `shiny` | any \| star \| square | default `any` | Required shiny class: any, star, or square. |
+| `shiny` | any \| star \| square \| all | default `any` | Required shiny class: any, star, square, or all (accept non-shiny for calibration). |
 | `delay_ms` | -5000 to 5000 | default `200` | Calibration offset in ms added to the timed encounter confirm press. |
 | `sync` | hardy \| lonely \| brave \| adamant \| naughty \| bold \| docile \| relaxed \| impish \| lax \| timid \| hasty \| serious \| jolly \| naive \| modest \| mild \| quiet \| bashful \| rash \| calm \| gentle \| sassy \| careful \| quirky | optional | Optional Synchronize lead nature (omit if not using Synchronize). |
 | `max_attempts` | 1 to 999 | default `20` | Maximum soft-reset attempts before stopping. |

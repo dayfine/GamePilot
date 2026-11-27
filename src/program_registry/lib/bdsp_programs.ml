@@ -117,9 +117,11 @@ let static_rng_options : Run_options.declared list =
     };
     {
       key = "shiny";
-      value = Run_options.One_of [ "any"; "star"; "square" ];
+      value = Run_options.One_of [ "any"; "star"; "square"; "all" ];
       presence = Run_options.Default "any";
-      doc = "Required shiny class: any, star, or square.";
+      doc =
+        "Required shiny class: any, star, square, or all (accept non-shiny for \
+         calibration).";
     };
     {
       key = "delay_ms";

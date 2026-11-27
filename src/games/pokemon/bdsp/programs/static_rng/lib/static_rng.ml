@@ -133,8 +133,39 @@ let reidentify_in_chamber ~picture ~target ~base_state =
   reidentify_with_bounds ~picture ~target ~base_state
     ~search_min:reid_cfg.search_min ~search_max:reid_cfg.search_max
 
+type frame_capture = { count : int; interval_s : int; ms_per_s : int }
+
+let post_intro_frames = { count = 15; interval_s = 2; ms_per_s = 1000 }
+
+let save_one_frame ~dir ~tag i =
+  let sec = i * post_intro_frames.interval_s in
+  let path = Filename.concat dir (Printf.sprintf "battle_%d_%02ds.png" tag sec) in
+  ignore (Effects.save_frame path : int);
+  if i + 1 < post_intro_frames.count then
+    Switch.Switch_presses.wait
+      (post_intro_frames.interval_s * post_intro_frames.ms_per_s)
+
+let capture_frames_to ~picture dir =
+  let tag = int_of_float (Effects.now ()) in
+  let total_s = post_intro_frames.count * post_intro_frames.interval_s in
+  log_line
+    (Printf.sprintf "Saving %d battle frames (%ds) to %s (tag=%d)..."
+       post_intro_frames.count total_s dir tag);
+  let probes = Bdsp_readers.Battle_detector.probes ~picture in
+  Effects.with_probes probes (fun () ->
+      for i = 0 to post_intro_frames.count - 1 do
+        save_one_frame ~dir ~tag i
+      done)
+
+let capture_post_intro_frames ~picture () =
+  match Sys.getenv_opt "GAMEPILOT_BDSP_FRAME_DIR" with
+  | None | Some "" -> ()
+  | Some dir -> capture_frames_to ~picture dir
+
 let detect_shiny ~picture () =
-  Bdsp_readers.Shiny_encounter_detector.detect ~picture ()
+  let reading = Bdsp_readers.Shiny_encounter_detector.detect ~picture () in
+  capture_post_intro_frames ~picture ();
+  reading
 
 let trigger_encounter ~picture ~chamber_eye_target cfg
     (anchor : Bdsp_blink_rng.In_chamber_reidentifier.anchor) =

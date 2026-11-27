@@ -10,6 +10,7 @@ type shiny_filter =
   | Any  (** Accept either star or square shiny. *)
   | Star  (** Accept only star shiny. *)
   | Square  (** Accept only square shiny. *)
+  | All  (** Accept any advance (including non-shiny) for calibration. *)
 
 type t = {
   target : Bdsp_rng.Static_targets.t;

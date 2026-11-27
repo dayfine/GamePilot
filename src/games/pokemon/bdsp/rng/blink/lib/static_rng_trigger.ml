@@ -38,7 +38,7 @@ let ms_per_s = 1000.0
 let poll_timeout_ms = 500
 let press_hold_ms = 100
 let press_cooldown_ms = 150
-let min_prep_advances = 2
+let min_prep_advances = 10
 let span_extra_events = 10
 let wait_margin_factor = 1.5
 let wait_margin_extra_s = 20.0
@@ -51,7 +51,7 @@ let default_config ~target ~accept =
         tsv = 0;
         synchronize_nature = None;
         min_wait_advances = 20;
-        max_wait_advances = 5000;
+        max_wait_advances = 2000;
         accept;
       };
     timings = SPS.default_timings;

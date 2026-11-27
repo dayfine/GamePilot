@@ -133,8 +133,34 @@ let make_fake_steps ~readings ~resets ~captured_delay_ms ~captured_sync () :
 
 let default_opts () =
   match Opts.of_run_options Run_options.none with
-  | Ok opts -> opts
+  | Ok opts -> { opts with shiny = Opts.All }
   | Error e -> fail ("default options failed: " ^ e)
+
+let test_precheck_skips_chamber_when_no_early_shiny () =
+  let resets = ref 0 in
+  let entered = ref 0 in
+  let delay = ref None in
+  let sync = ref None in
+  let opts = { (default_opts ()) with shiny = Opts.Any; max_attempts = 1 } in
+  let base =
+    make_fake_steps ~readings:[ shiny_reading ] ~resets ~captured_delay_ms:delay
+      ~captured_sync:sync ()
+  in
+  let steps =
+    {
+      base with
+      enter_chamber =
+        (fun () ->
+          incr entered;
+          Ok ());
+    }
+  in
+  let outcome = WF.run ~steps opts in
+  check_eq "chamber never entered on seed with no early shiny" ~expected:0
+    ~actual:!entered;
+  match outcome with
+  | WF.Exhausted { attempts = 1; _ } -> ()
+  | _ -> fail "expected pre-chamber rejection to exhaust after 1 attempt"
 
 let test_shiny_hit_attempt_one () =
   let resets = ref 0 in
@@ -234,5 +260,6 @@ let () =
   test_shiny_hit_attempt_one ();
   test_retry_then_shiny_attempt_two ();
   test_exhausted_max_attempts ();
+  test_precheck_skips_chamber_when_no_early_shiny ();
   test_invalid_options_rejected ();
   print_endline "OK"

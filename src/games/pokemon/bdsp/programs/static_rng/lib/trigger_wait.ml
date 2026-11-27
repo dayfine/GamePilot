@@ -18,10 +18,10 @@ let cfg =
     ms_per_s = 1000.0;
     secs_per_min = 60.0;
     poll_ms = 500;
-    handoff_guard_ms = 5_000.0;
-    reanchor_min_advances = 250;
-    reanchor_lead_ms = 220_000.0;
-    reanchor_window = 350;
+    handoff_guard_ms = 2_500.0;
+    reanchor_min_advances = 180;
+    reanchor_lead_ms = 120_000.0;
+    reanchor_window = 240;
     search_min_floor = 50;
     lease_ms = 30_000.0;
     keepawake_ms = 90_000.0;
@@ -121,12 +121,14 @@ let maybe_reanchor ~picture ~log ~reidentify_with_bounds tcfg
     let* p2 = Bdsp_blink_rng.Static_rng_trigger.plan tcfg anchor2 in
     Ok (anchor2, p2)
 
-let run_final ~log tcfg anchor (p : Bdsp_blink_rng.Static_rng_trigger.plan) () =
+let run_final ~log ~prepare_for_trigger tcfg anchor
+    (p : Bdsp_blink_rng.Static_rng_trigger.plan) () =
   let now = Effects.now () in
   log_planned_hit ~log tcfg p ~now;
   let stop_ms = p.open_t_ms -. cfg.handoff_guard_ms in
   wait_loop ~log ~target_adv:p.hit.advances ~stop_ms ~open_t_ms:p.open_t_ms
     ~last_lease:now ~last_ka:now ~last_log:now;
+  prepare_for_trigger ();
   Bdsp_blink_rng.Static_rng_trigger.run tcfg anchor
 
 let run ~picture ~chamber_eye_target:_ ~log ~prepare_for_trigger
@@ -137,6 +139,6 @@ let run ~picture ~chamber_eye_target:_ ~log ~prepare_for_trigger
   let* anchor_final, p_final =
     maybe_reanchor ~picture ~log ~reidentify_with_bounds tcfg anchor p0
   in
-  prepare_for_trigger ();
   let probes = Bdsp_readers.Battle_detector.probes ~picture in
-  Effects.with_probes probes (run_final ~log tcfg anchor_final p_final)
+  Effects.with_probes probes
+    (run_final ~log ~prepare_for_trigger tcfg anchor_final p_final)

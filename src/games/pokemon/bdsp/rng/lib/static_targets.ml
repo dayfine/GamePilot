@@ -17,6 +17,7 @@ type encounter_defaults = {
   half_female : int;
   legendary_ivs : int;
   default_delay : int;
+  groudon_delay : int;
 }
 
 type encounter_levels = {
@@ -37,6 +38,7 @@ let defaults =
     half_female = 127;
     legendary_ivs = 3;
     default_delay = 84;
+    groudon_delay = 86;
   }
 
 let levels =
@@ -61,10 +63,11 @@ let make ~id ~species ~level ~guaranteed_ivs ~ability_kind ~gender_ratio
     advances_after_accept;
   }
 
-let ramanas_single ~id ~species ?(gender_ratio = defaults.genderless) base_stats
-    =
+let ramanas_single ~id ~species ?(gender_ratio = defaults.genderless)
+    ?(advances_after_accept = defaults.default_delay) base_stats =
   make ~id ~species ~level:levels.ramanas ~guaranteed_ivs:defaults.legendary_ivs
-    ~ability_kind:defaults.standard_ability ~gender_ratio ~base_stats ()
+    ~ability_kind:defaults.standard_ability ~gender_ratio ~base_stats
+    ~advances_after_accept ()
 
 let ramanas_hidden ~id ~species base_stats =
   make ~id ~species ~level:levels.ramanas ~guaranteed_ivs:defaults.legendary_ivs
@@ -83,6 +86,7 @@ let all =
     ramanas_single ~id:"kyogre" ~species:"Kyogre"
       { hp = 100; attack = 100; defense = 90; spatk = 150; spdef = 140; speed = 90 };
     ramanas_single ~id:"groudon" ~species:"Groudon"
+      ~advances_after_accept:defaults.groudon_delay
       { hp = 100; attack = 150; defense = 140; spatk = 100; spdef = 90; speed = 90 };
     ramanas_single ~id:"rayquaza" ~species:"Rayquaza"
       { hp = 105; attack = 150; defense = 90; spatk = 150; spdef = 90; speed = 95 };

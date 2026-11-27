@@ -1,7 +1,7 @@
 module E = Bdsp_rng.Static_encounter
 module T = Bdsp_rng.Static_targets
 
-type shiny_filter = Any | Star | Square
+type shiny_filter = Any | Star | Square | All
 
 type t = {
   target : T.t;
@@ -45,18 +45,21 @@ let parse_shiny_filter s =
   | "any" -> Ok Any
   | "star" -> Ok Star
   | "square" -> Ok Square
+  | "all" -> Ok All
   | other ->
       Error
-        (Printf.sprintf "unknown shiny filter %S (expected any|star|square)"
-           other)
+        (Printf.sprintf
+           "unknown shiny filter %S (expected any|star|square|all)" other)
 
 let shiny_filter_to_string = function
   | Any -> "any"
   | Star -> "star"
   | Square -> "square"
+  | All -> "all"
 
 let accept_pokemon filter (p : E.pokemon) =
   match (filter, p.shiny) with
+  | All, _ -> true
   | Any, (E.Star | E.Square) -> true
   | Star, E.Star -> true
   | Square, E.Square -> true
