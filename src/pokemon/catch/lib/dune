@@ -1,0 +1,3 @@
+(library
+ (name pokemon_catch)
+ (public_name gamepilot.pokemon_catch))

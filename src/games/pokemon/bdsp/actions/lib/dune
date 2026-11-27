@@ -8,5 +8,6 @@
   gamepilot.switch
   gamepilot.grid_geometry
   gamepilot.grid_maps
+  gamepilot.pokemon_catch
   gamepilot.bdsp_readers
   gamepilot.bdsp_underground))

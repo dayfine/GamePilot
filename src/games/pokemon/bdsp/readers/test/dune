@@ -3,6 +3,7 @@
   test_mining_grid
   test_minimap_sparkles
   test_wall_sparkle
+  test_battle_hud
   test_eye_blink_reader
   test_shiny_encounter_reader
   test_shiny_encounter_detector)

@@ -1,0 +1,8 @@
+(tests
+ (names test_battle_catch_steps)
+ (libraries
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.pokemon_catch
+  gamepilot.bdsp_readers
+  gamepilot.bdsp_actions))
