@@ -29,6 +29,13 @@ constexpr int kRecordWidth = 640;
 // and the input schedule again.
 constexpr double kLivePollMs = 5;
 
+bool has_every_probe(const ClientConnection& client) {
+  return std::any_of(client.probes.begin(), client.probes.end(),
+                     [](const FrameProbe& probe) {
+                       return probe.spec.delivery == "every";
+                     });
+}
+
 }  // namespace
 
 Server::Server(Backend& backend, ServerOptions options, const Clock& clock)
@@ -274,6 +281,16 @@ void Server::send_probe_results(std::int64_t seq, double t_ms) {
     std::vector<std::pair<std::string, ProbeResult>> results;
     for (const FrameProbe& probe : client->probes) {
       results.emplace_back(probe.spec.id, evaluate_probe(probe, frame));
+    }
+    if (has_every_probe(*client)) {
+      if (client->last_every_frame && seq > client->last_every_frame->seq + 1) {
+        send(*client, gap_notification(client->last_every_frame->seq + 1,
+                                       seq - 1, client->last_every_frame->t_ms,
+                                       t_ms));
+      }
+      client->last_every_frame = FrameStamp{seq, t_ms};
+    } else {
+      client->last_every_frame.reset();
     }
     pa::JsonObject changed = client->sent_results.take_changed(results);
     send(*client, frame_notification(seq, loads_, t_ms, std::move(changed)));
@@ -624,6 +641,9 @@ pa::JsonObject Server::dispatch_probes(ClientConnection& client,
       removed.push_back(id);
     }
   }
+  if (!has_every_probe(client)) {
+    client.last_every_frame.reset();
+  }
   return unsubscribe_result(removed);
 }
 
@@ -648,6 +668,7 @@ pa::JsonObject Server::dispatch_input(ClientConnection& client,
       rebase_pacing();
       for (auto& other : clients_) {
         other->sent_results.forget_all();
+        other->last_every_frame.reset();
       }
       held_for_input_ = method == "backend.reset";
       loads_++;
@@ -662,11 +683,18 @@ pa::JsonObject Server::dispatch_input(ClientConnection& client,
     keep_awake_.input(clock_.now_ms());
     batch_owners_.emplace_back(submit.batch_id, client.number);
     if (backend_.info().timing == Timing::kLive) {
-      live_schedule_.submit(submit.batch_id, submit.commands, clock_.now_ms());
+      live_schedule_.submit(submit.batch_id, submit.commands, clock_.now_ms(),
+                            submit.start_at_t_ms);
       return submit_result(submit.batch_id, backend_.seq());
     }
+    std::int64_t target_seq = backend_.seq();
+    if (submit.start_at_t_ms && *submit.start_at_t_ms > game_ms()) {
+      const double delta_ms = *submit.start_at_t_ms - game_ms();
+      target_seq +=
+          std::llround(delta_ms * backend_.info().frame_rate / 1000.0);
+    }
     const std::int64_t start =
-        schedule_.submit(submit.batch_id, submit.commands, backend_.seq());
+        schedule_.submit(submit.batch_id, submit.commands, target_seq);
     held_for_input_ = false;
     return submit_result(submit.batch_id, start);
   }
@@ -681,10 +709,15 @@ pa::JsonObject Server::dispatch_input(ClientConnection& client,
   batch_owners_.emplace_back(cancel.then->batch_id, client.number);
   if (backend_.info().timing == Timing::kLive) {
     live_schedule_.submit(cancel.then->batch_id, cancel.then->commands,
-                          clock_.now_ms());
+                          clock_.now_ms(), cancel.then->start_at_t_ms);
   } else {
-    schedule_.submit(cancel.then->batch_id, cancel.then->commands,
-                     backend_.seq());
+    std::int64_t target_seq = backend_.seq();
+    if (cancel.then->start_at_t_ms && *cancel.then->start_at_t_ms > game_ms()) {
+      const double delta_ms = *cancel.then->start_at_t_ms - game_ms();
+      target_seq +=
+          std::llround(delta_ms * backend_.info().frame_rate / 1000.0);
+    }
+    schedule_.submit(cancel.then->batch_id, cancel.then->commands, target_seq);
   }
   return cancel_result(backend_.seq());
 }

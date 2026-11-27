@@ -39,11 +39,7 @@ let probe ~picture ~id box test =
 let lines m id =
   match Effects.probe m id with
   | Some (Wire.Line_shares t) -> Some t
-  | Some
-      ( Wire.Color_stats _ | Wire.Template_match _ | Wire.Color_count _
-      | Wire.Find _ | Wire.Other _ )
-  | None ->
-      None
+  | _ -> None
 
 let window shares ~first ~count =
   let picked =

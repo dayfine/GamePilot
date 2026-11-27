@@ -88,11 +88,7 @@ let fraction = Color_count.share
 let score m id =
   match Effects.probe m id with
   | Some (Wire.Template_match { score; _ }) -> Some score
-  | Some
-      ( Wire.Color_stats _ | Wire.Color_count _ | Wire.Line_shares _
-      | Wire.Find _ | Wire.Other _ )
-  | None ->
-      None
+  | _ -> None
 
 let min_white = 0.70
 let max_other_white = 0.30

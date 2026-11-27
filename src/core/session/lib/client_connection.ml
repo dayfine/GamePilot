@@ -21,6 +21,9 @@ type t = {
   templates : (Digest.t, Effects.template_hash) Hashtbl.t;
   mutable held : string option;
   queued : (string, unit) Hashtbl.t;
+  gaps : Wire.gap Queue.t;
+  mutable lease_owner : string;
+  mutable lease_ttl_ms : int option;
 }
 
 let create transport =
@@ -37,6 +40,9 @@ let create transport =
     templates = Hashtbl.create 8;
     held = None;
     queued = Hashtbl.create 8;
+    gaps = Queue.create ();
+    lease_owner = "";
+    lease_ttl_ms = None;
   }
 
 let protocol_error fmt = Printf.ksprintf (fun s -> raise (Protocol_error s)) fmt
@@ -66,6 +72,10 @@ let take_frame t (frame : Wire.frame) =
 let take_notification t = function
   | Wire.Frame { load; _ } when load < t.load -> None
   | Wire.Frame { frame; _ } -> take_frame t frame
+  | Wire.Gap g ->
+      Queue.push g t.gaps;
+      t.now <- Some g.to_t_ms;
+      None
   | Wire.Batch_done d ->
       if Hashtbl.mem t.queued d.batch_id then Hashtbl.remove t.queued d.batch_id
       else Hashtbl.replace t.dones d.batch_id d;

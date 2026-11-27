@@ -3,11 +3,7 @@ type stats = { mean : Wire.rgb; stddev : Wire.rgb }
 let stats m id =
   match Effects.probe m id with
   | Some (Wire.Color_stats { mean; stddev }) -> Some { mean; stddev }
-  | Some
-      ( Wire.Template_match _ | Wire.Color_count _ | Wire.Line_shares _
-      | Wire.Find _ | Wire.Other _ )
-  | None ->
-      None
+  | _ -> None
 
 let sum (c : Wire.rgb) = c.r +. c.g +. c.b
 
