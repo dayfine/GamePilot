@@ -46,7 +46,7 @@ let ( let* ) = Result.bind
 
 type precheck_window = { min_advances : int; max_advances : int }
 
-let precheck_cfg = { min_advances = 400; max_advances = 2500 }
+let precheck_cfg = { min_advances = 400; max_advances = 3500 }
 
 let check_seed_early_hit ~(opts : Opts.t) state =
   let searcher =

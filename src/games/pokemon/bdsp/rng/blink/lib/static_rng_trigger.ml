@@ -51,7 +51,7 @@ let default_config ~target ~accept =
         tsv = 0;
         synchronize_nature = None;
         min_wait_advances = 20;
-        max_wait_advances = 2000;
+        max_wait_advances = 3000;
         accept;
       };
     timings = SPS.default_timings;

@@ -17,8 +17,9 @@ module Action : sig
     | Underground_farm
         (** Farm Mysterious Shards and treasures in the Grand Underground. *)
     | Static_rng
-        (** Hunt a shiny static legendary using Munchlax boot-seed recovery,
-            in-chamber 1PK re-identification, and timed encounter triggers. *)
+        (** Hunt a shiny static legendary using 0PK pedestal player-blink seed
+            recovery, in-chamber 1PK re-identification, and timed encounter
+            triggers. *)
 
   include Engine_rules.ACTION with type t := t
 end

@@ -141,14 +141,18 @@ let test_precheck_skips_chamber_when_no_early_shiny () =
   let entered = ref 0 in
   let delay = ref None in
   let sync = ref None in
-  let opts = { (default_opts ()) with shiny = Opts.Any; max_attempts = 1 } in
+  let opts = { (default_opts ()) with shiny = Opts.Square; max_attempts = 1 } in
   let base =
     make_fake_steps ~readings:[ shiny_reading ] ~resets ~captured_delay_ms:delay
       ~captured_sync:sync ()
   in
+  let empty_seed =
+    { dummy_seed with state = { s0 = 1; s1 = 1; s2 = 1; s3 = 1 } }
+  in
   let steps =
     {
       base with
+      recover_pedestal_seed = (fun ~timeout_s:_ -> Ok empty_seed);
       enter_chamber =
         (fun () ->
           incr entered;

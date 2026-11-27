@@ -18,6 +18,8 @@ type templates = {
   player_eye_box : Wire.box;
       (** Normalized ROI around the player's eye at the pedestal and in the
           Mystery Space. *)
+  frame_dir : string option;
+      (** Optional directory for saving 30 s of post-intro battle frames. *)
 }
 (** Player open-eye PNG template and ROI supplied by the CLI runner. *)
 

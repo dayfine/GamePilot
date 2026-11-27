@@ -131,8 +131,7 @@ let run_final ~log ~prepare_for_trigger tcfg anchor
   prepare_for_trigger ();
   Bdsp_blink_rng.Static_rng_trigger.run tcfg anchor
 
-let run ~picture ~chamber_eye_target:_ ~log ~prepare_for_trigger
-    ~reidentify_with_bounds tcfg anchor =
+let run ~picture ~log ~prepare_for_trigger ~reidentify_with_bounds tcfg anchor =
   let ( let* ) = Result.bind in
   let* p0 = Bdsp_blink_rng.Static_rng_trigger.plan tcfg anchor in
   log_planned_hit ~log tcfg p0 ~now:(Effects.now ());

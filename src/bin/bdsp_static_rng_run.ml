@@ -36,9 +36,15 @@ let load_templates () =
     | Some p when p <> "" -> read_file p
     | _ -> Ok player_eye_png
   in
+  let frame_dir =
+    match Sys.getenv_opt "GAMEPILOT_BDSP_FRAME_DIR" with
+    | Some "" | None -> None
+    | Some dir -> Some dir
+  in
   Ok
     {
       Bdsp_static_rng.Static_rng.player_eye_png;
       chamber_eye_png;
       player_eye_box = Bdsp_static_rng.Static_rng.default_player_eye_box;
+      frame_dir;
     }

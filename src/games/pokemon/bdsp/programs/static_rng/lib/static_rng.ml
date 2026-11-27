@@ -6,6 +6,7 @@ type templates = {
   player_eye_png : string;
   chamber_eye_png : string;
   player_eye_box : Wire.box;
+  frame_dir : string option;
 }
 
 let default_player_eye_box : Wire.box =
@@ -159,27 +160,26 @@ let capture_frames_to ~picture dir =
         save_one_frame ~dir ~tag i
       done)
 
-let capture_post_intro_frames ~picture () =
-  match Sys.getenv_opt "GAMEPILOT_BDSP_FRAME_DIR" with
+let capture_post_intro_frames ~picture ~frame_dir () =
+  match frame_dir with
   | None | Some "" -> ()
   | Some dir -> capture_frames_to ~picture dir
 
-let detect_shiny ~picture () =
+let detect_shiny ~picture ~frame_dir () =
   let reading = Bdsp_readers.Shiny_encounter_detector.detect ~picture () in
-  capture_post_intro_frames ~picture ();
+  capture_post_intro_frames ~picture ~frame_dir ();
   reading
 
 let trigger_encounter ~picture ~chamber_eye_target cfg
     (anchor : Bdsp_blink_rng.In_chamber_reidentifier.anchor) =
-  Trigger_wait.run ~picture ~chamber_eye_target ~log:log_line
-    ~prepare_for_trigger
+  Trigger_wait.run ~picture ~log:log_line ~prepare_for_trigger
     ~reidentify_with_bounds:
       (reidentify_with_bounds ~picture ~target:chamber_eye_target
          ~base_state:anchor.base_state)
     cfg anchor
 
-let live_game_steps ~picture ~pedestal_eye_target ~chamber_eye_target :
-    WF.game_steps =
+let live_game_steps ~picture ~frame_dir ~pedestal_eye_target ~chamber_eye_target
+    : WF.game_steps =
   {
     log = log_line;
     update_counters = publish_counters;
@@ -190,7 +190,7 @@ let live_game_steps ~picture ~pedestal_eye_target ~chamber_eye_target :
     reidentify_in_chamber =
       reidentify_in_chamber ~picture ~target:chamber_eye_target;
     trigger_encounter = trigger_encounter ~picture ~chamber_eye_target;
-    detect_shiny = detect_shiny ~picture;
+    detect_shiny = detect_shiny ~picture ~frame_dir;
     soft_reset_to_pedestal = soft_reset_to_pedestal ~picture;
   }
 
@@ -216,7 +216,8 @@ let run_checked ~picture ~templates cfg =
     }
   in
   let steps =
-    live_game_steps ~picture ~pedestal_eye_target ~chamber_eye_target
+    live_game_steps ~picture ~frame_dir:templates.frame_dir ~pedestal_eye_target
+      ~chamber_eye_target
   in
   WF.run ~steps cfg |> WF.outcome_to_result cfg
 
