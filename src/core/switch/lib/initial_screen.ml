@@ -14,12 +14,10 @@ type expectation =
   | In_game_or_home
 
 let read_timeout_ms = 2000
-let channel_max = 255
 
-(* An impossible RGB range so HOME's tile art probes match no tile when the
-   caller does not supply a game's tile colour. *)
-let no_tile : H.tile_color =
-  { min = (channel_max, channel_max, channel_max); max = (0, 0, 0) }
+(* A valid [min <= max] RGB range used when the caller does not need to match a
+   specific game tile on HOME; the daemon rejects probes with [min > max]. *)
+let no_tile : H.tile_color = { min = (0, 0, 0); max = (0, 0, 0) }
 
 let classify m =
   match H.read m with
