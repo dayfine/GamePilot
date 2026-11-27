@@ -24,6 +24,7 @@ type rules =
   | Plza_gifts
       (** PLZA's plans run from its main menu's Mystery Gift (Plza_engine,
           Plza_claim_gifts_series). *)
+  | Bdsp  (** BDSP's checkpoint rules (Bdsp_engine, Bdsp_checkpoint_series). *)
 
 (** Shared program grouping across games, shown by [gamepilot programs] and
     recorded in [run.json]. *)

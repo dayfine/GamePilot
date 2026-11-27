@@ -21,6 +21,9 @@
   gamepilot.wire
   gamepilot.effects
   gamepilot.live
+  gamepilot.bdsp_actions
+  gamepilot.bdsp_rules
+  gamepilot.bdsp_checkpoint_series
   gamepilot.program_registry
   gamepilot.guide_page
   gamepilot.run_record

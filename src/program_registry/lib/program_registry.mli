@@ -23,8 +23,9 @@ type viewport = Nso_gba | Native
     (Plza_engine, Plza_series); [Pokemon_home]: Pokémon HOME plans run from the
     Switch's HOME menu (Plza_engine, Plza_bank_home_series); [Plza_gifts]:
     PLZA's plans run from its main menu's Mystery Gift (Plza_engine,
-    Plza_claim_gifts_series). *)
-type rules = Pokemon_grid | Plza_story | Pokemon_home | Plza_gifts
+    Plza_claim_gifts_series); [Bdsp]: BDSP's checkpoint rules (Bdsp_engine,
+    Bdsp_checkpoint_series). *)
+type rules = Pokemon_grid | Plza_story | Pokemon_home | Plza_gifts | Bdsp
 
 (** Shared program grouping across games, shown by [gamepilot programs] and
     recorded in [run.json]. *)

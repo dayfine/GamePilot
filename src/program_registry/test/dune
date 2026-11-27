@@ -5,5 +5,6 @@
   gamepilot.frlg_checkpoints
   gamepilot.frlg_actions
   gamepilot.plza_engine
+  gamepilot.bdsp_engine
   gamepilot.run_options
   gamepilot.program_registry))

@@ -1,0 +1,6 @@
+(library
+ (name bdsp_event_snapshot)
+ (public_name gamepilot.bdsp_event_snapshot)
+ (libraries yojson gamepilot.engine_event_snapshot)
+ (preprocess
+  (pps ppx_deriving_yojson)))

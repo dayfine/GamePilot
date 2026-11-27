@@ -1,0 +1,16 @@
+(library
+ (name bdsp_checkpoint_series)
+ (public_name gamepilot.bdsp_checkpoint_series)
+ (libraries
+  gamepilot.wire
+  gamepilot.switch
+  gamepilot.live_run
+  gamepilot.run_record
+  gamepilot.watch_report
+  gamepilot.guide_page
+  gamepilot.engine_run
+  gamepilot.engine_series
+  gamepilot.run_flags
+  gamepilot.run_options
+  gamepilot.bdsp_rules
+  gamepilot.bdsp_engine))

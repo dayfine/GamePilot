@@ -1,6 +1,6 @@
 type backend = Mgba | Switch
 type viewport = Nso_gba | Native
-type rules = Pokemon_grid | Plza_story | Pokemon_home | Plza_gifts
+type rules = Pokemon_grid | Plza_story | Pokemon_home | Plza_gifts | Bdsp
 
 type category =
   | Testing
