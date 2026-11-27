@@ -11,15 +11,17 @@
 module Walk_args = Walk_args
 (** {!Walk_args}: a walk's legs and end. *)
 
-(** Where the player stands: a zone ({!Engine_rules.Zone_pose}). A pose without
-    a spot holds anywhere in its place. The fork's
-    [PokemonLZA_AutoStoryGame.cpp] checks no pose; PLZA reads none yet, so its
-    game tells no position ([None]) and the runner checks nothing until a zone
-    reader comes. *)
-module Pose :
-  Engine_rules.POSE
-    with type t = Engine_rules.Zone_pose.t
-     and type observed = Engine_rules.Zone_pose.observed
+(** Where the player stands: a zone. *)
+module Pose : sig
+  type zone = { place : string; spot : string option }
+  (** A place (["LumioseCity"]), and maybe a spot in it. *)
+
+  (** A pose without a spot holds anywhere in its place. The fork's
+      [PokemonLZA_AutoStoryGame.cpp] checks no pose; PLZA reads none yet, so its
+      game tells no position ([None]) and the runner checks nothing until a zone
+      reader comes. *)
+  include Engine_rules.POSE with type t = zone and type observed = zone
+end
 
 (** PLZA's actions: its own event kinds. *)
 module Action : sig

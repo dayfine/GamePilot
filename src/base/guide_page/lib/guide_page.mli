@@ -46,16 +46,3 @@ val long_paragraphs : max_lines:int -> string -> (int * int) list
 
 val cell : string -> string
 (** Text as a Markdown table cell: every pipe escaped, so none ends the cell. *)
-
-val checkpoint_rows :
-  load_title:(plan_dir:string -> string -> (string * string, string) result) ->
-  plan_dir:string ->
-  string list ->
-  (string list, string) result
-(** Formats one Markdown table row (["| <id> | <title> |"]) per checkpoint id in
-    [ids], calling [load_title ~plan_dir id] for each checkpoint's id and title
-    and escaping pipes via {!cell}. *)
-
-val switch_testing_commands : args:string -> string
-(** Formats the example Switch testing-mode [gamepilot run] command block for
-    [args] ([PROGRAM --from ... --to ...]). *)

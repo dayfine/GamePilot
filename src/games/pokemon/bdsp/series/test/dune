@@ -2,7 +2,5 @@
  (name test_bdsp_series)
  (libraries
   gamepilot.bdsp_checkpoint_series
-  gamepilot.bdsp_engine
   gamepilot.engine_series
-  gamepilot.guide_page
   gamepilot.run_flags))

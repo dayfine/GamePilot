@@ -1,6 +1,6 @@
 (library
  (name plza_event_snapshot)
  (public_name gamepilot.plza_event_snapshot)
- (libraries yojson gamepilot.engine_event_snapshot)
+ (libraries yojson gamepilot.engine_event_snapshot gamepilot.plza_rules)
  (preprocess
   (pps ppx_deriving_yojson)))

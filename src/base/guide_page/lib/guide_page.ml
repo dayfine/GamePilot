@@ -205,24 +205,3 @@ let long_paragraphs ~max_lines text =
   List.rev (close max_lines st).long
 
 let cell s = String.concat "\\|" (String.split_on_char '|' s)
-
-let checkpoint_rows ~load_title ~plan_dir ids =
-  let* rev =
-    List.fold_left
-      (fun acc id ->
-        let* acc = acc in
-        let* cp_id, title = load_title ~plan_dir id in
-        let row = Printf.sprintf "| %s | %s |" cp_id (cell title) in
-        Ok (row :: acc))
-      (Ok []) ids
-  in
-  Ok (List.rev rev)
-
-let switch_testing_commands ~args =
-  String.concat "\n"
-    [
-      "# the Switch: each checkpoint once, from where the console is";
-      "cd src && opam exec -- dune exec -- gamepilot run " ^ args
-      ^ " --mode testing --backend switch --serial PORT --capture DEVICE \\";
-      "    --watch";
-    ]

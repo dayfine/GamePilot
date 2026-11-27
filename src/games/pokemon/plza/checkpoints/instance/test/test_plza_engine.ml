@@ -138,7 +138,7 @@ let decode_cases =
        checkpoint.metadata.postconditions.party is not a known field.";
   ]
 
-let at ?spot place : Pose.t = { place; spot }
+let at ?spot place : Pose.zone = { place; spot }
 
 (* A PLZA game that logs each handler and stands where the script says after
    each event; [position] is [None] when it reads no zone. *)

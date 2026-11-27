@@ -70,21 +70,13 @@ let test_select_range_defaults_to_all dir =
         ~actual:sel.selected
 
 let test_guide_tables dir =
-  let load_title ~plan_dir id =
-    Result.map
-      (fun (p : Bdsp_engine.Plan.t) ->
-        (p.checkpoint.checkpoint_id, p.checkpoint.title))
-      (Checkpoint_series.load_plan ~plan_dir id)
-  in
-  match
-    Guide_page.checkpoint_rows ~load_title ~plan_dir:dir [ "01-save-game" ]
-  with
+  match Guide_tables.rows ~plan_dir:dir [ "01-save-game" ] with
   | Error e -> fail ("guide rows: " ^ e)
   | Ok rows ->
       assert_eq ~name:"guide rows"
         ~expected:[ "| 01-save-game | Save Game |" ]
         ~actual:rows;
-      let cmd = Guide_page.switch_testing_commands ~args:"bdsp.example" in
+      let cmd = Guide_tables.commands ~args:"bdsp.example" in
       assert_eq ~name:"commands non-empty" ~expected:true
         ~actual:(String.length cmd > 0)
 
