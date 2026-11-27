@@ -539,6 +539,35 @@ option plays as the fork does.
   fork's default with a registry option to change it:
   `find src/games -path '*/programs/*/plans/*.plan.json' -exec grep -HnE '"(name|player_name|look|language)": *"' {} +`.
 
+## From the session of 2026-11-26 (BDSP readers)
+
+### R27 Group related numeric constants into typed records, not flat `let` walls
+
+When a module holds a family of related numeric parameters (color bands, screen/ROI geometry,
+material thresholds, timing tables), group them into compact typed records whose fields carry the
+names instead of 15–40 flat top-level scalar `let` bindings. `ocaml_lint`'s `no_magic_numbers`
+already accepts numeric literals inside named record fields, so typed records stay lint-clean while
+keeping related values side by side.
+
+- Why: "do you think we can do better than a list of 20+ constants?" and "let's make a rule for
+  this so the same style can be applied going forward and we audit all existing code for the same
+  (and maybe this can be linted?)" (user, 2026-11-26, in session on #309).
+- Bad: 30 flat `let pink_r_min = 180`, `let pink_g_max = 140`, `let pink_b_min = 165`, ...
+  bindings above a reader.
+- Good: `type rgb_band = { min_r : int; max_r : int; min_g : int; max_g : int; min_b : int; max_b : int }`
+  with `let pink_band = { min_r = 180; max_r = 255; min_g = 0; max_g = 140; min_b = 165; max_b = 255 }`.
+- Find: recipe, then judgment on each hit (`>= 15` top-level scalar numeric `let` bindings in a
+  `lib/` module; candidate for an `ocaml_lint` advisory/hard check once existing hits are cleaned):
+
+  ```sh
+  python3 -c '
+  import glob, re
+  for f in sorted(glob.glob("src/**/lib/*.ml", recursive=True)):
+      if "/_build/" in f: continue
+      n = sum(1 for l in open(f) if re.match(r"^let [a-z0-9_]+ = -?[0-9]", l))
+      if n >= 15: print(f"{n:3d}  {f}")'
+  ```
+
 ## AGENTS.md hard rules no lint checks yet
 
 Each is stated in `AGENTS.md` (the name below is its bold lead); the auditor runs the recipe and
