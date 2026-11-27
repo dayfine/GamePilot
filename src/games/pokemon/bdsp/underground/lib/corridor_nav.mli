@@ -8,43 +8,20 @@
     Step into the Hideaway doorway and immediately back out to respawn dig spots
     without running deep into the cave (avoiding wild Pokémon, with a
     battle-escape fallback if one spawns near the doorway). 4. Save every
-    [save_every] digs and stop once the {!Mining_goal.goal} is met.
-
-    BDSP movement timings come from fork PR #402
-    ([SerialPrograms/Source/Pokemon/Navigation/Pokemon_MoveMechanics.h],
-    [BDSP_MOVE_MECHANICS]). *)
-
-(** Cardinal movement or facing direction in the Grand Underground. *)
-type direction =
-  | North  (** Up on the D-pad. *)
-  | South  (** Down on the D-pad. *)
-  | East  (** Right on the D-pad. *)
-  | West  (** Left on the D-pad. *)
-
-type move_mechanics = {
-  turn_tap_ms : int;  (** Hold time for an in-place turn tap (50 ms). *)
-  start_delay_ms : int;  (** Initial acceleration delay (250 ms). *)
-  walk_across_ms : int;  (** Walking ms/tile horizontally (160 ms). *)
-  walk_up_down_ms : int;  (** Walking ms/tile vertically (240 ms). *)
-  run_across_ms : int;  (** Running ms/tile horizontally (100 ms). *)
-  run_up_down_ms : int;  (** Running ms/tile vertically (150 ms). *)
-  step_tap_hold_ms : int;  (** Open-leg step tap hold (160 ms). *)
-  step_tap_release_ms : int;  (** Open-leg step tap release (640 ms). *)
-}
-(** Measured tile and tap timings for BDSP overworld movement. *)
-
-val bdsp_move_mechanics : move_mechanics
-(** Measured BDSP movement timings from fork PR #402 ([BDSP_MOVE_MECHANICS]). *)
+    [save_every] digs and stop once the {!Mining_goal.goal} is met. *)
 
 type sparkle_target = {
   offset_tiles : int;  (** Distance along the corridor from the anchor. *)
-  wall_side : direction;  (** Which wall side to face and press A against. *)
+  wall_side : Grid_geometry.Direction.t;
+      (** Which wall side to face and press A against. *)
 }
 (** One dig-spot target detected along a corridor wall. *)
 
 type doorway_anchor = {
-  enter_dir : direction;  (** Direction to step into the Hideaway. *)
-  exit_dir : direction;  (** Opposite direction to step back into the tunnel. *)
+  enter_dir : Grid_geometry.Direction.t;
+      (** Direction to step into the Hideaway. *)
+  exit_dir : Grid_geometry.Direction.t;
+      (** Opposite direction to step back into the tunnel. *)
 }
 (** Hideaway doorway directions used to refresh dig spots. *)
 

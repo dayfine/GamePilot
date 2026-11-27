@@ -1,4 +1,3 @@
-open Bdsp_underground
 module PB = Switch.Picture_box
 module BF = Wire.Blob_find
 
@@ -151,9 +150,9 @@ let locate_diff ~before ~after =
   |> pick_largest
 
 let dir_of_offset { dx; dy; _ } =
-  if dy < 0 then Corridor_nav.North
-  else if dy > 0 then Corridor_nav.South
-  else if dx > 0 then Corridor_nav.East
-  else Corridor_nav.West
+  if dy < 0 then Grid_geometry.Direction.North
+  else if dy > 0 then Grid_geometry.Direction.South
+  else if dx > 0 then Grid_geometry.Direction.East
+  else Grid_geometry.Direction.West
 
 let direction m = Option.map dir_of_offset (locate m)

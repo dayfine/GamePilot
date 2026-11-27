@@ -8,8 +8,6 @@
     pixel precision without masking neighboring stars, and returns the star's
     exact normalized screen offset relative to the player [(0.50, 0.48)]. *)
 
-open Bdsp_underground
-
 type offset = {
   dx : int;  (** [-1] = left (West), [0] = aligned, [+1] = right (East). *)
   dy : int;  (** [-1] = above (North), [0] = aligned, [+1] = below (South). *)
@@ -34,6 +32,6 @@ val locate_diff :
     present within [35] game pixels in [before], cancelling static wall torches.
 *)
 
-val direction : Effects.measurements -> Corridor_nav.direction option
+val direction : Effects.measurements -> Grid_geometry.Direction.t option
 (** Dominant cardinal direction of the strongest visible sparkle star, if any.
 *)
