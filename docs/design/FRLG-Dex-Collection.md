@@ -1,9 +1,9 @@
 # FRLG Dex Collection (`frlg.dex_collection`), Engineering Design
 
 Design for expanding `frlg.dex_collection` from its initial three mGBA grass checkpoints into a
-complete, Switch-ready shiny FireRed Pokédex collector — starting with the 13 Kanto FireRed
-version-exclusive shinies (per evolution line) and scaling cleanly across encounter methods,
-catcher progressions, and console calibration.
+complete, Switch-ready collector for the **13 Kanto FireRed version-exclusive shinies** (per
+evolution line), scaling cleanly across encounter methods, catcher progressions, visual battle-intro
+shiny detection, and console calibration.
 
 Related docs:
 - Roadmap: [docs/roadmap/frlg-dex-exclusives.md](../roadmap/frlg-dex-exclusives.md) (A6),
@@ -12,6 +12,9 @@ Related docs:
   [docs/guide/frlg.wild_rng.md](../guide/frlg.wild_rng.md)
 - ACE item prep: [docs/design/FRLG-ACE-Execution.md](FRLG-ACE-Execution.md)
 - Shared catch engine: `src/pokemon/catch/` (`gamepilot.pokemon_catch`, introduced in PR #337)
+- Visual battle-intro shiny detection reference: BDSP `Bdsp_readers.Shiny_encounter_detector` /
+  `Shiny_encounter_reader` (`src/games/pokemon/bdsp/readers/lib/shiny_encounter_{detector,reader}.{ml,mli}`,
+  PR #334)
 
 ---
 
@@ -19,17 +22,23 @@ Related docs:
 
 All six architectural decisions for `frlg.dex_collection` are settled:
 
-1. **Two-phase catcher progression**: Start immediately pre-Four Island with a 2-Pokémon catcher
-   pair (**Spore Parasect + False Swipe Farfetch'd/Scyther**, leveled via `frlg.team_training`),
-   then upgrade post-Four Island (after 60 caught + National Dex + Ruby) to a single bred
-   **Lv 100 Parasect** with Egg Move **False Swipe + Spore** at Four Island Day Care.
-2. **Shared catch engine (`src/pokemon/catch/`)**: Reuse `Catch_state`, `Catch_policy`, and
-   `Catch_runner` for both the 2-mon pair (`status_setter` + `false_swiper` on distinct slots) and
-   the 1-mon Parasect (`status_setter.slot = false_swiper.slot = 1`), backed by three new FRLG
-   battle HUD probes (foe HP ratio, player HP ratio, foe SLP/PAR status badge).
+1. **Two-phase catcher progression**: Focus purely on the 13 Kanto FireRed-exclusive shinies.
+   Phase 1 starts right away with a 2-Pokémon catcher pair (**Spore Parasect + False Swipe
+   Farfetch'd/Scyther**, leveled via `frlg.team_training`). Phase 2 (a single bred **Lv 100
+   Parasect** with Egg Move **False Swipe + Spore** at Four Island Day Care) is an optional
+   single-slot upgrade whenever Four Island Day Care is unlocked.
+2. **Shared catch engine (`src/pokemon/catch/`) + visual battle-intro shiny detection**: Reuse
+   `Catch_state`, `Catch_policy`, and `Catch_runner` for both the 2-mon pair (`status_setter` +
+   `false_swiper` on distinct slots) and the 1-mon Parasect (`status_setter.slot =
+   false_swiper.slot = 1`), backed by three new FRLG battle HUD probes (foe HP ratio, player HP
+   ratio, foe SLP/PAR status badge). Add a visual battle-intro shiny detector for FRLG (modeled on
+   BDSP's `Bdsp_readers.Shiny_encounter_detector` from PR #334) so `wild_rng` distinguishes shiny
+   from non-shiny **before** committing to Spore/False Swipe and Luxury/Ultra Balls, while still
+   confirming `Frlg_readers.Shiny_star` on Summary before saving.
 3. **Switch Wild RNG calibration**: Calibrate **once per console**, persisted by console ID in the
-   local GamePilot data directory (`~/.local/share/gamepilot/frlg/`), and run **auto-recalibration
-   only on a miss** (Master Ball → summary stats/nature read → refine seed/advance offsets → soft
+   local GamePilot data directory (`~/.local/share/gamepilot/frlg/`). On a battle-intro miss, skip
+   Luxury Balls and Spore/False Swipe — either soft-reset immediately or throw a Master Ball for
+   miss-only auto-recalibration (read Summary stats/nature → refine seed/advance offsets → soft
    reset without saving).
 4. **Composable parameterized plans (`Engine_expand`)**: Replace repetitive ~100-line per-species
    checkpoint JSON files with four parameterized fragment templates (`wild_rng_grass_catch`,
@@ -40,9 +49,10 @@ All six architectural decisions for `frlg.dex_collection` are settled:
    Oddish ×3, Psyduck ×2, Shellder ×2, Electabuzz ×1, Scyther ×1), and support
    `--options ball=ultra-ball|luxury-ball` (Ultra Balls pre-ACE, Luxury Balls post-ACE).
 6. **Ordered vertical-slice milestones**: Land the work in six incremental PRs — Phase 1 catcher
-   prep → FRLG battle HUD readers & catch adapter → `Engine_expand` catch templates & count-based
-   progress → Switch per-console calibration & miss-recalibration → Surf/Super Rod/Power Plant/Gift
-   RNG exclusives → Phase 2 Four Island Parasect breeding.
+   prep → FRLG battle HUD readers, visual battle-intro shiny detector & catch adapter →
+   `Engine_expand` catch templates & count-based progress → Switch per-console calibration &
+   miss-recalibration → Surf/Super Rod/Power Plant/Gift RNG exclusives → optional Phase 2 Four
+   Island Parasect breeding.
 
 ---
 
@@ -54,19 +64,18 @@ targets such as Electabuzz (catch rate 45) and Luxury Ball catches (1× multipli
 Ball). At 1 HP and Asleep, Ekans, Oddish, Psyduck, Growlithe, and Shellder are guaranteed catches
 in a Luxury Ball, and Electabuzz rises to ~36% per ball.
 
-Breeding a single False Swipe + Spore Parasect requires Four Island Day Care, which is gated behind
-60 caught species, the National Pokédex, and the Sevii Ruby quest. Rather than blocking shiny
-collection on Four Island, catcher preparation is split into two phases:
+Breeding a single False Swipe + Spore Parasect requires Four Island Day Care, which is not needed
+to collect the 13 FireRed-exclusive shinies. Phase 1 uses a 2-Pokémon catcher pair right away, and
+Phase 2 is an optional single-slot upgrade whenever Four Island Day Care is unlocked:
 
 ```mermaid
 flowchart LR
-    P1["Phase 1: Pre-Four Island<br/>Spore Parasect + False Swipe Farfetch'd/Scyther<br/>(leveled via frlg.team_training)"]
-    D60["60 Caught + National Dex + Ruby"]
-    P2["Phase 2: Post-Four Island<br/>Bred Lv 100 Parasect<br/>(Egg Move False Swipe + Spore)"]
-    P1 --> D60 --> P2
+    P1["Phase 1 (default): 2-Mon Catcher Pair<br/>Spore Parasect + False Swipe Farfetch'd/Scyther<br/>(leveled via frlg.team_training)"]
+    P2["Phase 2 (optional): Single-Slot Catcher<br/>Bred Lv 100 Parasect<br/>(Egg Move False Swipe + Spore at Four Island Day Care)"]
+    P1 -. "optional upgrade when Four Island is unlocked" .-> P2
 ```
 
-### Phase 1 — Pre-Four Island 2-Mon Catcher Pair
+### Phase 1 — 2-Mon Catcher Pair (Immediate)
 
 - **Slot 1 — Sleeper (Parasect)**: Catch Paras in Mt. Moon, evolve at Lv 24, learn **Spore** at
   Lv 27 (100% accuracy Sleep).
@@ -86,10 +95,10 @@ flowchart LR
   6. *Empty* (Slot 6 — receives the caught shiny so `Wild_rng_steps.shiny_at ~slot:6` can read its
      summary star before saving and depositing)
 
-### Phase 2 — Post-Four Island Single-Slot Catcher
+### Phase 2 — Optional Single-Slot Catcher (Four Island Day Care)
 
-- **Prerequisite**: 60 Kanto species caught → Oak grants the National Pokédex → Sevii Ruby quest
-  unlocks Four Island Day Care.
+- **Availability**: Optional upgrade whenever Four Island Day Care is unlocked (not required to
+  collect the 13 FireRed exclusives).
 - **Breeding**: Pair a male **False Swipe** Farfetch'd or Scyther with a female Paras/Parasect at
   Four Island Day Care to hatch a Paras with Egg Move **False Swipe**, evolve to Parasect, learn
   **Spore** (Lv 27), and level to **Lv 100** via `frlg.team_training` or ACE Rare Candies
@@ -137,8 +146,9 @@ keeps Slot 1 on the field for Spore → False Swipe → ball throws with zero sw
 ### 2.2 FRLG Battle Reader & Battle Engine Audit
 
 An audit of `src/games/pokemon/frlg/readers/lib/` and `src/games/pokemon/frlg/battle/lib/` shows
-that screen navigation, menus, and forced switches are already implemented; only the **three HUD
-value probes** and the **FRLG `Catch_runner.game_steps` adapter** are missing.
+that screen navigation, menus, and forced switches are already implemented; the missing pieces are
+the **three HUD value probes**, the **visual battle-intro shiny detector**, and the **FRLG
+`Catch_runner.game_steps` adapter**.
 
 #### Already implemented (reuse as-is)
 
@@ -160,12 +170,34 @@ value probes** and the **FRLG `Catch_runner.game_steps` adapter** are missing.
 | **Foe HP bar ratio** | `Frlg_readers.Battle_hud` (`src/games/pokemon/frlg/readers/lib/battle_hud.{ml,mli}`) | Segmented `color_stats` probes along the 48-pixel GBA foe HP bar inside `foe_box` (green/yellow/red filled segments vs dark empty track), gated by `Battle_screen.foe_box`. Returns `float option` in `[0.0 .. 1.0]`. |
 | **Player HP bar ratio** | `Frlg_readers.Battle_hud` | Segmented `color_stats` probes along the 48-pixel GBA player HP bar inside `player_box`, gated by `Battle_screen.player_box`. Returns `float option` in `[0.0 .. 1.0]`. |
 | **Foe status badge (SLP/PAR/other)** | `Frlg_readers.Battle_hud` | Color probe on the 20×8 GBA status icon box on the foe HP box (`pokefirered` `graphics/interface/status_icons.pal`: silver/grey `SLP` → `Asleep`, yellow `PAR` → `Paralyzed`, purple `PSN` / orange-red `BRN` / cyan `FRZ` → `Other_status`, cream HP-box background → `Healthy`), gated by `Battle_screen.foe_box`. |
+| **Visual battle-intro shiny detector** | `Frlg_readers.Shiny_encounter_reader` & `Frlg_readers.Shiny_encounter_detector` (`src/games/pokemon/frlg/readers/lib/shiny_encounter_{reader,detector}.{ml,mli}`) | Modeled on BDSP's `Bdsp_readers.Shiny_encounter_reader` / `Shiny_encounter_detector` (PR #334). Watches the wild battle opening using `Battle_screen` probes and measures the ~1.1–1.3 s shiny sparkle delay (and/or sparkle pixels in the foe sprite region) between `"Wild X appeared!"` and player send-out / action menu, classifying `Shiny \| Not_shiny \| Unknown` before the first turn. |
 | **FRLG catch adapter** | `Frlg_actions.Battle_catch_steps` (`src/games/pokemon/frlg/actions/lib/battle_catch_steps.{ml,mli}`) | Implements `Catch_runner.game_steps` (`next_event`, `execute`, `send_in`) over `Battle_steps` + `Battle_hud`. Never calls `Battle.run`. Maps `Battle.Action_menu` → `Action_menu` with observed `Catch_state.t`, `Battle.Use_next` → `answer_use_next true` → `Forced_switch`, `Battle.Switch_in` → `Forced_switch`, ball-throw catch / `Battle_over` → `Caught` or `Foe_ended`, and empty ball pocket → `No_balls`. |
 
-`Wild_rng` (`src/games/pokemon/frlg/actions/lib/wild_rng.{ml,mli}`) will delegate wild-battle
-catching to `Catch_runner.run` via `Battle_catch_steps` whenever a catcher policy is active,
-keeping the existing full-HP ball-throw path available as a degenerate `policy` (`status_setter =
-None`, `false_swiper = None`, `wall = None`).
+`Wild_rng` (`src/games/pokemon/frlg/actions/lib/wild_rng.{ml,mli}`) will run
+`Frlg_readers.Shiny_encounter_detector` during the wild battle intro and delegate shiny catches to
+`Catch_runner.run` via `Battle_catch_steps` whenever a catcher policy is active, keeping the
+existing full-HP ball-throw path available as a degenerate `policy` (`status_setter = None`,
+`false_swiper = None`, `wall = None`).
+
+### 2.3 In-Battle Visual Shiny Detection (Before Catching)
+
+Today `wild_rng` catches every encounter first and checks `Frlg_readers.Shiny_star` on the Summary
+screen afterward, because GamePilot's daemon is video-only (no audio probe). That wastes Spore /
+False Swipe turns and Luxury/Ultra Balls on every RNG miss.
+
+In FireRed/LeafGreen, a shiny wild Pokémon plays a distinct sparkle animation (~1.1–1.3 s extra
+delay plus bright star sparkles over the foe sprite) between `"Wild X appeared!"` and the player's
+send-out / action menu. Following BDSP's visual battle-intro detector (`Bdsp_readers.Shiny_encounter_detector`
+and `Bdsp_readers.Shiny_encounter_reader`, PR #334), `Frlg_readers.Shiny_encounter_detector` tracks
+that visual battle-intro window and gates the battle path before turn 1:
+
+- **Shiny detected at battle intro**: Run `Catch_runner.run` (`src/pokemon/catch/`) with the
+  configured ball (`luxury-ball` or `ultra-ball`), then confirm `Frlg_readers.Shiny_star` on
+  Summary page 1 before saving and depositing.
+- **Not shiny at battle intro (miss)**: Skip Luxury/Ultra Balls and Spore/False Swipe completely —
+  either soft-reset immediately to retry, or throw a **Master Ball** for miss-only calibration
+  (read Summary stats/nature → refine offsets → soft reset without saving, as detailed in
+  Section 3.3).
 
 ---
 
@@ -211,38 +243,46 @@ Calibrate **once per console** and persist the offsets in the local GamePilot FR
   `Frlg_rng.Rng_timings.sweet_scent`. Explicit plan-level overrides remain supported for mGBA
   replay tests.
 
-### 3.3 Miss-Only Auto-Recalibration Flow
+### 3.3 In-Battle Detection & Miss-Only Auto-Recalibration Flow
 
-On a hit, there is **zero calibration overhead** — the program catches the shiny in the configured
-ball (`ultra-ball` or `luxury-ball`), confirms `Frlg_readers.Shiny_star` on Summary page 1, saves,
-and moves on.
+On a hit, there is **zero calibration overhead** — `Frlg_readers.Shiny_encounter_detector` detects
+the shiny at the battle intro, `Catch_runner` catches it in the configured ball (`ultra-ball` or
+`luxury-ball`), `Frlg_readers.Shiny_star` confirms it on Summary page 1, and the program saves and
+moves on.
 
-Auto-recalibration runs **only on a miss** (`wild_rng_not_shiny`):
+On a miss (`Not_shiny` at battle intro), the program skips Luxury/Ultra Balls and Spore/False Swipe
+entirely and either soft-resets immediately or runs miss-only auto-recalibration:
 
 ```mermaid
 flowchart TD
-    A["Timed hard reset + blind presses"] --> B["Catch with configured ball<br/>(Catch_runner)"]
-    B --> C{"Summary page 1:<br/>Shiny star?"}
-    C -- Yes --> D["Save game & deposit to PC"]
-    C -- No --> E["Miss detected:<br/>Do NOT save"]
-    E --> F["Calibration read:<br/>Master Ball catch (if retrying)<br/>or read missed catch's Summary"]
-    F --> G["Read species, level, nature, stats<br/>(Summary pages 1-2)"]
-    G --> H["Match actual (seed, advance)<br/>within search window around target"]
-    H --> I["Update seed_offset & ingame_offset<br/>in rng_calibration_&lt;console_id&gt;.json"]
-    I --> J["Soft/hard reset (unsaved;<br/>Master Ball restored) & retry"]
+    A["Timed hard reset + blind presses"] --> B{"Battle intro:<br/>Shiny_encounter_detector"}
+    B -- "Shiny (or Unknown)" --> C["Catch with configured ball<br/>(Catch_runner: Spore + False Swipe + Luxury/Ultra)"]
+    C --> D{"Summary page 1:<br/>Shiny_star?"}
+    D -- Yes --> E["Save game & deposit to PC"]
+    D -- No --> F["Unexpected miss:<br/>Do NOT save"]
+    B -- "Not shiny (miss)" --> G{"Recalibrate<br/>this miss?"}
+    G -- "No (fast retry)" --> J["Soft/hard reset (unsaved) & retry"]
+    G -- "Yes (miss-only calibration)" --> H["Throw Master Ball<br/>(skip Luxury Balls & Spore/False Swipe)"]
+    H --> I["Read species, level, nature, stats<br/>(Summary pages 1-2)"]
+    F --> I
+    I --> K["Match actual (seed, advance)<br/>within search window around target"]
+    K --> L["Update seed_offset & ingame_offset<br/>in rng_calibration_&lt;console_id&gt;.json"]
+    L --> J
 ```
 
-- **Zero Master Ball consumption**: When a dedicated calibration probe is needed (e.g. first-time
-  console calibration or after a miss where the target broke out), the calibrator throws a
-  **Master Ball**, reads the caught Pokémon's level, nature, and 6 stats on Summary pages 1–2,
-  identifies the actual `(seed, advance)` hit using the ported C++ calibration matcher
-  (`PokemonFRLG_RngCalibration`), writes the delta to `rng_calibration_<console_id>.json`, and
-  **resets without saving** so the Master Ball is always restored.
-- **Already-caught miss fast path**: Because GamePilot catches the target to check `Shiny_star`
-  (no audio shiny detection), a non-shiny catch is already in party Slot 6! Reading its nature and
-  stats from the same Summary session immediately yields the missed `(seed, advance)` without even
-  needing a second encounter; the Master Ball path is used for initial uncalibrated console setup
-  or if a high-difficulty foe escaped.
+- **No wasted Luxury Balls or catch turns on misses**: Because visual battle-intro detection
+  identifies non-shiny encounters before turn 1, misses never spend Luxury/Ultra Balls or run
+  Spore/False Swipe.
+- **Immediate soft-reset vs. Master Ball calibration**: When console calibration is already dialed
+  in (or no Master Ball is available), a battle-intro miss soft-resets immediately. When
+  calibrating a console or adjusting drift on a miss, the calibrator throws a **Master Ball**,
+  reads the caught Pokémon's level, nature, and 6 stats on Summary pages 1–2, identifies the actual
+  `(seed, advance)` hit using the ported C++ calibration matcher (`PokemonFRLG_RngCalibration`),
+  writes the delta to `rng_calibration_<console_id>.json`, and **resets without saving** so the
+  Master Ball is always restored.
+- **Summary `Shiny_star` safety check**: Even when the battle-intro detector reports `Shiny` (or
+  `Unknown` on an inconclusive intro), `Frlg_readers.Shiny_star` on Summary page 1 remains the
+  final gate before saving — a false positive never saves a non-shiny Pokémon.
 
 ---
 
@@ -457,10 +497,10 @@ poke-ball | great-ball | ultra-ball | luxury-ball
 ```
 
 - **Pre-ACE (`--options ball=ultra-ball`)**: Restocked at Indigo Plateau / Celadon Mart (as
-  `01-ultra-balls` already does). Used during Phase 1 toward the 60-caught National Dex milestone.
+  `01-ultra-balls` already does). Used when collecting pre-ACE before Luxury Balls are stocked.
 - **Post-ACE (`--options ball=luxury-ball`)**: Stocked via `frlg.ace` bag-prep preset (Luxury Ball
   `0x000B` ×999, plus Master Ball `0x0001` ×999 for zero-consumption miss-recalibration and Rare
-  Candies `0x0044` for Phase 2 Parasect).
+  Candies `0x0044` for optional Phase 2 Parasect leveling).
 
 ---
 
@@ -484,13 +524,19 @@ Each PR is independently testable on mGBA / unit tests and lands cleanly on `mai
      leveling via `frlg.team_training`.
    - Document party-order preflight requirements (Sleeper Slot 1, False Swiper Slot 2, Sweet Scent
      last occupied slot, Slot 6 empty).
-2. **PR 2 — FRLG Battle HUD Readers & `pokemon/catch` Adapter**:
+2. **PR 2 — FRLG Battle HUD Readers, Visual Battle-Intro Shiny Detector & `pokemon/catch` Adapter**:
    - Add `Frlg_readers.Battle_hud` (`foe_hp_ratio`, `player_hp_ratio`, `foe_status`) with fixture
      tests on mGBA and Switch captures.
+   - Add `Frlg_readers.Shiny_encounter_reader` and `Frlg_readers.Shiny_encounter_detector`
+     (modeled on BDSP's `Bdsp_readers.Shiny_encounter_{reader,detector}` from PR #334) to classify
+     shiny vs. non-shiny from the ~1.1–1.3 s battle-intro sparkle delay / sparkle pixels before
+     turn 1, with unit and fixture tests.
    - Add `Frlg_actions.Battle_catch_steps` implementing `Catch_runner.game_steps` over
      `Battle_steps` + `Battle_hud`, with `Effect.Deep` tests covering both 2-mon (Phase 1) and
      1-mon (Phase 2) policies.
-   - Wire `Wild_rng` to use `Catch_runner.run`.
+   - Wire `Wild_rng` to run visual battle-intro shiny detection first, delegate shiny catches to
+     `Catch_runner.run` (still confirming `Frlg_readers.Shiny_star` on Summary before saving), and
+     skip Luxury/Ultra Balls + Spore/False Swipe on a battle-intro miss.
 3. **PR 3 — `Engine_expand` Catch Templates & Count-Based `dex_progress.json`**:
    - Extend `Towns` (`pc`, `outside`) and `Place_table.resolve` (`place`, `string`).
    - Add `wild_rng_grass_catch`, `wild_rng_surf_catch`, `wild_rng_fish_catch`, and `gift_rng_prize`
@@ -502,16 +548,16 @@ Each PR is independently testable on mGBA / unit tests and lands cleanly on `mai
    - Add `rng_calibration_<console_id>.json` persistence in `Frlg_rng` / `Wild_rng_plan`.
    - Port summary stat/nature reading (Summary pages 1–2) and the C++ seed/advance calibration
      matcher.
-   - Trigger miss-only auto-recalibration (read missed catch or Master Ball calibration catch →
-     update persisted offsets → soft reset without saving) and verify on Switch hardware.
+   - Wire battle-intro misses to either soft-reset immediately or throw a Master Ball for miss-only
+     auto-recalibration (read Summary stats/nature → update persisted offsets → reset without
+     saving), and verify on Switch hardware.
 5. **PR 5 — Surf, Super Rod, Power Plant & Gift RNG FireRed Exclusives**:
    - Add water/Super Rod encounter tables and actions (`surf`, `super_rod`) plus `gift_rng` for
      Celadon Game Corner.
    - Add all 7 species checkpoints (Route 8 Ekans ×2 & Growlithe ×2, Route 7 Oddish ×3, Viridian
      pond Psyduck ×2, Vermilion shore Shellder ×2, Power Plant Electabuzz ×1, Celadon Game Corner
      Scyther ×1) — completing the 13 FireRed Kanto exclusives.
-6. **PR 6 — Phase 2 Four Island Parasect Breeding**:
-   - Add Four Island Day Care breeding checkpoint(s) (male False Swipe Scyther/Farfetch'd + female
-     Paras/Parasect → hatch → evolve & learn Spore → Lv 100 via `frlg.team_training` or `frlg.ace`
-     Rare Candies) and switch default `dex_collection` catcher policy to the 1-slot Lv 100
-     Parasect.
+6. **PR 6 — Optional Phase 2 Four Island Parasect Breeding**:
+   - Add optional Four Island Day Care breeding checkpoint(s) (male False Swipe Scyther/Farfetch'd +
+     female Paras/Parasect → hatch → evolve & learn Spore → Lv 100 via `frlg.team_training` or
+     `frlg.ace` Rare Candies) as a single-slot upgrade whenever Four Island is unlocked.
