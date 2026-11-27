@@ -1,7 +1,7 @@
 module EBR = Bdsp_readers.Eye_blink_reader
 module BM = Bdsp_rng.Blink_model
 module XS = Bdsp_rng.Xorshift128
-module MSF = Bdsp_actions.Munchlax_seed_finder
+module MSF = Bdsp_blink_rng.Munchlax_seed_finder
 
 let fail msg =
   prerr_endline ("FAIL: " ^ msg);
