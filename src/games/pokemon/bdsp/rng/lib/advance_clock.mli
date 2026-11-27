@@ -2,15 +2,16 @@
     given advance: a linear clock anchored on one blink whose advance is known.
     Each NPC tick takes one advance per NPC.
 
-    Port of the fork's
+    Port of
     [PokemonBDSP/Programs/RngManipulation/PokemonBDSP_AdvanceClock.{h,cpp}]
-    (R21: same arithmetic, same integer division of advances into ticks). Times
-    are seconds as a [float], the unit of the [now] effect, on a grid of whole
-    microseconds: the C++ holds a [WallClock] and truncates every duration it
-    adds to one to the clock's tick, which is a microsecond with libc++ (the
-    build the golden vectors come from), and {!plus_seconds} does the same.
-    Whether a sample at a cut-off survives depends on it. Advances and NPC
-    counts are OCaml [int]s (the C++ [uint64_t] and [uint8_t]). *)
+    (https://github.com/PokemonAutomation/Arduino-Source; R21: same arithmetic,
+    same integer division of advances into ticks). Times are seconds as a
+    [float], the unit of the [now] effect, on a grid of whole microseconds: the
+    C++ holds a [WallClock] and truncates every duration it adds to one to the
+    clock's tick, which is a microsecond with libc++ (the build the golden
+    vectors come from), and {!plus_seconds} does the same. Whether a sample at a
+    cut-off survives depends on it. Advances and NPC counts are OCaml [int]s
+    (the C++ [uint64_t] and [uint8_t]). *)
 
 val plus_seconds : float -> float -> float
 (** [plus_seconds time seconds]: [time + duration_cast<WallDuration>(seconds)],

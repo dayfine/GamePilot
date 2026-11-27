@@ -3,11 +3,12 @@
     more such readings make a linear system over GF(2) whose solution is the
     state.
 
-    Port of the Pokemon half of the fork's
-    [PokemonBDSP/Programs/RngManipulation/PokemonBDSP_StateSolver.{h,cpp}] (R21:
-    same reading order, same subsets, same messages); the NPC half is
-    {!State_solver}. Where the C++ takes an optional [Logger] and logs a
-    success, this port logs nothing. *)
+    Port of the Pokemon half of
+    [PokemonBDSP/Programs/RngManipulation/PokemonBDSP_StateSolver.{h,cpp}]
+    (https://github.com/PokemonAutomation/Arduino-Source; R21: same reading
+    order, same subsets, same messages); the NPC half is {!State_solver}. Where
+    the C++ takes an optional [Logger] and logs a success, this port logs
+    nothing. *)
 
 val recommended_pokemon_blink_count : float -> int
 (** How many intervals to time at the given timing tolerance (seconds) so that

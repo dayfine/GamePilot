@@ -2,15 +2,16 @@
     Pokemon model's seconds between blinks, plus the inverse (which rolls fit a
     measured interval) that the state solver reads.
 
-    Port of the fork's
-    [PokemonBDSP/Programs/RngManipulation/PokemonBDSP_BlinkModel.{h,cpp}] (R21:
-    same constants, same float steps). Each float operation is rounded as
-    written, as in the x86 and MSVC builds of the C++. Compilers for arm64 fuse
-    [range_float]'s multiply-add into one FMA unless told not to (the fork's
-    clang build does, and so would ocamlopt), which can move the result by one
-    ulp; this port keeps the products separate. Rolls are 32-bit values held in
-    an OCaml [int]; floats are IEEE doubles as in the C++. Precondition failures
-    return [Error] where the C++ throws [InternalProgramError]. *)
+    Port of
+    [PokemonBDSP/Programs/RngManipulation/PokemonBDSP_BlinkModel.{h,cpp}]
+    (https://github.com/PokemonAutomation/Arduino-Source; R21: same constants,
+    same float steps). Each float operation is rounded as written, as in the x86
+    and MSVC builds of the C++. Compilers for arm64 fuse [range_float]'s
+    multiply-add into one FMA unless told not to (the fork's clang build does,
+    and so would ocamlopt), which can move the result by one ulp; this port
+    keeps the products separate. Rolls are 32-bit values held in an OCaml [int];
+    floats are IEEE doubles as in the C++. Precondition failures return [Error]
+    where the C++ throws [InternalProgramError]. *)
 
 val npc_tick_seconds : float
 (** 1.017: seconds per NPC tick, one advance per NPC. *)

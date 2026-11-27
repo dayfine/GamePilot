@@ -1,5 +1,6 @@
-(** A screen that must read the same for a while before it counts: the fork's
-    DetectorToFinder hold (CommonTools/VisualDetector.h, a PRESENT finder), as a
+(** A screen that must read the same for a while before it counts: the
+    DetectorToFinder hold (CommonTools/VisualDetector.h in
+    https://github.com/PokemonAutomation/Arduino-Source, a PRESENT finder), as a
     watcher over the frames. *)
 
 val held :

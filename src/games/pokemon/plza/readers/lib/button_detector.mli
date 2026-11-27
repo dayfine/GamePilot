@@ -11,7 +11,8 @@
     x 10 for their insides) and its score limit (70 for A and the right arrow,
     80 for B, minus and the D-pad markers, 120 for their insides); aspect and
     fill within 0.8 to 1.25 of the template's (the default bounds of
-    CommonTools/ImageMatch/WaterfillTemplateMatcher.cpp). Sizes and areas are
+    CommonTools/ImageMatch/WaterfillTemplateMatcher.cpp in
+    https://github.com/PokemonAutomation/Arduino-Source). Sizes and areas are
     scaled from 4K to 1080p.
 
     Where it differs: the fork's detector also keeps where the button was; this
