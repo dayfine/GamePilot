@@ -3,7 +3,7 @@ type launch_request = {
   program_id : string;
   from_id : string option;
   to_id : string option;
-  mode : string;
+  mode : string option;
   preflight : bool;
   options : (string * string) list;
 }
@@ -191,11 +191,15 @@ let decode_launch = function
       let* from_id = opt_string_field "from" fields in
       let* to_id = opt_string_field "to" fields in
       let* mode_opt = opt_string_field "mode" fields in
-      let mode = Option.value mode_opt ~default:"testing" in
+      let mode =
+        match mode_opt with Some "default" -> None | other -> other
+      in
       let* preflight = opt_bool_field "preflight" ~default:false fields in
       let* options = decode_options fields in
       Ok { console_id; program_id; from_id; to_id; mode; preflight; options }
   | _ -> Error "expected a JSON object"
+
+let mode_args = function None -> [] | Some m -> [ "--mode"; m ]
 
 let range_args (p : Program_registry.t) (req : launch_request) =
   let cps = checkpoints_of p in
@@ -205,8 +209,9 @@ let range_args (p : Program_registry.t) (req : launch_request) =
   let to_id = match req.to_id with Some _ as t -> t | None -> last in
   match (from_id, to_id) with
   | Some f, _ when req.preflight -> Ok [ "--preflight"; "--from"; f ]
-  | Some f, Some t -> Ok [ "--from"; f; "--to"; t; "--mode"; req.mode ]
-  | _ -> Error (p.id ^ " has no checkpoints to run")
+  | Some f, Some t -> Ok ([ "--from"; f; "--to"; t ] @ mode_args req.mode)
+  | None, None -> Ok (mode_args req.mode)
+  | _ -> Error (p.id ^ " has incomplete checkpoint range")
 
 let build_run_argv ~gamepilot ?config_path ~console req =
   let* prog =

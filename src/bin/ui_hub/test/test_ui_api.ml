@@ -1,5 +1,5 @@
-(* Ui_api: pure JSON encoding of Program_registry, launch request decoding, and
-   gamepilot run argv construction (no sockets or child processes). *)
+(* Ui_api, External_runs, and Http_router: pure JSON encoding, argv
+   construction, ps parsing, and HTTP route contract tests (no sockets). *)
 
 open Ui_hub
 
@@ -36,13 +36,63 @@ let programs_has_supplies () =
       string_of_bool has
   | _ -> "bad shape"
 
+let with_temp_router f =
+  let dir = Filename.temp_file "ui_hub_test_" "" in
+  Sys.remove dir;
+  let path = Filename.concat dir "consoles.json" in
+  let mgr = Run_manager.create ~config_path:path in
+  let res = f mgr in
+  if Sys.file_exists path then Sys.remove path;
+  if Sys.file_exists dir then Sys.rmdir dir;
+  res
+
+let router_console_roundtrip () =
+  with_temp_router (fun mgr ->
+      let c1, _, _ = Http_router.route mgr "GET" "/" "" in
+      let c2, _, _ =
+        Http_router.route mgr "POST" "/api/consoles"
+          {|{"id":"mgba","name":"Local mGBA","backend":"mgba","mgba_port":47810}|}
+      in
+      let c3, _, body = Http_router.route mgr "GET" "/api/consoles" "" in
+      let has_mgba =
+        match Yojson.Safe.from_string body with
+        | `Assoc fs -> (
+            match List.assoc_opt "consoles" fs with
+            | Some (`List [ _ ]) -> true
+            | _ -> false)
+        | _ -> false
+      in
+      Printf.sprintf "%d:%d:%d:%b" c1 c2 c3 has_mgba)
+
+let router_error_codes () =
+  with_temp_router (fun mgr ->
+      let c_bad_json, _, _ =
+        Http_router.route mgr "POST" "/api/consoles" "{bad"
+      in
+      let c_missing_console, _, _ =
+        Http_router.route mgr "POST" "/api/runs"
+          {|{"console":"nope","program":"frlg.supplies"}|}
+      in
+      let c_missing_stop, _, _ =
+        Http_router.route mgr "POST" "/api/runs/run-99/stop" ""
+      in
+      let c_404, _, _ = Http_router.route mgr "GET" "/no-such-route" "" in
+      Printf.sprintf "%d:%d:%d:%d" c_bad_json c_missing_console c_missing_stop
+        c_404)
+
 let () =
   Table_test.run "ui_api"
     [
       case "programs_json includes frlg.supplies" programs_has_supplies "true";
-      case "build_run_argv for frlg.supplies with options"
+      case "build_run_argv default mode omits --mode"
         (build_run
-           {|{"console":"console-a","program":"frlg.supplies","from":"su-01","to":"su-01","options":{"retro-mail":"20","super-repel":"0"}}|})
+           {|{"console":"console-a","program":"frlg.supplies","from":"su-01","to":"su-01","mode":"default","options":{"retro-mail":"20","super-repel":"0"}}|})
+        "gamepilot run frlg.supplies --backend switch --capture 0 --serial \
+         /dev/cu.usbserial-1 --from su-01 --to su-01 --watch --options \
+         retro-mail=20 --options super-repel=0";
+      case "build_run_argv explicit testing mode passes --mode"
+        (build_run
+           {|{"console":"console-a","program":"frlg.supplies","from":"su-01","to":"su-01","mode":"testing","options":{"retro-mail":"20","super-repel":"0"}}|})
         "gamepilot run frlg.supplies --backend switch --capture 0 --serial \
          /dev/cu.usbserial-1 --from su-01 --to su-01 --mode testing --watch \
          --options retro-mail=20 --options super-repel=0";
@@ -73,4 +123,8 @@ let () =
                 (Option.value r.registry ~default:"")
           | None -> "none")
         "80610:bdsp.underground:/tmp/watch";
+      case "http_router serves page and console upsert roundtrip"
+        router_console_roundtrip "200:200:200:true";
+      case "http_router returns expected 400/404 status codes"
+        router_error_codes "400:404:404:404";
     ]

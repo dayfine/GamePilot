@@ -90,6 +90,7 @@ let html =
       <label>To Checkpoint <select id="toSelect"></select></label>
       <label>Mode
         <select id="modeSelect">
+          <option value="default" selected>default (live)</option>
           <option value="testing">testing</option>
           <option value="verification">verification</option>
         </select>

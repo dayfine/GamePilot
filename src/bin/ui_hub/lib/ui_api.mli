@@ -10,7 +10,9 @@ type launch_request = {
   program_id : string;  (** Registered program id (e.g. ["frlg.supplies"]). *)
   from_id : string option;  (** Optional [--from] checkpoint id. *)
   to_id : string option;  (** Optional [--to] checkpoint id. *)
-  mode : string;  (** ["testing"] or ["verification"]. *)
+  mode : string option;
+      (** Optional [--mode] (["testing"] or ["verification"]); [None] uses the
+          program's default live behavior. *)
   preflight : bool;  (** True to run [--preflight] instead of executing. *)
   options : (string * string) list;  (** Program [--options KEY=VALUE] pairs. *)
 }
