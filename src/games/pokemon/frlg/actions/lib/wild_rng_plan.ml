@@ -71,6 +71,7 @@ let throw_only_policy (capture : Capture_plan.t) : CS.policy =
     false_swiper = None;
     wall = None;
     ball_name = capture.ball;
+    fallback_ball = None;
     max_balls = capture.max_balls;
     foe_hp_target = 1.0;
     foe_hp_rechip = 1.0;
@@ -271,10 +272,6 @@ let slots t =
     ~none:("no grass slots for " ^ t.location)
     (R.Encounters_database.slots db ~kind:"grass" ~location:t.location)
 
-let no_target t =
-  Printf.sprintf "no shiny %s in %s at advances %d..%d" t.species t.seeds
-    t.min_advance t.max_advance
-
 let calibrations_of t (model : R.Rng_timings.frame_model) =
   let seed_offset =
     if t.boot_offset_ms = 0 then 0
@@ -288,13 +285,14 @@ let calibrations_of t (model : R.Rng_timings.frame_model) =
     ingame_offset = t.ingame_offset;
   }
 
-let search t (delays, seeds) slots =
-  let model = List.assoc t.frame_model frame_models in
-  R.Wild_target.find ~calibrations:(calibrations_of t model) model ~delays
-    ~seeds slots ~species:t.species ~tid_xor_sid:(t.tid lxor t.sid)
-    ~min_advance:t.min_advance ~max_advance:t.max_advance
-
 let target t =
-  let* column = seed_column t in
+  let* delays, seeds = seed_column t in
   let* slots = slots t in
-  Option.to_result ~none:(no_target t) (search t column slots)
+  let model = List.assoc t.frame_model frame_models in
+  Option.to_result
+    ~none:
+      (Printf.sprintf "no shiny %s in %s (%d..%d)" t.species t.seeds
+         t.min_advance t.max_advance)
+    (R.Wild_target.find ~calibrations:(calibrations_of t model) model ~delays
+       ~seeds slots ~species:t.species ~tid_xor_sid:(t.tid lxor t.sid)
+       ~min_advance:t.min_advance ~max_advance:t.max_advance)

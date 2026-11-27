@@ -10,6 +10,8 @@ type t = {
   lead_slot : int;  (** 1-based party slot sent out at battle start. *)
   bag : Bdsp_actions.Battle_catch_steps.bag_layout;
       (** Bag pocket and item row offsets for balls and healing items. *)
+  fallback_ball_steps : int;
+      (** X-carousel horizontal steps from primary ball to fallback ball. *)
   policy : Pokemon_catch.Catch_state.policy;
       (** Constructed catch policy including optional tank heavy-chipper. *)
 }

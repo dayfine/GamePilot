@@ -241,6 +241,7 @@ let build_policy ~ball_name ~max_balls ~max_turns ~sleeper_slot ~spore_move
         };
     wall;
     ball_name;
+    fallback_ball = None;
     max_balls;
     foe_hp_target = defaults.foe_hp_target;
     foe_hp_rechip = defaults.foe_hp_rechip;

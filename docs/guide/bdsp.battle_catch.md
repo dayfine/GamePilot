@@ -41,6 +41,9 @@ Give each as `--options KEY=VALUE`:
 | `max_turns` | 10 to 200 | default `80` | Pause after this many turns to guard against Struggle. |
 | `ball_pocket_steps` | -5 to 5 | default `0` | Horizontal pocket steps from initial battle Bag pocket to Poké Balls. |
 | `ball_row` | -20 to 20 | default `-1` | Horizontal steps in the X-button Poké Ball carousel (-1 = Left once for last ball / Luxury Ball). |
+| `fallback_ball` | none \| dusk \| timer \| ultra \| luxury \| premier \| master | default `none` | Optional higher-rate Poké Ball switched to at fallback_turn (e.g. dusk or timer) to prevent Struggle KOs. |
+| `fallback_turn` | 1 to 200 | default `25` | Turn number at which to switch from ball to fallback_ball. |
+| `fallback_ball_steps` | -20 to 20 | default `-6` | Horizontal steps in the X-button Poké Ball carousel from ball to fallback_ball. |
 | `heal_pocket_steps` | -5 to 5 | default `0` | Horizontal pocket steps from initial battle Bag pocket to Medicine. |
 | `heal_row` | 0 to 20 | default `0` | 0-based row of the healing item in the Medicine pocket. |
 <!-- /generated -->

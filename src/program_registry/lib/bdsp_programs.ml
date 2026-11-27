@@ -165,6 +165,21 @@ let battle_catch_options : Run_options.declared list =
     int_opt "ball_row" (-catch_b.max_row) catch_b.max_row "-1"
       "Horizontal steps in the X-button Poké Ball carousel (-1 = Left once for \
        last ball / Luxury Ball).";
+    {
+      key = "fallback_ball";
+      value =
+        Run_options.One_of
+          [ "none"; "dusk"; "timer"; "ultra"; "luxury"; "premier"; "master" ];
+      presence = Run_options.Default "none";
+      doc =
+        "Optional higher-rate Poké Ball switched to at fallback_turn (e.g. \
+         dusk or timer) to prevent Struggle KOs.";
+    };
+    int_opt "fallback_turn" 1 catch_b.max_turns "25"
+      "Turn number at which to switch from ball to fallback_ball.";
+    int_opt "fallback_ball_steps" (-catch_b.max_row) catch_b.max_row "-6"
+      "Horizontal steps in the X-button Poké Ball carousel from ball to \
+       fallback_ball.";
     int_opt "heal_pocket_steps" (-catch_b.pocket_bound) catch_b.pocket_bound "0"
       "Horizontal pocket steps from initial battle Bag pocket to Medicine.";
     int_opt "heal_row" 0 catch_b.max_row "0"

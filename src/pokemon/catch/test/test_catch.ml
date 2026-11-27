@@ -46,6 +46,7 @@ let kyogre_policy : Catch_state.policy =
       Some { slot = 5; move_slot = 2; require_status = true; hp_floor = 0.40 };
     wall = Some { slot = 3; heal_move_slot = Some 4; hp_floor = 0.45 };
     ball_name = "Luxury Ball";
+    fallback_ball = None;
     max_balls = 50;
     foe_hp_target = 0.15;
     foe_hp_rechip = 0.35;
@@ -63,6 +64,7 @@ let groudon_policy : Catch_state.policy =
       Some { slot = 5; move_slot = 2; require_status = true; hp_floor = 0.40 };
     wall = Some { slot = 6; heal_move_slot = None; hp_floor = 0.40 };
     ball_name = "Luxury Ball";
+    fallback_ball = None;
     max_balls = 3;
     foe_hp_target = 0.15;
     foe_hp_rechip = 0.40;
@@ -79,6 +81,7 @@ let dex_policy : Catch_state.policy =
     false_swiper = None;
     wall = None;
     ball_name = "Ultra Ball";
+    fallback_ball = None;
     max_balls = 20;
     foe_hp_target = 0.15;
     foe_hp_rechip = 0.35;
@@ -350,6 +353,7 @@ let test_lead_tank_chip_then_false_swipe_and_balls () =
         Some { slot = 1; move_slot = 2; require_status = true; hp_floor = 0.35 };
       wall = Some { slot = 6; heal_move_slot = None; hp_floor = 0.40 };
       ball_name = "Luxury Ball";
+      fallback_ball = None;
       max_balls = 50;
       foe_hp_target = 0.15;
       foe_hp_rechip = 0.35;
@@ -412,6 +416,7 @@ let test_regression_fainted_swiper_and_status_pp () =
         Some { slot = 1; move_slot = 2; require_status = true; hp_floor = 0.55 };
       wall = Some { slot = 1; heal_move_slot = Some 1; hp_floor = 0.55 };
       ball_name = "Luxury Ball";
+      fallback_ball = None;
       max_balls = 60;
       foe_hp_target = 0.15;
       foe_hp_rechip = 0.35;
@@ -456,7 +461,14 @@ let test_regression_fainted_swiper_and_status_pp () =
   in
   assert_eq "wall heal 0 PP falls back to Heal_active"
     (Catch_policy.decide venusaur_policy low_hp_after_5_heals)
-    Catch_state.Heal_active
+    Catch_state.Heal_active;
+  let fallback_policy =
+    { venusaur_policy with fallback_ball = Some (25, "Dusk Ball") }
+  in
+  let late_turn_state = { pp_exhausted_state with turn = 25 } in
+  assert_eq "turn >= 25 switches to fallback Dusk Ball"
+    (Catch_policy.decide fallback_policy late_turn_state)
+    (Catch_state.Throw_ball "Dusk Ball")
 
 let () =
   test_kyogre_full_flow ();

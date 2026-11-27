@@ -117,6 +117,10 @@ type policy = {
           throws. When [None], survival heals the active member in place and
           ball throws happen directly. *)
   ball_name : string;  (** Name of the Poké Ball to throw. *)
+  fallback_ball : (int * string) option;
+      (** Optional [(turn, ball_name)] fallback switched to once [turn] is
+          reached (e.g. Luxury Ball -> Dusk/Timer Ball at turn 25 to avoid
+          Struggle KOs). *)
   max_balls : int;  (** Pause for user once this many balls have been thrown. *)
   foe_hp_target : float;
       (** Initial foe HP ratio threshold above which chipping runs. *)

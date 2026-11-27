@@ -50,6 +50,7 @@ type policy = {
   false_swiper : false_swipe_config option;
   wall : wall_config option;
   ball_name : string;
+  fallback_ball : (int * string) option;
   max_balls : int;
   foe_hp_target : float;
   foe_hp_rechip : float;

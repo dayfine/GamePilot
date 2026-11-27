@@ -65,6 +65,7 @@ val default_timing : timing
 val make :
   ?log:(string -> unit) ->
   ?initial_move_slot:int ->
+  ?fallback_ball_steps:int ->
   config ->
   Pokemon_catch.Catch_runner.game_steps
 (** Build BDSP {!Pokemon_catch.Catch_runner.game_steps} driven through

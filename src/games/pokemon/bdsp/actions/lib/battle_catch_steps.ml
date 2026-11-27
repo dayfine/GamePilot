@@ -83,6 +83,7 @@ type tracker = {
   mutable subscribed : bool;
   mutable turns : int;
   mutable balls_thrown : int;
+  mutable last_ball : string option;
   cursor : Cursor.t;
 }
 
@@ -172,113 +173,109 @@ let move_cursor_delta t ~from_slot ~to_slot =
 
 let settle_after_action t = P.wait (t.menu_settle_ms * 3)
 
-let use_move ~log cfg tr move_slot =
-  let t = cfg.timing in
-  let prev = Cursor.last_move tr.cursor in
-  log (Printf.sprintf "BDSP: Fight -> move %d (from %d)" move_slot prev);
-  tap t Wire.A;
-  P.wait t.menu_settle_ms;
-  move_cursor_delta t ~from_slot:prev ~to_slot:move_slot;
-  tap t Wire.A;
-  Cursor.record_move tr.cursor move_slot;
+let finish_turn t tr =
   tr.turns <- tr.turns + 1;
   settle_after_action t;
   Ok ()
 
-let execute_command ~log cfg tr = function
+let open_submenu t down_rows =
+  nav_repeat t Wire.Down down_rows;
+  tap t Wire.A;
+  P.wait t.menu_settle_ms
+
+let use_move ~log cfg tr move_slot =
+  let t = cfg.timing and prev = Cursor.last_move tr.cursor in
+  log (Printf.sprintf "BDSP: Fight -> move %d (from %d)" move_slot prev);
+  open_submenu t 0;
+  move_cursor_delta t ~from_slot:prev ~to_slot:move_slot;
+  tap t Wire.A;
+  Cursor.record_move tr.cursor move_slot;
+  finish_turn t tr
+
+let throw_ball ~log cfg tr ~fallback_ball_steps name =
+  let t = cfg.timing in
+  log ("BDSP: X-shortcut -> throw " ^ name);
+  tap t Wire.X;
+  P.wait t.menu_settle_ms;
+  (match tr.last_ball with
+  | None -> move_pockets t cfg.bag.ball_row
+  | Some prev when prev <> name -> move_pockets t fallback_ball_steps
+  | Some _ -> ());
+  tap t Wire.A;
+  tr.last_ball <- Some name;
+  tr.balls_thrown <- tr.balls_thrown + 1;
+  finish_turn t tr
+
+let execute_command ~log cfg tr ~fallback_ball_steps = function
   | CS.Use_move move_slot -> use_move ~log cfg tr move_slot
   | CS.Switch_to slot ->
-      let t = cfg.timing in
-      let row = Cursor.swap_to tr.cursor slot in
+      let t = cfg.timing and row = Cursor.swap_to tr.cursor slot in
       log (Printf.sprintf "BDSP: Pokémon -> slot %d (row %d)" slot row);
-      nav_repeat t Wire.Down 1;
-      tap t Wire.A;
-      P.wait t.menu_settle_ms;
+      open_submenu t 1;
       select_party_row t row;
-      tr.turns <- tr.turns + 1;
-      settle_after_action t;
-      Ok ()
-  | CS.Throw_ball name ->
-      let t = cfg.timing in
-      log ("BDSP: X-shortcut -> throw " ^ name);
-      tap t Wire.X;
-      P.wait t.menu_settle_ms;
-      if tr.balls_thrown = 0 then move_pockets t cfg.bag.ball_row;
-      tap t Wire.A;
-      tr.balls_thrown <- tr.balls_thrown + 1;
-      tr.turns <- tr.turns + 1;
-      settle_after_action t;
-      Ok ()
+      finish_turn t tr
+  | CS.Throw_ball name -> throw_ball ~log cfg tr ~fallback_ball_steps name
   | CS.Heal_active ->
       let t = cfg.timing in
-      let active = Cursor.active_slot tr.cursor in
-      log (Printf.sprintf "BDSP: Bag -> heal slot %d" active);
-      nav_repeat t Wire.Down 2;
-      tap t Wire.A;
-      P.wait t.menu_settle_ms;
+      log
+        (Printf.sprintf "BDSP: Bag -> heal slot %d"
+           (Cursor.active_slot tr.cursor));
+      open_submenu t 2;
       move_pockets t cfg.bag.heal_pocket_steps;
       nav_repeat t Wire.Down cfg.bag.heal_row;
-      tap t Wire.A;
-      tap t Wire.A;
-      tap t Wire.A;
-      tr.turns <- tr.turns + 1;
-      settle_after_action t;
-      Ok ()
+      nav_repeat t Wire.A 3;
+      finish_turn t tr
   | CS.Pause_for_user _ -> Ok ()
 
 let send_in ~log cfg tr slot =
-  let t = cfg.timing in
-  let row = Cursor.swap_to tr.cursor slot in
+  let t = cfg.timing and row = Cursor.swap_to tr.cursor slot in
   log (Printf.sprintf "BDSP: forced switch -> slot %d (row %d)" slot row);
   P.wait t.menu_settle_ms;
   select_party_row t row;
   settle_after_action t;
   Ok ()
 
-let make ?(log = ignore) ?(initial_move_slot = 1) cfg : CR.game_steps =
-  let party_size = 6 in
+let make ?(log = ignore) ?(initial_move_slot = 1) ?(fallback_ball_steps = 0) cfg
+    : CR.game_steps =
   let cursor =
-    Cursor.create ~party_size ~initial_active_slot:cfg.initial_active_slot
+    Cursor.create ~party_size:6 ~initial_active_slot:cfg.initial_active_slot
   in
   if initial_move_slot <> 1 then Cursor.record_move cursor initial_move_slot;
-  let tr = { subscribed = false; turns = 0; balls_thrown = 0; cursor } in
+  let tr =
+    {
+      subscribed = false;
+      turns = 0;
+      balls_thrown = 0;
+      last_ball = None;
+      cursor;
+    }
+  in
   {
     next_event = next_event ~log cfg tr;
-    execute = execute_command ~log cfg tr;
+    execute = execute_command ~log cfg tr ~fallback_ball_steps;
     send_in = send_in ~log cfg tr;
-  }
-
-let status_role s : CS.role_config =
-  {
-    slot = s.status_setter;
-    move_slot = s.status_move;
-    hp_floor = default_hp_floor;
-  }
-
-let swiper_role s : CS.false_swipe_config =
-  {
-    slot = s.false_swiper;
-    move_slot = s.false_swipe_move;
-    require_status = true;
-    hp_floor = default_hp_floor;
-  }
-
-let wall_role s : CS.wall_config =
-  {
-    slot = s.wall;
-    heal_move_slot = s.wall_heal_move;
-    hp_floor = default_hp_floor;
   }
 
 let build_policy ~ball_name ~max_balls ~max_turns ~foe_hp_rechip ~heavy_chipper
     (s : party_slots) : CS.policy =
+  let f = default_hp_floor in
   {
-    status_setter = Some (status_role s);
+    status_setter =
+      Some { slot = s.status_setter; move_slot = s.status_move; hp_floor = f };
     setup = None;
     heavy_chipper;
-    false_swiper = Some (swiper_role s);
-    wall = Some (wall_role s);
+    false_swiper =
+      Some
+        {
+          slot = s.false_swiper;
+          move_slot = s.false_swipe_move;
+          require_status = true;
+          hp_floor = f;
+        };
+    wall =
+      Some { slot = s.wall; heal_move_slot = s.wall_heal_move; hp_floor = f };
     ball_name;
+    fallback_ball = None;
     max_balls;
     foe_hp_target = default_foe_target;
     foe_hp_rechip;

@@ -119,6 +119,11 @@ let status_command policy state =
            ~move_slot:ss.move_slot)
   | _ -> None
 
+let chosen_ball policy state =
+  match policy.fallback_ball with
+  | Some (switch_turn, name) when state.turn >= switch_turn -> name
+  | _ -> policy.ball_name
+
 let ball_command policy state =
   match (policy.false_swiper, policy.wall) with
   | Some fs, Some w
@@ -126,7 +131,7 @@ let ball_command policy state =
          && state.active_slot = fs.slot
          && not (is_fainted state w.slot) ->
       Switch_to w.slot
-  | _ -> Throw_ball policy.ball_name
+  | _ -> Throw_ball (chosen_ball policy state)
 
 let limit_command policy state =
   if state.turn >= policy.max_turns then

@@ -5,6 +5,7 @@ type t = {
   target : string;
   lead_slot : int;
   bag : BCS.bag_layout;
+  fallback_ball_steps : int;
   policy : CS.policy;
 }
 
@@ -45,26 +46,13 @@ let lim =
     default_wall_slot = 6;
   }
 
-type floors = {
-  status_hp : float;
-  chipper_hp : float;
-  swiper_hp : float;
-  wall_hp : float;
-  foe_target : float;
-  foe_rechip : float;
-  pct_divisor : float;
-}
-
-let hp_floors =
-  {
-    status_hp = 0.55;
-    chipper_hp = 0.45;
-    swiper_hp = 0.55;
-    wall_hp = 0.55;
-    foe_target = 0.15;
-    foe_rechip = 0.35;
-    pct_divisor = 100.0;
-  }
+let status_hp = 0.55
+let chipper_hp = 0.45
+let swiper_hp = 0.55
+let wall_hp = 0.55
+let foe_target = 0.15
+let foe_rechip = 0.35
+let pct_divisor = 100.0
 
 let ball_display_name = function
   | "luxury" -> Ok "Luxury Ball"
@@ -176,11 +164,7 @@ let make_status_setter s =
   if s.sleep_slot = 0 then None
   else
     Some
-      {
-        CS.slot = s.sleep_slot;
-        move_slot = s.sleep_move;
-        hp_floor = hp_floors.status_hp;
-      }
+      { CS.slot = s.sleep_slot; move_slot = s.sleep_move; hp_floor = status_hp }
 
 let make_setup s =
   if s.setup_slot = 0 then None
@@ -196,14 +180,12 @@ let make_setup s =
 let make_heavy_chipper s =
   if s.chipper_slot = 0 then None
   else
-    let foe_hp_floor =
-      float_of_int s.chipper_floor_pct /. hp_floors.pct_divisor
-    in
+    let foe_hp_floor = float_of_int s.chipper_floor_pct /. pct_divisor in
     Some
       {
         CS.slot = s.chipper_slot;
         move_slot = s.chipper_move;
-        hp_floor = hp_floors.chipper_hp;
+        hp_floor = chipper_hp;
         foe_hp_floor;
         require_status = s.sleep_slot > 0;
       }
@@ -216,7 +198,7 @@ let make_false_swiper s =
         CS.slot = s.false_swipe_slot;
         move_slot = s.false_swipe_move;
         require_status = s.sleep_slot > 0;
-        hp_floor = hp_floors.swiper_hp;
+        hp_floor = swiper_hp;
       }
 
 let make_wall s =
@@ -225,9 +207,9 @@ let make_wall s =
     let heal_move_slot =
       if s.wall_heal_move = 0 then None else Some s.wall_heal_move
     in
-    Some { CS.slot = s.wall_slot; heal_move_slot; hp_floor = hp_floors.wall_hp }
+    Some { CS.slot = s.wall_slot; heal_move_slot; hp_floor = wall_hp }
 
-let build_policy ~ball_name ~max_balls ~max_turns s : CS.policy =
+let build_policy ~ball_name ~fallback_ball ~max_balls ~max_turns s : CS.policy =
   let all_slots = List.init lim.max_slot (fun i -> i + 1) in
   let send_in_order =
     dedup_slots
@@ -241,13 +223,34 @@ let build_policy ~ball_name ~max_balls ~max_turns s : CS.policy =
     false_swiper = make_false_swiper s;
     wall = make_wall s;
     ball_name;
+    fallback_ball;
     max_balls;
-    foe_hp_target = hp_floors.foe_target;
-    foe_hp_rechip = hp_floors.foe_rechip;
+    foe_hp_target = foe_target;
+    foe_hp_rechip = foe_rechip;
     reapply_status = s.sleep_slot > 0;
     max_turns;
     send_in_order;
   }
+
+let default_fallback_turn = 25
+let default_fallback_steps = -6
+
+let parse_fallback opts =
+  let key =
+    Option.value ~default:"none" (Run_options.find opts "fallback_ball")
+  in
+  let* steps =
+    int_opt ~key:"fallback_ball_steps" ~default:default_fallback_steps
+      ~min:(-lim.max_row) ~max:lim.max_row opts
+  in
+  if key = "none" then Ok (None, steps)
+  else
+    let* name = ball_display_name key in
+    let* turn =
+      int_opt ~key:"fallback_turn" ~default:default_fallback_turn ~min:1
+        ~max:lim.max_turns opts
+    in
+    Ok (Some (turn, name), steps)
 
 let of_run_options opts =
   let target =
@@ -257,6 +260,7 @@ let of_run_options opts =
     Option.value ~default:"luxury" (Run_options.find opts "ball")
   in
   let* ball_name = ball_display_name ball_key in
+  let* fallback_ball, fallback_ball_steps = parse_fallback opts in
   let* max_balls =
     int_opt ~key:"max_balls" ~default:lim.default_max_balls ~min:1
       ~max:lim.max_balls opts
@@ -267,8 +271,10 @@ let of_run_options opts =
   in
   let* slots = parse_slots opts in
   let* bag = parse_bag opts in
-  let policy = build_policy ~ball_name ~max_balls ~max_turns slots in
-  Ok { target; lead_slot = slots.lead_slot; bag; policy }
+  let policy =
+    build_policy ~ball_name ~fallback_ball ~max_balls ~max_turns slots
+  in
+  Ok { target; lead_slot = slots.lead_slot; bag; fallback_ball_steps; policy }
 
 let format_summary cfg =
   let chip_text =
@@ -276,7 +282,7 @@ let format_summary cfg =
     | None -> "none"
     | Some hc ->
         Printf.sprintf "slot%d/m%d(floor=%.0f%%)" hc.slot hc.move_slot
-          (hc.foe_hp_floor *. hp_floors.pct_divisor)
+          (hc.foe_hp_floor *. pct_divisor)
   in
   Printf.sprintf "target=%s ball=%s lead=%d chipper=%s max_balls=%d" cfg.target
     cfg.policy.ball_name cfg.lead_slot chip_text cfg.policy.max_balls

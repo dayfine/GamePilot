@@ -36,6 +36,7 @@ let run_checked ~picture (cfg : Opts.t) =
   Effects.show_log ("Starting bdsp.battle_catch: " ^ Opts.format_summary cfg);
   let steps =
     BCS.make ~log:Effects.show_log ~initial_move_slot:(initial_move_slot ())
+      ~fallback_ball_steps:cfg.fallback_ball_steps
       {
         picture;
         initial_active_slot = cfg.lead_slot;
