@@ -7,6 +7,7 @@
  (libraries
   gamepilot.live_run
   gamepilot.console_config
+  gamepilot.ui_hub
   gamepilot.run_options
   gamepilot.wire
   gamepilot.effects

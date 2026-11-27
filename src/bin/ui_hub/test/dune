@@ -1,0 +1,7 @@
+(tests
+ (names test_ui_api)
+ (libraries
+  gamepilot.table_test
+  gamepilot.ui_hub
+  gamepilot.console_config
+  yojson))
