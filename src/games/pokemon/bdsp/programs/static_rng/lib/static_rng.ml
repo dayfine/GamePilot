@@ -5,7 +5,7 @@ module WF = Static_rng_workflow
 type templates = { player_eye_png : string; player_eye_box : Wire.box }
 
 let default_player_eye_box : Wire.box =
-  { x = 0.470; y = 0.665; w = 0.058; h = 0.056 }
+  { x = 0.493; y = 0.672; w = 0.030; h = 0.044 }
 
 type chamber_timings = {
   press_ms : int;
@@ -36,7 +36,7 @@ let timings =
 
 type reid_defaults = { threshold : float; search_min : int; search_max : int }
 
-let reid_cfg = { threshold = 0.08; search_min = 50; search_max = 10_000 }
+let reid_cfg = { threshold = 0.20; search_min = 50; search_max = 10_000 }
 let rgb_max = 255
 
 let fallback_home_tile : Switch.Home_screen.tile_color =
@@ -56,15 +56,6 @@ let publish_counters ~attempt ~max_attempts ~phase =
 
 let submit_presses cmds = ignore (Effects.submit cmds : Wire.batch_done)
 
-let freeze_player () =
-  submit_presses
-    [
-      Wire.press ~hold_ms:timings.press_ms
-        ~cooldown_ms:timings.wheel_cooldown_ms [ Wire.Plus ];
-      Wire.press ~hold_ms:timings.press_ms ~cooldown_ms:timings.bike_cooldown_ms
-        [ Wire.Right ];
-    ]
-
 let dismiss_dialog () =
   submit_presses
     [
@@ -72,6 +63,16 @@ let dismiss_dialog () =
         ~cooldown_ms:timings.dialog_cooldown_ms [ Wire.B ];
       Wire.press ~hold_ms:timings.press_ms
         ~cooldown_ms:timings.dialog_cooldown_ms [ Wire.B ];
+    ]
+
+let freeze_player () =
+  dismiss_dialog ();
+  submit_presses
+    [
+      Wire.press ~hold_ms:timings.press_ms
+        ~cooldown_ms:timings.wheel_cooldown_ms [ Wire.Plus ];
+      Wire.press ~hold_ms:timings.press_ms ~cooldown_ms:timings.bike_cooldown_ms
+        [ Wire.Right ];
     ]
 
 let repeat_press button count cooldown_ms =

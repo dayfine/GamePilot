@@ -25,6 +25,8 @@ type timing_defaults = {
   min_rolls : int;
   timeout_s : float;
   lease_renew_s : float;
+  keepawake_s : float;
+  keepawake_press_ms : int;
 }
 
 let defaults =
@@ -35,6 +37,8 @@ let defaults =
     min_rolls = 38;
     timeout_s = 600.0;
     lease_renew_s = 30.0;
+    keepawake_s = 90.0;
+    keepawake_press_ms = 50;
   }
 
 let default_config ~picture ~target =
@@ -49,6 +53,7 @@ let default_config ~picture ~target =
 type watch_state = {
   start_s : float;
   mutable last_lease_s : float;
+  mutable last_keepawake_s : float;
   mutable last_check_s : float;
   mutable samples_rev : BE.match_sample list;
   mutable recovery : BR.t;
@@ -67,15 +72,26 @@ let make_watch config start_s =
   {
     start_s;
     last_lease_s = start_s;
+    last_keepawake_s = start_s;
     last_check_s = start_s;
     samples_rev = [];
     recovery = BR.start br_cfg ~watchers:1 ~now:start_s;
   }
 
+let send_keepawake () =
+  let cmd =
+    Wire.press ~hold_ms:defaults.keepawake_press_ms
+      ~cooldown_ms:defaults.keepawake_press_ms [ Wire.LStick ]
+  in
+  ignore (Effects.submit [ cmd ] : Wire.batch_done)
+
 let maybe_renew_lease config watch now_s =
   if now_s -. watch.last_lease_s >= config.lease_renew_seconds then (
     Effects.renew_lease ();
-    watch.last_lease_s <- now_s)
+    watch.last_lease_s <- now_s);
+  if now_s -. watch.last_keepawake_s >= defaults.keepawake_s then (
+    send_keepawake ();
+    watch.last_keepawake_s <- now_s)
 
 let record_frame config watch (frame : Effects.measurements) =
   match EBR.score frame config.target.id with
