@@ -75,16 +75,16 @@ let start_frame_path setup cp =
   | Some (Anywhere _) -> None
   | Some (Grid _ | Zone _) | None -> Some (frame_path setup cp.id)
 
-(* On the Switch: back to the last save (unless already at start) and the start
-   check, then the run. *)
-let console_run setup cp ~already_at_start log =
+(* On the Switch: initial screen check and back to the last save (unless already
+   at start), then the start check and the run. *)
+let console_run setup ~picture cp ~already_at_start log =
   let roster =
     Frlg_actions.Party_roster.(to_list (of_string setup.common.party))
   in
   let party = Console_session.start_party ~roster cp.before in
   let steps = Console_runs.before_run ~already_at_start in
   match
-    Console_session.before ~log
+    Console_session.before ~log ~picture ~home_tile:setup.home_tile
       ~frame_path:(start_frame_path setup cp)
       ~start_path:
         (Frlg_checkpoints.Start_check.start_file ~states:setup.states
@@ -123,20 +123,25 @@ let emulator_run setup cp log record =
   | Passed _ -> ());
   outcome
 
-let switch_run setup cp ~already_at_start log record =
-  let ((outcome, _) as ended) = console_run setup cp ~already_at_start log in
+let switch_run setup ~picture cp ~already_at_start log record =
+  let ((outcome, _) as ended) =
+    console_run setup ~picture cp ~already_at_start log
+  in
   (match outcome with
   | Failed _ -> Daemon_run.save_failure ~log record ~save_states:false
   | Passed _ -> ());
   console_after setup cp log ended
 
-let in_session setup cp ~already_at_start ~progress record log () =
+let in_session setup cp ~already_at_start ~progress record log
+    (backend : Wire.backend) =
   let log = Watch_report.log log in
   Effects.show_run (progress None);
   let outcome =
     match setup.backend with
     | Mgba _ -> emulator_run setup cp log record
-    | Switch _ -> switch_run setup cp ~already_at_start log record
+    | Switch _ ->
+        switch_run setup ~picture:backend.viewport cp ~already_at_start log
+          record
   in
   Effects.show_run (progress (Some (trial outcome)));
   outcome
@@ -144,7 +149,7 @@ let in_session setup cp ~already_at_start ~progress record log () =
 let live setup cp ~already_at_start ~progress record log
     (daemon : Daemon_process.t) =
   Daemon_run.in_session ~failed ~dir:record.Run_record.dir (fun () ->
-      Live.run ~port:daemon.port
+      Live.run_with_backend ~port:daemon.port
         (in_session setup cp ~already_at_start ~progress record log))
 
 let with_daemon setup run n body =

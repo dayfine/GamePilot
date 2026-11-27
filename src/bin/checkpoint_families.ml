@@ -40,12 +40,22 @@ let viewport plan_dir (f : _ Run_flags.flags) =
 let program_options plan_dir (f : _ Run_flags.flags) =
   R.check_options (R.of_plan_dir plan_dir) f.options
 
+(* The game's Switch HOME tile colour for a plan folder, when known. *)
+let home_tile plan_dir =
+  Option.bind (R.of_plan_dir plan_dir) (fun (p : R.t) ->
+      Option.map (fun (s : R.switch) -> s.home_tile) p.game.switch)
+
 let grid_series plan_dir args =
   let* f = Pokemon_flags.parse Pokemon_flags.defaults args in
   let* options = program_options plan_dir f in
   Grid.Run_command.run_grid
     ~program:
-      { fields = program_fields; viewport = viewport plan_dir f; options }
+      {
+        fields = program_fields;
+        viewport = viewport plan_dir f;
+        home_tile = home_tile plan_dir;
+        options;
+      }
     plan_dir f
 
 (* The Pokémon grid rules' guide. *)
