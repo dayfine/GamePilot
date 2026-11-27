@@ -41,32 +41,16 @@ type party_slots = {
   send_in_order : int list;
 }
 
-type policy_defaults = {
-  ball_name : string;
-  max_balls : int;
-  max_turns : int;
-  status_floor : float;
-  swiper_floor : float;
-  wall_floor : float;
-  foe_target : float;
-  kyogre_rechip : float;
-  groudon_rechip : float;
-  poll_slice_ms : int;
-}
-
-let defaults : policy_defaults =
-  {
-    ball_name = "Luxury Ball";
-    max_balls = 60;
-    max_turns = 80;
-    status_floor = 0.35;
-    swiper_floor = 0.40;
-    wall_floor = 0.45;
-    foe_target = 0.15;
-    kyogre_rechip = 0.35;
-    groudon_rechip = 0.40;
-    poll_slice_ms = 500;
-  }
+let default_ball_name = "Luxury Ball"
+let default_max_balls = 60
+let default_max_turns = 80
+let default_status_floor = 0.35
+let default_swiper_floor = 0.40
+let default_wall_floor = 0.45
+let default_foe_target = 0.15
+let kyogre_rechip = 0.35
+let groudon_rechip = 0.40
+let poll_slice_ms = 500
 
 let default_timing : timing =
   {
@@ -111,13 +95,14 @@ let ensure_probes cfg tr =
         : string list);
     tr.subscribed <- true)
 
+let saw_sleep m = Hud.foe_asleep m = Some true
+
 let sample_foe_asleep cfg first_m =
   match Hud.foe_asleep first_m with
   | Some true -> Some CS.Asleep
   | None -> None
   | Some false when cfg.timing.status_cycle_ms <= 0 -> Some CS.Healthy
   | Some false -> (
-      let saw_sleep m = Hud.foe_asleep m = Some true in
       match Effects.await ~timeout_ms:cfg.timing.status_cycle_ms saw_sleep with
       | Effects.Holds _ -> Some CS.Asleep
       | Effects.Timeout -> Some CS.Healthy)
@@ -160,15 +145,14 @@ let inspect_frame ~log cfg tr m =
   | Hud.Black -> Some (wait_battle_end ~log cfg tr)
   | Hud.Other -> None
 
-let is_event_screen m =
-  match Hud.classify_screen m with Hud.Other -> false | _ -> true
+let is_event_screen m = Hud.classify_screen m <> Hud.Other
 
 let rec poll_event ~log cfg tr deadline =
   let remaining = int_of_float (deadline -. Effects.now ()) in
   if remaining <= 0 then
     Ok (CR.Unexpected "timed out waiting for BDSP battle event")
   else
-    let slice = min remaining defaults.poll_slice_ms in
+    let slice = min remaining poll_slice_ms in
     match Effects.await ~timeout_ms:slice is_event_screen with
     | Effects.Timeout -> poll_event ~log cfg tr deadline
     | Effects.Holds m -> (
@@ -264,36 +248,53 @@ let make ?(log = ignore) ?(initial_move_slot = 1) cfg : CR.game_steps =
     send_in = send_in ~log cfg tr;
   }
 
+let status_role s : CS.role_config =
+  {
+    slot = s.status_setter;
+    move_slot = s.status_move;
+    hp_floor = default_status_floor;
+  }
+
+let swiper_role s : CS.false_swipe_config =
+  {
+    slot = s.false_swiper;
+    move_slot = s.false_swipe_move;
+    require_status = true;
+    hp_floor = default_swiper_floor;
+  }
+
+let wall_role s : CS.wall_config =
+  {
+    slot = s.wall;
+    heal_move_slot = s.wall_heal_move;
+    hp_floor = default_wall_floor;
+  }
+
 let build_policy ~ball_name ~max_balls ~max_turns ~foe_hp_rechip ~heavy_chipper
     (s : party_slots) : CS.policy =
-  let status_setter : CS.role_config =
-    { slot = s.status_setter; move_slot = s.status_move; hp_floor = defaults.status_floor }
-  in
-  let false_swiper : CS.false_swipe_config =
-    {
-      slot = s.false_swiper; move_slot = s.false_swipe_move;
-      require_status = true; hp_floor = defaults.swiper_floor;
-    }
-  in
-  let wall : CS.wall_config =
-    { slot = s.wall; heal_move_slot = s.wall_heal_move; hp_floor = defaults.wall_floor }
-  in
   {
-    status_setter = Some status_setter; setup = None; heavy_chipper;
-    false_swiper = Some false_swiper; wall = Some wall;
-    ball_name; max_balls; foe_hp_target = defaults.foe_target;
-    foe_hp_rechip; reapply_status = true; max_turns;
+    status_setter = Some (status_role s);
+    setup = None;
+    heavy_chipper;
+    false_swiper = Some (swiper_role s);
+    wall = Some (wall_role s);
+    ball_name;
+    max_balls;
+    foe_hp_target = default_foe_target;
+    foe_hp_rechip;
+    reapply_status = true;
+    max_turns;
     send_in_order = s.send_in_order;
   }
 
-let kyogre_policy ?(ball_name = defaults.ball_name)
-    ?(max_balls = defaults.max_balls) ?(max_turns = defaults.max_turns)
+let kyogre_policy ?(ball_name = default_ball_name)
+    ?(max_balls = default_max_balls) ?(max_turns = default_max_turns)
     ?heavy_chipper slots =
-  build_policy ~ball_name ~max_balls ~max_turns
-    ~foe_hp_rechip:defaults.kyogre_rechip ~heavy_chipper slots
+  build_policy ~ball_name ~max_balls ~max_turns ~foe_hp_rechip:kyogre_rechip
+    ~heavy_chipper slots
 
-let groudon_policy ?(ball_name = defaults.ball_name)
-    ?(max_balls = defaults.max_balls) ?(max_turns = defaults.max_turns)
+let groudon_policy ?(ball_name = default_ball_name)
+    ?(max_balls = default_max_balls) ?(max_turns = default_max_turns)
     ?heavy_chipper slots =
-  build_policy ~ball_name ~max_balls ~max_turns
-    ~foe_hp_rechip:defaults.groudon_rechip ~heavy_chipper slots
+  build_policy ~ball_name ~max_balls ~max_turns ~foe_hp_rechip:groudon_rechip
+    ~heavy_chipper slots

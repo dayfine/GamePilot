@@ -34,11 +34,7 @@ let is_setup_move (policy : Catch_state.policy) (state : Catch_state.t) slot =
   | Some su -> state.active_slot = su.slot && su.move_slot = slot
   | None -> false
 
-type counters = {
-  summary : summary;
-  setup_uses : int;
-  wall_move_heals : int;
-}
+type counters = { summary : summary; setup_uses : int; wall_move_heals : int }
 
 let empty_counters =
   { summary = empty_summary; setup_uses = 0; wall_move_heals = 0 }

@@ -108,58 +108,32 @@ type raw_slots = {
   wall_heal_move : int;
 }
 
-let parse_primary opts =
+let parse_slots opts =
+  let slot_opt key default =
+    int_opt ~key ~default ~min:0 ~max:lim.max_slot opts
+  in
+  let move_opt key default =
+    int_opt ~key ~default ~min:1 ~max:lim.max_move opts
+  in
   let* lead_slot =
     int_opt ~key:"lead_slot" ~default:1 ~min:1 ~max:lim.max_slot opts
   in
-  let* sleep_slot =
-    int_opt ~key:"sleep_slot" ~default:1 ~min:0 ~max:lim.max_slot opts
-  in
-  let* sleep_move =
-    int_opt ~key:"sleep_move" ~default:lim.default_sleep_move ~min:1
-      ~max:lim.max_move opts
-  in
-  let* false_swipe_slot =
-    int_opt ~key:"false_swipe_slot" ~default:1 ~min:0 ~max:lim.max_slot opts
-  in
-  let* false_swipe_move =
-    int_opt ~key:"false_swipe_move" ~default:lim.default_fs_move ~min:1
-      ~max:lim.max_move opts
-  in
-  Ok (lead_slot, sleep_slot, sleep_move, false_swipe_slot, false_swipe_move)
-
-let parse_setup opts =
-  let* setup_slot =
-    int_opt ~key:"setup_slot" ~default:0 ~min:0 ~max:lim.max_slot opts
-  in
-  let* setup_move =
-    int_opt ~key:"setup_move" ~default:lim.max_move ~min:1 ~max:lim.max_move
-      opts
-  in
+  let* sleep_slot = slot_opt "sleep_slot" 1 in
+  let* sleep_move = move_opt "sleep_move" lim.default_sleep_move in
+  let* false_swipe_slot = slot_opt "false_swipe_slot" 1 in
+  let* false_swipe_move = move_opt "false_swipe_move" lim.default_fs_move in
+  let* setup_slot = slot_opt "setup_slot" 0 in
+  let* setup_move = move_opt "setup_move" lim.max_move in
   let* setup_uses =
     int_opt ~key:"setup_uses" ~default:2 ~min:1 ~max:lim.max_slot opts
   in
-  Ok (setup_slot, setup_move, setup_uses)
-
-let parse_slots opts =
-  let* lead_slot, sleep_slot, sleep_move, false_swipe_slot, false_swipe_move =
-    parse_primary opts
-  in
-  let* setup_slot, setup_move, setup_uses = parse_setup opts in
-  let* chipper_slot =
-    int_opt ~key:"chipper_slot" ~default:0 ~min:0 ~max:lim.max_slot opts
-  in
-  let* chipper_move =
-    int_opt ~key:"chipper_move" ~default:1 ~min:1 ~max:lim.max_move opts
-  in
+  let* chipper_slot = slot_opt "chipper_slot" 0 in
+  let* chipper_move = move_opt "chipper_move" 1 in
   let* chipper_floor_pct =
     int_opt ~key:"chipper_floor_pct" ~default:lim.default_floor_pct
       ~min:lim.floor_min_pct ~max:lim.floor_max_pct opts
   in
-  let* wall_slot =
-    int_opt ~key:"wall_slot" ~default:lim.default_wall_slot ~min:0
-      ~max:lim.max_slot opts
-  in
+  let* wall_slot = slot_opt "wall_slot" lim.default_wall_slot in
   let* wall_heal_move =
     int_opt ~key:"wall_heal_move" ~default:0 ~min:0 ~max:lim.max_move opts
   in
@@ -202,25 +176,35 @@ let make_status_setter s =
   if s.sleep_slot = 0 then None
   else
     Some
-      { CS.slot = s.sleep_slot; move_slot = s.sleep_move; hp_floor = hp_floors.status_hp }
+      {
+        CS.slot = s.sleep_slot;
+        move_slot = s.sleep_move;
+        hp_floor = hp_floors.status_hp;
+      }
 
 let make_setup s =
   if s.setup_slot = 0 then None
   else
     Some
       {
-        CS.slot = s.setup_slot; move_slot = s.setup_move;
-        uses = s.setup_uses; require_status = s.sleep_slot > 0;
+        CS.slot = s.setup_slot;
+        move_slot = s.setup_move;
+        uses = s.setup_uses;
+        require_status = s.sleep_slot > 0;
       }
 
 let make_heavy_chipper s =
   if s.chipper_slot = 0 then None
   else
-    let foe_hp_floor = float_of_int s.chipper_floor_pct /. hp_floors.pct_divisor in
+    let foe_hp_floor =
+      float_of_int s.chipper_floor_pct /. hp_floors.pct_divisor
+    in
     Some
       {
-        CS.slot = s.chipper_slot; move_slot = s.chipper_move;
-        hp_floor = hp_floors.chipper_hp; foe_hp_floor;
+        CS.slot = s.chipper_slot;
+        move_slot = s.chipper_move;
+        hp_floor = hp_floors.chipper_hp;
+        foe_hp_floor;
         require_status = s.sleep_slot > 0;
       }
 
@@ -229,8 +213,10 @@ let make_false_swiper s =
   else
     Some
       {
-        CS.slot = s.false_swipe_slot; move_slot = s.false_swipe_move;
-        require_status = s.sleep_slot > 0; hp_floor = hp_floors.swiper_hp;
+        CS.slot = s.false_swipe_slot;
+        move_slot = s.false_swipe_move;
+        require_status = s.sleep_slot > 0;
+        hp_floor = hp_floors.swiper_hp;
       }
 
 let make_wall s =

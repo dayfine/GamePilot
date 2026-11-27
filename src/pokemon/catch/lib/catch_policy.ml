@@ -53,7 +53,8 @@ let status_or_pause policy state =
 
 let setup_for policy state (su : setup_config) =
   if
-    state.balls_thrown > 0 || state.setup_uses_done >= su.uses
+    state.balls_thrown > 0
+    || state.setup_uses_done >= su.uses
     || is_fainted state su.slot
   then None
   else if su.require_status && needs_status state then

@@ -42,7 +42,8 @@ type t = {
 
 type setup_config = {
   slot : int;  (** 1-based party slot that uses the setup move. *)
-  move_slot : int;  (** 1-based move slot of the setup move (e.g. Swords Dance). *)
+  move_slot : int;
+      (** 1-based move slot of the setup move (e.g. Swords Dance). *)
   uses : int;  (** Number of setup turns to execute before chipping. *)
   require_status : bool;
       (** When [true], apply status (e.g. Sleep) before setting up. *)
