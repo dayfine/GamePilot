@@ -25,6 +25,7 @@ type t = {
 
 let create ~config_path ?listen () =
   { config_path; listen; next_id = 0; runs = [] }
+
 let config_path st = st.config_path
 
 let append_log entry line =
