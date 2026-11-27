@@ -238,7 +238,7 @@ let decide_policy ?(found = true) ?intro_verdict ~catch_outcome
           add "find";
           found);
       detect_shiny;
-      on_miss = (fun () -> add "on_miss");
+      on_miss = (fun ~party -> add (Printf.sprintf "on_miss(party=%d)" party));
       catch_battle =
         (fun () ->
           add "catch_battle";
@@ -395,7 +395,8 @@ let policy_decisions =
     case "visual non-shiny miss skips catch & throws 0 balls, runs on_miss"
       (decide_policy ~intro_verdict:Not_shiny
          ~catch_outcome:(Caught caught_summary) ~shiny:true ~party:5)
-      "find, intro not_shiny, on_miss => wild_rng_not_shiny_intro (balls=none)";
+      "find, intro not_shiny, on_miss(party=5) => wild_rng_not_shiny_intro \
+       (balls=none)";
     case "visual unknown still catches and checks summary star guard"
       (decide_policy ~intro_verdict:Unknown
          ~catch_outcome:(Caught caught_summary) ~shiny:false ~party:5)
@@ -431,7 +432,7 @@ let policy_decisions =
                 add (Printf.sprintf "find#%d" !attempt);
                 true);
             detect_shiny = None;
-            on_miss = ignore;
+            on_miss = (fun ~party:_ -> ());
             catch_battle =
               (fun () ->
                 add (Printf.sprintf "catch#%d" !attempt);
@@ -459,6 +460,123 @@ let policy_decisions =
           (Option.value (Wild_rng.failure_code r.end_) ~default:"passes"))
       "find#1, catch#1, summary#1=false, find#2, catch#2, summary#2=true => \
        passes";
+    case "visual miss runs on_miss (skipping phase1/2) then retries to shiny"
+      (fun () ->
+        let attempt = ref 0 in
+        let steps = ref [] in
+        let add s = steps := s :: !steps in
+        let pc : Wild_rng.policy_catch_steps =
+          {
+            find_encounter =
+              (fun () ->
+                incr attempt;
+                add (Printf.sprintf "find#%d" !attempt);
+                true);
+            detect_shiny =
+              Some
+                (fun () ->
+                  let v =
+                    if !attempt = 1 then
+                      Frlg_readers.Shiny_encounter_reader.Not_shiny
+                    else Shiny
+                  in
+                  add
+                    (Printf.sprintf "intro#%d=%s" !attempt
+                       (Frlg_readers.Shiny_encounter_reader.verdict_to_string v));
+                  reading_of v);
+            on_miss =
+              (fun ~party ->
+                add (Printf.sprintf "fast_cal#%d(party=%d)" !attempt party));
+            catch_battle =
+              (fun () ->
+                add (Printf.sprintf "policy_catch#%d" !attempt);
+                Caught caught_summary);
+            finish_catch = (fun _ -> true);
+          }
+        in
+        let game_steps : Wild_rng.game_steps =
+          {
+            catch = (fun _ ~party:_ -> failwith "unused");
+            policy_catch = Some pc;
+            shiny_at =
+              (fun slot ->
+                add (Printf.sprintf "summary#%d(slot=%d)" !attempt slot);
+                true);
+            log = ignore;
+          }
+        in
+        let base = Result.get_ok (Wild_rng_plan.decode (obj plan_args)) in
+        let plan = { base.capture with max_encounters = 3 } in
+        let r = Wild_rng.run game_steps plan ~party:5 in
+        Printf.sprintf "%s => %s"
+          (String.concat ", " (List.rev !steps))
+          (Option.value (Wild_rng.failure_code r.end_) ~default:"passes"))
+      "find#1, intro#1=not_shiny, fast_cal#1(party=5), find#2, intro#2=shiny, \
+       policy_catch#2, summary#2(slot=6) => passes";
+    case "wild miss calibration recovers exact delta for non-target species"
+      (fun () ->
+        let plan =
+          Result.get_ok
+            (Wild_rng_plan.decode
+               (obj
+                  {|{"species": "ekans", "location": "route_10", "tid": 12345,
+                     "sid": 54321, "frame_model": "switch"}|}))
+        in
+        let tgt = Result.get_ok (Wild_rng_plan.target plan) in
+        let slots = Result.get_ok (Wild_rng_plan.slots plan) in
+        let delays, seeds =
+          Result.get_ok
+            (Wild_rng_plan.seed_column_of ~seeds:plan.seeds
+               ~seed_shift:plan.seed_shift)
+        in
+        let idx =
+          Option.get
+            (Frlg_rng.Rng_miss_search.find_seed_index ~delays ~seeds
+               ~seed:tgt.seed ~table_delay_ms:tgt.table_delay_ms)
+        in
+        let miss_idx = idx + 1 in
+        let rec find_non_target adv =
+          let st =
+            Frlg_rng.Rng_state.of_seed ~seed:seeds.(miss_idx) ~advance:adv
+              Method1
+          in
+          let e =
+            Frlg_rng.Wild_encounter.pokemon_of_state st slots ~super_rod:false
+          in
+          if e.species <> plan.species then (adv, e)
+          else find_non_target (adv + 1)
+        in
+        let miss_adv, enc = find_non_target (tgt.advance + 15) in
+        let db = Result.get_ok (Frlg_rng.Base_stats.load ()) in
+        let bs = Option.get (Frlg_rng.Base_stats.find db enc.species) in
+        let stats =
+          Frlg_rng.Base_stats.compute_stats ~base:bs.base
+            ~nature:enc.pokemon.nature ~ivs:enc.pokemon.ivs ~level:enc.level
+        in
+        let obs : Frlg_rng.Rng_miss_search.observation =
+          {
+            nature = Some enc.pokemon.nature;
+            gender = Unknown;
+            level = enc.level;
+            stats = Some stats;
+          }
+        in
+        match
+          Rng_miss_calibration.report_and_calibrate_wild ~log:ignore
+            ~label:"Wild RNG" ~species:enc.species ~slots ~super_rod:false
+            ~seeds:plan.seeds ~seed_shift:plan.seed_shift ~target_seed:tgt.seed
+            ~target_delay_ms:tgt.table_delay_ms ~target_advance:tgt.advance
+            ~persist:false obs
+        with
+        | None -> "none"
+        | Some d ->
+            let expected_boot = -(delays.(miss_idx) - tgt.table_delay_ms) in
+            let expected_adv = -(miss_adv - tgt.advance) in
+            Printf.sprintf "non_target=%b boot_ok=%b adv_ok=%b"
+              (enc.species <> plan.species)
+              (d.boot_delta_ms = expected_boot)
+              (d.ingame_delta = expected_adv))
+      "non_target=true boot_ok=true adv_ok=true";
   ]
 
 let decisions =

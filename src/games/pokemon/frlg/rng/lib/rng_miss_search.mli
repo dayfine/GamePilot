@@ -82,6 +82,28 @@ val search_method1 :
     doubling [adv_radius] up to {!max_advances_radius} if 0 hits are found. Hits
     are sorted by [(abs seed_delta_frames * 5) + abs advance_delta]. *)
 
+val search_wild :
+  slots:Wild_encounter.slot array ->
+  super_rod:bool ->
+  species:string ->
+  base_stats:Base_stats.entry ->
+  delays:int array ->
+  seeds:int array ->
+  target_seed_index:int ->
+  target_advance:int ->
+  ?seed_radius:int ->
+  ?advances_radius:int ->
+  observation ->
+  hit list
+(** Searches wild encounters via {!Wild_encounter.pokemon_of_state} across
+    [Method1], [Method2], and [Method4] (matching PA/CC's [AdvRngMethod::Any])
+    in [[target_seed_index - seed_radius .. target_seed_index + seed_radius]]
+    and [[max 0 (target_advance - adv_radius) .. target_advance + adv_radius]],
+    doubling [adv_radius] up to {!max_advances_radius} if 0 hits are found.
+    Matches when {!Wild_encounter.species_matches}, [level], nature, gender, and
+    stats agree, returning at most one hit per [(seed_index, advance)], sorted
+    by [(abs seed_delta_frames * 5) + abs advance_delta]. *)
+
 val format_observation : observation -> string
 (** Formats an {!observation} as a single log line (e.g.
     ["Calm Female Lv16 (45/21/29/25/33/23)"]). *)

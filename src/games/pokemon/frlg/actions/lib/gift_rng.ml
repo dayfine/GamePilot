@@ -210,9 +210,9 @@ let live_calibrated_game_steps ~log ?(reset_mode = Rng_reset.Mgba) initial_plan
     match Wild_rng_steps.check_summary ~log ~slot ~read_miss:is_switch with
     | `Shiny -> true
     | `Not_shiny None -> false
-    | `Not_shiny (Some obs) ->
+    | `Not_shiny (Some miss) ->
         calibrate_miss ~log ~is_switch ~current_plan ~prev_seed_delta
-          ~tgt:!current_target obs;
+          ~tgt:!current_target miss.observation;
         false
   in
   { claim_prize; shiny_at; log }

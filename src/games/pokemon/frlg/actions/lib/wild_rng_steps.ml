@@ -102,8 +102,10 @@ let game_steps ~log ?reset_mode ?encounter_method t plan =
     flee = (fun () -> true);
   }
 
+let ignore_miss ~party:_ = ()
+
 let policy_catch_steps ~log ?reset_mode ?encounter_method ~timings
-    ?(visual_shiny_check = false) ?(on_miss = ignore) ~config ~policy () :
+    ?(visual_shiny_check = false) ?(on_miss = ignore_miss) ~config ~policy () :
     Wild_rng.policy_catch_steps =
   let detect_shiny =
     if visual_shiny_check then
@@ -130,36 +132,6 @@ let read_star () =
   | Holds _ -> true
   | Timeout -> false
 
-let skills_page = 2
-
-let miss_gender_of = function
-  | Some Frlg_text.Summary_stats.Male -> Frlg_rng.Rng_miss_search.Male
-  | Some Female -> Female
-  | Some Genderless -> Genderless
-  | None -> Unknown
-
-let miss_stats_of (s : Frlg_text.Summary_stats.stats) :
-    Frlg_rng.Rng_miss_search.stats =
-  { hp = s.hp; atk = s.atk; def = s.def; spa = s.spa; spd = s.spd; spe = s.spe }
-
-let read_page2_stats glyphs =
-  Summary_paging.to_page skills_page;
-  Summary_paging.settled (fun () -> Frlg_text.Summary_stats.read_stats glyphs)
-  |> Option.map miss_stats_of
-
-let read_miss_observation () =
-  let glyphs = Text_data.glyphs () in
-  let level =
-    Summary_paging.settled (fun () -> Frlg_text.Summary_stats.read_level glyphs)
-  in
-  Option.map
-    (fun level ->
-      let nature = Frlg_text.Summary_stats.read_nature glyphs in
-      let gender = miss_gender_of (Frlg_text.Summary_stats.read_gender ()) in
-      let stats = read_page2_stats glyphs in
-      { Frlg_rng.Rng_miss_search.nature; gender; level; stats })
-    level
-
 let check_open_summary ~log ~slot ~read_miss () =
   Summary_moves.open_summary slot;
   let shiny = read_star () in
@@ -168,7 +140,8 @@ let check_open_summary ~log ~slot ~read_miss () =
        (if shiny then "shows" else "does not show"));
   let result =
     if shiny then `Shiny
-    else if read_miss then `Not_shiny (read_miss_observation ())
+    else if read_miss then
+      `Not_shiny (Rng_miss_calibration.read_summary_miss ())
     else `Not_shiny None
   in
   M.close_to_overworld ~label:"summary" ~log;
@@ -200,22 +173,29 @@ let prepare_target ~log ~first_attempt ~current_plan ~current_target () =
       log ("Wild RNG: " ^ Frlg_rng.Wild_target.describe tgt ^ ".");
       Ok tgt
 
-let calibrate_miss ~log ~is_switch ~current_plan ~prev_seed_delta
-    ~(tgt : Frlg_rng.Wild_target.t) obs =
-  let (p : Wild_rng_plan.t) = !current_plan in
-  match
-    Rng_miss_calibration.report_and_calibrate ~log ~label:"Wild RNG"
-      ~species:p.species ~seeds:p.seeds ~seed_shift:p.seed_shift
-      ~target_seed:tgt.seed ~target_delay_ms:tgt.table_delay_ms
-      ~target_advance:tgt.advance ~persist:is_switch
-      ?prev_seed_delta:!prev_seed_delta obs
-  with
+let apply_miss_delta ~current_plan ~prev_seed_delta (p : Wild_rng_plan.t) =
+  function
   | None -> ()
-  | Some d ->
+  | Some (d : Rng_miss_calibration.delta) ->
       prev_seed_delta := Some d.seed_delta_frames;
       current_plan :=
         Wild_rng_plan.apply_timing_delta ~boot_delta_ms:d.boot_delta_ms
           ~ingame_delta:d.ingame_delta p
+
+let calibrate_miss ~log ~is_switch ~current_plan ~prev_seed_delta
+    ~(tgt : Frlg_rng.Wild_target.t) (miss : Rng_miss_calibration.summary_miss) =
+  let (p : Wild_rng_plan.t) = !current_plan in
+  let caught_species = Option.value ~default:p.species miss.species in
+  match Wild_rng_plan.slots p with
+  | Error e -> log ("Wild RNG miss search skipped: " ^ e)
+  | Ok slots ->
+      Rng_miss_calibration.report_and_calibrate_wild ~log ~label:"Wild RNG"
+        ~species:caught_species ~slots
+        ~super_rod:(p.encounter_method = Wild_rng_plan.Super_rod)
+        ~seeds:p.seeds ~seed_shift:p.seed_shift ~target_seed:tgt.seed
+        ~target_delay_ms:tgt.table_delay_ms ~target_advance:tgt.advance
+        ~persist:is_switch ?prev_seed_delta:!prev_seed_delta miss.observation
+      |> apply_miss_delta ~current_plan ~prev_seed_delta p
 
 let calibrated_find ~log ~reset_mode ~encounter_method ~prepare () =
   match prepare () with
@@ -224,29 +204,29 @@ let calibrated_find ~log ~reset_mode ~encounter_method ~prepare () =
       find_encounter ~log ~reset_mode ~encounter_method tgt.timings ()
 
 let make_calibrated_policy ~log ~reset_mode ~encounter_method ~timings ~prepare
-    ~visual_shiny_check ~config ~policy =
+    ~visual_shiny_check ~on_miss ~config ~policy =
   let base =
     policy_catch_steps ~log ~reset_mode ~encounter_method ~timings
-      ~visual_shiny_check ~config ~policy ()
+      ~visual_shiny_check ~on_miss ~config ~policy ()
   in
   let find_encounter =
     calibrated_find ~log ~reset_mode ~encounter_method ~prepare
   in
   Some { base with find_encounter }
 
-let calibrated_policy_catch ~log ~reset_mode ~timings ~prepare
+let calibrated_policy_catch ~log ~reset_mode ~timings ~prepare ~on_miss
     (plan : Wild_rng_plan.t) =
   let encounter_method = plan.encounter_method in
   match (plan.catch_mode, plan.visual_shiny_check) with
   | Wild_rng_plan.Throw_only, false -> None
   | Wild_rng_plan.Throw_only, true ->
       make_calibrated_policy ~log ~reset_mode ~encounter_method ~timings
-        ~prepare ~visual_shiny_check:true
+        ~prepare ~visual_shiny_check:true ~on_miss
         ~config:Wild_rng_plan.default_catch_config
         ~policy:(Wild_rng_plan.throw_only_policy plan.capture)
   | Wild_rng_plan.Catch_policy { policy; config }, visual_shiny_check ->
       make_calibrated_policy ~log ~reset_mode ~encounter_method ~timings
-        ~prepare ~visual_shiny_check ~config ~policy
+        ~prepare ~visual_shiny_check ~on_miss ~config ~policy
 
 let calibrated_catch ~log ~reset_mode ~encounter_method ~prepare capture ~party
     =
@@ -265,10 +245,25 @@ let calibrated_shiny_at ~log ~is_switch ~current_plan ~prev_seed_delta
   match check_summary ~log ~slot ~read_miss:is_switch with
   | `Shiny -> true
   | `Not_shiny None -> false
-  | `Not_shiny (Some obs) ->
+  | `Not_shiny (Some miss) ->
       calibrate_miss ~log ~is_switch ~current_plan ~prev_seed_delta
-        ~tgt:!current_target obs;
+        ~tgt:!current_target miss;
       false
+
+(* Fast throw-only catch on a visual Not_shiny miss (no Spore, no False Swipe,
+   no party switching — throws the top ball in the Poké Balls pocket on Turn 1),
+   then reads Summary to calibrate the next attempt. *)
+let fast_calibration_on_miss ~log ~current_plan ~shiny_at ~party =
+  log "Wild RNG: visual miss — fast throw-only catch for calibration.";
+  let (p : Wild_rng_plan.t) = !current_plan in
+  let policy = Wild_rng_plan.throw_only_policy p.capture in
+  let steps = Battle_catch_steps.make ~log Wild_rng_plan.default_catch_config in
+  match Pokemon_catch.Catch_runner.run ~log steps policy with
+  | Pokemon_catch.Catch_runner.Caught _ ->
+      if Capture_steps.finish_catch ~log Party then
+        ignore (shiny_at (party + 1) : bool)
+      else log "Wild RNG: calibration catch did not return to overworld."
+  | _ -> log "Wild RNG: fast calibration catch ended without catching."
 
 let live_calibrated_game_steps ~log ?(reset_mode = Rng_reset.Mgba)
     (initial_plan : Wild_rng_plan.t) (initial_target : Frlg_rng.Wild_target.t) :
@@ -281,15 +276,21 @@ let live_calibrated_game_steps ~log ?(reset_mode = Rng_reset.Mgba)
   let prepare =
     prepare_target ~log ~first_attempt ~current_plan ~current_target
   in
+  let shiny_at =
+    calibrated_shiny_at ~log ~is_switch ~current_plan ~prev_seed_delta
+      ~current_target
+  in
+  let on_miss =
+    if is_switch then fast_calibration_on_miss ~log ~current_plan ~shiny_at
+    else ignore_miss
+  in
   {
     catch =
       calibrated_catch ~log ~reset_mode
         ~encounter_method:initial_plan.encounter_method ~prepare;
     policy_catch =
       calibrated_policy_catch ~log ~reset_mode ~timings:initial_target.timings
-        ~prepare initial_plan;
-    shiny_at =
-      calibrated_shiny_at ~log ~is_switch ~current_plan ~prev_seed_delta
-        ~current_target;
+        ~prepare ~on_miss initial_plan;
+    shiny_at;
     log;
   }

@@ -220,6 +220,10 @@ val encounter_slots : string
     [src/games/pokemon/frlg/assets/extract/extract_frlg_encounter_slots.py]
     writes from Packages' [EncounterSlotsFR.json] (LeafGreen's beside it). *)
 
+val slots : t -> (Frlg_rng.Wild_encounter.slot array, string) result
+(** Loads the encounter slots for [t.location] and [t.encounter_method] from
+    {!encounter_slots}. *)
+
 val target : t -> (Frlg_rng.Wild_target.t, string) result
 (** Reads the seed table and the slots, and searches them: the soonest shiny
     [species] in the advance range, timed for the frame model. *)

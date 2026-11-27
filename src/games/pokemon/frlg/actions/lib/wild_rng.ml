@@ -4,7 +4,7 @@ module Shiny = Frlg_readers.Shiny_encounter_reader
 type policy_catch_steps = {
   find_encounter : unit -> bool;
   detect_shiny : (unit -> Shiny.reading) option;
-  on_miss : unit -> unit;
+  on_miss : party:int -> unit;
   catch_battle : unit -> CR.outcome;
   finish_catch : Capture.destination -> bool;
 }
@@ -42,14 +42,14 @@ let confirm_summary game_steps ~party cap =
   let end_ = if game_steps.shiny_at (party + 1) then Shiny else Not_shiny in
   { end_; capture = Some cap }
 
-let check_intro ~log (pc : policy_catch_steps) =
+let check_intro ~log ~party (pc : policy_catch_steps) =
   match pc.detect_shiny with
   | None -> true
   | Some detect ->
       let reading = detect () in
       log ("Wild RNG: " ^ Shiny.format_reading reading);
       if reading.verdict = Shiny.Not_shiny then (
-        pc.on_miss ();
+        pc.on_miss ~party;
         false)
       else true
 
@@ -66,7 +66,7 @@ let finish_policy_catch game_steps (pc : policy_catch_steps) plan ~party summary
 let run_policy_catch game_steps (pc : policy_catch_steps) plan ~party =
   if not (pc.find_encounter ()) then
     { end_ = Capture_ended No_encounter; capture = None }
-  else if not (check_intro ~log:game_steps.log pc) then
+  else if not (check_intro ~log:game_steps.log ~party pc) then
     { end_ = Not_shiny_intro; capture = None }
   else
     match pc.catch_battle () with

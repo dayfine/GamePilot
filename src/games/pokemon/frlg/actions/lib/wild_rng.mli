@@ -23,9 +23,10 @@ type policy_catch_steps = {
       (** Optional visual battle-intro shiny detector run before turn 1. When
           [Some f] returns [Not_shiny], [catch_battle] is skipped and [on_miss]
           runs instead. *)
-  on_miss : unit -> unit;
-      (** Hook invoked on a visual [Not_shiny] miss (for example, Master Ball
-          miss-only calibration without saving). *)
+  on_miss : party:int -> unit;
+      (** Hook invoked on a visual [Not_shiny] miss with the current [party]
+          count (for example, fast throw-only catch + Summary miss calibration
+          without saving). *)
   catch_battle : unit -> Pokemon_catch.Catch_runner.outcome;
       (** Catch the wild Pokémon via {!Pokemon_catch.Catch_runner.run}. *)
   finish_catch : Capture.destination -> bool;

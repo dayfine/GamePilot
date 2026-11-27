@@ -95,7 +95,7 @@ let make_hit ~target_seed_index ~target_delay_ms ~target_advance ~seed_index
   }
 
 let check_state ~base_stats ~target_seed_index ~target_delay_ms ~target_advance
-    ~seed_index ~seed ~delay_ms obs state acc =
+    obs ~seed_index ~seed ~delay_ms state acc =
   let p = Pokemon_generation.pokemon_of_state state in
   if not (matches_observation ~base_stats obs p) then acc
   else
@@ -103,12 +103,41 @@ let check_state ~base_stats ~target_seed_index ~target_delay_ms ~target_advance
       ~seed ~delay_ms state p
     :: acc
 
-let search_seed_row ~base_stats ~target_seed_index ~target_delay_ms
-    ~target_advance ~min_adv ~max_adv ~seed_index ~seed ~delay_ms obs acc =
-  let step =
-    check_state ~base_stats ~target_seed_index ~target_delay_ms ~target_advance
-      ~seed_index ~seed ~delay_ms obs
+let rec try_wild_methods ~slots ~super_rod ~base_stats obs state = function
+  | [] -> None
+  | rng_method :: rest ->
+      let e =
+        Wild_encounter.pokemon_of_state { state with rng_method } slots
+          ~super_rod
+      in
+      if matches_observation ~base_stats obs e.pokemon then Some e.pokemon
+      else try_wild_methods ~slots ~super_rod ~base_stats obs state rest
+
+let match_wild_methods ~slots ~super_rod ~species ~base_stats obs
+    (state : Rng_state.t) =
+  let first = Wild_encounter.pokemon_of_state state slots ~super_rod in
+  let ok_slot =
+    Wild_encounter.species_matches ~observed:species ~candidate:first.species
+    && first.level = obs.level
   in
+  if not ok_slot then None
+  else if matches_observation ~base_stats obs first.pokemon then
+    Some first.pokemon
+  else
+    try_wild_methods ~slots ~super_rod ~base_stats obs state
+      [ Rng_state.Method2; Rng_state.Method4 ]
+
+let check_wild_state ~slots ~super_rod ~species ~base_stats ~target_seed_index
+    ~target_delay_ms ~target_advance obs ~seed_index ~seed ~delay_ms state acc =
+  match match_wild_methods ~slots ~super_rod ~species ~base_stats obs state with
+  | None -> acc
+  | Some p ->
+      make_hit ~target_seed_index ~target_delay_ms ~target_advance ~seed_index
+        ~seed ~delay_ms state p
+      :: acc
+
+let search_seed_row ~check ~min_adv ~max_adv ~seed_index ~seed ~delay_ms acc =
+  let step = check ~seed_index ~seed ~delay_ms in
   let rec walk (state : Rng_state.t) acc =
     if state.advance > max_adv then acc
     else walk (Rng_state.next state) (step state acc)
@@ -126,45 +155,65 @@ let compare_hits a b =
   let d = Int.compare (hit_distance a) (hit_distance b) in
   if d <> 0 then d else compare_tie a b
 
-let rec fold_seed_rows ~base_stats ~delays ~seeds ~target_seed_index
-    ~target_delay_ms ~target_advance ~min_adv ~max_adv ~hi_seed obs i acc =
+let rec fold_seed_rows ~check ~delays ~seeds ~min_adv ~max_adv ~hi_seed i acc =
   if i > hi_seed then acc
   else
     let acc =
-      search_seed_row ~base_stats ~target_seed_index ~target_delay_ms
-        ~target_advance ~min_adv ~max_adv ~seed_index:i ~seed:seeds.(i)
-        ~delay_ms:delays.(i) obs acc
+      search_seed_row ~check ~min_adv ~max_adv ~seed_index:i ~seed:seeds.(i)
+        ~delay_ms:delays.(i) acc
     in
-    fold_seed_rows ~base_stats ~delays ~seeds ~target_seed_index
-      ~target_delay_ms ~target_advance ~min_adv ~max_adv ~hi_seed obs (i + 1)
-      acc
+    fold_seed_rows ~check ~delays ~seeds ~min_adv ~max_adv ~hi_seed (i + 1) acc
 
-let search_window ~base_stats ~delays ~seeds ~target_seed_index ~target_advance
-    ~seed_radius ~adv_radius obs =
+let search_window ~check ~delays ~seeds ~target_seed_index ~target_advance
+    ~seed_radius ~adv_radius =
   let n = min (Array.length delays) (Array.length seeds) in
-  if target_seed_index < 0 || target_seed_index >= n then []
-  else
-    let target_delay_ms = delays.(target_seed_index) in
-    let lo_seed = max 0 (target_seed_index - seed_radius) in
-    let hi_seed = min (n - 1) (target_seed_index + seed_radius) in
-    let min_adv = max 0 (target_advance - adv_radius) in
-    let max_adv = target_advance + adv_radius in
-    fold_seed_rows ~base_stats ~delays ~seeds ~target_seed_index
-      ~target_delay_ms ~target_advance ~min_adv ~max_adv ~hi_seed obs lo_seed []
-    |> List.sort compare_hits
+  let lo_seed = max 0 (target_seed_index - seed_radius) in
+  let hi_seed = min (n - 1) (target_seed_index + seed_radius) in
+  let min_adv = max 0 (target_advance - adv_radius) in
+  let max_adv = target_advance + adv_radius in
+  fold_seed_rows ~check ~delays ~seeds ~min_adv ~max_adv ~hi_seed lo_seed []
+  |> List.sort compare_hits
 
-let search_method1 ~base_stats ~delays ~seeds ~target_seed_index ~target_advance
-    ?(seed_radius = default_seed_radius)
-    ?(advances_radius = default_advances_radius) obs =
+let expand_search ~check ~delays ~seeds ~target_seed_index ~target_advance
+    ~seed_radius ~advances_radius =
   let rec expand adv_radius =
     let hits =
-      search_window ~base_stats ~delays ~seeds ~target_seed_index
-        ~target_advance ~seed_radius ~adv_radius obs
+      search_window ~check ~delays ~seeds ~target_seed_index ~target_advance
+        ~seed_radius ~adv_radius
     in
     if hits <> [] || adv_radius >= max_advances_radius then hits
     else expand (min max_advances_radius (adv_radius * 2))
   in
   expand (max 0 advances_radius)
+
+let search_method1 ~base_stats ~delays ~seeds ~target_seed_index ~target_advance
+    ?(seed_radius = default_seed_radius)
+    ?(advances_radius = default_advances_radius) obs =
+  let n = min (Array.length delays) (Array.length seeds) in
+  if target_seed_index < 0 || target_seed_index >= n then []
+  else
+    let target_delay_ms = delays.(target_seed_index) in
+    let check =
+      check_state ~base_stats ~target_seed_index ~target_delay_ms
+        ~target_advance obs
+    in
+    expand_search ~check ~delays ~seeds ~target_seed_index ~target_advance
+      ~seed_radius ~advances_radius
+
+let search_wild ~slots ~super_rod ~species ~base_stats ~delays ~seeds
+    ~target_seed_index ~target_advance ?(seed_radius = default_seed_radius)
+    ?(advances_radius = default_advances_radius) obs =
+  let n = min (Array.length delays) (Array.length seeds) in
+  if target_seed_index < 0 || target_seed_index >= n || Array.length slots = 0
+  then []
+  else
+    let target_delay_ms = delays.(target_seed_index) in
+    let check =
+      check_wild_state ~slots ~super_rod ~species ~base_stats ~target_seed_index
+        ~target_delay_ms ~target_advance obs
+    in
+    expand_search ~check ~delays ~seeds ~target_seed_index ~target_advance
+      ~seed_radius ~advances_radius
 
 let gender_to_string = function
   | Male -> "Male"

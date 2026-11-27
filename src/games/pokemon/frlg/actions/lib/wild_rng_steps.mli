@@ -61,7 +61,7 @@ val policy_catch_steps :
   ?encounter_method:Wild_rng_plan.encounter_method ->
   timings:Frlg_rng.Rng_timings.t ->
   ?visual_shiny_check:bool ->
-  ?on_miss:(unit -> unit) ->
+  ?on_miss:(party:int -> unit) ->
   config:Battle_catch_steps.config ->
   policy:Pokemon_catch.Catch_state.policy ->
   unit ->
@@ -75,11 +75,11 @@ val check_summary :
   log:(string -> unit) ->
   slot:int ->
   read_miss:bool ->
-  [ `Shiny | `Not_shiny of Frlg_rng.Rng_miss_search.observation option ]
+  [ `Shiny | `Not_shiny of Rng_miss_calibration.summary_miss option ]
 (** From the overworld: opens [slot]'s Summary Page 1 and checks the shiny star.
-    When not shiny and [read_miss] is [true], reads Page 1 (level, nature,
-    gender), turns to Page 2 to read the 6 stats ({!Frlg_text.Summary_stats}),
-    and closes back to the overworld. *)
+    When not shiny and [read_miss] is [true], reads Page 1 (level, species,
+    nature, gender), turns to Page 2 to read the 6 stats
+    ({!Frlg_text.Summary_stats}), and closes back to the overworld. *)
 
 val shiny_at : log:(string -> unit) -> slot:int -> bool
 (** From the overworld: the member's summary, its first page's star read, back
