@@ -4,7 +4,7 @@
   "execution": {},
   "metadata": {
     "phase": "testing",
-    "source": "ours: BDSP Workflow B static legendary RNG manipulation loop (Munchlax boot-seed recovery, in-chamber 1PK re-identification, timed trigger, visual shiny detection)",
+    "source": "ours: BDSP Workflow A static legendary RNG manipulation loop (0PK pedestal player-blink seed recovery, slate insertion, in-chamber 1PK re-identification, timed trigger, visual shiny detection)",
     "postconditions": {}
   },
   "checkpoint": {
@@ -14,7 +14,7 @@
       {
         "id": "static_rng",
         "kind": "static_rng",
-        "why": "recover the 128-bit boot seed from Munchlax's intro blinks, enter the save facing the legendary, re-identify the 1PK advance anchor, trigger the earliest matching shiny advance, and stop parked on the shiny battle screen ready for capture"
+        "why": "recover the 128-bit seed from 0PK player blinks at the empty pedestal, insert the slate and enter the chamber, re-identify the 1PK advance anchor, trigger the earliest matching shiny advance, and stop parked on the shiny battle screen ready for capture"
       }
     ]
   }

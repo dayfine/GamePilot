@@ -10,20 +10,20 @@ type outcome =
 type game_steps = {
   log : string -> unit;
   update_counters : attempt:int -> max_attempts:int -> phase:string -> unit;
-  recover_boot_seed :
-    timeout_s:int ->
-    (Bdsp_blink_rng.Munchlax_seed_finder.outcome, string) result;
-  enter_save : unit -> (unit, string) result;
+  freeze_player : unit -> unit;
+  recover_pedestal_seed :
+    timeout_s:int -> (Pedestal_seed_finder.outcome, string) result;
+  enter_chamber : unit -> (unit, string) result;
   reidentify_in_chamber :
     base_state:Bdsp_rng.Xorshift128.state ->
     (Bdsp_blink_rng.In_chamber_reidentifier.anchor, string) result;
-  face_target : unit -> unit;
+  prepare_for_trigger : unit -> unit;
   trigger_encounter :
     Trigger.config ->
     Bdsp_blink_rng.In_chamber_reidentifier.anchor ->
     (Trigger.outcome, string) result;
   detect_shiny : unit -> R.reading;
-  soft_reset : unit -> (unit, string) result;
+  soft_reset_to_pedestal : unit -> (unit, string) result;
 }
 
 type attempt_result = Hit of E.hit * R.reading | Retry of string
@@ -46,18 +46,20 @@ let log_phase ~steps ~attempt ~(opts : Opts.t) phase msg =
 let ( let* ) = Result.bind
 
 let run_attempt ~steps ~attempt ~(opts : Opts.t) =
-  log_phase ~steps ~attempt ~opts "munchlax_seed"
-    "Recovering 128-bit boot seed from Munchlax blinks...";
+  log_phase ~steps ~attempt ~opts "pedestal_seed"
+    "Freezing player and recovering 128-bit seed from 0PK pedestal blinks...";
   let res =
-    let* seed = steps.recover_boot_seed ~timeout_s:opts.munchlax_timeout_s in
-    log_phase ~steps ~attempt ~opts "enter_save"
-      (Printf.sprintf "Seed locked (%d blinks, %.1fs). Entering save..."
-         seed.blink_count seed.elapsed_seconds);
-    let* () = steps.enter_save () in
+    steps.freeze_player ();
+    let* seed = steps.recover_pedestal_seed ~timeout_s:opts.seed_timeout_s in
+    log_phase ~steps ~attempt ~opts "enter_chamber"
+      (Printf.sprintf
+         "Seed confirmed (%d blinks, %.1fs, tick=%.4fs). Inserting slate..."
+         seed.events seed.elapsed_seconds seed.tick_seconds);
+    let* () = steps.enter_chamber () in
     log_phase ~steps ~attempt ~opts "reidentify_1pk"
       "Re-identifying in-chamber 1PK advance anchor...";
     let* anchor = steps.reidentify_in_chamber ~base_state:seed.state in
-    steps.face_target ();
+    steps.prepare_for_trigger ();
     log_phase ~steps ~attempt ~opts "trigger"
       (Printf.sprintf "Anchor locked at adv=%d. Scheduling %s encounter..."
          anchor.advances_to_last_blink opts.target.template.species);
@@ -88,8 +90,8 @@ let retry_after_miss ~steps ~attempt ~(opts : Opts.t) ~reason next =
     Exhausted { attempts = attempt; last_reason = reason }
   else (
     log_phase ~steps ~attempt ~opts "soft_reset"
-      "Soft-resetting via Switch HOME for next attempt...";
-    match steps.soft_reset () with
+      "Soft-resetting via Switch HOME back to empty pedestal...";
+    match steps.soft_reset_to_pedestal () with
     | Ok () -> next (attempt + 1)
     | Error e ->
         Exhausted

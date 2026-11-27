@@ -1,8 +1,8 @@
 # Static Legendary RNG
 
 Hunts shiny static legendaries in Pokémon Brilliant Diamond and Shining Pearl using eye-blink RNG
-manipulation (Workflow B): Munchlax boot-seed recovery, in-chamber 1PK re-identification, timed
-encounter triggers, and visual shiny detection.
+manipulation (Workflow A): quiet-room `0PK` pedestal player-blink seed recovery, slate insertion,
+in-chamber `1PK` re-identification, timed encounter triggers, and visual shiny detection.
 
 <!-- generated:backends -->
 Runs on: the Switch.
@@ -10,14 +10,14 @@ Runs on: the Switch.
 
 ## Before you start
 
-- Save inside the Ramanas Park chamber (or Sinnoh static room) directly facing the target
-  legendary, with a Synchronize lead in slot 1 if using `--options sync=...`.
+- Save in front of the **empty Ramanas Park pedestal** (before inserting the slate), facing South
+  toward the camera, with the required slate in your Bag and a **Bike** registered on the `+`
+  wheel's Right slot (used to pop up Rowan's dialog and freeze idle head fidgets).
 - Stock Poké Balls and status or False Swipe support in your party so you can catch the shiny
   once the program stops on the battle screen.
-- Provide the open-eye PNG templates via `GAMEPILOT_BDSP_MUNCHLAX_EYE_PNG` and
-  `GAMEPILOT_BDSP_PLAYER_EYE_PNG` (or place them under `src/games/pokemon/bdsp/assets/`).
-- Start the game on the Switch title/Munchlax intro screen (or at the Switch HOME menu ready to
-  boot into the intro).
+- Provide the player open-eye PNG template via `GAMEPILOT_BDSP_PLAYER_EYE_PNG` (or place it at
+  `src/games/pokemon/bdsp/assets/player_eye.png`).
+- Start with the game already loaded at the saved empty pedestal.
 
 ## Options
 
@@ -31,7 +31,7 @@ Give each as `--options KEY=VALUE`:
 | `delay_ms` | -5000 to 5000 | default `200` | Calibration offset in ms added to the timed encounter confirm press. |
 | `sync` | hardy \| lonely \| brave \| adamant \| naughty \| bold \| docile \| relaxed \| impish \| lax \| timid \| hasty \| serious \| jolly \| naive \| modest \| mild \| quiet \| bashful \| rash \| calm \| gentle \| sassy \| careful \| quirky | optional | Optional Synchronize lead nature (omit if not using Synchronize). |
 | `max_attempts` | 1 to 999 | default `20` | Maximum soft-reset attempts before stopping. |
-| `munchlax_timeout_s` | 30 to 3600 | default `300` | Maximum seconds to wait for Munchlax boot-seed recovery per attempt. |
+| `seed_timeout_s` | 60 to 3600 | default `600` | Maximum seconds to wait for 0PK pedestal seed recovery per attempt. |
 <!-- /generated -->
 
 ## Running it
@@ -44,12 +44,12 @@ cd src && opam exec -- dune exec -- gamepilot run bdsp.static_rng --from 01-stat
 ```
 <!-- /generated -->
 
-Example targeting a Modest shiny Kyogre with a calibrated `delay_ms` offset on a Switch console:
+Example targeting a shiny Groudon with a calibrated `delay_ms` offset on a Switch console:
 
 ```sh
 cd src && opam exec -- dune exec -- gamepilot run bdsp.static_rng \
   --watch --console --backend switch --serial /dev/cu.usbmodem... --capture 0 \
-  --options target=kyogre --options shiny=any --options sync=modest --options delay_ms=200
+  --options target=groudon --options shiny=any --options delay_ms=200
 ```
 
 ## What happens
@@ -59,23 +59,24 @@ cd src && opam exec -- dune exec -- gamepilot run bdsp.static_rng \
 |---|---|
 | 01-static-rng | Hunt a shiny static legendary with eye-blink RNG |
 
-<!-- plans: ba6da481a9e1 -->
+<!-- plans: 0cab37d3f7ce -->
 <!-- /generated -->
 
-1. **Boot seed recovery:** Watches Munchlax's eye blinks on the intro screen with
-   `Munchlax_seed_finder` while renewing the input lease until the 128-bit `Xorshift128` boot
-   seed is uniquely confirmed.
-2. **Enter save:** Advances past the title screen into the overworld chamber where the player is
-   already standing in front of the legendary.
-3. **In-chamber 1PK re-identification:** Tracks player eye blinks via `In_chamber_reidentifier`
-   under the 1-player + 1-Pokémon-model timeline to lock the current advance anchor.
-4. **Target search and timed trigger:** Searches forward with `Static_rng_trigger` for the
-   earliest reachable shiny advance matching `target`, `shiny`, and `sync`, opens the cry dialog,
-   and fires the final confirm press at the exact daemon timestamp via `submit_at`.
+1. **Pedestal seed recovery (`0PK`):** Opens the Bike dialog (`+` → `Right`) to freeze idle head
+   fidgets and watches player eye blinks with `Pedestal_seed_finder` (`Blink_recovery`, `npcs = 1`)
+   until the 128-bit `Xorshift128` seed is uniquely confirmed (~4 minutes / ~45 blinks).
+2. **Insert slate and enter chamber:** Dismisses the dialog, turns North, inserts the slate, enters
+   the Mystery Space, walks up to the legendary, turns South, and re-freezes with the Bike dialog.
+3. **In-chamber `1PK` re-identification:** Tracks player eye blinks via `In_chamber_reidentifier`
+   under the 1-player + 1-Pokémon-model timeline to lock the exact advance anchor (~60–90 seconds).
+4. **Target search and timed trigger:** Dismisses the dialog, turns North to face the legendary,
+   searches forward with `Static_rng_trigger` for the earliest reachable shiny advance matching
+   `target`, `shiny`, and `sync`, opens the cry dialog, and fires the final confirm press at the
+   exact daemon timestamp via `submit_at`.
 5. **Visual shiny detection and retry:** Watches battle-dialog timing with
    `Shiny_encounter_detector` (waiting through weather banners such as Drizzle and Drought). On a
-   shiny, stops immediately on the battle screen; on a miss, soft-resets via Switch HOME and
-   retries.
+   shiny, stops immediately on the battle screen; on a miss, soft-resets via Switch HOME back to
+   the saved empty pedestal and retries.
 
 ## When it stops
 
@@ -94,7 +95,7 @@ cd src && opam exec -- dune exec -- gamepilot run bdsp.static_rng \
 
 ## How it works
 
-Orchestrates `Bdsp_blink_rng.Munchlax_seed_finder`, `Bdsp_blink_rng.In_chamber_reidentifier`,
+Orchestrates `Bdsp_static_rng.Pedestal_seed_finder`, `Bdsp_blink_rng.In_chamber_reidentifier`,
 `Bdsp_blink_rng.Static_rng_trigger`, and `Bdsp_readers.Shiny_encounter_detector` through
 `Bdsp_static_rng.Static_rng_workflow`. See `docs/design/BDSP-Static-Legendary-RNG.md` for the
-1PK timeline math and calibration procedure.
+`0PK -> 1PK` timeline math and calibration procedure.

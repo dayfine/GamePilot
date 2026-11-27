@@ -1,8 +1,8 @@
-(* Scripted Workflow B unit tests for Bdsp_static_rng.
+(* Scripted Workflow A unit tests for Bdsp_static_rng.
 
    The fake game_steps record stands in for the live Switch console: it returns
-   synthetic boot seeds, in-chamber anchors, trigger outcomes, and shiny battle
-   readings while recording every phase transition and soft-reset call. *)
+   synthetic pedestal seeds, in-chamber anchors, trigger outcomes, and shiny
+   battle readings while recording every phase transition and soft-reset call. *)
 
 open Bdsp_static_rng
 module Opts = Static_rng_options
@@ -20,45 +20,29 @@ let check_eq label ~expected ~actual = if expected <> actual then fail label
 let dummy_state : X.state =
   { s0 = 0x12345678; s1 = 0x9abcdef0; s2 = 0x13579bdf; s3 = 0x2468ace0 }
 
-let dummy_seed : Bdsp_blink_rng.Munchlax_seed_finder.outcome =
+let dummy_seed : Pedestal_seed_finder.outcome =
   {
     state = dummy_state;
-    solve =
-      {
-        success = true;
-        state = dummy_state;
-        advances_to_last_interval = 40;
-        observations_used = 40;
-        observations_discarded = 0;
-        equations_used = 128;
-        null_space_dimension = 0;
-        attempts = 1;
-        weakest_margin_used = 0.2;
-        mistimed_intervals = 0;
-        worst_residual_seconds = 0.01;
-        failure_reason = "";
-      };
-    blink_count = 46;
-    gaps = [];
-    threshold = 0.25;
-    elapsed_seconds = 120.0;
+    events = 45;
+    tick_seconds = 1.0198;
+    elapsed_seconds = 250.0;
   }
 
 let dummy_anchor : Bdsp_blink_rng.In_chamber_reidentifier.anchor =
   {
     base_state = dummy_state;
     anchor_time_ms = 50_000.0;
-    advances_to_first_blink = 100;
-    advances_to_last_blink = 120;
-    next_pokemon_blink_min_seconds = 3.0;
-    next_pokemon_blink_max_seconds = 5.0;
-    fitted_tick_seconds = 1.018;
+    advances_to_first_blink = 575;
+    advances_to_last_blink = 650;
+    next_pokemon_blink_min_seconds = 0.0;
+    next_pokemon_blink_max_seconds = 0.42;
+    fitted_tick_seconds = 1.015;
     gaps = [];
   }
 
 let dummy_hit ~shiny : E.hit =
   {
-    advances = 250;
+    advances = 780;
     state = dummy_state;
     pokemon =
       {
@@ -89,7 +73,7 @@ let dummy_trigger_outcome ~shiny : Bdsp_blink_rng.Static_rng_trigger.outcome =
     plan =
       {
         hit;
-        timeline_start_advance = 130;
+        timeline_start_advance = 660;
         schedule =
           {
             span = 120;
@@ -114,7 +98,7 @@ let shiny_reading : R.reading =
 let non_shiny_reading : R.reading =
   {
     verdict = R.Not_shiny;
-    wild_animation_ms = Some 1850.;
+    wild_animation_ms = Some 544.;
     your_animation_ms = Some 1800.;
     phase = R.Post_entry;
   }
@@ -125,10 +109,11 @@ let make_fake_steps ~readings ~resets ~captured_delay_ms ~captured_sync () :
   {
     log = (fun _ -> ());
     update_counters = (fun ~attempt:_ ~max_attempts:_ ~phase:_ -> ());
-    recover_boot_seed = (fun ~timeout_s:_ -> Ok dummy_seed);
-    enter_save = (fun () -> Ok ());
+    freeze_player = (fun () -> ());
+    recover_pedestal_seed = (fun ~timeout_s:_ -> Ok dummy_seed);
+    enter_chamber = (fun () -> Ok ());
     reidentify_in_chamber = (fun ~base_state:_ -> Ok dummy_anchor);
-    face_target = (fun () -> ());
+    prepare_for_trigger = (fun () -> ());
     trigger_encounter =
       (fun cfg _anchor ->
         captured_delay_ms := Some cfg.aim_offset_ms;
@@ -141,7 +126,7 @@ let make_fake_steps ~readings ~resets ~captured_delay_ms ~captured_sync () :
         | hd :: tl ->
             queue := tl;
             hd);
-    soft_reset =
+    soft_reset_to_pedestal =
       (fun () ->
         incr resets;
         Ok ());
@@ -205,7 +190,7 @@ let test_exhausted_max_attempts () =
       {
         attempts = 2;
         last_reason =
-          "battle detector: verdict=not_shiny wild=1850ms your=1800ms";
+          "battle detector: verdict=not_shiny wild=544ms your=1800ms";
       }
   in
   check_eq "exhausted after 2 attempts" ~expected ~actual:outcome;

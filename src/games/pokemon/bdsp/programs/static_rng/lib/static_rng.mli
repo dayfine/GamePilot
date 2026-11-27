@@ -1,25 +1,25 @@
-(** Checkpoint program [bdsp.static_rng] for BDSP static legendary RNG
-    manipulation (Workflow B) on the Switch.
+(** Checkpoint program [bdsp.static_rng] for BDSP Ramanas Park static legendary
+    RNG manipulation (Workflow A) on the Switch.
 
     GamePilot's own program wiring {!Static_rng_options},
-    {!Static_rng_workflow}, {!Bdsp_blink_rng.Munchlax_seed_finder},
+    {!Static_rng_workflow}, {!Pedestal_seed_finder},
     {!Bdsp_blink_rng.In_chamber_reidentifier},
     {!Bdsp_blink_rng.Static_rng_trigger},
     {!Bdsp_readers.Shiny_encounter_detector}, {!Bdsp_actions.Game_entry}, and
     {!Switch.Game_entry}. *)
 
 type templates = {
-  munchlax_eye_png : string;
-      (** Raw PNG bytes of Munchlax's open eye on the intro screen. *)
   player_eye_png : string;
-      (** Raw PNG bytes of the player's open eye in the legendary chamber. *)
+      (** Raw PNG bytes of the player's open eye facing South. *)
   player_eye_box : Wire.box;
-      (** Normalized ROI around the player's eye in the legendary chamber. *)
+      (** Normalized ROI around the player's eye at the pedestal and in the
+          Mystery Space. *)
 }
-(** Eye-blink PNG templates and player eye ROI supplied by the CLI runner. *)
+(** Player open-eye PNG template and ROI supplied by the CLI runner. *)
 
 val default_player_eye_box : Wire.box
-(** Default normalized player eye ROI in a Ramanas Park chamber. *)
+(** Default normalized player eye ROI covering both the Ramanas Park pedestal
+    room and the Mystery Space. *)
 
 val run :
   picture:Wire.box ->

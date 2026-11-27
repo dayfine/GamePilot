@@ -2,8 +2,8 @@
     program.
 
     GamePilot's own option decoder over {!Run_options}, mapping CLI keys
-    ([target], [shiny], [delay_ms], [sync], [max_attempts],
-    [munchlax_timeout_s]) into typed parameters for {!Static_rng_workflow}. *)
+    ([target], [shiny], [delay_ms], [sync], [max_attempts], [seed_timeout_s])
+    into typed parameters for {!Static_rng_workflow}. *)
 
 (** Which shiny class a target advance must satisfy. *)
 type shiny_filter =
@@ -22,9 +22,9 @@ type t = {
       (** Optional Synchronize lead nature index (0..24), or [None]. *)
   max_attempts : int;
       (** Maximum soft-reset attempts before stopping (default 20). *)
-  munchlax_timeout_s : int;
-      (** Maximum seconds to wait for Munchlax boot-seed recovery per attempt
-          (default 300). *)
+  seed_timeout_s : int;
+      (** Maximum seconds to wait for [0PK] pedestal seed recovery per attempt
+          (default 600). *)
 }
 (** Decoded and validated configuration for one [bdsp.static_rng] run. *)
 

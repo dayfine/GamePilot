@@ -1,5 +1,5 @@
-(* Loads BDSP static RNG eye-blink PNG templates from environment variables or
-   committed repo assets before starting the live effect session. *)
+(* Loads the BDSP static RNG player eye-blink PNG template from an environment
+   variable or committed repo asset before starting the live effect session. *)
 
 let ( let* ) = Result.bind
 
@@ -27,17 +27,12 @@ let resolve_template ~env_var ~repo_path =
   | _ -> find_repo_template ~env_var ~repo_path
 
 let load_templates () =
-  let* munchlax_eye_png =
-    resolve_template ~env_var:"GAMEPILOT_BDSP_MUNCHLAX_EYE_PNG"
-      ~repo_path:Bdsp_readers.Eye_blink_reader.munchlax_template_asset
-  in
   let* player_eye_png =
     resolve_template ~env_var:"GAMEPILOT_BDSP_PLAYER_EYE_PNG"
       ~repo_path:"src/games/pokemon/bdsp/assets/player_eye.png"
   in
   Ok
     {
-      Bdsp_static_rng.Static_rng.munchlax_eye_png;
-      player_eye_png;
+      Bdsp_static_rng.Static_rng.player_eye_png;
       player_eye_box = Bdsp_static_rng.Static_rng.default_player_eye_box;
     }

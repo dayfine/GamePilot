@@ -9,7 +9,7 @@ type t = {
   delay_ms : int;
   sync_nature : int option;
   max_attempts : int;
-  munchlax_timeout_s : int;
+  seed_timeout_s : int;
 }
 
 type defaults = {
@@ -17,7 +17,7 @@ type defaults = {
   shiny : string;
   delay_ms : int;
   max_attempts : int;
-  munchlax_timeout_s : int;
+  seed_timeout_s : int;
 }
 
 let default_values =
@@ -26,7 +26,7 @@ let default_values =
     shiny = "any";
     delay_ms = 200;
     max_attempts = 20;
-    munchlax_timeout_s = 300;
+    seed_timeout_s = 600;
   }
 
 let nature_count = 25
@@ -98,7 +98,7 @@ let option_bounds =
     delay_min_ms = -5000;
     delay_max_ms = 5000;
     max_attempts_limit = 999;
-    timeout_min_s = 30;
+    timeout_min_s = 60;
     timeout_max_s = 3600;
   }
 
@@ -119,19 +119,18 @@ let of_run_options opts =
     int_opt ~key:"max_attempts" ~default:default_values.max_attempts ~min:1
       ~max:option_bounds.max_attempts_limit opts
   in
-  let* munchlax_timeout_s =
-    int_opt ~key:"munchlax_timeout_s" ~default:default_values.munchlax_timeout_s
+  let* seed_timeout_s =
+    int_opt ~key:"seed_timeout_s" ~default:default_values.seed_timeout_s
       ~min:option_bounds.timeout_min_s ~max:option_bounds.timeout_max_s opts
   in
-  Ok { target; shiny; delay_ms; sync_nature; max_attempts; munchlax_timeout_s }
+  Ok { target; shiny; delay_ms; sync_nature; max_attempts; seed_timeout_s }
 
 let format_summary cfg =
   let sync_text =
     match cfg.sync_nature with None -> "none" | Some idx -> E.nature_name idx
   in
   Printf.sprintf
-    "target=%s shiny=%s delay_ms=%d sync=%s max_attempts=%d \
-     munchlax_timeout_s=%d"
+    "target=%s shiny=%s delay_ms=%d sync=%s max_attempts=%d seed_timeout_s=%d"
     cfg.target.id
     (shiny_filter_to_string cfg.shiny)
-    cfg.delay_ms sync_text cfg.max_attempts cfg.munchlax_timeout_s
+    cfg.delay_ms sync_text cfg.max_attempts cfg.seed_timeout_s

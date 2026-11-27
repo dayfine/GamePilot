@@ -94,7 +94,7 @@ let static_bounds =
     delay_min_ms = -5000;
     delay_max_ms = 5000;
     max_attempts = 999;
-    timeout_min_s = 30;
+    timeout_min_s = 60;
     timeout_max_s = 3600;
   }
 
@@ -143,13 +143,13 @@ let static_rng_options : Run_options.declared list =
       doc = "Maximum soft-reset attempts before stopping.";
     };
     {
-      key = "munchlax_timeout_s";
+      key = "seed_timeout_s";
       value =
         Run_options.Int_range
           (static_bounds.timeout_min_s, static_bounds.timeout_max_s);
-      presence = Run_options.Default "300";
+      presence = Run_options.Default "600";
       doc =
-        "Maximum seconds to wait for Munchlax boot-seed recovery per attempt.";
+        "Maximum seconds to wait for 0PK pedestal seed recovery per attempt.";
     };
   ]
 
@@ -160,8 +160,9 @@ let static_rng =
     name = "Static Legendary RNG";
     category = Shiny_hunting;
     description =
-      "Hunts shiny static legendaries using Munchlax boot-seed recovery, \
-       in-chamber 1PK re-identification, and timed encounter triggers.";
+      "Hunts shiny static legendaries using 0PK pedestal player-blink seed \
+       recovery, in-chamber 1PK re-identification, and timed encounter \
+       triggers.";
     doc = "docs/guide/bdsp.static_rng.md";
     checkpoints = Some "src/games/pokemon/bdsp/programs/static_rng/plans";
     backends = [ Switch ];
