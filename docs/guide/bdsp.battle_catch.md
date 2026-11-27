@@ -37,7 +37,7 @@ Give each as `--options KEY=VALUE`:
 | `max_balls` | 1 to 99 | default `60` | Pause after throwing this many balls. |
 | `max_turns` | 10 to 200 | default `80` | Pause after this many turns to guard against Struggle. |
 | `ball_pocket_steps` | -5 to 5 | default `0` | Horizontal pocket steps from initial battle Bag pocket to Poké Balls. |
-| `ball_row` | 0 to 20 | default `0` | 0-based row of the target Poké Ball in the Poké Balls pocket. |
+| `ball_row` | -20 to 20 | default `-1` | Horizontal steps in the X-button Poké Ball carousel (-1 = Left once for last ball / Luxury Ball). |
 | `heal_pocket_steps` | -5 to 5 | default `0` | Horizontal pocket steps from initial battle Bag pocket to Medicine. |
 | `heal_row` | 0 to 20 | default `0` | 0-based row of the healing item in the Medicine pocket. |
 <!-- /generated -->

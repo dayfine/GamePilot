@@ -156,8 +156,9 @@ let battle_catch_options : Run_options.declared list =
       "Pause after this many turns to guard against Struggle.";
     int_opt "ball_pocket_steps" (-catch_b.pocket_bound) catch_b.pocket_bound "0"
       "Horizontal pocket steps from initial battle Bag pocket to Poké Balls.";
-    int_opt "ball_row" 0 catch_b.max_row "0"
-      "0-based row of the target Poké Ball in the Poké Balls pocket.";
+    int_opt "ball_row" (-catch_b.max_row) catch_b.max_row "-1"
+      "Horizontal steps in the X-button Poké Ball carousel (-1 = Left once for \
+       last ball / Luxury Ball).";
     int_opt "heal_pocket_steps" (-catch_b.pocket_bound) catch_b.pocket_bound "0"
       "Horizontal pocket steps from initial battle Bag pocket to Medicine.";
     int_opt "heal_row" 0 catch_b.max_row "0"

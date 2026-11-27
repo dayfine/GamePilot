@@ -26,7 +26,7 @@ let hp_probes prefix ~filled ~rgb =
 
 let menu_frame ~t_ms ~foe_filled ~player_filled ~asleep : Effects.measurements =
   let sleep_probe =
-    if asleep then ("bdsp_foe_slp", cs (128., 122., 125.) (12., 12., 12.))
+    if asleep then ("bdsp_foe_slp", cs (121., 174., 225.) (12., 12., 12.))
     else ("bdsp_foe_slp", cs (245., 245., 245.) (3., 3., 3.))
   in
   {
@@ -124,7 +124,12 @@ let test_cfg : Battle_catch_steps.config =
         heal_pocket_steps = 0;
         heal_row = 0;
       };
-    timing = { Battle_catch_steps.default_timing with event_timeout_ms = 2000 };
+    timing =
+      {
+        Battle_catch_steps.default_timing with
+        event_timeout_ms = 2000;
+        status_cycle_ms = 0;
+      };
   }
 
 let kyogre_slots : Battle_catch_steps.party_slots =

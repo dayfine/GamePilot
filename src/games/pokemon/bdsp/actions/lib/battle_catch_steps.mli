@@ -31,6 +31,9 @@ type timing = {
   dialog_advance_ms : int;  (** Cooldown after advancing a battle dialog. *)
   black_hold_ms : float;
       (** Minimum black-screen duration to count as battle fade-out. *)
+  status_cycle_ms : int;
+      (** Sampling window in ms to catch the alternating Sleep pill on the foe
+          plate (0 disables extra wait in unit tests). *)
 }
 (** Button press and wait timings for BDSP battle navigation. *)
 

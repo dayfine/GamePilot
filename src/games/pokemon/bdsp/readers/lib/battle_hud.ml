@@ -32,20 +32,20 @@ type color_target = {
 let foe_bar : hp_bar_layout =
   {
     prefix = "bdsp_foe_hp_";
-    x = 0.068;
-    y = 0.112;
-    w = 0.180;
-    h = 0.012;
+    x = 0.767;
+    y = 0.115;
+    w = 0.199;
+    h = 0.013;
     segments = 10;
   }
 
 let player_bar : hp_bar_layout =
   {
     prefix = "bdsp_ply_hp_";
-    x = 0.720;
-    y = 0.735;
-    w = 0.180;
-    h = 0.012;
+    x = 0.046;
+    y = 0.882;
+    w = 0.199;
+    h = 0.013;
     segments = 10;
   }
 
@@ -55,13 +55,13 @@ let hp_thresh : hp_thresholds =
 let sleep_badge : color_target =
   {
     id = "bdsp_foe_slp";
-    box = { x = 0.042; y = 0.132; w = 0.048; h = 0.026 };
-    r_share = 0.34;
-    g_share = 0.33;
-    b_share = 0.33;
+    box = { x = 0.889; y = 0.063; w = 0.090; h = 0.043 };
+    r_share = 0.232;
+    g_share = 0.334;
+    b_share = 0.433;
     max_dist = 0.09;
-    min_rgb_sum = 260.;
-    max_rgb_sum = 460.;
+    min_rgb_sum = 380.;
+    max_rgb_sum = 620.;
   }
 
 let switch_header : color_target =

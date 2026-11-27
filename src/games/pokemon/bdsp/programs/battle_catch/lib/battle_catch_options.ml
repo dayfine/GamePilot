@@ -166,7 +166,8 @@ let parse_bag opts =
       ~max:lim.pocket_bound opts
   in
   let* ball_row =
-    int_opt ~key:"ball_row" ~default:0 ~min:0 ~max:lim.max_row opts
+    int_opt ~key:"ball_row" ~default:(-1) ~min:(-lim.max_row) ~max:lim.max_row
+      opts
   in
   let* heal_pocket_steps =
     int_opt ~key:"heal_pocket_steps" ~default:0 ~min:(-lim.pocket_bound)
