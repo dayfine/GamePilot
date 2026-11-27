@@ -93,6 +93,10 @@
 #include <unistd.h>
 #endif
 
+#ifndef GAMEPILOT_VERSION
+#define GAMEPILOT_VERSION "dev"
+#endif
+
 namespace {
 
 std::atomic<bool> g_stop{false};
@@ -122,7 +126,8 @@ int usage() {
       "         [--crop x,y,w,h | --crop auto] [--stale-s 10] [--name NAME] "
       "[--source LABEL] [--tail-log FILE]\n"
       "       gamepilot_daemon --hub --registry DIR [--watch-port 47901] "
-      "[--listen 127.0.0.1]\n",
+      "[--listen 127.0.0.1]\n"
+      "       gamepilot_daemon --version\n",
       stderr);
   return 2;
 }
@@ -170,6 +175,7 @@ struct Flags {
   gamepilot::SwitchOptions switch_options;
   gamepilot::ServerOptions server;
   bool hub = false;
+  bool version = false;
   std::optional<bool> record;           // default: by backend
   std::optional<double> keepawake_s;    // default: by backend
   gamepilot::WindowCaptureConfig window;
@@ -324,6 +330,8 @@ bool parse_flags(int argc, char** argv, Flags& flags) {
       flags.server.tail_log = argv[++i];
     } else if (arg == "--hub") {
       flags.hub = true;
+    } else if (arg == "--version") {
+      flags.version = true;
     } else if (arg == "--fast") {
       flags.server.fast = true;
     } else if (arg == "--speed" && has_value) {
@@ -333,6 +341,9 @@ bool parse_flags(int argc, char** argv, Flags& flags) {
     } else {
       return false;
     }
+  }
+  if (flags.version) {
+    return argc == 2;
   }
   if (flags.hub) {
     return flags.backend.empty() && !flags.server.registry.empty();
@@ -555,6 +566,10 @@ int main(int argc, char** argv) {
   Flags flags;
   if (!parse_flags(argc, argv, flags)) {
     return usage();
+  }
+  if (flags.version) {
+    std::printf("gamepilot_daemon %s\n", GAMEPILOT_VERSION);
+    return 0;
   }
 
   std::signal(SIGINT, on_signal);
