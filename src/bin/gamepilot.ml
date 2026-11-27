@@ -24,7 +24,12 @@ let usage =
      run)\n" ^ Programs_command.usage ^ Guide_command.usage
   ^ Status_command.usage ^ Ctl_command.usage ^ Runs_command.usage
   ^ Switch_devices.usage ^ Bring_up_command.usage ^ Console_park_command.usage
-  ^ Setup_command.usage ^ Ui_command.usage
+  ^ Setup_command.usage ^ Ui_command.usage ^ "  gamepilot --version\n"
+
+let version_string () =
+  let ver = if Version.version = "" then "dev" else Version.version in
+  let sha = if Version.git_sha = "" then "unknown" else Version.git_sha in
+  Printf.sprintf "gamepilot %s (%s)" ver sha
 
 let die msg =
   prerr_string msg;
@@ -56,6 +61,9 @@ let old_command command parsed =
 
 let () =
   match List.tl (Array.to_list Sys.argv) with
+  | [ "--version" ] ->
+      print_endline (version_string ());
+      exit 0
   | "run" :: args when List.mem "--help" args ->
       print_string usage;
       exit 0

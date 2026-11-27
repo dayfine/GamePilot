@@ -1,4 +1,4 @@
-module R = Bdsp_readers.Shiny_encounter_reader
+module R = Shiny_encounter_reader
 
 let default_timeout_ms = 30_000
 

@@ -21,6 +21,21 @@ let in_session ~failed ~dir body =
           repeats = true;
         }
 
+let run_live ~failed ~dir ~port body =
+  match
+    in_session ~failed ~dir (fun () -> Live.run_with_backend ~port body)
+  with
+  | outcome -> outcome
+  | exception e ->
+      failed { at = "raised"; reason = Printexc.to_string e; repeats = false }
+
+let guard_session ~on_stop ~on_raised body =
+  match body () with
+  | outcome -> outcome
+  | exception (Effects.Disconnected _ as e) -> raise e
+  | exception Effects.Stop_requested reason -> on_stop reason
+  | exception e -> on_raised e
+
 let finish ~runs_dir (run : Run_record.run) ~summary ending =
   print_endline ("[Run] " ^ run.record.dir ^ ": " ^ summary);
   Run_record.finish ~runs_dir run ~summary ending

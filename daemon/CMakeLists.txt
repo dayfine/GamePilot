@@ -156,8 +156,12 @@ if(WIN32)
 endif()
 gamepilot_warnings(gamepilot_core)
 
+set(GAMEPILOT_VERSION "dev" CACHE STRING "GamePilot daemon version string")
+
 add_executable(gamepilot_daemon src/main.cpp)
 target_link_libraries(gamepilot_daemon PRIVATE gamepilot_core)
+target_compile_definitions(gamepilot_daemon PRIVATE
+  GAMEPILOT_VERSION="${GAMEPILOT_VERSION}")
 gamepilot_warnings(gamepilot_daemon)
 
 add_executable(probe_images src/probe_images.cpp)

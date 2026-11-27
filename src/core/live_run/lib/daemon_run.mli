@@ -22,6 +22,19 @@ val in_session : failed:(failed -> 'o) -> dir:string -> (unit -> 'o) -> 'o
     fails at ["session"] (not repeating) and a Unix error at ["session"]
     (repeating); any other exception goes on to the caller. *)
 
+val run_live :
+  failed:(failed -> 'o) -> dir:string -> port:int -> (Wire.backend -> 'o) -> 'o
+(** [run_live ~failed ~dir ~port body] runs [Live.run_with_backend ~port body]
+    inside {!in_session}, turning any unexpected exception into a non-repeating
+    failure at ["raised"] so the run folder and watch run always close. *)
+
+val guard_session :
+  on_stop:(string -> 'o) -> on_raised:(exn -> 'o) -> (unit -> 'o) -> 'o
+(** [guard_session ~on_stop ~on_raised body] runs [body ()] inside a live
+    session: re-raises {!Effects.Disconnected} so {!in_session} handles it, maps
+    {!Effects.Stop_requested} through [on_stop], and maps any other exception
+    through [on_raised]. *)
+
 val finish :
   runs_dir:string ->
   Run_record.run ->

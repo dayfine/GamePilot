@@ -1,11 +1,11 @@
 (** Pure visual-only state machine for BDSP battle-intro shiny detection.
 
-    Ported from the fork's
-    [SerialPrograms/Source/VideoGames/PokemonSwSh/Inference/Battles/PokemonSwSh_BattleDialogTracker.cpp]
-    (https://github.com/PokemonAutomation/Arduino-Source/blob/main/SerialPrograms/Source/VideoGames/PokemonSwSh/Inference/Battles/PokemonSwSh_BattleDialogTracker.cpp)
+    Ported from upstream
+    {{:https://github.com/PokemonAutomation/Arduino-Source/blob/main/SerialPrograms/Source/VideoGames/PokemonSwSh/Inference/Battles/PokemonSwSh_BattleDialogTracker.h}PokemonSwSh_BattleDialogTracker.h},
+    {{:https://github.com/PokemonAutomation/Arduino-Source/blob/main/SerialPrograms/Source/VideoGames/PokemonSwSh/Inference/Battles/PokemonSwSh_BattleDialogTracker.cpp}PokemonSwSh_BattleDialogTracker.cpp},
+    {{:https://github.com/PokemonAutomation/Arduino-Source/blob/main/SerialPrograms/Source/PokemonBDSP/Inference/ShinyDetection/PokemonBDSP_ShinyEncounterDetector.h}PokemonBDSP_ShinyEncounterDetector.h},
     and
-    [SerialPrograms/Source/PokemonBDSP/Inference/ShinyDetection/PokemonBDSP_ShinyEncounterDetector.cpp]
-    (https://github.com/PokemonAutomation/Arduino-Source/blob/main/SerialPrograms/Source/PokemonBDSP/Inference/ShinyDetection/PokemonBDSP_ShinyEncounterDetector.cpp).
+    {{:https://github.com/PokemonAutomation/Arduino-Source/blob/main/SerialPrograms/Source/PokemonBDSP/Inference/ShinyDetection/PokemonBDSP_ShinyEncounterDetector.cpp}PokemonBDSP_ShinyEncounterDetector.cpp}.
 
     Difference from the fork: GamePilot's daemon is video-only, so this module
     uses dialog-gap timing alone with no audio detector and no per-frame

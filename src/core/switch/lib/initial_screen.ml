@@ -87,3 +87,10 @@ let check ~log ~picture expectation =
   | ( (Home _ | Home_dimmed | User_select),
       (In_game_read_only | In_game_or_resume None) ) ->
       Error (unexpected_screen screen)
+
+let check_unless_chained ~already_at_start ~log ~picture expectation =
+  if already_at_start then (
+    log
+      "[Console] continuing from previous pass (skipping initial-screen check)";
+    Ok ())
+  else check ~log ~picture expectation

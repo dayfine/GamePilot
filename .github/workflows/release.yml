@@ -5,10 +5,14 @@ on:
   push:
     tags:
       - "v*"
+  schedule:
+    # Daily at 04:00 UTC; skipped by preflight when main has no new commits
+    # since the last nightly-* tag.
+    - cron: "0 4 * * *"
   workflow_dispatch:
     inputs:
       version:
-        description: "Version label for dry-run artifacts (e.g. v0.1.0-rc1)"
+        description: "Version label for dry-run artifacts (e.g. v0.1.0-rc.1)"
         required: false
         default: "dev"
 
@@ -16,7 +20,40 @@ permissions:
   contents: read
 
 jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      should_build: ${{ steps.plan.outputs.should_build }}
+      should_publish: ${{ steps.plan.outputs.should_publish }}
+      version: ${{ steps.plan.outputs.version }}
+      short_sha: ${{ steps.plan.outputs.short_sha }}
+      release_kind: ${{ steps.plan.outputs.release_kind }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          fetch-tags: true
+
+      - name: Plan release and check nightly diff
+        id: plan
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        shell: bash
+        run: bash dev/release/plan_release.sh
+
+      - name: Verify CI is green on target commit
+        if: steps.plan.outputs.should_publish == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: bash dev/release/verify_ci_green.sh
+
   build:
+    needs: preflight
+    if: needs.preflight.outputs.should_build == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -33,6 +70,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       DUNE_CACHE: enabled
+      GAMEPILOT_VERSION: ${{ needs.preflight.outputs.version }}
+      GAMEPILOT_GIT_SHA: ${{ needs.preflight.outputs.short_sha }}
     steps:
       - uses: actions/checkout@v4
 
@@ -42,15 +81,11 @@ jobs:
           git submodule update --init --depth 1 third_party/Arduino-Source
           git submodule update --init --depth 1 third_party/PokemonSimulation
 
-      - name: Resolve version
+      - name: Resolve bundle name
         id: ver
         shell: bash
         run: |
-          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
-            VERSION="${GITHUB_REF_NAME}"
-          else
-            VERSION="${{ inputs.version || 'dev' }}"
-          fi
+          VERSION="${GAMEPILOT_VERSION}"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "bundle=gamepilot-${VERSION}-${{ matrix.target }}" >> "$GITHUB_OUTPUT"
 
@@ -80,9 +115,11 @@ jobs:
         run: |
           if [ "$RUNNER_OS" = "Windows" ]; then
             cmake -S daemon -B daemon/build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+              -DGAMEPILOT_VERSION="${GAMEPILOT_VERSION}" \
               -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl
           else
-            cmake -S daemon -B daemon/build -G Ninja -DCMAKE_BUILD_TYPE=Release
+            cmake -S daemon -B daemon/build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+              -DGAMEPILOT_VERSION="${GAMEPILOT_VERSION}"
           fi
           cmake --build daemon/build --config Release --parallel 4
 
@@ -114,7 +151,7 @@ jobs:
 
       - name: Out-of-tree smoke test
         shell: bash
-        run: sh dev/release/smoke_test.sh "dist/${{ steps.ver.outputs.bundle }}"
+        run: sh dev/release/smoke_test.sh "dist/${{ steps.ver.outputs.bundle }}" "${GAMEPILOT_VERSION}"
 
       - name: Package archive (tar.gz)
         if: matrix.archive == 'tar.gz'
@@ -134,14 +171,19 @@ jobs:
         with:
           name: release-${{ matrix.target }}
           path: artifacts/*
+          retention-days: 7
 
   publish:
-    needs: build
-    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [preflight, build]
+    if: needs.preflight.outputs.should_publish == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
       - uses: actions/download-artifact@v4
         with:
           path: dist-artifacts
@@ -151,11 +193,11 @@ jobs:
         working-directory: dist-artifacts
         run: sha256sum * > SHA256SUMS.txt
 
-      - name: Create GitHub Release
+      - name: Publish GitHub Release and prune superseded prereleases
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
-        run: |
-          gh release create "$TAG" dist-artifacts/* \
-            --title "GamePilot $TAG" \
-            --generate-notes
+          RELEASE_VERSION: ${{ needs.preflight.outputs.version }}
+          RELEASE_KIND: ${{ needs.preflight.outputs.release_kind }}
+          ARTIFACTS_DIR: dist-artifacts
+        shell: bash
+        run: bash dev/release/publish_release.sh

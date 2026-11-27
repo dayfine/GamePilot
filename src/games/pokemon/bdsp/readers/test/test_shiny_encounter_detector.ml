@@ -1,11 +1,11 @@
-(* Scripted effect-handler tests for Bdsp_actions.Shiny_encounter_detector.
+(* Scripted effect-handler tests for Bdsp_readers.Shiny_encounter_detector.
 
    The fake effect handler stands in for the live daemon: it records subscribed
    and unsubscribed probe ids and feeds a scripted list of synthetic frames to
    Effects.await until the predicate holds or the list ends (Timeout). *)
 
 module R = Bdsp_readers.Shiny_encounter_reader
-module D = Bdsp_actions.Shiny_encounter_detector
+module D = Bdsp_readers.Shiny_encounter_detector
 
 let fail msg =
   prerr_endline ("FAIL: " ^ msg);

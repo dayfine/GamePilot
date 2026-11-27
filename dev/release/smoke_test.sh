@@ -2,15 +2,16 @@
 # Out-of-tree smoke test for a staged GamePilot release directory.
 #
 # Usage:
-#   sh dev/release/smoke_test.sh <staged-dir>
+#   sh dev/release/smoke_test.sh <staged-dir> [expected-version]
 set -eu
 
-if [ "$#" -ne 1 ]; then
-  echo "usage: sh dev/release/smoke_test.sh <staged-dir>" >&2
+if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
+  echo "usage: sh dev/release/smoke_test.sh <staged-dir> [expected-version]" >&2
   exit 2
 fi
 
 STAGED=$(cd "$1" && pwd)
+EXPECTED_VERSION=${2:-}
 
 if [ -x "$STAGED/gamepilot" ]; then
   GP="$STAGED/gamepilot"
@@ -33,6 +34,25 @@ trap 'rm -rf "$TMPDIR_TEST"' EXIT
     echo "smoke_test.sh: expected usage output from gamepilot" >&2
     exit 1
   }
+
+  echo "[smoke] gamepilot --version"
+  GP_VER=$("$GP" --version)
+  case "$GP_VER" in
+    "gamepilot "*) ;;
+    *)
+      echo "smoke_test.sh: unexpected 'gamepilot --version' output: $GP_VER" >&2
+      exit 1
+      ;;
+  esac
+  if [ -n "$EXPECTED_VERSION" ]; then
+    case "$GP_VER" in
+      "gamepilot $EXPECTED_VERSION ("*")") ;;
+      *)
+        echo "smoke_test.sh: expected gamepilot version '$EXPECTED_VERSION', got: $GP_VER" >&2
+        exit 1
+        ;;
+    esac
+  fi
 
   echo "[smoke] gamepilot programs (out of tree)"
   OUT=$("$GP" programs)
@@ -57,18 +77,35 @@ trap 'rm -rf "$TMPDIR_TEST"' EXIT
     exit 1
   }
 
+  DAEMON=""
   if [ -x "$STAGED/bin/gamepilot_daemon" ]; then
-    echo "[smoke] bin/gamepilot_daemon --help"
-    "$STAGED/bin/gamepilot_daemon" --help 2>&1 | grep -q "usage:" || {
-      echo "smoke_test.sh: expected usage output from gamepilot_daemon" >&2
-      exit 1
-    }
+    DAEMON="$STAGED/bin/gamepilot_daemon"
   elif [ -f "$STAGED/bin/gamepilot_daemon.exe" ]; then
-    echo "[smoke] bin/gamepilot_daemon.exe --help"
-    "$STAGED/bin/gamepilot_daemon.exe" --help 2>&1 | grep -q "usage:" || {
-      echo "smoke_test.sh: expected usage output from gamepilot_daemon.exe" >&2
+    DAEMON="$STAGED/bin/gamepilot_daemon.exe"
+  fi
+
+  if [ -n "$DAEMON" ]; then
+    echo "[smoke] $(basename "$DAEMON") --help"
+    "$DAEMON" --help 2>&1 | grep -q "usage:" || {
+      echo "smoke_test.sh: expected usage output from $(basename "$DAEMON")" >&2
       exit 1
     }
+
+    echo "[smoke] $(basename "$DAEMON") --version"
+    DM_VER=$("$DAEMON" --version)
+    case "$DM_VER" in
+      "gamepilot_daemon "*) ;;
+      *)
+        echo "smoke_test.sh: unexpected 'gamepilot_daemon --version' output: $DM_VER" >&2
+        exit 1
+        ;;
+    esac
+    if [ -n "$EXPECTED_VERSION" ]; then
+      if [ "$DM_VER" != "gamepilot_daemon $EXPECTED_VERSION" ]; then
+        echo "smoke_test.sh: expected daemon version '$EXPECTED_VERSION', got: $DM_VER" >&2
+        exit 1
+      fi
+    fi
   fi
 )
 
