@@ -6,6 +6,7 @@ let ( let* ) = Result.bind
 
 let setup_usage =
   "  gamepilot setup [--config FILE]\n"
+  ^ "  gamepilot setup --discover [--write] [--config FILE]\n"
   ^ "  gamepilot setup --add-switch ID --capture DEVICE [--serial PORT] \
      [--name NAME] [--config FILE]\n"
   ^ "  gamepilot setup --add-mgba ID [--mgba-port PORT] [--name NAME] \
@@ -18,6 +19,7 @@ let usage = setup_usage ^ doctor_usage
 
 type setup_action =
   | Show
+  | Discover of { write : bool }
   | Add_switch of {
       id : string;
       name : string option;
@@ -38,7 +40,8 @@ let set_name action name =
   match action with
   | Add_switch s -> Ok (Add_switch { s with name = Some name })
   | Add_mgba m -> Ok (Add_mgba { m with name = Some name })
-  | Show | Remove _ -> Error "--name requires --add-switch or --add-mgba"
+  | Show | Discover _ | Remove _ ->
+      Error "--name requires --add-switch or --add-mgba"
 
 let set_capture action capture =
   match action with
@@ -66,6 +69,13 @@ let add_mgba_action id =
 let rec parse_setup f = function
   | [] -> Ok f
   | "--config" :: p :: rest -> parse_setup { f with config = Some p } rest
+  | "--discover" :: rest ->
+      parse_setup { f with action = Discover { write = false } } rest
+  | "--write" :: rest -> (
+      match f.action with
+      | Discover _ ->
+          parse_setup { f with action = Discover { write = true } } rest
+      | _ -> Error "--write requires --discover")
   | "--add-switch" :: id :: rest ->
       parse_setup { f with action = add_switch_action id } rest
   | "--add-mgba" :: id :: rest ->
@@ -105,6 +115,51 @@ let save_console ~path c =
     Printf.printf "Saved %s to %s\n" (Console_config.describe c) path;
     Ok 0
 
+let print_discovered ~serials ~captures =
+  print_endline "Detected serial ports:";
+  (match serials with
+  | [] -> print_endline "  (none)"
+  | _ -> List.iter (fun s -> Printf.printf "  - %s\n" s) serials);
+  print_endline "Detected capture devices:";
+  match captures with
+  | [] -> print_endline "  (none)"
+  | _ ->
+      List.iter
+        (fun (c : Console_config.Device_discovery.capture_device) ->
+          Printf.printf "  - index=%s  %s (%s)\n" c.index c.name c.device_id)
+        captures
+
+let suggested_console (id, name, serial, capture) : Console_config.console =
+  { id; name; backend = Switch { serial; capture } }
+
+let run_discover ~path ~write =
+  let serials = Console_config.Device_discovery.discover_serial_ports () in
+  let captures = Console_config.Device_discovery.discover_capture_devices () in
+  print_discovered ~serials ~captures;
+  let suggested =
+    Console_config.Device_discovery.suggest_consoles ~serials ~captures
+    |> List.map suggested_console
+  in
+  if suggested = [] then (
+    print_endline "No Switch hardware detected.";
+    Ok 0)
+  else if write then (
+    let* existing = Console_config.load ~path () in
+    let updated = List.fold_left Console_config.upsert existing suggested in
+    let* () = Console_config.save ~path updated in
+    Printf.printf "Wrote %d console(s) to %s:\n" (List.length suggested) path;
+    List.iter
+      (fun c -> Printf.printf "  - %s\n" (Console_config.describe c))
+      suggested;
+    Ok 0)
+  else (
+    print_endline "";
+    print_endline "Suggested consoles (re-run with --discover --write to save):";
+    List.iter
+      (fun c -> Printf.printf "  - %s\n" (Console_config.describe c))
+      suggested;
+    Ok 0)
+
 let run_setup f =
   let path = Option.value f.config ~default:(Console_config.default_path ()) in
   match f.action with
@@ -112,7 +167,9 @@ let run_setup f =
       let* consoles = Console_config.load ~path () in
       print_consoles path consoles;
       print_endline "";
-      print_endline "Add a console:";
+      print_endline "Auto-discover connected Switch hardware:";
+      print_endline "  gamepilot setup --discover [--write]";
+      print_endline "Or add manually:";
       print_endline
         "  gamepilot setup --add-switch console-a --name \"Console A\" \
          --capture <DEVICE> [--serial <PORT>]";
@@ -120,6 +177,7 @@ let run_setup f =
         "  gamepilot setup --add-mgba mgba --name \"mGBA\" [--mgba-port 47810]";
       print_endline "Then verify with: gamepilot doctor";
       Ok 0
+  | Discover { write } -> run_discover ~path ~write
   | Add_switch { capture = None; _ } ->
       Error "--add-switch requires --capture DEVICE"
   | Add_switch { id; name; capture = Some capture; serial } ->

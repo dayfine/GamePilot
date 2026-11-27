@@ -79,3 +79,33 @@ val expand_console_flag :
 
 val describe : console -> string
 (** One-line human-readable summary of [console]. *)
+
+module Device_discovery : sig
+  type capture_device = {
+    index : string;  (** OpenCV / daemon [--capture] index (e.g. ["0"]). *)
+    device_id : string;  (** Platform unique device id, or [""] if unknown. *)
+    name : string;  (** Human-readable device name (e.g. ["USB Video"]). *)
+  }
+  (** One discovered video capture device. *)
+
+  val is_serial_device_name : string -> bool
+  (** Whether a [/dev] entry name looks like a USB Switch controller serial
+      port. *)
+
+  val parse_capture_lines : string list -> capture_device list
+  (** Pure parser for tab-separated [INDEX\tID\tNAME] lines. *)
+
+  val discover_serial_ports : unit -> string list
+  (** Scans [/dev] on Unix for connected USB serial ports (sorted). *)
+
+  val discover_capture_devices : unit -> capture_device list
+  (** Enumerates available capture devices on the host. *)
+
+  val suggest_consoles :
+    serials:string list ->
+    captures:capture_device list ->
+    (string * string * string option * string) list
+  (** Pairs discovered serial ports and capture devices into
+      [(id, name, serial, capture)] tuples ([console-a] / ["Console A"], ...).
+  *)
+end

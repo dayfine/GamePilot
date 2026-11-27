@@ -1,4 +1,4 @@
 (library
  (name console_config)
  (public_name gamepilot.console_config)
- (libraries gamepilot.repo_io yojson))
+ (libraries gamepilot.repo_io unix yojson))

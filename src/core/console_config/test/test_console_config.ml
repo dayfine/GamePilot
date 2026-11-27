@@ -95,4 +95,37 @@ let () =
           let kept, removed = remove [ sample_switch; sample_mgba ] "mgba" in
           Printf.sprintf "%b:%d" removed (List.length kept))
         "true:1";
+      case "device discovery filters serial names"
+        (fun () ->
+          let names =
+            [
+              "cu.usbmodem5C630032771";
+              "cu.Bluetooth-Incoming-Port";
+              "ttyUSB0";
+              "disk0";
+            ]
+          in
+          String.concat ","
+            (List.filter Device_discovery.is_serial_device_name names))
+        "cu.usbmodem5C630032771,ttyUSB0";
+      case "device discovery parses capture list and suggests consoles"
+        (fun () ->
+          let captures =
+            Device_discovery.parse_capture_lines
+              [ "0\t0x1100\tUSB Video"; "1\t0x1140\tUSB Video" ]
+          in
+          let suggested =
+            Device_discovery.suggest_consoles
+              ~serials:[ "/dev/cu.usbmodemA"; "/dev/cu.usbmodemB" ]
+              ~captures
+          in
+          String.concat " | "
+            (List.map
+               (fun (id, name, ser, cap) ->
+                 Printf.sprintf "%s:%s:%s:%s" id name
+                   (Option.value ser ~default:"none")
+                   cap)
+               suggested))
+        "console-a:Console A:/dev/cu.usbmodemA:0 | console-b:Console \
+         B:/dev/cu.usbmodemB:1";
     ]

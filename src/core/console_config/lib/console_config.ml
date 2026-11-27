@@ -186,3 +186,5 @@ let describe c =
       Printf.sprintf "%s (%s): switch, capture=%s (no serial)" c.id c.name
         capture
   | Mgba { port } -> Printf.sprintf "%s (%s): mgba, port=%d" c.id c.name port
+
+module Device_discovery = Device_discovery
