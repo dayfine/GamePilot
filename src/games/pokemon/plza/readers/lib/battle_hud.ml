@@ -71,34 +71,53 @@ let bar_tests =
   @ [ trough ]
 
 (* The markers' five slots, one probe across them. *)
-let slot_count = 5
-let slot_first_centre = 405
-let slot_spacing = 27
+type marker_geom = {
+  slot_count : int;
+  first_centre : int;
+  spacing : int;
+  w : int;
+  h : int;
+  top : int;
+  triangle_share : float;
+  no_triangle_share : float;
+  dot_share_min : float;
+  dot_share_max : float;
+  dots_min : int;
+  dot_spread : int;
+}
+
+let mk =
+  {
+    slot_count = 5;
+    first_centre = 405;
+    spacing = 27;
+    w = 16;
+    h = 12;
+    top = 800;
+    triangle_share = 0.2;
+    no_triangle_share = 0.05;
+    dot_share_min = 0.06;
+    dot_share_max = 0.5;
+    dots_min = 3;
+    dot_spread = 30;
+  }
 
 let slot_centres =
-  List.init slot_count (fun i -> slot_first_centre + (slot_spacing * i))
+  List.init mk.slot_count (fun i -> mk.first_centre + (mk.spacing * i))
 
-let slot_w = 16
-let slot_h = 12
-let slot_top = 800
-let first_slot_left = slot_first_centre - (slot_w / 2)
+let first_slot_left = mk.first_centre - (mk.w / 2)
 
 let markers_span =
   px
     {
       x = float_of_int first_slot_left;
-      y = float_of_int slot_top;
-      w = float_of_int ((slot_spacing * (slot_count - 1)) + slot_w);
-      h = float_of_int slot_h;
+      y = float_of_int mk.top;
+      w = float_of_int ((mk.spacing * (mk.slot_count - 1)) + mk.w);
+      h = float_of_int mk.h;
     }
 
 let triangle_id = "battle_hud.markers.triangle"
 let dot_id = "battle_hud.markers.dot"
-let triangle_share = 0.2
-let no_triangle_share = 0.05
-let dot_share_min = 0.06
-let dot_share_max = 0.5
-let dots_min = 3
 
 let triangle : L.test =
   [
@@ -120,15 +139,28 @@ let white_within spread : L.test =
       (fun (a, b) -> [ diff a b Less_equal spread; diff b a Less_equal spread ])
       [ (0, 1); (0, 2); (1, 2) ]
 
-let dot_spread = 30
-
 (* The trainer's six balls, one probe across their tops and one their
    bottoms. *)
-let ball_count = 6
-let ball_first_x = 857.5
-let ball_spacing = 41
-let ball_w = 14
-let ball_left = ball_first_x -. (float_of_int ball_w /. 2.)
+type ball_geom = {
+  count : int;
+  first_x : float;
+  spacing : int;
+  w : int;
+  share : float;
+  white_spread : int;
+}
+
+let bl =
+  {
+    count = 6;
+    first_x = 857.5;
+    spacing = 41;
+    w = 14;
+    share = 0.4;
+    white_spread = 40;
+  }
+
+let ball_left = bl.first_x -. (float_of_int bl.w /. 2.)
 
 (* A row of the balls: its [y] and [h]. *)
 let ball_span (row : pixels) =
@@ -136,15 +168,13 @@ let ball_span (row : pixels) =
     {
       row with
       x = ball_left;
-      w = float_of_int ((ball_spacing * (ball_count - 1)) + ball_w);
+      w = float_of_int ((bl.spacing * (bl.count - 1)) + bl.w);
     }
 
 let ball_tops = ball_span { x = 0.; y = 60.; w = 0.; h = 6. }
 let ball_bottoms = ball_span { x = 0.; y = 72.; w = 0.; h = 8. }
 let ball_top_id = "battle_hud.balls.top"
 let ball_bottom_id = "battle_hud.balls.bottom"
-let ball_share = 0.4
-let ball_white_spread = 40
 
 let coral : L.test =
   [
@@ -167,10 +197,10 @@ let probes ~picture ~assets =
       bar_probes ~picture;
       Pixel_shares.probe ~picture ~id:triangle_id markers_span triangle;
       Pixel_shares.probe ~picture ~id:dot_id markers_span
-        (white_within dot_spread);
+        (white_within mk.dot_spread);
       Pixel_shares.probe ~picture ~id:ball_top_id ball_tops coral;
       Pixel_shares.probe ~picture ~id:ball_bottom_id ball_bottoms
-        (white_within ball_white_spread);
+        (white_within bl.white_spread);
     ]
 
 let hint_shown m = Interact_prompt.shown_over m hint_id
@@ -237,29 +267,29 @@ let column_share m id ~first ~count =
 type slot = Triangle | Dot | Neither
 
 let slot m centre =
-  let first = centre - (slot_w / 2) - first_slot_left in
-  let share id = column_share m id ~first ~count:slot_w in
+  let first = centre - (mk.w / 2) - first_slot_left in
+  let share id = column_share m id ~first ~count:mk.w in
   match (share triangle_id, share dot_id) with
-  | Some blue, _ when blue >= triangle_share -> Triangle
+  | Some blue, _ when blue >= mk.triangle_share -> Triangle
   | Some blue, Some white
-    when blue < no_triangle_share && white >= dot_share_min
-         && white <= dot_share_max ->
+    when blue < mk.no_triangle_share
+         && white >= mk.dot_share_min && white <= mk.dot_share_max ->
       Dot
   | _ -> Neither
 
 let markers_shown m =
   let slots = List.map (slot m) slot_centres in
   let count kind = List.length (List.filter (( = ) kind) slots) in
-  count Triangle = 1 && count Dot >= dots_min
+  count Triangle = 1 && count Dot >= mk.dots_min
 
 let ball_shown m i =
-  let first = ball_spacing * i in
-  let share id = column_share m id ~first ~count:ball_w in
-  at_least ball_share (share ball_top_id)
-  && at_least ball_share (share ball_bottom_id)
+  let first = bl.spacing * i in
+  let share id = column_share m id ~first ~count:bl.w in
+  at_least bl.share (share ball_top_id)
+  && at_least bl.share (share ball_bottom_id)
 
 let trainer_balls_shown m =
-  List.exists (ball_shown m) (List.init ball_count Fun.id)
+  List.exists (ball_shown m) (List.init bl.count Fun.id)
 
 let shown m =
   hint_shown m || (panel_shown m && (markers_shown m || trainer_balls_shown m))

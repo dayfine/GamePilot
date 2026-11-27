@@ -1,4 +1,5 @@
 type t = { id : string; left : int; glyph_top : int; indent : int; width : int }
+type row_grid = { first_top : int; pitch : int }
 
 let game_width_px = 240
 let game_width = float game_width_px
@@ -6,17 +7,18 @@ let game_height = 160.
 let template_top = 1
 let template_height = 12
 let slack = 2
-let list_row_pitch = 16
-let list_first_top = 10
-let summary_move_pitch = 28
-let summary_first_top = 21
+let list_grid = { first_top = 10; pitch = 16 }
+let summary_move_grid = { first_top = 21; pitch = 28 }
+let battle_message_grid = { first_top = 122; pitch = 16 }
+let start_menu_grid = { first_top = 8; pitch = 15 }
+let row_top g i = g.first_top + (g.pitch * i)
 
 let bag_row i =
   {
     id = Printf.sprintf "bag.%d" i;
     left = 97;
     indent = 2;
-    glyph_top = list_first_top + (list_row_pitch * i);
+    glyph_top = row_top list_grid i;
     width = 98;
   }
 
@@ -25,7 +27,7 @@ let tm_case_row i =
     id = Printf.sprintf "tm_case.%d" i;
     left = 112;
     indent = 5;
-    glyph_top = list_first_top + (list_row_pitch * i);
+    glyph_top = row_top list_grid i;
     width = 89;
   }
 
@@ -34,31 +36,25 @@ let summary_move i =
     id = Printf.sprintf "summary_move.%d" i;
     left = 163;
     indent = 3;
-    glyph_top = summary_first_top + (summary_move_pitch * i);
+    glyph_top = row_top summary_move_grid i;
     width = 75;
   }
-
-let battle_message_pitch = 16
-let battle_message_first_top = 122
 
 let battle_message i =
   {
     id = Printf.sprintf "battle_message.%d" i;
     left = 10;
     indent = 0;
-    glyph_top = battle_message_first_top + (battle_message_pitch * i);
+    glyph_top = row_top battle_message_grid i;
     width = 208;
   }
-
-let start_menu_pitch = 15
-let start_menu_first_top = 8
 
 let start_menu_row i =
   {
     id = Printf.sprintf "start_menu_name.%d" i;
     left = 184;
     indent = 2;
-    glyph_top = start_menu_first_top + (start_menu_pitch * i);
+    glyph_top = row_top start_menu_grid i;
     width = 50;
   }
 
@@ -78,108 +74,110 @@ let digit_cell id k ~left ~glyph_top =
     width = digit_width;
   }
 
+type digit_origins = {
+  card_ones_left : int;
+  card_money_top : int;
+  card_dex_top : int;
+  bag_message_left : int;
+  bag_message_second_top : int;
+  summary_level_left : int;
+  summary_level_top : int;
+  count_ones_left : int;
+  berry_number_left : int;
+  pokedex_number_left : int;
+}
+
+let digits =
+  {
+    card_ones_left = 138;
+    card_money_top = 64;
+    card_dex_top = 80;
+    bag_message_left = 16;
+    bag_message_second_top = 137;
+    summary_level_left = 14;
+    summary_level_top = 18;
+    count_ones_left = 216;
+    berry_number_left = 106;
+    pokedex_number_left = 37;
+  }
+
 (* The card's window starts at (8, 8); the money string (the yen sign, 8 wide,
    then the digits) ends at x 136 of the window, the ones digit from 130. *)
-let card_ones_left = 138
-let card_money_top = 64
-
 let trainer_card_money_digit k =
   digit_cell "card_money" k
-    ~left:(card_ones_left - (digit_width * k))
-    ~glyph_top:card_money_top
+    ~left:(digits.card_ones_left - (digit_width * k))
+    ~glyph_top:digits.card_money_top
 
 (* The Pokedex count: window y 72, 16 below the money's 56. *)
-let card_dex_top = 80
-
 let trainer_card_dex_digit k =
   digit_cell "card_dex" k
-    ~left:(card_ones_left - (digit_width * k))
-    ~glyph_top:card_dex_top
+    ~left:(digits.card_ones_left - (digit_width * k))
+    ~glyph_top:digits.card_dex_top
 
 (* The bag's message window 5 starts at (16, 120); its second line's glyphs
    at y 137 (measured on mGBA by reading the Coin Case's count). *)
-let bag_message_left = 16
-let bag_message_second_top = 137
-
 let bag_message_digit k =
   digit_cell "bag_message_digit" k
-    ~left:(bag_message_left + (digit_width * k))
-    ~glyph_top:bag_message_second_top
+    ~left:(digits.bag_message_left + (digit_width * k))
+    ~glyph_top:digits.bag_message_second_top
 
 (* The level in the summary's top left, on every page: "Lv" (10 wide) at x 4,
    then the digits, left-aligned (measured on mGBA). *)
-let summary_level_left = 14
-let summary_level_top = 18
-
 let summary_level_digit k =
   digit_cell "summary_level" k
-    ~left:(summary_level_left + (digit_width * k))
-    ~glyph_top:summary_level_top
+    ~left:(digits.summary_level_left + (digit_width * k))
+    ~glyph_top:digits.summary_level_top
 
 let small_digit_width = 5
 
 let small_digit_cell id ~left ~glyph_top =
   { id; left; indent = 0; glyph_top; width = small_digit_width }
 
-let list_row_top row = list_first_top + (list_row_pitch * row)
+let list_row_top row = row_top list_grid row
 
 (* The list window starts at x 88; the count prints at x 110 as "×" (8 wide)
    and three digit cells. *)
-let count_ones_left = 216
-
 let bag_count_digit row k =
   small_digit_cell
     (Printf.sprintf "bag_count.%d.%d" row k)
-    ~left:(count_ones_left - (small_digit_width * k))
+    ~left:(digits.count_ones_left - (small_digit_width * k))
     ~glyph_top:(list_row_top row)
 
 (* The label at x 97: the No symbol (8 wide), CLEAR 1, then the digits. *)
-let berry_number_left = 106
-
 let berry_pouch_number_digit row k =
   small_digit_cell
     (Printf.sprintf "pouch_number.%d.%d" row k)
-    ~left:(berry_number_left + (small_digit_width * k))
+    ~left:(digits.berry_number_left + (small_digit_width * k))
     ~glyph_top:(list_row_top row)
 
 (* The phrase window at x 24; a row's first word after CLEAR 17. *)
-let mail_field_one_left = 41
-let mail_first_row_top = 2
+let mail_grid = { first_top = 2; pitch = 16 }
 
 let mail_field_one ~width =
-  {
-    id = "mail_field.1";
-    left = mail_field_one_left;
-    indent = 0;
-    glyph_top = mail_first_row_top;
-    width;
-  }
-
-let mail_row_pitch = 16
+  { id = "mail_field.1"; left = 41; indent = 0; glyph_top = 2; width }
 
 let mail_field ~row ~left ~width =
   {
     id = Printf.sprintf "mail_field.r%d.x%d" row left;
     left;
     indent = 0;
-    glyph_top = mail_first_row_top + (mail_row_pitch * row);
+    glyph_top = row_top mail_grid row;
     width;
   }
 
 (* The lower panel's list window: window 2 at tile (1, 0), its rows 16 apart
    from y 96 scrolled so the top shown row is at 92. *)
-let easy_chat_list_top = 92
-let easy_chat_list_pitch = 16
-let easy_chat_word_left_first = 32
-let easy_chat_word_left_second = 136
-let easy_chat_group_left_first = 18
-let easy_chat_group_left_second = 102
+type col_pair = { first : int; second : int }
+
+let easy_chat_grid = { first_top = 92; pitch = 16 }
+let easy_chat_word_cols = { first = 32; second = 136 }
+let easy_chat_group_cols = { first = 18; second = 102 }
 
 let easy_chat_word_lefts =
-  [| easy_chat_word_left_first; easy_chat_word_left_second |]
+  [| easy_chat_word_cols.first; easy_chat_word_cols.second |]
 
 let easy_chat_group_lefts =
-  [| easy_chat_group_left_first; easy_chat_group_left_second |]
+  [| easy_chat_group_cols.first; easy_chat_group_cols.second |]
 
 let easy_chat_rows = 4
 
@@ -188,7 +186,7 @@ let easy_chat_cell kind lefts ~row ~col ~width =
     id = Printf.sprintf "easy_chat_%s.r%dc%d" kind row col;
     left = lefts.(col);
     indent = 0;
-    glyph_top = easy_chat_list_top + (easy_chat_list_pitch * row);
+    glyph_top = row_top easy_chat_grid row;
     width;
   }
 
@@ -211,16 +209,15 @@ let box t : Wire.box =
    168, the capitals from y 45; PKMN DATA's window 0 at (0, 88) prints
    "/<species>" at (6, 14); the box screen's message window 1 at (88, 136)
    prints at (0, 2). *)
-let pc_row_pitch = 16
-let pc_menu_first_top = 10
-let pc_mon_menu_first_top = 42
+let pc_menu_grid = { first_top = 10; pitch = 16 }
+let pc_mon_menu_grid = { first_top = 42; pitch = 16 }
 
 let pc_menu_row i =
   {
     id = Printf.sprintf "pc_menu.%d" i;
     left = 16;
     indent = 2;
-    glyph_top = pc_menu_first_top + (pc_row_pitch * i);
+    glyph_top = row_top pc_menu_grid i;
     width = 104;
   }
 
@@ -231,7 +228,7 @@ let pc_mon_menu_row i =
     id = Printf.sprintf "pc_mon_menu.%d" i;
     left = pc_mon_menu_left;
     indent = 2;
-    glyph_top = pc_mon_menu_first_top + (pc_row_pitch * i);
+    glyph_top = row_top pc_mon_menu_grid i;
     width = 60;
   }
 
@@ -255,11 +252,8 @@ let pc_message =
 (* The Pokédex's numerical list: window at tile (2, 2), rows 14 apart from
    y 2, the names at x 56 and the No symbol at x 12, its digits 9 right. *)
 let pokedex_list_rows = 9
-let pokedex_list_first_top = 18
-let pokedex_list_pitch = 14
-
-let pokedex_list_row_top row =
-  pokedex_list_first_top + (pokedex_list_pitch * row)
+let pokedex_grid = { first_top = 18; pitch = 14 }
+let pokedex_list_row_top row = row_top pokedex_grid row
 
 let pokedex_list_name row =
   {
@@ -270,29 +264,27 @@ let pokedex_list_name row =
     width = 62;
   }
 
-let pokedex_number_left = 37
-
 let pokedex_list_number_digit row k =
   small_digit_cell
     (Printf.sprintf "pokedex_number.%d.%d" row k)
-    ~left:(pokedex_number_left + (small_digit_width * k))
+    ~left:(digits.pokedex_number_left + (small_digit_width * k))
     ~glyph_top:(pokedex_list_row_top row)
 
 (* The naming screen's text entry: window WIN_TEXT_ENTRY at tile (8, 6),
    each character printed alone at x [8 i + base - 64] of the window and y 1,
    base = (240 - 8 max_chars) / 2 + 6 (pokefirered naming_screen.c,
    [DrawTextEntry], [NamingScreen_Init]). *)
-let naming_entry_pitch = 8
-let naming_entry_glyph_top = 49
-let naming_entry_centre = 6
+type naming_geom = { pitch : int; glyph_top : int; centre : int }
+
+let naming = { pitch = 8; glyph_top = 49; centre = 6 }
 
 let naming_entry_cell ~max_chars i =
   {
     id = Printf.sprintf "naming_entry.%d" i;
     left =
-      ((game_width_px - (naming_entry_pitch * max_chars)) / 2)
-      + naming_entry_centre + (naming_entry_pitch * i);
+      ((game_width_px - (naming.pitch * max_chars)) / 2)
+      + naming.centre + (naming.pitch * i);
     indent = 0;
-    glyph_top = naming_entry_glyph_top;
-    width = naming_entry_pitch;
+    glyph_top = naming.glyph_top;
+    width = naming.pitch;
   }

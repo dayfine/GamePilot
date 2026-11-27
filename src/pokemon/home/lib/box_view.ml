@@ -17,53 +17,82 @@ let all_digits = List.init base Fun.id
 let complete t = List.for_all (fun d -> List.mem_assoc d t.digits) all_digits
 
 (* The counter. *)
+type counter_geom = {
+  digits_left : int;
+  advance : int;
+  max_digits : int;
+  window_slack : int;
+  window_width : int;
+  ink_max : int;
+}
+
+let ctr =
+  {
+    digits_left = 153;
+    advance = 17;
+    max_digits = 3;
+    window_slack = 4;
+    window_width = 26;
+    ink_max = 170;
+  }
+
 let slash_id = "home.box.slash"
 let counter : F.t = { x = 150; y = 780; w = 150; h = 34 }
-let digits_left = 153
-let advance = 17
-let max_digits = 3
-let window_slack = 4
-let window_width = 26
 
 let digit_box k : F.t =
   {
-    x = digits_left + (advance * k) - window_slack;
+    x = ctr.digits_left + (ctr.advance * k) - ctr.window_slack;
     y = 780;
-    w = window_width;
+    w = ctr.window_width;
     h = 34;
   }
 
 let digit_id k d = Printf.sprintf "home.box.digit%d.%d" k d
-let ink_max = 170
 
 let ink : Wire.color_range =
-  { min = (0, 0, 0); max = (ink_max, ink_max, ink_max) }
+  { min = (0, 0, 0); max = (ctr.ink_max, ctr.ink_max, ctr.ink_max) }
 
 (* Slots. *)
-let frame_width = 1920.
-let frame_height = 1080.
-let home_left = 0.073
-let game_left = 0.5635
-let col_pitch = 0.0725
-let first_row = 0.228
-let row_pitch = 0.112
-let slot_half = 28
+type slot_geom = {
+  frame_width : float;
+  frame_height : float;
+  home_left : float;
+  game_left : float;
+  col_pitch : float;
+  first_row : float;
+  row_pitch : float;
+  slot_half : int;
+}
+
+let sg =
+  {
+    frame_width = 1920.;
+    frame_height = 1080.;
+    home_left = 0.073;
+    game_left = 0.5635;
+    col_pitch = 0.0725;
+    first_row = 0.228;
+    row_pitch = 0.112;
+    slot_half = 28;
+  }
 
 let centre s =
   let left =
-    match s.pane with Home_box -> home_left | Game_box -> game_left
+    match s.pane with Home_box -> sg.home_left | Game_box -> sg.game_left
   in
-  ( Float.to_int (frame_width *. (left +. (col_pitch *. float_of_int s.col))),
+  ( Float.to_int
+      (sg.frame_width *. (left +. (sg.col_pitch *. float_of_int s.col))),
     Float.to_int
-      (frame_height *. (first_row +. (row_pitch *. float_of_int s.row))) )
+      (sg.frame_height *. (sg.first_row +. (sg.row_pitch *. float_of_int s.row)))
+  )
 
 let slot_box s : F.t =
   let cx, cy = centre s in
   {
-    x = cx - slot_half;
-    y = cy - slot_half;
-    w = 2 * slot_half;
-    h = 2 * slot_half;
+    x = cx - sg.slot_half;
+    y = cy - sg.slot_half;
+    w = 2 * sg.slot_half;
+    h = 2 * sg.slot_half;
   }
 
 let pane_name = function Home_box -> "home" | Game_box -> "game"
@@ -85,7 +114,7 @@ let probes t =
          List.map
            (fun (d, h) -> F.template_probe ~ink (digit_id k d) (digit_box k) h)
            t.digits)
-       (List.init max_digits Fun.id)
+       (List.init ctr.max_digits Fun.id)
   @ List.map
       (fun s -> F.stats_probe (slot_id s) (slot_box s))
       (all_slots Home_box @ all_slots Game_box)
@@ -140,7 +169,8 @@ let digit_count m =
   Option.map
     (fun (_, x) ->
       Float.to_int
-        (Float.round ((x -. float_of_int digits_left) /. float_of_int advance)))
+        (Float.round
+           ((x -. float_of_int ctr.digits_left) /. float_of_int ctr.advance)))
     (F.score m slash_id)
 
 let read_digit m k =
@@ -158,7 +188,7 @@ let digits_value digits =
 
 let number m =
   match digit_count m with
-  | Some n when shown m && n >= 1 && n <= max_digits ->
+  | Some n when shown m && n >= 1 && n <= ctr.max_digits ->
       digits_value (List.init n (read_digit m))
   | Some _ | None -> None
 
@@ -172,7 +202,7 @@ let counter_to_string m =
     (Option.fold ~none:"-"
        ~some:(fun (score, x) -> Printf.sprintf "%.3f at x %.0f" score x)
        (F.score m slash_id))
-    (String.concat ", " (List.map window (List.init max_digits Fun.id)))
+    (String.concat ", " (List.map window (List.init ctr.max_digits Fun.id)))
 
 let max_empty_stddev = 25.
 let min_empty_sum = 550.
