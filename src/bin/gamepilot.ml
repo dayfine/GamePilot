@@ -24,6 +24,7 @@ let usage =
      run)\n" ^ Programs_command.usage ^ Guide_command.usage
   ^ Status_command.usage ^ Ctl_command.usage ^ Runs_command.usage
   ^ Switch_devices.usage ^ Bring_up_command.usage ^ Console_park_command.usage
+  ^ Setup_command.usage
 
 let die msg =
   prerr_string msg;
@@ -37,12 +38,13 @@ let run_registered id flags =
   Result.bind (Programs_command.plan_dir id) (fun dir ->
       Checkpoint_families.main dir flags)
 
-(* gamepilot run: what [args] name. *)
+(* gamepilot run: what [args] name, expanding [--console ID] if given. *)
 let run (args : Run_args.t) =
-  match args.target with
-  | Program id -> run_registered id args.flags
-  | Plan_folder dir -> Checkpoint_families.main dir args.flags
-  | Plan plan -> Checkpoint_families.checkpoint plan args.flags
+  Result.bind (Console_config.expand_console_flag args.flags) (fun flags ->
+      match args.target with
+      | Program id -> run_registered id flags
+      | Plan_folder dir -> Checkpoint_families.main dir flags
+      | Plan plan -> Checkpoint_families.checkpoint plan flags)
 
 (* gamepilot checkpoints and gamepilot checkpoint: their gamepilot run form on
    stderr, then that run. *)
@@ -69,6 +71,8 @@ let () =
   | "switch-devices" :: flags -> exit_with (Switch_devices.main flags)
   | "bring-up" :: flags -> exit_with (Bring_up_command.main flags)
   | "console" :: args -> exit_with (Console_park_command.main args)
+  | "setup" :: args -> exit_with (Setup_command.main_setup args)
+  | "doctor" :: args -> exit_with (Setup_command.main_doctor args)
   | "programs" :: flags -> exit_with (Programs_command.main flags)
   | "guide" :: args -> exit_with (Guide_command.main args)
   | "replay" :: "checkpoint" :: wirelog :: plan :: flags ->
