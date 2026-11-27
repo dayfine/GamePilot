@@ -53,8 +53,11 @@ let player_bar : hp_bar_layout =
 let status_probe_id = "battle.hud.foe_status"
 let status_box = Game_pixels.box { x = 16.; y = 31.; w = 20.; h = 8. }
 
+(* Filled HP segments on Switch 1080p scaling clip 1px of the bar border,
+   giving stddev sums up to ~216 on the rightmost segment while chroma stays
+   55..150 (vs < 25 on empty grey segments). *)
 let hp_thresh : hp_thresholds =
-  { min_chroma = 35.; min_brightness = 115.; max_stddev_sum = 120. }
+  { min_chroma = 35.; min_brightness = 115.; max_stddev_sum = 250. }
 
 let status_thresh : status_thresholds =
   {

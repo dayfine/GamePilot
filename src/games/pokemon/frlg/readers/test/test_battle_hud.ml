@@ -70,6 +70,18 @@ let test_hp_ratios () =
       @ hp_bar_probes "battle.hud.player_hp." ~filled:3 ~rgb:(248., 88., 56.))
   in
   assert_eq "player red 25%" (Battle_hud.player_hp_ratio low_player) (Some 0.25);
+  (* Switch 1080p scaling clips 1px of the player HP bar border (sd_sum ~131..216). *)
+  let switch_full_player =
+    frame
+      (player_box_probes
+      @ List.init 12 (fun idx ->
+            let id = Printf.sprintf "battle.hud.player_hp.%d" idx in
+            if idx < 11 then (id, cs (140.9, 246.3, 181.9) (55., 22., 54.))
+            else (id, cs (149.6, 204.2, 157.4) (72., 72., 72.))))
+  in
+  assert_eq "switch player full green"
+    (Battle_hud.player_hp_ratio switch_full_player)
+    (Some 1.0);
   (* Gating: without Battle_screen.foe_box / player_box, ratios return None. *)
   let ungated_foe =
     frame (hp_bar_probes "battle.hud.foe_hp." ~filled:12 ~rgb:(80., 240., 128.))
