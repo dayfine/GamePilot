@@ -82,13 +82,7 @@ type tracker = {
 }
 
 let find_battle_index tr logical_slot =
-  let len = Array.length tr.party_order in
-  let rec loop i =
-    if i >= len then None
-    else if tr.party_order.(i) = logical_slot then Some i
-    else loop (i + 1)
-  in
-  loop 0
+  Array.find_index (( = ) logical_slot) tr.party_order
 
 let swap_into_lead tr idx =
   let cur = tr.party_order.(0) in
@@ -132,6 +126,9 @@ let rec next_live_event ~log (battle : B.game_steps) cfg tr =
   | B.Switch_in -> Ok (CR.Forced_switch { fainted_slot = tr.active_slot })
   | B.Battle_over ->
       if tr.last_action_was_throw then Ok CR.Caught else Ok CR.Foe_ended
+  (* Already-registered species show the in-battle nickname Yes/No (Move_learn)
+     after a ball throw instead of fading to Pokédex. *)
+  | B.Move_learn when tr.last_action_was_throw -> Ok CR.Caught
   | B.Timed_out -> Ok (CR.Unexpected "timed out waiting for FRLG battle event")
   | (B.Level_up | B.Move_learn | B.Evolution | B.Switch_offer) as ev ->
       Ok (CR.Unexpected ("unexpected battle prompt: " ^ B.event_name ev))
@@ -166,7 +163,8 @@ let execute_switch ~log (battle : B.game_steps) tr slot =
   match find_battle_index tr slot with
   | None -> Error (Printf.sprintf "unknown party slot %d" slot)
   | Some idx ->
-      log (Printf.sprintf "FRLG catch: Pokémon -> slot %d (pos %d)" slot (idx + 1));
+      log
+        (Printf.sprintf "FRLG catch: Pokémon -> slot %d (pos %d)" slot (idx + 1));
       tr.last_action_was_throw <- false;
       if battle.switch_to ~slot:idx then (
         swap_into_lead tr idx;

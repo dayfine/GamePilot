@@ -223,7 +223,21 @@ let test_phase2_one_mon_catch () =
     (Catch_runner.Caught
        { turns = 3; balls_thrown = 1; switches = 0; heals = 0 });
   assert_eq "phase2 actions" (get_actions ())
-    [ Move 0; Move 1; Item (Bag.Poke_balls, 2, None) ]
+    [ Move 0; Move 1; Item (Bag.Poke_balls, 2, None) ];
+  (* Already-registered species shows in-battle nickname Yes/No (Move_learn)
+     immediately after a ball throw instead of fading to Pokédex. *)
+  let battle_nick, _ = make_fake_battle [ B.Action_menu; B.Move_learn ] in
+  let outcome_nick, _ =
+    run_with_hud
+      [ hud_frame ~foe_filled:1 ~player_filled:12 ~asleep:true ]
+      (fun () ->
+        Catch_runner.run
+          (Battle_catch_steps.make ~battle:battle_nick test_cfg)
+          policy)
+  in
+  assert_eq "nickname prompt after ball throw is Caught" outcome_nick
+    (Catch_runner.Caught
+       { turns = 1; balls_thrown = 1; switches = 0; heals = 0 })
 
 let test_use_next_and_forced_switch () =
   let events = [ B.Use_next; B.Switch_in; B.Action_menu; B.Battle_over ] in
