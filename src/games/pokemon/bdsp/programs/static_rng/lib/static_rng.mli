@@ -10,7 +10,11 @@
 
 type templates = {
   player_eye_png : string;
-      (** Raw PNG bytes of the player's open eye facing South. *)
+      (** Raw PNG bytes of the player's open eye facing South at the pedestal.
+      *)
+  chamber_eye_png : string;
+      (** Raw PNG bytes of the player's open eye inside the Mystery Space
+          (defaults to [player_eye_png] when room lighting matches). *)
   player_eye_box : Wire.box;
       (** Normalized ROI around the player's eye at the pedestal and in the
           Mystery Space. *)

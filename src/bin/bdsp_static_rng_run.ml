@@ -31,8 +31,14 @@ let load_templates () =
     resolve_template ~env_var:"GAMEPILOT_BDSP_PLAYER_EYE_PNG"
       ~repo_path:"src/games/pokemon/bdsp/assets/player_eye.png"
   in
+  let* chamber_eye_png =
+    match Sys.getenv_opt "GAMEPILOT_BDSP_CHAMBER_EYE_PNG" with
+    | Some p when p <> "" -> read_file p
+    | _ -> Ok player_eye_png
+  in
   Ok
     {
       Bdsp_static_rng.Static_rng.player_eye_png;
+      chamber_eye_png;
       player_eye_box = Bdsp_static_rng.Static_rng.default_player_eye_box;
     }

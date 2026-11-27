@@ -2,7 +2,11 @@ module EBR = Bdsp_readers.Eye_blink_reader
 module Opts = Static_rng_options
 module WF = Static_rng_workflow
 
-type templates = { player_eye_png : string; player_eye_box : Wire.box }
+type templates = {
+  player_eye_png : string;
+  chamber_eye_png : string;
+  player_eye_box : Wire.box;
+}
 
 let default_player_eye_box : Wire.box =
   { x = 0.493; y = 0.672; w = 0.030; h = 0.044 }
@@ -133,16 +137,17 @@ let reidentify_in_chamber ~picture ~target ~base_state =
 let detect_shiny ~picture () =
   Bdsp_readers.Shiny_encounter_detector.detect ~picture ()
 
-let live_game_steps ~picture ~player_eye_target : WF.game_steps =
+let live_game_steps ~picture ~pedestal_eye_target ~chamber_eye_target :
+    WF.game_steps =
   {
     log = log_line;
     update_counters = publish_counters;
     freeze_player;
     recover_pedestal_seed =
-      recover_pedestal_seed ~picture ~target:player_eye_target;
+      recover_pedestal_seed ~picture ~target:pedestal_eye_target;
     enter_chamber;
     reidentify_in_chamber =
-      reidentify_in_chamber ~picture ~target:player_eye_target;
+      reidentify_in_chamber ~picture ~target:chamber_eye_target;
     prepare_for_trigger;
     trigger_encounter = Bdsp_blink_rng.Static_rng_trigger.run;
     detect_shiny = detect_shiny ~picture;
@@ -150,15 +155,29 @@ let live_game_steps ~picture ~player_eye_target : WF.game_steps =
   }
 
 let run_checked ~picture ~templates cfg =
-  let player_template = Effects.upload_template templates.player_eye_png in
-  let player_eye_target : EBR.target =
+  let pedestal_template = Effects.upload_template templates.player_eye_png in
+  let chamber_template =
+    if String.equal templates.chamber_eye_png templates.player_eye_png then
+      pedestal_template
+    else Effects.upload_template templates.chamber_eye_png
+  in
+  let pedestal_eye_target : EBR.target =
     {
       id = "bdsp_eye_player";
       box = templates.player_eye_box;
-      template = player_template;
+      template = pedestal_template;
     }
   in
-  let steps = live_game_steps ~picture ~player_eye_target in
+  let chamber_eye_target : EBR.target =
+    {
+      id = "bdsp_eye_chamber";
+      box = templates.player_eye_box;
+      template = chamber_template;
+    }
+  in
+  let steps =
+    live_game_steps ~picture ~pedestal_eye_target ~chamber_eye_target
+  in
   WF.run ~steps cfg |> WF.outcome_to_result cfg
 
 let run ~picture ~templates ?(options = Run_options.none) () =
