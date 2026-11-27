@@ -51,12 +51,24 @@ trap 'rm -rf "$TMPDIR_TEST"' EXIT
     exit 1
   }
 
+  echo "[smoke] gamepilot doctor (out of tree, empty temp config)"
+  "$GP" doctor --config "$TMPDIR_TEST/consoles.json" | grep -q "\[PASS\] bundled data" || {
+    echo "smoke_test.sh: expected [PASS] bundled data from gamepilot doctor" >&2
+    exit 1
+  }
+
   if [ -x "$STAGED/bin/gamepilot_daemon" ]; then
     echo "[smoke] bin/gamepilot_daemon --help"
-    "$STAGED/bin/gamepilot_daemon" --help >/dev/null
+    "$STAGED/bin/gamepilot_daemon" --help 2>&1 | grep -q "usage:" || {
+      echo "smoke_test.sh: expected usage output from gamepilot_daemon" >&2
+      exit 1
+    }
   elif [ -f "$STAGED/bin/gamepilot_daemon.exe" ]; then
     echo "[smoke] bin/gamepilot_daemon.exe --help"
-    "$STAGED/bin/gamepilot_daemon.exe" --help >/dev/null
+    "$STAGED/bin/gamepilot_daemon.exe" --help 2>&1 | grep -q "usage:" || {
+      echo "smoke_test.sh: expected usage output from gamepilot_daemon.exe" >&2
+      exit 1
+    }
   fi
 )
 

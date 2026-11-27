@@ -1,0 +1,161 @@
+# harness: project
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version label for dry-run artifacts (e.g. v0.1.0-rc1)"
+        required: false
+        default: "dev"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            target: macos-arm64
+            archive: tar.gz
+          - os: ubuntu-latest
+            target: linux-x86_64
+            archive: tar.gz
+          - os: windows-latest
+            target: windows-x86_64
+            archive: zip
+    runs-on: ${{ matrix.os }}
+    env:
+      DUNE_CACHE: enabled
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch runtime and daemon submodules
+        shell: bash
+        run: |
+          git submodule update --init --depth 1 third_party/Arduino-Source
+          git submodule update --init --depth 1 third_party/PokemonSimulation
+
+      - name: Resolve version
+        id: ver
+        shell: bash
+        run: |
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            VERSION="${GITHUB_REF_NAME}"
+          else
+            VERSION="${{ inputs.version || 'dev' }}"
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "bundle=gamepilot-${VERSION}-${{ matrix.target }}" >> "$GITHUB_OUTPUT"
+
+      - name: Install OpenCV (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libopencv-dev ninja-build
+
+      - name: Install OpenCV (macOS)
+        if: runner.os == 'macOS'
+        run: brew install opencv ninja
+
+      - name: Install OpenCV (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          choco install opencv --no-progress -y
+          echo "OpenCV_DIR=C:/tools/opencv/build" >> "$GITHUB_ENV"
+          echo "C:\\tools\\opencv\\build\\x64\\vc16\\bin" >> "$GITHUB_PATH"
+
+      - uses: ilammy/msvc-dev-cmd@v1.13.0
+        if: runner.os == 'Windows'
+
+      - name: Configure and build daemon
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            cmake -S daemon -B daemon/build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+              -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl
+          else
+            cmake -S daemon -B daemon/build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          fi
+          cmake --build daemon/build --config Release --parallel 4
+
+      - uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: "5.2"
+          cache: true
+          dune-cache: true
+
+      - name: Build gamepilot binary
+        working-directory: src
+        run: |
+          opam install . --deps-only --yes
+          opam exec -- dune build bin/gamepilot.exe
+
+      - name: Stage release bundle
+        shell: bash
+        run: |
+          DAEMON_BIN="daemon/build/gamepilot_daemon"
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            DAEMON_BIN="daemon/build/gamepilot_daemon.exe"
+          fi
+          sh dev/release/stage.sh "dist/${{ steps.ver.outputs.bundle }}" \
+            --gamepilot src/_build/default/bin/gamepilot.exe \
+            --daemon "$DAEMON_BIN"
+          if [ "$RUNNER_OS" = "Windows" ] && [ -d "C:/tools/opencv/build/x64/vc16/bin" ]; then
+            cp C:/tools/opencv/build/x64/vc16/bin/opencv_world*.dll "dist/${{ steps.ver.outputs.bundle }}/bin/" || true
+          fi
+
+      - name: Out-of-tree smoke test
+        shell: bash
+        run: sh dev/release/smoke_test.sh "dist/${{ steps.ver.outputs.bundle }}"
+
+      - name: Package archive (tar.gz)
+        if: matrix.archive == 'tar.gz'
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          tar -C dist -czf "artifacts/${{ steps.ver.outputs.bundle }}.tar.gz" "${{ steps.ver.outputs.bundle }}"
+
+      - name: Package archive (zip)
+        if: matrix.archive == 'zip'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+          Compress-Archive -Path "dist/${{ steps.ver.outputs.bundle }}" -DestinationPath "artifacts/${{ steps.ver.outputs.bundle }}.zip" -Force
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.target }}
+          path: artifacts/*
+
+  publish:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist-artifacts
+          merge-multiple: true
+
+      - name: Generate SHA256SUMS.txt
+        working-directory: dist-artifacts
+        run: sha256sum * > SHA256SUMS.txt
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$TAG" dist-artifacts/* \
+            --title "GamePilot $TAG" \
+            --generate-notes

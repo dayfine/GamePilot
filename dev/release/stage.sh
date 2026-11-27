@@ -91,12 +91,19 @@ if [ -d "third_party/PokemonSimulation/data/games/frlg/maps" ]; then
   copy_tree "third_party/PokemonSimulation/data/games/frlg/maps"
 fi
 
+# Capture device enumeration helper (used by `gamepilot setup --discover` on macOS)
+if [ -f "daemon/tools/list_capture_devices.swift" ]; then
+  copy_tree "daemon/tools/list_capture_devices.swift"
+fi
+
 cat > "$OUT_DIR/README.txt" <<'EOF'
 GamePilot release bundle
 ========================
 
 Quick start:
-  ./gamepilot --help
+  ./gamepilot setup --discover --write
+  ./gamepilot doctor
+  ./gamepilot ui
   ./gamepilot programs
 
 Bundled files:
