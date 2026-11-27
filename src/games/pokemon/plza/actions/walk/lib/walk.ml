@@ -130,17 +130,18 @@ and talk_read steps ~stop_on_battle walk ~held_ms ~streak tail =
     next (tail + talk_poll_ms))
   else
     match talk_at_prompt steps walk ~held_ms with
-    | Some ended -> ended
-    | None -> next (tail + talk_retry_gap_ms)
+    | Talk_prompt.Started -> Ok ()
+    | Talk_prompt.Prompt_stayed cause -> Error cause
+    | Talk_prompt.Nothing_started -> next (tail + talk_retry_gap_ms)
 
 let talk_check steps walk ~after_legs (screen : Walk_screen.t) ~held_ms :
     Last_leg_end.verdict =
   if after_legs || not screen.interact_prompt then Walk_on
   else
     match talk_at_prompt steps walk ~held_ms with
-    | Some (Ok ()) -> Ended
-    | Some (Error cause) -> Failed cause
-    | None -> Walk_on
+    | Talk_prompt.Started -> Ended
+    | Talk_prompt.Prompt_stayed cause -> Failed cause
+    | Talk_prompt.Nothing_started -> Walk_on
 
 (* The last leg's end, or the reads for the prompt after it. *)
 let talk_after_last_leg steps ~stop_on_battle walk = function
@@ -156,11 +157,12 @@ let walk_into_talk steps ~walk_only ~stop_on_battle walk move ~after_legs =
   let early =
     if prompt_before_walking steps walk move then
       talk_at_prompt steps walk ~held_ms:0
-    else None
+    else Talk_prompt.Nothing_started
   in
   match early with
-  | Some ended -> ended
-  | None ->
+  | Talk_prompt.Started -> Ok ()
+  | Talk_prompt.Prompt_stayed cause -> Error cause
+  | Talk_prompt.Nothing_started ->
       talk_after_last_leg steps ~stop_on_battle walk
         (walk_last_leg steps ~walk_only ~stop_on_battle walk move
            ~check:(talk_check steps walk ~after_legs))

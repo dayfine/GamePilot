@@ -1,8 +1,9 @@
 (** The ["wild_rng"] game action's decisions: with a party slot free, the
     capture on the blind RNG steps ({!Wild_rng_steps}), then the catch's
-    summary, which must show the shiny star. Ported from the fork's program loop
-    in [PokemonFRLG/Programs/RngManipulation/PokemonFRLG_WildRng.cpp] (reset and
-    blind sequence, shiny check, catch).
+    summary, which must show the shiny star. Ported from the program loop in
+    [PokemonFRLG/Programs/RngManipulation/PokemonFRLG_WildRng.cpp]
+    (https://github.com/PokemonAutomation/Arduino-Source; reset and blind
+    sequence, shiny check, catch).
 
     Where it differs: the fork checks for the shiny sound before catching and
     resets on a miss, calibrating from the miss's stats; here the target is

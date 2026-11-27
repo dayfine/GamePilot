@@ -3,15 +3,16 @@
     solution is the state, and the few states it leaves open
     ({!Null_space_search}) are checked against every watched roll.
 
-    Port of the NPC half of the fork's
-    [PokemonBDSP/Programs/RngManipulation/PokemonBDSP_StateSolver.{h,cpp}] (R21:
-    same equations, same order, same messages), extended with W10's 3-state
-    observation so capture gaps and stalls can be skipped cleanly without false
-    rejections or inferred non-blinks; the Pokemon half is
-    {!Pokemon_blink_solver}. Where the C++ takes an optional [Logger] and logs a
-    success, this port logs nothing: the caller has the whole result. Advances
-    are OCaml [int]s (the C++ [uint64_t]). Precondition failures return [Error]
-    where the C++ throws [InternalProgramError]. *)
+    Port of the NPC half of
+    [PokemonBDSP/Programs/RngManipulation/PokemonBDSP_StateSolver.{h,cpp}]
+    (https://github.com/PokemonAutomation/Arduino-Source; R21: same equations,
+    same order, same messages), extended with W10's 3-state observation so
+    capture gaps and stalls can be skipped cleanly without false rejections or
+    inferred non-blinks; the Pokemon half is {!Pokemon_blink_solver}. Where the
+    C++ takes an optional [Logger] and logs a success, this port logs nothing:
+    the caller has the whole result. Advances are OCaml [int]s (the C++
+    [uint64_t]). Precondition failures return [Error] where the C++ throws
+    [InternalProgramError]. *)
 
 (** What the detector observed at one NPC tick. *)
 type observation =

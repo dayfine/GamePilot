@@ -1,7 +1,8 @@
 (** Whether a box is one solid colour or white, from its [core.color_stats@1]
-    result, as the fork tests it (CommonTools/Images/SolidColorTest.cpp) with
-    the limits the PLZA readers pass ({!Switch.Solid_color} keeps the fork's
-    defaults only). *)
+    result, as CommonTools/Images/SolidColorTest.cpp
+    (https://github.com/PokemonAutomation/Arduino-Source) tests it with the
+    limits the PLZA readers pass ({!Switch.Solid_color} keeps the defaults
+    only). *)
 
 type stats = Switch.Solid_color.stats
 (** A box's mean and stddev per channel. *)

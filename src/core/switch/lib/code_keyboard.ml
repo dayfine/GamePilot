@@ -70,8 +70,27 @@ let key_presses from targets =
 let presses ~from code = Result.map (key_presses from) (keys code)
 
 (* The probes, in frame pixels. *)
-let frame_width = 1920.
-let frame_height = 1080.
+type geometry = {
+  frame_width : float;
+  frame_height : float;
+  first_column : float;
+  column_step : float;
+  character_columns : float;
+  cursor_top : float;
+  cursor_bottom : float;
+}
+
+let geom =
+  {
+    frame_width = 1920.;
+    frame_height = 1080.;
+    first_column = 0.077;
+    column_step = 0.075;
+    character_columns = 11.;
+    cursor_top = 0.43;
+    cursor_bottom = 0.8145;
+  }
+
 let keys_id = "code_keyboard.keys_dark"
 let light_keys_id = "code_keyboard.keys_light"
 let cursor_id = "code_keyboard.cursor"
@@ -80,34 +99,44 @@ let keys_box : Wire.box = { x = 0.10; y = 0.50; w = 0.70; h = 0.35 }
 (* The fork's KEY_ROW_Y, KEY_COL_X0 and KEY_COL_STEP; the cursor box spans the
    first four rows (to halfway to the bottom row, above PAGE_LABELS) and the
    eleven character columns (to halfway to the right column). *)
-let digit_row = 0.500
-let top_row = 0.593
-let middle_row = 0.681
-let bottom_row = 0.770
-let key_rows = [ digit_row; top_row; middle_row; bottom_row ]
-let first_column = 0.077
-let column_step = 0.075
-let character_columns = 11.
-let cursor_top = 0.43
-let cursor_bottom = 0.8145
+type row_ys = { digit : float; top : float; middle : float; bottom : float }
+
+let rows = { digit = 0.500; top = 0.593; middle = 0.681; bottom = 0.770 }
+let key_rows = [ rows.digit; rows.top; rows.middle; rows.bottom ]
 
 let cursor_box : Wire.box =
   {
     x = 0.;
-    y = cursor_top;
-    w = first_column +. ((character_columns -. 0.5) *. column_step);
-    h = cursor_bottom -. cursor_top;
+    y = geom.cursor_top;
+    w =
+      geom.first_column +. ((geom.character_columns -. 0.5) *. geom.column_step);
+    h = geom.cursor_bottom -. geom.cursor_top;
   }
 
-let neutral_within = 15
+type luma_bounds = {
+  neutral_within : int;
+  dark_low : int;
+  dark_high : int;
+  light_low : int;
+  light_high : int;
+}
+
+let luma =
+  {
+    neutral_within = 15;
+    dark_low = 40;
+    dark_high = 135;
+    light_low = 200;
+    light_high = 250;
+  }
 
 let neutral =
   L.
     [
-      { weights = (1, -1, 0); op = Less; value = neutral_within };
-      { weights = (-1, 1, 0); op = Less; value = neutral_within };
-      { weights = (0, 1, -1); op = Less; value = neutral_within };
-      { weights = (0, -1, 1); op = Less; value = neutral_within };
+      { weights = (1, -1, 0); op = Less; value = luma.neutral_within };
+      { weights = (-1, 1, 0); op = Less; value = luma.neutral_within };
+      { weights = (0, 1, -1); op = Less; value = luma.neutral_within };
+      { weights = (0, -1, 1); op = Less; value = luma.neutral_within };
     ]
 
 let between low high =
@@ -116,11 +145,6 @@ let between low high =
       { weights = (1, 0, 0); op = Greater; value = low };
       { weights = (1, 0, 0); op = Less; value = high };
     ]
-
-let dark_low = 40
-let dark_high = 135
-let light_low = 200
-let light_high = 250
 
 (* is_cursor_pixel. *)
 let cursor_test =
@@ -136,9 +160,9 @@ let probes =
   List.filter_map Result.to_option
     [
       Wire.line_shares_probe ~id:keys_id ~box:keys_box ~delivery:Every
-        ~test:(neutral @ between dark_low dark_high);
+        ~test:(neutral @ between luma.dark_low luma.dark_high);
       Wire.line_shares_probe ~id:light_keys_id ~box:keys_box ~delivery:Every
-        ~test:(neutral @ between light_low light_high);
+        ~test:(neutral @ between luma.light_low luma.light_high);
       Wire.line_shares_probe ~id:cursor_id ~box:cursor_box ~delivery:Every
         ~test:cursor_test;
     ]
@@ -180,14 +204,16 @@ let nearest_row y =
 let min_cursor_share = 0.0005
 
 let key_at x y =
-  let col = Float.to_int (Float.round ((x -. first_column) /. column_step)) in
+  let col =
+    Float.to_int (Float.round ((x -. geom.first_column) /. geom.column_step))
+  in
   if col < 0 || col >= String.length layout.(0) then None
   else Some { row = nearest_row y; col }
 
 let enough_cyan (t : L.t) =
   let width = float_of_int (List.length t.columns) in
   List.fold_left ( +. ) 0. t.rows *. width
-  >= min_cursor_share *. frame_width *. frame_height
+  >= min_cursor_share *. geom.frame_width *. geom.frame_height
 
 let cursor_key (t : L.t) =
   match (centroid t.columns, centroid t.rows) with

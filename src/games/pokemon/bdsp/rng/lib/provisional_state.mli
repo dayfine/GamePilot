@@ -1,11 +1,12 @@
 (** The provisional RNG state a blink recovery holds until a later solve, over
     more blinks, repeats it; and the rule that drops a held state whose solves
-    keep failing (fork #816).
+    keep failing (https://github.com/dayfine/Arduino-Source, PR #816).
 
-    Port of [ProvisionalState] and [update_provisional] from the fork's
+    Port of [ProvisionalState] and [update_provisional] from
     [PokemonBDSP/Programs/RngManipulation/PokemonBDSP_BlinkRecovery.{h,cpp}]
-    (R21: same transitions). The C++'s [held] flag with a state and roll count
-    beside it becomes an option. *)
+    (https://github.com/PokemonAutomation/Arduino-Source; R21: same
+    transitions). The C++'s [held] flag with a state and roll count beside it
+    becomes an option. *)
 
 type held = {
   state : Xorshift128.state;

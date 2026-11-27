@@ -2,12 +2,13 @@
     for "eye shut", blinks as dips below it, double blinks grouped, and the NPC
     tick period fitted. {!Blink_grid} places the events on advances.
 
-    Port of the first half of the fork's
-    [PokemonBDSP/Inference/Rng/PokemonBDSP_BlinkExtraction.{h,cpp}] (R21: same
-    constants, same scans, same float steps). Timestamps are seconds as a
-    [float], the unit of the [now] effect; the C++ holds a [WallClock] and
-    converts to seconds where it computes. Sentinel returns become options: the
-    C++'s -1 threshold and its all-zero {!tick_fit} below three events. *)
+    Port of the first half of
+    [PokemonBDSP/Inference/Rng/PokemonBDSP_BlinkExtraction.{h,cpp}]
+    (https://github.com/PokemonAutomation/Arduino-Source; R21: same constants,
+    same scans, same float steps). Timestamps are seconds as a [float], the unit
+    of the [now] effect; the C++ holds a [WallClock] and converts to seconds
+    where it computes. Sentinel returns become options: the C++'s -1 threshold
+    and its all-zero {!tick_fit} below three events. *)
 
 type match_sample = { timestamp : float; score : float }
 (** [BlinkMatchSample]: one frame's best template match ([match] in the C++). *)

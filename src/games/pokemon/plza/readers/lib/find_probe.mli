@@ -1,6 +1,7 @@
 (** [core.find@1] probes over a {!Native_box.t}, and the blobs they read: the
-    fork's colour filter, waterfill and size filter
-    (CommonTools/Images/WaterfillUtilities.cpp), run in the daemon. *)
+    colour filter, waterfill and size filter
+    (CommonTools/Images/WaterfillUtilities.cpp in
+    https://github.com/PokemonAutomation/Arduino-Source), run in the daemon. *)
 
 val probe :
   ?template:string ->

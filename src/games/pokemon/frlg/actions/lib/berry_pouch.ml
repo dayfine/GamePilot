@@ -23,31 +23,37 @@ let key_open_row = 0
 (* The fork's presses and waits: OPEN taken (2000 ms), the cursor sent up 12
    times, the list scrolled down and back up, each DOWN in a menu; each A
    160 ms held, then 800 ms on the berry, 1500 ms on GIVE. *)
-let pouch_open_ms = 2000
-let reset_ups = 12
-let reset_hold_ms = 80
-let reset_release_ms = 100
-let scroll_hold_ms = 100
-let scroll_release_ms = 350
-let back_up_hold_ms = 80
-let back_up_release_ms = 120
-let menu_hold_ms = 100
-let menu_release_ms = 250
-let berry_menu_ms = 800
-let give_taken_ms = 1500
+type tap = { hold_ms : int; release_ms : int }
 
-let presses ~n ~hold_ms ~cooldown_ms button =
-  if n > 0 then
-    ignore
-      (Effects.submit
-         (List.init n (fun _ -> M.hold ~hold_ms ~cooldown_ms button)))
+let reset_tap = { hold_ms = 80; release_ms = 100 }
+let scroll_tap = { hold_ms = 100; release_ms = 350 }
+let back_up_tap = { hold_ms = 80; release_ms = 120 }
+let menu_tap_timing = { hold_ms = 100; release_ms = 250 }
+
+type pouch_waits = {
+  pouch_open_ms : int;
+  reset_ups : int;
+  berry_menu_ms : int;
+  give_taken_ms : int;
+}
+
+let waits =
+  {
+    pouch_open_ms = 2000;
+    reset_ups = 12;
+    berry_menu_ms = 800;
+    give_taken_ms = 1500;
+  }
+
+let presses ~n (t : tap) button =
+  let cmd = M.hold ~hold_ms:t.hold_ms ~cooldown_ms:t.release_ms button in
+  if n > 0 then ignore (Effects.submit (List.init n (fun _ -> cmd)))
 
 let open_pouch () =
   Bag_items.item_action "berry-pouch" key_open_row;
-  Effects.submit [ Wire.Wait { wait_ms = pouch_open_ms } ] |> ignore;
+  Effects.submit [ Wire.Wait { wait_ms = waits.pouch_open_ms } ] |> ignore;
   ignore (M.await_screen ~code:"no_berry_pouch" "the Berry Pouch" shows_pouch);
-  presses ~n:reset_ups ~hold_ms:reset_hold_ms ~cooldown_ms:reset_release_ms
-    Wire.Up
+  presses ~n:waits.reset_ups reset_tap Wire.Up
 
 let max_number_digits = 2
 
@@ -63,8 +69,7 @@ let rec find_shown target row =
   else if number_on_row row = Some target then Some row
   else find_shown target (row + 1)
 
-let scroll_down () =
-  presses ~n:1 ~hold_ms:scroll_hold_ms ~cooldown_ms:scroll_release_ms Wire.Down
+let scroll_down () = presses ~n:1 scroll_tap Wire.Down
 
 (* One more row on the bottom row per DOWN, from list row [index]; the DOWNs
    pressed so far in [downs]. *)
@@ -82,23 +87,19 @@ let find_row target =
   match find_shown target 0 with
   | Some row -> Some row
   | None ->
-      presses ~n:scroll_downs ~hold_ms:scroll_hold_ms
-        ~cooldown_ms:scroll_release_ms Wire.Down;
+      presses ~n:scroll_downs scroll_tap Wire.Down;
       let found, downs = scroll target shown_rows None scroll_downs in
-      presses ~n:downs ~hold_ms:back_up_hold_ms ~cooldown_ms:back_up_release_ms
-        Wire.Up;
+      presses ~n:downs back_up_tap Wire.Up;
       found
 
 let give_row = 1
-
-let menu_tap ~n =
-  presses ~n ~hold_ms:menu_hold_ms ~cooldown_ms:menu_release_ms Wire.Down
+let menu_tap ~n = presses ~n menu_tap_timing Wire.Down
 
 let give_from_row row =
   menu_tap ~n:row;
-  M.press Wire.A ~cooldown_ms:berry_menu_ms;
+  M.press Wire.A ~cooldown_ms:waits.berry_menu_ms;
   menu_tap ~n:give_row;
-  M.press Wire.A ~cooldown_ms:give_taken_ms
+  M.press Wire.A ~cooldown_ms:waits.give_taken_ms
 
 let row_of slug number =
   Effects.with_probes probes open_pouch;
@@ -115,8 +116,7 @@ let find_shown_row target =
   match find_shown target 0 with
   | Some row -> Some row
   | None -> (
-      presses ~n:scroll_downs ~hold_ms:scroll_hold_ms
-        ~cooldown_ms:scroll_release_ms Wire.Down;
+      presses ~n:scroll_downs scroll_tap Wire.Down;
       match scroll target shown_rows None scroll_downs with
       | Some _, _ -> Some (shown_rows - 1)
       | None, _ -> None)

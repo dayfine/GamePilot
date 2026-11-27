@@ -1,45 +1,29 @@
+type rect = { x : int; y : int; w : int; h : int }
+
 (* Boxes here are stated in whole game pixels. *)
-let box ~x ~y ~w ~h =
-  Game_pixels.box { x = float x; y = float y; w = float w; h = float h }
+let box (r : rect) =
+  Game_pixels.box { x = float r.x; y = float r.y; w = float r.w; h = float r.h }
 
 let panel_id = "pc_box.panel"
 let panel_box : Wire.box = { x = 0.007; y = 0.556; w = 0.296; h = 0.253 }
 let min_panel_stddev = 10.
 let item_id = "pc_box.item"
-let item_x = 2
-let item_y = 134
-let item_w = 68
-let item_h = 10
-let item_box = box ~x:item_x ~y:item_y ~w:item_w ~h:item_h
+let item_box = box { x = 2; y = 134; w = 68; h = 10 }
 let shadow_id = "pc_box.first_slot_shadow"
-let shadow_x = 93
-let shadow_y = 49
-let shadow_w = 13
-let shadow_h = 7
-let shadow_box = box ~x:shadow_x ~y:shadow_y ~w:shadow_w ~h:shadow_h
+let shadow_box = box { x = 93; y = 49; w = 13; h = 7 }
 
 let shadow : Color_count.range =
   { low = { r = 50; g = 75; b = 90 }; high = { r = 115; g = 140; b = 160 } }
 
 let min_shadow_share = 0.25
 let wallpaper_id = "pc_box.wallpaper"
-let wallpaper_x = 100
-let wallpaper_y = 140
-let wallpaper_w = 120
-let wallpaper_h = 12
-
-let wallpaper_box =
-  box ~x:wallpaper_x ~y:wallpaper_y ~w:wallpaper_w ~h:wallpaper_h
+let wallpaper_box = box { x = 100; y = 140; w = 120; h = 12 }
 
 let anything : Color_count.range =
   { low = { r = 0; g = 0; b = 0 }; high = { r = 255; g = 255; b = 255 } }
 
 let male_id = "pc_box.male"
-let male_x = 9
-let male_y = 116
-let male_w = 9
-let male_h = 13
-let male_box = box ~x:male_x ~y:male_y ~w:male_w ~h:male_h
+let male_box = box { x = 9; y = 116; w = 9; h = 13 }
 
 (* Core blue of the male mark is (0, 123, 255) on mGBA; the panel's lilac
    background is (148, 148, 173) (r >= 133 even at x0.9 brightness) and the
@@ -53,31 +37,36 @@ let min_red_over_green = 15.
 let min_green_over_blue = 20.
 
 (* The title menu's arrow: x 145-149, a row's glyph rows (y 58 + 16 i). *)
-let title_menu_rows = 4
-let title_menu_arrow_left = 143
-let title_menu_arrow_width = 9
-let title_menu_first_top = 59
-let title_menu_pitch = 16
-let title_menu_arrow_height = 11
+type title_menu_geom = {
+  rows : int;
+  left : int;
+  width : int;
+  first_top : int;
+  pitch : int;
+  height : int;
+}
+
+let title_geom =
+  { rows = 4; left = 143; width = 9; first_top = 59; pitch = 16; height = 11 }
 
 let title_menu_box i =
-  box ~x:title_menu_arrow_left
-    ~y:(title_menu_first_top + (title_menu_pitch * i))
-    ~w:title_menu_arrow_width ~h:title_menu_arrow_height
+  box
+    {
+      x = title_geom.left;
+      y = title_geom.first_top + (title_geom.pitch * i);
+      w = title_geom.width;
+      h = title_geom.height;
+    }
 
 let title_menu =
   Cursor_column.make ~prefix:"pc_box.title_menu"
-    (List.init title_menu_rows title_menu_box)
+    (List.init title_geom.rows title_menu_box)
 
 let title_menu_row m = Cursor_column.row title_menu m
 
 (* The hand over the first slot, x 90-105, y 20-37 (its bob included). *)
 let hand_id = "pc_box.hand_first_slot"
-let hand_left = 90
-let hand_top = 20
-let hand_width = 16
-let hand_height = 18
-let hand_box = box ~x:hand_left ~y:hand_top ~w:hand_width ~h:hand_height
+let hand_box = box { x = 90; y = 20; w = 16; h = 18 }
 
 let quick_yellow : Color_count.range =
   { low = { r = 225; g = 200; b = 40 }; high = { r = 255; g = 255; b = 150 } }
@@ -90,20 +79,10 @@ let hand_quick m =
 (* The title bar's wallpaper, right of the hand when it points at the title
    (x 137-156) and of most of the name: its sky above the name (y 20-22) and
    its ground below it (y 34-35), x 162-193. *)
-let title_left = 162
-let title_width = 32
 let title_sky_id = "pc_box.title_sky"
-let title_sky_y = 20
-let title_sky_h = 3
 let title_ground_id = "pc_box.title_ground"
-let title_ground_y = 34
-let title_ground_h = 2
-
-let title_sky_box =
-  box ~x:title_left ~y:title_sky_y ~w:title_width ~h:title_sky_h
-
-let title_ground_box =
-  box ~x:title_left ~y:title_ground_y ~w:title_width ~h:title_ground_h
+let title_sky_box = box { x = 162; y = 20; w = 32; h = 3 }
+let title_ground_box = box { x = 162; y = 34; w = 32; h = 2 }
 
 let probes =
   Cursor_column.probes title_menu

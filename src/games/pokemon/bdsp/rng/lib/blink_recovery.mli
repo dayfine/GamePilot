@@ -6,13 +6,14 @@
     what the loop decided.
 
     Port of the decision logic of [recover_state_from_blinks] and
-    [solve_blink_window] in the fork's
+    [solve_blink_window] in
     [PokemonBDSP/Programs/RngManipulation/PokemonBDSP_BlinkRecovery.{h,cpp}]
-    (R21: same checks in the same order, same thresholds, same messages). Left
-    to the caller, which owns the video and the clock: the poll wait, the
-    keep-awake nudges, the progress display, the sample log and the watchers, so
-    the window slide the C++ does on them ([discard_blinks_before]) comes back
-    as {!outcome.discard_before}. {!Blink_reanchor} ports [reanchor_absolute];
+    (https://github.com/PokemonAutomation/Arduino-Source; R21: same checks in
+    the same order, same thresholds, same messages). Left to the caller, which
+    owns the video and the clock: the poll wait, the keep-awake nudges, the
+    progress display, the sample log and the watchers, so the window slide the
+    C++ does on them ([discard_blinks_before]) comes back as
+    {!outcome.discard_before}. {!Blink_reanchor} ports [reanchor_absolute];
     [hold_and_reanchor], the scene waits and the watcher setup are not ported.
     Times are seconds as a [float]; the C++'s per-watcher thresholds, frozen
     together on the first solve, become one option. *)

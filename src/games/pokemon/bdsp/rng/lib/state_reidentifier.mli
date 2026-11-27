@@ -2,12 +2,13 @@
     of NPC blinks against the rolls that follow it: either the ticks between
     blinks or the blinks' types (single or double).
 
-    Port of the fork's
+    Port of
     [PokemonBDSP/Programs/RngManipulation/PokemonBDSP_StateReidentifier.{h,cpp}]
-    (R21: same scans, same match cap, same messages). The C++'s method enum and
-    its two vectors become one variant, so there is no "unknown method" failure;
-    where the C++ takes an optional [Logger] and logs a success, this port logs
-    nothing. Advances are OCaml [int]s (the C++ [uint64_t]). *)
+    (https://github.com/PokemonAutomation/Arduino-Source; R21: same scans, same
+    match cap, same messages). The C++'s method enum and its two vectors become
+    one variant, so there is no "unknown method" failure; where the C++ takes an
+    optional [Logger] and logs a success, this port logs nothing. Advances are
+    OCaml [int]s (the C++ [uint64_t]). *)
 
 type observation =
   | Intervals of int list
