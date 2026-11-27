@@ -705,6 +705,53 @@ let policy_decisions =
               est.sample_count est.boot_offset_ms est.ingame_offset
               cals.csf_offset cals.ingame_offset has_history_log)
       "n=1 boot=-17 ingame=-15 csf=1 adj=-16 logged=true";
+    case "live_calibrated_game_steps logs 1-based attempt/total on each reset"
+      (fun () ->
+        let plan =
+          Result.get_ok
+            (Wild_rng_plan.decode
+               (obj
+                  {|{"species": "ekans", "location": "route_10", "tid": 12345,
+                     "sid": 54321, "frame_model": "mgba",
+                     "catch_mode": "phase2", "attempts": 3}|}))
+        in
+        let tgt = Result.get_ok (Wild_rng_plan.target plan) in
+        let logs = ref [] in
+        let steps =
+          Wild_rng_steps.live_calibrated_game_steps
+            ~log:(fun s -> logs := s :: !logs)
+            plan tgt
+        in
+        let pc = Option.get steps.policy_catch in
+        let exception Stop_at_reset in
+        let run_until_reset () =
+          try
+            Effect.Deep.try_with pc.find_encounter ()
+              {
+                effc =
+                  (fun (type a) (eff : a Effect.t) ->
+                    match eff with
+                    | Effects.Reset -> Some (fun _k -> raise Stop_at_reset)
+                    | _ -> None);
+              }
+            |> ignore
+          with Stop_at_reset -> ()
+        in
+        run_until_reset ();
+        run_until_reset ();
+        let attempt_lines =
+          List.rev !logs
+          |> List.filter (fun s ->
+                 String.starts_with ~prefix:"Wild RNG (attempt " s)
+        in
+        let desc = Frlg_rng.Wild_target.describe tgt in
+        let expected1 = Printf.sprintf "Wild RNG (attempt 1/3): %s." desc in
+        let expected2 = Printf.sprintf "Wild RNG (attempt 2/3): %s." desc in
+        Printf.sprintf "count=%d first=%b second=%b"
+          (List.length attempt_lines)
+          (List.nth_opt attempt_lines 0 = Some expected1)
+          (List.nth_opt attempt_lines 1 = Some expected2))
+      "count=2 first=true second=true";
   ]
 
 let decisions =

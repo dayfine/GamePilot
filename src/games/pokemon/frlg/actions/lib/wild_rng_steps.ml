@@ -154,20 +154,22 @@ let check_summary ~log ~slot ~read_miss =
 
 let shiny_at ~log ~slot = check_summary ~log ~slot ~read_miss:false = `Shiny
 
-let next_wild_target ~first_attempt ~current_plan ~current_target =
-  if !first_attempt then (
-    first_attempt := false;
-    Ok !current_target)
+let attempt_label ~attempt ~total =
+  Printf.sprintf "Wild RNG (attempt %d/%d)" !attempt total
+
+let next_wild_target ~attempt ~current_plan ~current_target =
+  incr attempt;
+  if !attempt = 1 then Ok !current_target
   else Wild_rng_plan.target !current_plan
 
-let prepare_target ~log ~first_attempt ~current_plan ~current_target () =
-  match next_wild_target ~first_attempt ~current_plan ~current_target with
+let prepare_target ~log ~attempt ~label ~current_plan ~current_target () =
+  match next_wild_target ~attempt ~current_plan ~current_target with
   | Error e ->
-      log ("Wild RNG: failed to recompute target: " ^ e);
+      log (label () ^ ": failed to recompute target: " ^ e);
       Error e
   | Ok tgt ->
       current_target := tgt;
-      log ("Wild RNG: " ^ Frlg_rng.Wild_target.describe tgt ^ ".");
+      log (label () ^ ": " ^ Frlg_rng.Wild_target.describe tgt ^ ".");
       Ok tgt
 
 let with_estimate (p : Wild_rng_plan.t)
@@ -180,19 +182,18 @@ let apply_rolling_update ~current_plan ~calibrator p = function
       calibrator := next_cal;
       current_plan := with_estimate p est
 
-let calibrate_miss ~log ~is_switch ~current_plan ~calibrator
+let calibrate_miss ~log ~label ~is_switch ~current_plan ~calibrator
     ~(tgt : Frlg_rng.Wild_target.t) (miss : Rng_miss_calibration.summary_miss) =
   let (p : Wild_rng_plan.t) = !current_plan in
   let species = Option.value ~default:p.species miss.species in
   match Wild_rng_plan.slots p with
-  | Error e -> log ("Wild RNG miss search skipped: " ^ e)
+  | Error e -> log (label ^ " miss search skipped: " ^ e)
   | Ok slots ->
       let super_rod = p.encounter_method = Wild_rng_plan.Super_rod in
-      Rng_miss_calibration.report_and_calibrate_wild_rolling ~log
-        ~label:"Wild RNG" ~species ~slots ~super_rod ~seeds:p.seeds
-        ~seed_shift:p.seed_shift ~target_seed:tgt.seed
-        ~target_delay_ms:tgt.table_delay_ms ~target_advance:tgt.advance
-        ~persist:is_switch ~calibrator:!calibrator
+      Rng_miss_calibration.report_and_calibrate_wild_rolling ~log ~label
+        ~species ~slots ~super_rod ~seeds:p.seeds ~seed_shift:p.seed_shift
+        ~target_seed:tgt.seed ~target_delay_ms:tgt.table_delay_ms
+        ~target_advance:tgt.advance ~persist:is_switch ~calibrator:!calibrator
         ~used_boot_offset_ms:p.boot_offset_ms
         ~used_ingame_offset:p.ingame_offset miss.observation
       |> apply_rolling_update ~current_plan ~calibrator p
@@ -240,20 +241,20 @@ let calibrated_catch ~log ~reset_mode ~encounter_method ~prepare capture ~party
       Effects.with_probes Frlg_battle.Battle_look.probes (fun () ->
           Capture.run steps capture ~party)
 
-let calibrated_shiny_at ~log ~is_switch ~current_plan ~calibrator
+let calibrated_shiny_at ~log ~label ~is_switch ~current_plan ~calibrator
     ~current_target slot =
   match check_summary ~log ~slot ~read_miss:is_switch with
   | `Shiny -> true
   | `Not_shiny None -> false
   | `Not_shiny (Some miss) ->
-      calibrate_miss ~log ~is_switch ~current_plan ~calibrator
+      calibrate_miss ~log ~label:(label ()) ~is_switch ~current_plan ~calibrator
         ~tgt:!current_target miss;
       false
 
 (* Fast throw-only catch on a visual Not_shiny miss (throws cal_ball_row in the
    Poké Balls pocket on Turn 1), then reads Summary to calibrate the next try. *)
-let fast_calibration_on_miss ~log ~current_plan ~shiny_at ~party =
-  log "Wild RNG: visual miss — fast throw-only catch for calibration.";
+let fast_calibration_on_miss ~log ~label ~current_plan ~shiny_at ~party =
+  log (label () ^ ": visual miss — fast throw-only catch for calibration.");
   let (p : Wild_rng_plan.t) = !current_plan in
   let bag = { Battle_catch_steps.ball_row = p.cal_ball_row; heal_row = 0 } in
   let steps =
@@ -264,24 +265,27 @@ let fast_calibration_on_miss ~log ~current_plan ~shiny_at ~party =
   | Pokemon_catch.Catch_runner.Caught _ ->
       if Capture_steps.finish_catch ~log Party then
         ignore (shiny_at (party + 1) : bool)
-      else log "Wild RNG: calibration catch did not return to overworld."
-  | _ -> log "Wild RNG: fast calibration catch ended without catching."
+      else log (label () ^ ": calibration catch did not return to overworld.")
+  | _ -> log (label () ^ ": fast calibration catch ended without catching.")
 
 let live_calibrated_game_steps ~log ?(reset_mode = Rng_reset.Mgba)
     (plan : Wild_rng_plan.t) (tgt : Frlg_rng.Wild_target.t) :
     Wild_rng.game_steps =
   let current_plan = ref plan and current_target = ref tgt in
   let calibrator = ref Frlg_rng.Rolling_calibrator.empty in
-  let first_attempt = ref true and is_switch = plan.frame_model = "switch" in
+  let attempt = ref 0 and total = max 1 plan.capture.max_encounters in
+  let is_switch = plan.frame_model = "switch" in
+  let label () = attempt_label ~attempt ~total in
   let prepare =
-    prepare_target ~log ~first_attempt ~current_plan ~current_target
+    prepare_target ~log ~attempt ~label ~current_plan ~current_target
   in
   let shiny_at =
-    calibrated_shiny_at ~log ~is_switch ~current_plan ~calibrator
+    calibrated_shiny_at ~log ~label ~is_switch ~current_plan ~calibrator
       ~current_target
   in
   let on_miss =
-    if is_switch then fast_calibration_on_miss ~log ~current_plan ~shiny_at
+    if is_switch then
+      fast_calibration_on_miss ~log ~label ~current_plan ~shiny_at
     else ignore_miss
   in
   {

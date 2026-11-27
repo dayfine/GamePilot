@@ -165,21 +165,21 @@ let live_game_steps ~log ?(reset_mode = Rng_reset.Mgba) ~prize_row timings =
     log;
   }
 
-let next_gift_target ~first_attempt ~current_plan ~current_target =
-  if !first_attempt then (
-    first_attempt := false;
-    Ok !current_target)
-  else target !current_plan
+let attempt_label ~attempt ~total =
+  Printf.sprintf "Gift RNG (attempt %d/%d)" !attempt total
 
-let calibrate_miss ~log ~is_switch ~current_plan ~prev_seed_delta
+let next_gift_target ~attempt ~current_plan ~current_target =
+  incr attempt;
+  if !attempt = 1 then Ok !current_target else target !current_plan
+
+let calibrate_miss ~log ~label ~is_switch ~current_plan ~prev_seed_delta
     ~(tgt : R.Gift_target.t) obs =
   let p = !current_plan in
   match
-    Rng_miss_calibration.report_and_calibrate ~log ~label:"Gift RNG"
-      ~species:p.species ~seeds:p.seeds ~seed_shift:p.seed_shift
-      ~target_seed:tgt.seed ~target_delay_ms:tgt.table_delay_ms
-      ~target_advance:tgt.advance ~persist:is_switch
-      ?prev_seed_delta:!prev_seed_delta obs
+    Rng_miss_calibration.report_and_calibrate ~log ~label ~species:p.species
+      ~seeds:p.seeds ~seed_shift:p.seed_shift ~target_seed:tgt.seed
+      ~target_delay_ms:tgt.table_delay_ms ~target_advance:tgt.advance
+      ~persist:is_switch ?prev_seed_delta:!prev_seed_delta obs
   with
   | None -> ()
   | Some d ->
@@ -188,21 +188,22 @@ let calibrate_miss ~log ~is_switch ~current_plan ~prev_seed_delta
         apply_timing_delta ~boot_delta_ms:d.boot_delta_ms
           ~ingame_delta:d.ingame_delta p
 
-let live_calibrated_game_steps ~log ?(reset_mode = Rng_reset.Mgba) initial_plan
-    initial_target =
+let live_calibrated_game_steps ~log ?(reset_mode = Rng_reset.Mgba)
+    (initial_plan : plan) initial_target =
   let current_plan = ref initial_plan in
   let current_target = ref initial_target in
   let prev_seed_delta = ref None in
-  let first_attempt = ref true in
+  let attempt = ref 0 and total = max 1 initial_plan.attempts in
   let is_switch = initial_plan.frame_model = "switch" in
+  let label () = attempt_label ~attempt ~total in
   let claim_prize () =
-    match next_gift_target ~first_attempt ~current_plan ~current_target with
+    match next_gift_target ~attempt ~current_plan ~current_target with
     | Error e ->
-        log ("Gift RNG: failed to recompute target: " ^ e);
+        log (label () ^ ": failed to recompute target: " ^ e);
         false
     | Ok tgt ->
         current_target := tgt;
-        log ("Gift RNG: " ^ R.Gift_target.describe tgt ^ ".");
+        log (label () ^ ": " ^ R.Gift_target.describe tgt ^ ".");
         execute_claim ~log ~reset_mode ~prize_row:!current_plan.prize_row
           tgt.timings
   in
@@ -211,8 +212,8 @@ let live_calibrated_game_steps ~log ?(reset_mode = Rng_reset.Mgba) initial_plan
     | `Shiny -> true
     | `Not_shiny None -> false
     | `Not_shiny (Some miss) ->
-        calibrate_miss ~log ~is_switch ~current_plan ~prev_seed_delta
-          ~tgt:!current_target miss.observation;
+        calibrate_miss ~log ~label:(label ()) ~is_switch ~current_plan
+          ~prev_seed_delta ~tgt:!current_target miss.observation;
         false
   in
   { claim_prize; shiny_at; log }

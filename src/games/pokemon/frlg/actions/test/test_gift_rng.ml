@@ -377,6 +377,46 @@ let test_miss_calibration () =
     plan2.ingame_offset;
   if Sys.file_exists cal_path then Sys.remove cal_path
 
+let test_attempt_logging () =
+  let fallback : Wild_rng_plan.trainer_ids =
+    { tid = Some 12345; sid = Some 54321 }
+  in
+  let plan =
+    Result.get_ok
+      (Gift_rng.decode ~fallback
+         (obj {|{"species": "scyther", "prize_row": 3, "attempts": 5}|}))
+  in
+  let tgt = Result.get_ok (Gift_rng.target plan) in
+  let logs = ref [] in
+  let steps =
+    Gift_rng.live_calibrated_game_steps
+      ~log:(fun s -> logs := s :: !logs)
+      plan tgt
+  in
+  let exception Stop_at_reset in
+  let run_until_reset () =
+    try
+      Effect.Deep.try_with steps.claim_prize ()
+        {
+          effc =
+            (fun (type a) (eff : a Effect.t) ->
+              match eff with
+              | Effects.Reset -> Some (fun _k -> raise Stop_at_reset)
+              | _ -> None);
+        }
+      |> ignore
+    with Stop_at_reset -> ()
+  in
+  run_until_reset ();
+  run_until_reset ();
+  let desc = Frlg_rng.Gift_target.describe tgt in
+  check_eq ~show:(String.concat " | ") "gift attempt log lines"
+    [
+      Printf.sprintf "Gift RNG (attempt 1/5): %s." desc;
+      Printf.sprintf "Gift RNG (attempt 2/5): %s." desc;
+    ]
+    (List.rev !logs)
+
 let () =
   test_decode ();
   test_frame_model_auto_selection ();
@@ -384,4 +424,5 @@ let () =
   test_run ();
   test_surf_request ();
   test_miss_calibration ();
+  test_attempt_logging ();
   print_endline "gift_rng: all passed"
