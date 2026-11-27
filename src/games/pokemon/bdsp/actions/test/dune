@@ -1,0 +1,7 @@
+(tests
+ (names test_shiny_encounter_detector)
+ (libraries
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.bdsp_readers
+  gamepilot.bdsp_actions))

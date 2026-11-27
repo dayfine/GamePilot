@@ -1,5 +1,9 @@
 (tests
- (names test_mining_grid test_minimap_sparkles test_wall_sparkle)
+ (names
+  test_mining_grid
+  test_minimap_sparkles
+  test_wall_sparkle
+  test_shiny_encounter_reader)
  (libraries
   gamepilot.wire
   gamepilot.switch
