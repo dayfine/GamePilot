@@ -16,6 +16,7 @@ let options log : Checkpoint_run.options =
     end_check_only = false;
     program_options = Run_options.none;
     default_frame_model = Frlg_actions.Wild_rng_plan.default_frame_model;
+    rng_reset_mode = Frlg_actions.Rng_reset.Mgba;
     log;
   }
 

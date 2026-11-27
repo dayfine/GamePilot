@@ -27,11 +27,17 @@ type game_steps = {
 type end_ = Shiny | Not_shiny | Claim_failed | Party_full
 type outcome = { end_ : end_; attempts : int }
 
-let prize_page_wait_ms = 1800
-let prize_list_wait_ms = 1800
+(* Port of collect_gamecorner_after_delay in PokemonFRLG_BlindNavigation.cpp:
+   2 dialog presses (200/1300 ms), padded 5-slot navigation (100/300 ms per
+   Down, 400 ms wait for remaining slots), select + wait, confirm (200/2800 ms),
+   and 2000 ms B mash to decline the nickname. *)
+let dialog_cooldown_ms = 1300
 let prize_tap_hold_ms = 200
-let prize_tap_release_ms = 300
-let prize_confirm_release_ms = 800
+let nav_hold_ms = 100
+let nav_release_ms = 300
+let nav_slot_ms = 400
+let prize_confirm_release_ms = 2800
+let nickname_mash_ms = 2000
 let ( let* ) = Result.bind
 
 let parse_prize_row_string ~where s =
@@ -58,20 +64,23 @@ let read ~options ~(fallback : Wild_rng_plan.trainer_ids) ~default_frame_model
     ~where args =
   let module W = Wild_rng_plan in
   let min_advance, max_advance = W.advances ~where args in
+  let model = W.frame_model ~default:default_frame_model ~where args in
   {
     species = J.string ~where "species" args;
     prize_row = prize_row ~where args;
     tid = W.resolved_id ~where ~options ~fallback:fallback.tid "tid" args;
     sid = W.resolved_id ~where ~options ~fallback:fallback.sid "sid" args;
     seeds =
-      Option.value ~default:W.default_seeds (J.string_opt ~where "seeds" args);
+      Option.value
+        ~default:(W.default_seeds_for_model model)
+        (J.string_opt ~where "seeds" args);
     boot_offset_ms = 0;
     seed_shift =
       W.opt_int ~where ~default:0 ~low:0 ~high:W.max_id "seed_shift" args;
     ingame_offset =
       W.opt_int ~where ~default:0 ~low:(-W.max_ingame_offset)
         ~high:W.max_ingame_offset "ingame_offset" args;
-    frame_model = W.frame_model ~default:default_frame_model ~where args;
+    frame_model = model;
     min_advance;
     max_advance;
     attempts =
@@ -117,16 +126,18 @@ let target p =
        ~max_advance:p.max_advance)
 
 let prize_presses ~prize_row (t : T.t) =
-  let tap =
-    M.hold ~hold_ms:prize_tap_hold_ms ~cooldown_ms:prize_tap_release_ms
+  let down = M.hold ~hold_ms:nav_hold_ms ~cooldown_ms:nav_release_ms in
+  let downs = List.init prize_row (fun _ -> down Wire.Down) in
+  let pad_slots = max 0 (Game_corner.prize_slots - prize_row) in
+  let pads =
+    List.init pad_slots (fun _ -> Wire.Wait { wait_ms = nav_slot_ms })
   in
-  let downs = List.init prize_row (fun _ -> tap Wire.Down) in
   let wait_ms = max 0 (t.ingame_delay_ms - T.gift_fixed_duration_ms) in
   [
-    M.hold ~hold_ms:prize_tap_hold_ms ~cooldown_ms:prize_page_wait_ms Wire.A;
-    M.hold ~hold_ms:prize_tap_hold_ms ~cooldown_ms:prize_list_wait_ms Wire.A;
+    M.hold ~hold_ms:prize_tap_hold_ms ~cooldown_ms:dialog_cooldown_ms Wire.A;
+    M.hold ~hold_ms:prize_tap_hold_ms ~cooldown_ms:dialog_cooldown_ms Wire.A;
   ]
-  @ downs
+  @ downs @ pads
   @ [
       M.hold ~hold_ms:prize_tap_hold_ms ~cooldown_ms:wait_ms Wire.A;
       M.hold ~hold_ms:prize_tap_hold_ms ~cooldown_ms:prize_confirm_release_ms
@@ -136,11 +147,11 @@ let prize_presses ~prize_row (t : T.t) =
 let blind_presses ~prize_row t =
   Wild_rng_steps.title_presses t @ prize_presses ~prize_row t
 
-let live_game_steps ~log ~prize_row timings =
+let live_game_steps ~log ?(reset_mode = Rng_reset.Mgba) ~prize_row timings =
   let claim_prize () =
-    let seq = Effects.reset () in
-    log (Printf.sprintf "Gift RNG: reset (seq %d), claiming prize." seq);
-    ignore (Effects.submit (blind_presses ~prize_row timings) : Wire.batch_done);
+    Rng_reset.reset_and_submit ~log reset_mode
+      (blind_presses ~prize_row timings);
+    M.mash Wire.B nickname_mash_ms;
     M.settle_back ~label:"gift rng prize" ~log;
     true
   in

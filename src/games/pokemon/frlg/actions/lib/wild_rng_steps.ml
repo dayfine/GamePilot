@@ -73,14 +73,13 @@ let await_bite ~log () =
 let confirm_bite ~log () =
   Effects.with_probes Frlg_readers.Dialog.probes (await_bite ~log)
 
-let find_encounter ~log ?(encounter_method = Wild_rng_plan.Grass) t () =
-  let seq = Effects.reset () in
+let find_encounter ~log ?(reset_mode = Rng_reset.Mgba)
+    ?(encounter_method = Wild_rng_plan.Grass) t () =
   log
-    (Printf.sprintf "Wild RNG (%s): reset (seq %d), the blind presses."
-       (Wild_rng_plan.encounter_method_to_string encounter_method)
-       seq);
-  ignore
-    (Effects.submit (blind_presses_for encounter_method t) : Wire.batch_done);
+    (Printf.sprintf "Wild RNG (%s): resetting for blind presses."
+       (Wild_rng_plan.encounter_method_to_string encounter_method));
+  Rng_reset.reset_and_submit ~log reset_mode
+    (blind_presses_for encounter_method t);
   let bite_ok =
     match encounter_method with
     | Super_rod -> confirm_bite ~log ()
@@ -95,15 +94,15 @@ let find_encounter ~log ?(encounter_method = Wild_rng_plan.Grass) t () =
     | Holds _ -> true
     | Timeout -> false
 
-let game_steps ~log ?encounter_method t plan =
+let game_steps ~log ?reset_mode ?encounter_method t plan =
   let spot = ref (Pacing.on_patch None) in
   {
     (Capture_steps.make ~log ~spot plan) with
-    find_encounter = find_encounter ~log ?encounter_method t;
+    find_encounter = find_encounter ~log ?reset_mode ?encounter_method t;
     flee = (fun () -> true);
   }
 
-let policy_catch_steps ~log ?encounter_method ~timings
+let policy_catch_steps ~log ?reset_mode ?encounter_method ~timings
     ?(visual_shiny_check = false) ?(on_miss = ignore) ~config ~policy () :
     Wild_rng.policy_catch_steps =
   let detect_shiny =
@@ -117,7 +116,7 @@ let policy_catch_steps ~log ?encounter_method ~timings
       policy
   in
   {
-    find_encounter = find_encounter ~log ?encounter_method timings;
+    find_encounter = find_encounter ~log ?reset_mode ?encounter_method timings;
     detect_shiny;
     on_miss;
     catch_battle;

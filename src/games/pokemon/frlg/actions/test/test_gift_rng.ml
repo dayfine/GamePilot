@@ -107,9 +107,16 @@ let test_target_and_presses () =
     |> List.map command_text |> String.concat ", "
   in
   check_eq ~show:Fun.id "scyther row 3 blind presses"
-    "wait 33033, A 3000/0, wait 348, A 50/1450, B 50/2450, A 200/1800, A \
-     200/1800, Down 200/300, Down 200/300, Down 200/300, A 200/5000, A 200/800"
-    cmds
+    "wait 33033, A 3000/0, wait 348, A 50/1450, B 50/2450, A 200/1300, A \
+     200/1300, Down 100/300, Down 100/300, Down 100/300, wait 400, wait 400, A \
+     200/1800, A 200/2800"
+    cmds;
+  check_eq ~show:Fun.id "switch resume press" "A 80/0"
+    (command_text Rng_reset.switch_resume_press);
+  check_eq ~show:Fun.id "switch default seeds" "rng_seeds_switch_fr_eng.json"
+    (Wild_rng_plan.default_seeds_for_model "switch");
+  check_eq ~show:Fun.id "mgba default seeds" "rng_seeds_mgba_sevii_save.json"
+    (Wild_rng_plan.default_seeds_for_model "mgba")
 
 let test_run () =
   let run_case ~claim_ok ~shiny_on ~attempts ~party =

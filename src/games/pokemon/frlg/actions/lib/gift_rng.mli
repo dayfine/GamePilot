@@ -75,9 +75,14 @@ val blind_presses : prize_row:int -> Frlg_rng.Rng_timings.t -> Wire.command list
     YES to claim the gift at the target advance. *)
 
 val live_game_steps :
-  log:(string -> unit) -> prize_row:int -> Frlg_rng.Rng_timings.t -> game_steps
-(** Live {!game_steps} that reset, submit {!blind_presses}, settle back to the
-    overworld, and check {!Wild_rng_steps.shiny_at}. *)
+  log:(string -> unit) ->
+  ?reset_mode:Rng_reset.mode ->
+  prize_row:int ->
+  Frlg_rng.Rng_timings.t ->
+  game_steps
+(** Live {!game_steps} that reset via {!Rng_reset.reset_and_submit} (default
+    {!Rng_reset.Mgba}), submit {!blind_presses}, decline any nickname prompt,
+    settle back to the overworld, and check {!Wild_rng_steps.shiny_at}. *)
 
 val run : game_steps -> attempts:int -> party:int -> outcome
 (** Runs up to [attempts] timed gift claims, stopping as soon as the newly

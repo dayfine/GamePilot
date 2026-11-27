@@ -42,9 +42,11 @@ let encounter_slots = assets ^ "encounter_slots_firered.json"
 let default_seeds = "rng_seeds_mgba_sevii_save.json"
 let default_frame_model = "mgba"
 
-let frame_model_for_backend = function
-  | "switch" -> "switch"
-  | _ -> default_frame_model
+let default_seeds_for_model m =
+  if m = "switch" then "rng_seeds_switch_fr_eng.json" else default_seeds
+
+let frame_model_for_backend b =
+  if b = "switch" then "switch" else default_frame_model
 
 let column = "Mono / Help / A"
 let config_env = "GAMEPILOT_FRLG_CONFIG"
@@ -93,11 +95,10 @@ let env_id name =
   let var = env_var name in
   match Sys.getenv_opt var with
   | None | Some "" -> Ok None
-  | Some raw ->
-      Option.fold
-        (int_of_string_opt (String.trim raw))
-        ~none:(Error (Printf.sprintf "%s is %S, not 0..%d" var raw max_id))
-        ~some:(fun n -> Result.map Option.some (check_id ~label:var n))
+  | Some raw -> (
+      match int_of_string_opt (String.trim raw) with
+      | None -> Error (Printf.sprintf "%s is %S, not 0..%d" var raw max_id)
+      | Some n -> Result.map Option.some (check_id ~label:var n))
 
 let json_id ~path name fields =
   match List.assoc_opt name fields with
@@ -120,17 +121,16 @@ let file_trainer_ids () =
         Ok { tid; sid }
     | _ -> Error (path ^ ": expected a JSON object")
 
-let pick primary secondary =
-  if Option.is_some primary then primary else secondary
+let pick a b = if Option.is_some a then a else b
 
 let load_trainer_ids () =
-  let* env_tid = env_id "tid" in
-  let* env_sid = env_id "sid" in
-  match (env_tid, env_sid) with
-  | Some _, Some _ -> Ok { tid = env_tid; sid = env_sid }
+  let* tid = env_id "tid" in
+  let* sid = env_id "sid" in
+  match (tid, sid) with
+  | Some _, Some _ -> Ok { tid; sid }
   | _ ->
       let* file = file_trainer_ids () in
-      Ok { tid = pick env_tid file.tid; sid = pick env_sid file.sid }
+      Ok { tid = pick tid file.tid; sid = pick sid file.sid }
 
 let frame_models =
   [ ("mgba", R.Rng_timings.mgba); ("switch", R.Rng_timings.switch) ]
@@ -147,6 +147,12 @@ let opt_int ~where ~default ~low ~high name args =
 
 let id ~where name args =
   opt_int ~where ~default:0 ~low:0 ~high:max_id name args
+
+let visual_shiny_check ~where args =
+  match J.find "visual_shiny_check" args with
+  | None -> false
+  | Some (`Bool b) -> b
+  | Some _ -> J.fail "%svisual_shiny_check is not a boolean" where
 
 let advances ~where args =
   match J.list_opt ~where "advances" args with
@@ -169,7 +175,7 @@ let encounter_method ~where args =
 
 let catch_mode ~where (c : Capture_plan.t) args =
   let module B = Battle_catch_steps in
-  let wrap policy = Catch_policy { policy; config = default_catch_config } in
+  let wrap p = Catch_policy { policy = p; config = default_catch_config } in
   let ball_name = c.ball and max_balls = c.max_balls in
   match J.string_opt ~where "catch_mode" args with
   | None | Some "throw_only" -> Throw_only
@@ -179,12 +185,6 @@ let catch_mode ~where (c : Capture_plan.t) args =
       wrap (B.phase2_policy ~ball_name ~max_balls B.default_phase2_slots)
   | Some other ->
       J.fail "%scatch_mode is %s, not throw_only, phase1, or phase2" where other
-
-let visual_shiny_check ~where args =
-  match J.find "visual_shiny_check" args with
-  | None -> false
-  | Some (`Bool b) -> b
-  | Some _ -> J.fail "%svisual_shiny_check is not a boolean" where
 
 let capture ~where args =
   let plan = Capture_plan.read ~where args in
@@ -208,6 +208,7 @@ let read ~options ~fallback ~default_frame_model ~where args =
   let tid = resolved_id ~where ~options ~fallback:fallback.tid "tid" args in
   let sid = resolved_id ~where ~options ~fallback:fallback.sid "sid" args in
   let cap = Capture_plan.apply_options options (capture ~where args) in
+  let model = frame_model ~default:default_frame_model ~where args in
   {
     encounter_method = encounter_method ~where args;
     species = J.string ~where "species" args;
@@ -215,13 +216,15 @@ let read ~options ~fallback ~default_frame_model ~where args =
     tid;
     sid;
     seeds =
-      Option.value ~default:default_seeds (J.string_opt ~where "seeds" args);
+      Option.value
+        ~default:(default_seeds_for_model model)
+        (J.string_opt ~where "seeds" args);
     boot_offset_ms = 0;
     seed_shift = opt_int ~where ~default:0 ~low:0 ~high:max_id "seed_shift" args;
     ingame_offset =
       opt_int ~where ~default:0 ~low:(-max_ingame_offset)
         ~high:max_ingame_offset "ingame_offset" args;
-    frame_model = frame_model ~default:default_frame_model ~where args;
+    frame_model = model;
     min_advance;
     max_advance;
     capture = cap;
@@ -239,13 +242,15 @@ let apply_calibration (entry : R.Switch_rng_calibration.entry) t =
 
 let decode ?(options = Run_options.none) ?(fallback = no_trainer_ids)
     ?(default_frame_model = default_frame_model) args =
-  let f = read ~options ~fallback ~default_frame_model in
-  Action_args.decode ~action:"wild_rng" f args
+  Action_args.decode ~action:"wild_rng"
+    (read ~options ~fallback ~default_frame_model)
+    args
 
 let json path =
-  match Repo_io.Repo_files.locate path with
-  | None -> Error (path ^ " not found from the working directory")
-  | Some file -> Repo_io.Json_file.read file
+  Option.fold
+    ~none:(Error (path ^ " not found from the working directory"))
+    ~some:Repo_io.Json_file.read
+    (Repo_io.Repo_files.locate path)
 
 let seed_column_of ~seeds ~seed_shift =
   let* j = json (assets ^ seeds) in
@@ -265,10 +270,6 @@ let slots t =
     ~none:("no " ^ kind ^ " slots for " ^ t.location)
     (R.Encounters_database.slots db ~kind ~location:t.location)
 
-let no_target t =
-  Printf.sprintf "no shiny %s in %s at advances %d..%d" t.species t.seeds
-    t.min_advance t.max_advance
-
 let calibrations_of_offsets ~boot_offset_ms ~ingame_offset
     (model : R.Rng_timings.frame_model) =
   let seed_offset =
@@ -279,18 +280,21 @@ let calibrations_of_offsets ~boot_offset_ms ~ingame_offset
   in
   { R.Rng_timings.no_calibrations with seed_offset; ingame_offset }
 
-let search t (delays, seeds) slots =
+let target t =
+  let* delays, seeds = seed_column_of ~seeds:t.seeds ~seed_shift:t.seed_shift in
+  let* slots = slots t in
   let model = List.assoc t.frame_model frame_models in
   let calibrations =
     calibrations_of_offsets ~boot_offset_ms:t.boot_offset_ms
       ~ingame_offset:t.ingame_offset model
   in
-  let super_rod = t.encounter_method = Super_rod in
-  R.Wild_target.find ~calibrations ~super_rod model ~delays ~seeds slots
-    ~species:t.species ~tid_xor_sid:(t.tid lxor t.sid)
-    ~min_advance:t.min_advance ~max_advance:t.max_advance
-
-let target t =
-  let* column = seed_column_of ~seeds:t.seeds ~seed_shift:t.seed_shift in
-  let* slots = slots t in
-  Option.to_result ~none:(no_target t) (search t column slots)
+  let none =
+    Printf.sprintf "no shiny %s in %s at advances %d..%d" t.species t.seeds
+      t.min_advance t.max_advance
+  in
+  Option.to_result ~none
+    (R.Wild_target.find ~calibrations
+       ~super_rod:(t.encounter_method = Super_rod)
+       model ~delays ~seeds slots ~species:t.species
+       ~tid_xor_sid:(t.tid lxor t.sid) ~min_advance:t.min_advance
+       ~max_advance:t.max_advance)

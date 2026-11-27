@@ -30,13 +30,15 @@ val blind_presses_for :
 
 val find_encounter :
   log:(string -> unit) ->
+  ?reset_mode:Rng_reset.mode ->
   ?encounter_method:Wild_rng_plan.encounter_method ->
   Frlg_rng.Rng_timings.t ->
   unit ->
   bool
-(** The reset, {!blind_presses_for} [encounter_method] (default [Grass]),
-    optional bite confirmation for [Super_rod], and the wild battle's screen
-    within {!battle_timeout_ms}. *)
+(** The reset ({!Rng_reset.reset_and_submit}, default {!Rng_reset.Mgba}),
+    {!blind_presses_for} [encounter_method] (default [Grass]), optional bite
+    confirmation for [Super_rod], and the wild battle's screen within
+    {!battle_timeout_ms}. *)
 
 val battle_timeout_ms : int
 (** 20 s: how long after the last press the wild battle's screen may take to
@@ -44,6 +46,7 @@ val battle_timeout_ms : int
 
 val game_steps :
   log:(string -> unit) ->
+  ?reset_mode:Rng_reset.mode ->
   ?encounter_method:Wild_rng_plan.encounter_method ->
   Frlg_rng.Rng_timings.t ->
   Capture_plan.t ->
@@ -54,6 +57,7 @@ val game_steps :
 
 val policy_catch_steps :
   log:(string -> unit) ->
+  ?reset_mode:Rng_reset.mode ->
   ?encounter_method:Wild_rng_plan.encounter_method ->
   timings:Frlg_rng.Rng_timings.t ->
   ?visual_shiny_check:bool ->

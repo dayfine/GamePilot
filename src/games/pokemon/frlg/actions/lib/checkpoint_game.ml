@@ -12,6 +12,7 @@ type config = {
   reload : unit -> (unit, Failure.cause) result;
   program_options : Run_options.t;
   default_frame_model : string;
+  rng_reset_mode : Rng_reset.mode;
   log : string -> unit;
 }
 
@@ -224,12 +225,12 @@ let capture t (_ : Pokemon_engine.Plan.event) args =
 (* The wild RNG catch ({!Wild_rng}): the target searched for, then either the
    legacy throw-only capture or optional visual shiny detection + policy catch
    ({!Battle_catch_steps}), and finally the summary's star. *)
-let wild_rng_policy_catch ~log ~timings (plan : Wild_rng_plan.t) =
+let wild_rng_policy_catch ~log ~reset_mode ~timings (plan : Wild_rng_plan.t) =
   let encounter_method = plan.encounter_method in
   let make ~visual_shiny_check ~config ~policy =
     Some
-      (Wild_rng_steps.policy_catch_steps ~log ~encounter_method ~timings
-         ~visual_shiny_check ~config ~policy ())
+      (Wild_rng_steps.policy_catch_steps ~log ~reset_mode ~encounter_method
+         ~timings ~visual_shiny_check ~config ~policy ())
   in
   match (plan.catch_mode, plan.visual_shiny_check) with
   | Wild_rng_plan.Throw_only, false -> None
@@ -239,14 +240,16 @@ let wild_rng_policy_catch ~log ~timings (plan : Wild_rng_plan.t) =
   | Wild_rng_plan.Catch_policy { policy; config }, visual_shiny_check ->
       make ~visual_shiny_check ~config ~policy
 
-let wild_rng_catch ~log ~encounter_method timings capture ~party =
+let wild_rng_catch ~log ~reset_mode ~encounter_method timings capture ~party =
+  let steps =
+    Wild_rng_steps.game_steps ~log ~reset_mode ~encounter_method timings capture
+  in
   Effects.with_probes Frlg_battle.Battle_look.probes (fun () ->
-      Capture.run
-        (Wild_rng_steps.game_steps ~log ~encounter_method timings capture)
-        capture ~party)
+      Capture.run steps capture ~party)
 
 let run_wild_rng t (plan : Wild_rng_plan.t) () =
   let log = t.config.log in
+  let reset_mode = t.config.rng_reset_mode in
   let target =
     match Wild_rng_plan.target plan with
     | Ok target -> target
@@ -254,9 +257,12 @@ let run_wild_rng t (plan : Wild_rng_plan.t) () =
   in
   log ("Wild RNG: " ^ Frlg_rng.Wild_target.describe target ^ ".");
   let catch =
-    wild_rng_catch ~log ~encounter_method:plan.encounter_method target.timings
+    wild_rng_catch ~log ~reset_mode ~encounter_method:plan.encounter_method
+      target.timings
   in
-  let policy_catch = wild_rng_policy_catch ~log ~timings:target.timings plan in
+  let policy_catch =
+    wild_rng_policy_catch ~log ~reset_mode ~timings:target.timings plan
+  in
   let game_steps : Wild_rng.game_steps =
     {
       catch;
@@ -319,7 +325,8 @@ let run_gift_rng t (plan : Gift_rng.plan) () =
   in
   log ("Gift RNG: " ^ Frlg_rng.Gift_target.describe target ^ ".");
   let steps =
-    Gift_rng.live_game_steps ~log ~prize_row:plan.prize_row target.timings
+    Gift_rng.live_game_steps ~log ~reset_mode:t.config.rng_reset_mode
+      ~prize_row:plan.prize_row target.timings
   in
   let r =
     Gift_rng.run steps ~attempts:plan.attempts

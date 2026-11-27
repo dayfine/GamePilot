@@ -91,7 +91,12 @@ val encounter_method_to_string : encounter_method -> string
 (** ["grass"], ["surf"], or ["super_rod"]. *)
 
 val default_seeds : string
-(** Default seed table filename when ["seeds"] is omitted from a plan. *)
+(** Default mGBA seed table filename when ["seeds"] is omitted from a plan. *)
+
+val default_seeds_for_model : string -> string
+(** Default seed table filename for a frame model:
+    ["rng_seeds_switch_fr_eng.json"] for ["switch"], {!default_seeds} otherwise.
+*)
 
 val default_frame_model : string
 (** Default frame model (["mgba"]) when ["frame_model"] is omitted. *)
