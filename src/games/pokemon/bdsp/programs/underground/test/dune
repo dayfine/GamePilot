@@ -1,0 +1,7 @@
+(test
+ (name test_ring_navigator)
+ (libraries
+  gamepilot.bdsp_underground_program
+  gamepilot.bdsp_underground
+  gamepilot.bdsp_readers
+  gamepilot.grid_geometry))
