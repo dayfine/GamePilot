@@ -180,8 +180,48 @@ let test_refine_timing () =
   check_eq ~show:Fun.id "updated_at updated" "2026-11-27T12:00:00Z"
     e1.updated_at
 
+let test_damped_calibration_delta () =
+  let make_hit ~seed_delta_frames ~delay_delta_ms ~advance_delta :
+      Rng_miss_search.hit =
+    {
+      seed_index = 2 + seed_delta_frames;
+      seed = 0x1168;
+      delay_ms = 30033 + delay_delta_ms;
+      advance = 1297 + advance_delta;
+      pid = 0l;
+      seed_delta_frames;
+      delay_delta_ms;
+      advance_delta;
+    }
+  in
+  let show_pair (b, i) = Printf.sprintf "(%d, %d)" b i in
+  let h_plus =
+    make_hit ~seed_delta_frames:1 ~delay_delta_ms:18 ~advance_delta:4
+  in
+  let h_minus =
+    make_hit ~seed_delta_frames:(-1) ~delay_delta_ms:(-15) ~advance_delta:(-2)
+  in
+  check_eq ~show:show_pair "no prev: full step" (-18, -4)
+    (Rng_miss_search.damped_calibration_delta ~prev_seed_delta:None h_plus);
+  check_eq ~show:show_pair "same sign +1 -> +1: full step" (-18, -4)
+    (Rng_miss_search.damped_calibration_delta ~prev_seed_delta:(Some 1) h_plus);
+  check_eq ~show:show_pair "large prev -2 -> +1: full step" (-18, -4)
+    (Rng_miss_search.damped_calibration_delta ~prev_seed_delta:(Some (-2))
+       h_plus);
+  check_eq ~show:show_pair "flip -1 -> +1 (+18 ms): halved to -9 ms" (-9, -4)
+    (Rng_miss_search.damped_calibration_delta ~prev_seed_delta:(Some (-1))
+       h_plus);
+  check_eq ~show:show_pair "flip +1 -> -1 (-15 ms): halved to +7 ms" (7, 2)
+    (Rng_miss_search.damped_calibration_delta ~prev_seed_delta:(Some 1) h_minus);
+  let h_zero =
+    make_hit ~seed_delta_frames:0 ~delay_delta_ms:0 ~advance_delta:3
+  in
+  check_eq ~show:show_pair "zero seed miss: 0 boot delta" (0, -3)
+    (Rng_miss_search.damped_calibration_delta ~prev_seed_delta:(Some 1) h_zero)
+
 let () =
   test_base_stats ();
   test_miss_search ();
+  test_damped_calibration_delta ();
   test_refine_timing ();
   print_endline "rng_miss_search: all passed"

@@ -183,3 +183,113 @@ let shiny_at ~log ~slot =
   match check_summary ~log ~slot ~read_miss:false with
   | `Shiny -> true
   | `Not_shiny _ -> false
+
+let next_wild_target ~first_attempt ~current_plan ~current_target =
+  if !first_attempt then (
+    first_attempt := false;
+    Ok !current_target)
+  else Wild_rng_plan.target !current_plan
+
+let prepare_target ~log ~first_attempt ~current_plan ~current_target () =
+  match next_wild_target ~first_attempt ~current_plan ~current_target with
+  | Error e ->
+      log ("Wild RNG: failed to recompute target: " ^ e);
+      Error e
+  | Ok tgt ->
+      current_target := tgt;
+      log ("Wild RNG: " ^ Frlg_rng.Wild_target.describe tgt ^ ".");
+      Ok tgt
+
+let calibrate_miss ~log ~is_switch ~current_plan ~prev_seed_delta
+    ~(tgt : Frlg_rng.Wild_target.t) obs =
+  let (p : Wild_rng_plan.t) = !current_plan in
+  match
+    Rng_miss_calibration.report_and_calibrate ~log ~label:"Wild RNG"
+      ~species:p.species ~seeds:p.seeds ~seed_shift:p.seed_shift
+      ~target_seed:tgt.seed ~target_delay_ms:tgt.table_delay_ms
+      ~target_advance:tgt.advance ~persist:is_switch
+      ?prev_seed_delta:!prev_seed_delta obs
+  with
+  | None -> ()
+  | Some d ->
+      prev_seed_delta := Some d.seed_delta_frames;
+      current_plan :=
+        Wild_rng_plan.apply_timing_delta ~boot_delta_ms:d.boot_delta_ms
+          ~ingame_delta:d.ingame_delta p
+
+let calibrated_find ~log ~reset_mode ~encounter_method ~prepare () =
+  match prepare () with
+  | Error _ -> false
+  | Ok (tgt : Frlg_rng.Wild_target.t) ->
+      find_encounter ~log ~reset_mode ~encounter_method tgt.timings ()
+
+let make_calibrated_policy ~log ~reset_mode ~encounter_method ~timings ~prepare
+    ~visual_shiny_check ~config ~policy =
+  let base =
+    policy_catch_steps ~log ~reset_mode ~encounter_method ~timings
+      ~visual_shiny_check ~config ~policy ()
+  in
+  let find_encounter =
+    calibrated_find ~log ~reset_mode ~encounter_method ~prepare
+  in
+  Some { base with find_encounter }
+
+let calibrated_policy_catch ~log ~reset_mode ~timings ~prepare
+    (plan : Wild_rng_plan.t) =
+  let encounter_method = plan.encounter_method in
+  match (plan.catch_mode, plan.visual_shiny_check) with
+  | Wild_rng_plan.Throw_only, false -> None
+  | Wild_rng_plan.Throw_only, true ->
+      make_calibrated_policy ~log ~reset_mode ~encounter_method ~timings
+        ~prepare ~visual_shiny_check:true
+        ~config:Wild_rng_plan.default_catch_config
+        ~policy:(Wild_rng_plan.throw_only_policy plan.capture)
+  | Wild_rng_plan.Catch_policy { policy; config }, visual_shiny_check ->
+      make_calibrated_policy ~log ~reset_mode ~encounter_method ~timings
+        ~prepare ~visual_shiny_check ~config ~policy
+
+let calibrated_catch ~log ~reset_mode ~encounter_method ~prepare capture ~party
+    =
+  match prepare () with
+  | Error e ->
+      { Capture.end_ = Failed e; encounters = 0; balls_thrown = 0; caught = [] }
+  | Ok (tgt : Frlg_rng.Wild_target.t) ->
+      let steps =
+        game_steps ~log ~reset_mode ~encounter_method tgt.timings capture
+      in
+      Effects.with_probes Frlg_battle.Battle_look.probes (fun () ->
+          Capture.run steps capture ~party)
+
+let calibrated_shiny_at ~log ~is_switch ~current_plan ~prev_seed_delta
+    ~current_target slot =
+  match check_summary ~log ~slot ~read_miss:is_switch with
+  | `Shiny -> true
+  | `Not_shiny None -> false
+  | `Not_shiny (Some obs) ->
+      calibrate_miss ~log ~is_switch ~current_plan ~prev_seed_delta
+        ~tgt:!current_target obs;
+      false
+
+let live_calibrated_game_steps ~log ?(reset_mode = Rng_reset.Mgba)
+    (initial_plan : Wild_rng_plan.t) (initial_target : Frlg_rng.Wild_target.t) :
+    Wild_rng.game_steps =
+  let current_plan = ref initial_plan in
+  let current_target = ref initial_target in
+  let prev_seed_delta = ref None in
+  let first_attempt = ref true in
+  let is_switch = initial_plan.frame_model = "switch" in
+  let prepare =
+    prepare_target ~log ~first_attempt ~current_plan ~current_target
+  in
+  {
+    catch =
+      calibrated_catch ~log ~reset_mode
+        ~encounter_method:initial_plan.encounter_method ~prepare;
+    policy_catch =
+      calibrated_policy_catch ~log ~reset_mode ~timings:initial_target.timings
+        ~prepare initial_plan;
+    shiny_at =
+      calibrated_shiny_at ~log ~is_switch ~current_plan ~prev_seed_delta
+        ~current_target;
+    log;
+  }

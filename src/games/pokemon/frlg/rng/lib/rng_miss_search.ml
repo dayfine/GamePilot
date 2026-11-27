@@ -207,3 +207,18 @@ let format_miss_report ~target_seed ~target_delay_ms ~target_advance = function
   | h :: rest -> format_hit_report h (1 + List.length rest)
 
 let calibration_delta_of_hit (h : hit) = (-h.delay_delta_ms, -h.advance_delta)
+
+let is_one_frame_flip ~prev_seed_delta (h : hit) =
+  match prev_seed_delta with
+  | Some prev ->
+      abs h.seed_delta_frames = 1
+      && abs prev = 1
+      && prev * h.seed_delta_frames < 0
+  | None -> false
+
+let damped_calibration_delta ~prev_seed_delta (h : hit) =
+  let boot_delta_ms =
+    if is_one_frame_flip ~prev_seed_delta h then -(h.delay_delta_ms / 2)
+    else -h.delay_delta_ms
+  in
+  (boot_delta_ms, -h.advance_delta)

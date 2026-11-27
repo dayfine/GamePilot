@@ -143,6 +143,12 @@ val resolved_id :
     [fallback], failing via {!Json_field.fail} if missing or outside
     [0..max_id]. *)
 
+val resolved_attempts :
+  where:string -> options:Run_options.t -> Json_field.obj -> int
+(** Resolves the reset attempt count from [--options attempts=N], then
+    ["attempts"] in [args], defaulting to {!default_attempts}
+    ([1..max_attempts]). *)
+
 val advances : where:string -> Json_field.obj -> int * int
 (** Reads optional ["advances"] as [[min, max]] with [0 <= min <= max],
     defaulting to [(900, 4000)]. *)
@@ -160,13 +166,14 @@ val seed_column_of :
     [src/games/pokemon/frlg/assets/], shifting every seed by [seed_shift]
     (wrapping 16-bit). *)
 
-val calibrations_of_offsets :
+val calibrated_model :
   boot_offset_ms:int ->
   ingame_offset:int ->
   Frlg_rng.Rng_timings.frame_model ->
-  Frlg_rng.Rng_timings.calibrations
-(** Builds {!Frlg_rng.Rng_timings.calibrations} from boot and in-game offsets.
-*)
+  Frlg_rng.Rng_timings.frame_model * Frlg_rng.Rng_timings.calibrations
+(** Applies [boot_offset_ms] directly to [model.fixed_seed_offset_ms] for
+    millisecond-accurate seed stepping and builds
+    {!Frlg_rng.Rng_timings.calibrations} with [ingame_offset]. *)
 
 val default_catch_config : Battle_catch_steps.config
 (** Default {!Battle_catch_steps.config} (active slot 1, bag rows 0, 30 s
@@ -186,6 +193,10 @@ val load_trainer_ids : unit -> (trainer_ids, string) result
 val apply_calibration : Frlg_rng.Switch_rng_calibration.entry -> t -> t
 (** Applies a persisted per-console Switch calibration entry to [t], combining
     [boot_offset_ms], [seed_shift] (wrapping 16-bit), and [ingame_offset]. *)
+
+val apply_timing_delta : boot_delta_ms:int -> ingame_delta:int -> t -> t
+(** Adds [boot_delta_ms] to [t.boot_offset_ms] and [ingame_delta] to
+    [t.ingame_offset]. *)
 
 val decode :
   ?options:Run_options.t ->

@@ -84,3 +84,16 @@ val check_summary :
 val shiny_at : log:(string -> unit) -> slot:int -> bool
 (** From the overworld: the member's summary, its first page's star read, back
     to the overworld. Fails as [no_party], [no_member_menu] or [no_summary]. *)
+
+val live_calibrated_game_steps :
+  log:(string -> unit) ->
+  ?reset_mode:Rng_reset.mode ->
+  Wild_rng_plan.t ->
+  Frlg_rng.Wild_target.t ->
+  Wild_rng.game_steps
+(** Live {!Wild_rng.game_steps} that recompute {!Wild_rng_plan.target} before
+    each subsequent attempt and, on Switch ([plan.frame_model = "switch"]), read
+    Summary Page 1 & Page 2 on misses, report the miss distance via
+    {!Rng_miss_calibration}, update the in-memory plan offsets for the next
+    attempt (with ±1-frame oscillation damping), and persist the timing delta.
+*)

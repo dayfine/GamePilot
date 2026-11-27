@@ -7,6 +7,18 @@
     miss report, and optionally persists the [(boot_delta_ms, ingame_delta)]
     correction via {!Frlg_rng.Switch_rng_calibration.record_timing_miss}. *)
 
+type delta = {
+  boot_delta_ms : int;
+      (** Millisecond correction to add to [boot_offset_ms] (halved on ±1-frame
+          oscillation when [prev_seed_delta] is supplied). *)
+  ingame_delta : int;  (** Advance correction to add to [ingame_offset]. *)
+  seed_delta_frames : int;
+      (** Observed seed miss in frames from the closest hit, to pass back as
+          [prev_seed_delta] on the next attempt. *)
+}
+(** Timing correction and observed seed miss returned by
+    {!report_and_calibrate}. *)
+
 val report_and_calibrate :
   log:(string -> unit) ->
   label:string ->
@@ -17,11 +29,13 @@ val report_and_calibrate :
   target_delay_ms:int ->
   target_advance:int ->
   persist:bool ->
+  ?prev_seed_delta:int ->
   ?calibration_path:string ->
   Frlg_rng.Rng_miss_search.observation ->
-  (int * int) option
+  delta option
 (** Logs [obs], searches for the landed Method 1 seed and advance, logs the miss
-    report, and returns [Some (boot_delta_ms, ingame_delta)] when at least one
-    match is found (taking the closest match). When [persist] is [true], also
-    updates {!Frlg_rng.Switch_rng_calibration.record_timing_miss} (logging a
-    warning on I/O failure). *)
+    report, and returns [Some delta] when at least one match is found (taking
+    the closest match and damping ±1-frame seed oscillation via
+    {!Frlg_rng.Rng_miss_search.damped_calibration_delta}). When [persist] is
+    [true], also updates {!Frlg_rng.Switch_rng_calibration.record_timing_miss}
+    (logging a warning on I/O failure). *)

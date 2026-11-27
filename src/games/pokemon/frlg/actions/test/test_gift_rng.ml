@@ -327,11 +327,37 @@ let test_miss_calibration () =
   let expected_delay_delta = delays.(miss_idx) - target.table_delay_ms in
   check_eq
     ~show:
-      (Option.fold ~none:"None" ~some:(fun (b, i) ->
-           Printf.sprintf "(%d,%d)" b i))
+      (Option.fold ~none:"None" ~some:(fun (d : Rng_miss_calibration.delta) ->
+           Printf.sprintf "(%d,%d,%d)" d.boot_delta_ms d.ingame_delta
+             d.seed_delta_frames))
     "calibration delta"
-    (Some (-expected_delay_delta, -25))
+    (Some
+       {
+         Rng_miss_calibration.boot_delta_ms = -expected_delay_delta;
+         ingame_delta = -25;
+         seed_delta_frames = 1;
+       })
     delta;
+  (* Oscillating -1 -> +1 miss halves boot_delta_ms when prev_seed_delta = -1. *)
+  let damped_delta =
+    Rng_miss_calibration.report_and_calibrate ~log:ignore ~label:"Gift RNG"
+      ~species:plan.species ~seeds:plan.seeds ~seed_shift:plan.seed_shift
+      ~target_seed:target.seed ~target_delay_ms:target.table_delay_ms
+      ~target_advance:target.advance ~persist:false ~prev_seed_delta:(-1) obs
+  in
+  check_eq
+    ~show:
+      (Option.fold ~none:"None" ~some:(fun (d : Rng_miss_calibration.delta) ->
+           Printf.sprintf "(%d,%d,%d)" d.boot_delta_ms d.ingame_delta
+             d.seed_delta_frames))
+    "damped calibration delta"
+    (Some
+       {
+         Rng_miss_calibration.boot_delta_ms = -(expected_delay_delta / 2);
+         ingame_delta = -25;
+         seed_delta_frames = 1;
+       })
+    damped_delta;
   let persisted =
     Option.get
       (Result.get_ok

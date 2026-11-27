@@ -23,6 +23,12 @@ let load_search_inputs ~species ~seeds ~seed_shift ~target_seed ~target_delay_ms
   in
   Ok (base_stats, delays, seed_col, target_seed_index)
 
+type delta = {
+  boot_delta_ms : int;
+  ingame_delta : int;
+  seed_delta_frames : int;
+}
+
 let persist_delta ~log ~label ?calibration_path ~boot_delta_ms ~ingame_delta ()
     =
   match
@@ -32,8 +38,11 @@ let persist_delta ~log ~label ?calibration_path ~boot_delta_ms ~ingame_delta ()
   | Ok _ -> ()
   | Error e -> log (Printf.sprintf "%s calibration warning: %s" label e)
 
-let apply_hit ~log ~label ~persist ?calibration_path h =
-  let boot_delta_ms, ingame_delta = MS.calibration_delta_of_hit h in
+let apply_hit ~log ~label ~persist ~prev_seed_delta ?calibration_path
+    (h : MS.hit) =
+  let boot_delta_ms, ingame_delta =
+    MS.damped_calibration_delta ~prev_seed_delta h
+  in
   let msg =
     Printf.sprintf
       "%s calibration: boot_offset_ms += %+d ms, ingame_offset += %+d adv."
@@ -42,14 +51,17 @@ let apply_hit ~log ~label ~persist ?calibration_path h =
   log msg;
   if persist then
     persist_delta ~log ~label ?calibration_path ~boot_delta_ms ~ingame_delta ();
-  (boot_delta_ms, ingame_delta)
+  { boot_delta_ms; ingame_delta; seed_delta_frames = h.seed_delta_frames }
 
-let apply_hits ~log ~label ~persist ?calibration_path = function
+let apply_hits ~log ~label ~persist ~prev_seed_delta ?calibration_path =
+  function
   | [] -> None
-  | h :: _ -> Some (apply_hit ~log ~label ~persist ?calibration_path h)
+  | h :: _ ->
+      Some (apply_hit ~log ~label ~persist ~prev_seed_delta ?calibration_path h)
 
 let report_and_calibrate ~log ~label ~species ~seeds ~seed_shift ~target_seed
-    ~target_delay_ms ~target_advance ~persist ?calibration_path obs =
+    ~target_delay_ms ~target_advance ~persist ?prev_seed_delta ?calibration_path
+    obs =
   log (Printf.sprintf "%s: observed %s." label (MS.format_observation obs));
   match
     load_search_inputs ~species ~seeds ~seed_shift ~target_seed ~target_delay_ms
@@ -65,4 +77,4 @@ let report_and_calibrate ~log ~label ~species ~seeds ~seed_shift ~target_seed
       log
         (MS.format_miss_report ~target_seed ~target_delay_ms ~target_advance
            hits);
-      apply_hits ~log ~label ~persist ?calibration_path hits
+      apply_hits ~log ~label ~persist ~prev_seed_delta ?calibration_path hits

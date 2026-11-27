@@ -85,12 +85,22 @@ let run_legacy game_steps plan ~party =
   | All_caught -> confirm_summary game_steps ~party r
   | e -> { end_ = Capture_ended e; capture = Some r }
 
+let run_attempt game_steps (plan : Capture_plan.t) ~party =
+  match game_steps.policy_catch with
+  | Some pc -> run_policy_catch game_steps pc plan ~party
+  | None -> run_legacy game_steps plan ~party
+
+let is_miss = function Not_shiny | Not_shiny_intro -> true | _ -> false
+
 let run game_steps (plan : Capture_plan.t) ~party =
   if party >= Capture.party_size then { end_ = Party_full; capture = None }
   else
-    match game_steps.policy_catch with
-    | Some pc -> run_policy_catch game_steps pc plan ~party
-    | None -> run_legacy game_steps plan ~party
+    let max_attempts = max 1 plan.max_encounters in
+    let rec loop n =
+      let r = run_attempt game_steps plan ~party in
+      if is_miss r.end_ && n < max_attempts then loop (n + 1) else r
+    in
+    loop 1
 
 let failure_code = function
   | Shiny -> None

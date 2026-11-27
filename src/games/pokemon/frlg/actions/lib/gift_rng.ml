@@ -83,9 +83,7 @@ let read ~options ~(fallback : Wild_rng_plan.trainer_ids) ~default_frame_model
     frame_model = model;
     min_advance;
     max_advance;
-    attempts =
-      W.opt_int ~where ~default:W.default_attempts ~low:1 ~high:W.max_attempts
-        "attempts" args;
+    attempts = W.resolved_attempts ~where ~options args;
   }
 
 let decode ?(options = Run_options.none)
@@ -119,8 +117,8 @@ let target p =
       ~none:("unknown frame_model " ^ p.frame_model)
       (Wild_rng_plan.find_frame_model p.frame_model)
   in
-  let calibrations =
-    Wild_rng_plan.calibrations_of_offsets ~boot_offset_ms:p.boot_offset_ms
+  let model, calibrations =
+    Wild_rng_plan.calibrated_model ~boot_offset_ms:p.boot_offset_ms
       ~ingame_offset:p.ingame_offset model
   in
   let none =
@@ -173,22 +171,28 @@ let next_gift_target ~first_attempt ~current_plan ~current_target =
     Ok !current_target)
   else target !current_plan
 
-let calibrate_miss ~log ~is_switch ~current_plan ~(tgt : R.Gift_target.t) obs =
+let calibrate_miss ~log ~is_switch ~current_plan ~prev_seed_delta
+    ~(tgt : R.Gift_target.t) obs =
   let p = !current_plan in
   match
     Rng_miss_calibration.report_and_calibrate ~log ~label:"Gift RNG"
       ~species:p.species ~seeds:p.seeds ~seed_shift:p.seed_shift
       ~target_seed:tgt.seed ~target_delay_ms:tgt.table_delay_ms
-      ~target_advance:tgt.advance ~persist:is_switch obs
+      ~target_advance:tgt.advance ~persist:is_switch
+      ?prev_seed_delta:!prev_seed_delta obs
   with
   | None -> ()
-  | Some (boot_delta_ms, ingame_delta) ->
-      current_plan := apply_timing_delta ~boot_delta_ms ~ingame_delta p
+  | Some d ->
+      prev_seed_delta := Some d.seed_delta_frames;
+      current_plan :=
+        apply_timing_delta ~boot_delta_ms:d.boot_delta_ms
+          ~ingame_delta:d.ingame_delta p
 
 let live_calibrated_game_steps ~log ?(reset_mode = Rng_reset.Mgba) initial_plan
     initial_target =
   let current_plan = ref initial_plan in
   let current_target = ref initial_target in
+  let prev_seed_delta = ref None in
   let first_attempt = ref true in
   let is_switch = initial_plan.frame_model = "switch" in
   let claim_prize () =
@@ -207,7 +211,8 @@ let live_calibrated_game_steps ~log ?(reset_mode = Rng_reset.Mgba) initial_plan
     | `Shiny -> true
     | `Not_shiny None -> false
     | `Not_shiny (Some obs) ->
-        calibrate_miss ~log ~is_switch ~current_plan ~tgt:!current_target obs;
+        calibrate_miss ~log ~is_switch ~current_plan ~prev_seed_delta
+          ~tgt:!current_target obs;
         false
   in
   { claim_prize; shiny_at; log }

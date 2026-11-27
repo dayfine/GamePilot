@@ -47,6 +47,18 @@ let options_of pairs =
         presence = Optional;
         doc = "";
       };
+      {
+        key = "catch_mode";
+        value = One_of [ "throw_only"; "phase1"; "phase2" ];
+        presence = Optional;
+        doc = "";
+      };
+      {
+        key = "attempts";
+        value = Int_range (1, 99);
+        presence = Optional;
+        doc = "";
+      };
     ]
   in
   Result.get_ok (Run_options.check decl pairs)
@@ -328,6 +340,49 @@ let policy_decoding =
        or phase2";
     case "apply_calibration updates switch plan offsets" decode_calibrated
       "visual=true boot=-50 shift=4 ingame=-2";
+    case "--options overrides catch_mode, attempts, ball, and balls"
+      (fun () ->
+        let options =
+          options_of
+            [
+              ("tid", "1");
+              ("sid", "2");
+              ("ball", "luxury-ball");
+              ("balls", "30");
+              ("catch_mode", "phase1");
+              ("attempts", "10");
+            ]
+        in
+        match Wild_rng_plan.decode ~options (obj plan_args_no_ids) with
+        | Ok t ->
+            let mode =
+              match t.catch_mode with
+              | Throw_only -> "throw_only"
+              | Catch_policy { policy; _ } ->
+                  Printf.sprintf "policy(ball=%s,max_balls=%d)" policy.ball_name
+                    policy.max_balls
+            in
+            Printf.sprintf "%s attempts=%d" mode t.capture.max_encounters
+        | Error c -> Pokemon_engine.Failure.cause_to_string c)
+      "policy(ball=luxury-ball,max_balls=30) attempts=10";
+    case "apply_timing_delta shifts seed_delay_ms by exact ms"
+      (fun () ->
+        let base =
+          Result.get_ok
+            (Wild_rng_plan.decode
+               (obj
+                  {|{"species": "ekans", "location": "route_10", "tid": 12345,
+                     "sid": 54321, "frame_model": "switch"}|}))
+        in
+        let t0 = Result.get_ok (Wild_rng_plan.target base) in
+        let shifted =
+          Wild_rng_plan.apply_timing_delta ~boot_delta_ms:(-8) ~ingame_delta:0
+            base
+        in
+        let t1 = Result.get_ok (Wild_rng_plan.target shifted) in
+        Printf.sprintf "delta_ms=%d"
+          (t1.timings.seed_delay_ms - t0.timings.seed_delay_ms))
+      "delta_ms=-8";
   ]
 
 let policy_decisions =
@@ -363,6 +418,47 @@ let policy_decisions =
       (decide_policy ~found:false ~intro_verdict:Shiny
          ~catch_outcome:(Caught caught_summary) ~shiny:true ~party:5)
       "find => wild_rng_no_encounter (balls=none)";
+    case "multi-attempt retries after non-shiny miss and succeeds on attempt 2"
+      (fun () ->
+        let attempt = ref 0 in
+        let steps = ref [] in
+        let add s = steps := s :: !steps in
+        let pc : Wild_rng.policy_catch_steps =
+          {
+            find_encounter =
+              (fun () ->
+                incr attempt;
+                add (Printf.sprintf "find#%d" !attempt);
+                true);
+            detect_shiny = None;
+            on_miss = ignore;
+            catch_battle =
+              (fun () ->
+                add (Printf.sprintf "catch#%d" !attempt);
+                Caught caught_summary);
+            finish_catch = (fun _ -> true);
+          }
+        in
+        let game_steps : Wild_rng.game_steps =
+          {
+            catch = (fun _ ~party:_ -> failwith "unused");
+            policy_catch = Some pc;
+            shiny_at =
+              (fun _ ->
+                let ok = !attempt = 2 in
+                add (Printf.sprintf "summary#%d=%b" !attempt ok);
+                ok);
+            log = ignore;
+          }
+        in
+        let base = Result.get_ok (Wild_rng_plan.decode (obj plan_args)) in
+        let plan = { base.capture with max_encounters = 3 } in
+        let r = Wild_rng.run game_steps plan ~party:5 in
+        Printf.sprintf "%s => %s"
+          (String.concat ", " (List.rev !steps))
+          (Option.value (Wild_rng.failure_code r.end_) ~default:"passes"))
+      "find#1, catch#1, summary#1=false, find#2, catch#2, summary#2=true => \
+       passes";
   ]
 
 let decisions =

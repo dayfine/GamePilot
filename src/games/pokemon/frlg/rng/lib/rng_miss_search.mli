@@ -97,3 +97,10 @@ val format_miss_report :
 val calibration_delta_of_hit : hit -> int * int
 (** Returns
     [(boot_delta_ms, ingame_delta) = (-h.delay_delta_ms, -h.advance_delta)]. *)
+
+val damped_calibration_delta : prev_seed_delta:int option -> hit -> int * int
+(** Like {!calibration_delta_of_hit}, but when [abs h.seed_delta_frames = 1] and
+    [prev_seed_delta] is [Some prev] with [abs prev = 1] in the opposite
+    direction (a ±1-frame sign flip), halves [boot_delta_ms]
+    ([-(h.delay_delta_ms / 2)]) so the next attempt lands inside the target seed
+    window instead of oscillating across its edges. *)

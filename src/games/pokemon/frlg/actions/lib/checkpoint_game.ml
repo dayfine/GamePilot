@@ -225,60 +225,16 @@ let capture t (_ : Pokemon_engine.Plan.event) args =
 (* The wild RNG catch ({!Wild_rng}): the target searched for, then either the
    legacy throw-only capture or optional visual shiny detection + policy catch
    ({!Battle_catch_steps}), and finally the summary's star. *)
-let wild_rng_policy_catch ~log ~reset_mode ~timings (plan : Wild_rng_plan.t) =
-  let encounter_method = plan.encounter_method in
-  let make ~visual_shiny_check ~config ~policy =
-    Some
-      (Wild_rng_steps.policy_catch_steps ~log ~reset_mode ~encounter_method
-         ~timings ~visual_shiny_check ~config ~policy ())
-  in
-  match (plan.catch_mode, plan.visual_shiny_check) with
-  | Wild_rng_plan.Throw_only, false -> None
-  | Wild_rng_plan.Throw_only, true ->
-      make ~visual_shiny_check:true ~config:Wild_rng_plan.default_catch_config
-        ~policy:(Wild_rng_plan.throw_only_policy plan.capture)
-  | Wild_rng_plan.Catch_policy { policy; config }, visual_shiny_check ->
-      make ~visual_shiny_check ~config ~policy
-
-let wild_rng_catch ~log ~reset_mode ~encounter_method timings capture ~party =
-  let steps =
-    Wild_rng_steps.game_steps ~log ~reset_mode ~encounter_method timings capture
-  in
-  Effects.with_probes Frlg_battle.Battle_look.probes (fun () ->
-      Capture.run steps capture ~party)
-
-let wild_rng_shiny_at ~log (plan : Wild_rng_plan.t)
-    (target : Frlg_rng.Wild_target.t) slot =
-  let is_switch = plan.frame_model = "switch" in
-  match Wild_rng_steps.check_summary ~log ~slot ~read_miss:is_switch with
-  | `Shiny -> true
-  | `Not_shiny None -> false
-  | `Not_shiny (Some obs) ->
-      ignore
-        (Rng_miss_calibration.report_and_calibrate ~log ~label:"Wild RNG"
-           ~species:plan.species ~seeds:plan.seeds ~seed_shift:plan.seed_shift
-           ~target_seed:target.seed ~target_delay_ms:target.table_delay_ms
-           ~target_advance:target.advance ~persist:is_switch obs);
-      false
-
 let run_wild_rng t (plan : Wild_rng_plan.t) () =
   let log = t.config.log in
-  let reset_mode = t.config.rng_reset_mode in
   let target =
     match Wild_rng_plan.target plan with
     | Ok target -> target
     | Error e -> Menu_input.fail "wild_rng_no_target" e
   in
-  log ("Wild RNG: " ^ Frlg_rng.Wild_target.describe target ^ ".");
-  let catch =
-    wild_rng_catch ~log ~reset_mode ~encounter_method:plan.encounter_method
-      target.timings
-  in
-  let policy_catch =
-    wild_rng_policy_catch ~log ~reset_mode ~timings:target.timings plan
-  in
-  let game_steps : Wild_rng.game_steps =
-    { catch; policy_catch; shiny_at = wild_rng_shiny_at ~log plan target; log }
+  let game_steps =
+    Wild_rng_steps.live_calibrated_game_steps ~log
+      ~reset_mode:t.config.rng_reset_mode plan target
   in
   let r =
     Wild_rng.run game_steps plan.capture ~party:(Party_roster.size !(t.party))
