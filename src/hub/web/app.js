@@ -1,6 +1,9 @@
 let consoles = [];
 let programs = [];
 let selectedConsole = null;
+let historyEntries = [];
+let historyPage = 0;
+const historyPageSize = 25;
 
 function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => ({
@@ -14,7 +17,10 @@ function esc(s) {
 
 function watchHref(url) {
   if (!url || typeof window === 'undefined' || !window.location) return url;
-  return url.replace(/^http:\/\/127\.0\.0\.1(?=[:/])/, 'http://' + window.location.hostname);
+  return url.replace(
+    /^http:\/\/(127\.0\.0\.1|localhost|0\.0\.0\.0)(?=[:/])/,
+    'http://' + window.location.hostname
+  );
 }
 
 function toggleAdd() {
@@ -216,18 +222,42 @@ async function loadRuns() {
     .join('');
 }
 
-async function loadHistory() {
-  const r = await fetch('/api/history');
-  if (!r.ok) return;
-  const j = await r.json();
-  document.getElementById('historyDir').textContent = j.runs_dir || '';
-  const entries = j.entries || [];
+function onHistoryFilter() {
+  historyPage = 0;
+  renderHistory();
+}
+
+function pageHistory(delta) {
+  historyPage = Math.max(0, historyPage + delta);
+  renderHistory();
+}
+
+function renderHistory() {
+  const q = (document.getElementById('historySearch').value || '').trim().toLowerCase();
+  const resFilter = document.getElementById('historyResult').value || 'all';
+  const sort = document.getElementById('historySort').value || 'newest';
+  let filtered = historyEntries.filter((e) => {
+    if (resFilter !== 'all' && e.result !== resFilter) return false;
+    if (!q) return true;
+    const hay = `${e.checkpoint} ${e.run} ${e.mode} ${e.at} ${e.reason}`.toLowerCase();
+    return hay.includes(q);
+  });
+  if (sort === 'oldest') filtered = filtered.slice().reverse();
+
+  const total = filtered.length;
+  const maxPage = Math.max(0, Math.ceil(total / historyPageSize) - 1);
+  if (historyPage > maxPage) historyPage = maxPage;
+  const start = historyPage * historyPageSize;
+  const slice = filtered.slice(start, start + historyPageSize);
+
   const el = document.getElementById('historyList');
-  if (!entries.length) {
-    el.innerHTML = '<div class="muted">No recorded runs in RESULTS.tsv yet.</div>';
+  const pager = document.getElementById('historyPager');
+  if (!total) {
+    el.innerHTML = '<div class="muted">No matching runs in RESULTS.tsv.</div>';
+    pager.classList.toggle('hidden', true);
     return;
   }
-  el.innerHTML = `<table><thead><tr><th>Time</th><th>Program / Checkpoint</th><th>Mode</th><th>Result</th><th>Detail</th></tr></thead><tbody>${entries.map((e) => `
+  el.innerHTML = `<table><thead><tr><th>Time</th><th>Program / Checkpoint</th><th>Mode</th><th>Result</th><th>Detail</th></tr></thead><tbody>${slice.map((e) => `
     <tr>
       <td class="muted nowrap">${esc(e.time.replace('T', ' '))}</td>
       <td class="nowrap"><strong>${esc(e.checkpoint)}</strong><div class="muted">${esc(e.run)}</div></td>
@@ -235,6 +265,21 @@ async function loadHistory() {
       <td class="nowrap"><span class="pill ${esc(e.result)}">${esc(e.result)}</span></td>
       <td class="muted detail">${esc([e.at, e.reason].filter(Boolean).join(' — '))}</td>
     </tr>`).join('')}</tbody></table>`;
+
+  pager.classList.toggle('hidden', total <= historyPageSize);
+  document.getElementById('historyPageInfo').textContent =
+    `Showing ${start + 1}–${start + slice.length} of ${total}`;
+  document.getElementById('historyPrev').disabled = historyPage === 0;
+  document.getElementById('historyNext').disabled = historyPage >= maxPage;
+}
+
+async function loadHistory() {
+  const r = await fetch('/api/history');
+  if (!r.ok) return;
+  const j = await r.json();
+  document.getElementById('historyDir').textContent = j.runs_dir || '';
+  historyEntries = j.entries || [];
+  renderHistory();
 }
 
 async function refreshAll() {

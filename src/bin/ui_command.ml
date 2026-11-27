@@ -54,6 +54,7 @@ let dispatch_raw st raw =
     "HTTP/1.1 %d %s\r\n\
      Content-Type: %s\r\n\
      Content-Length: %d\r\n\
+     Cache-Control: no-store\r\n\
      Connection: close\r\n\
      \r\n\
      %s"

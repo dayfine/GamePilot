@@ -15,7 +15,7 @@ type entry = {
 (** One row from [RESULTS.tsv]. *)
 
 val default_limit : int
-(** Default maximum number of recent entries returned (30). *)
+(** Default maximum number of recent entries returned (200). *)
 
 val parse_tsv : ?limit:int -> string -> entry list
 (** Pure parser for [RESULTS.tsv] contents; returns up to [limit] most recent

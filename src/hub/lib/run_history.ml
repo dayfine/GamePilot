@@ -8,7 +8,7 @@ type entry = {
   reason : string;
 }
 
-let default_limit = 30
+let default_limit = 200
 
 let field_at cols i =
   match List.nth_opt cols i with Some s -> String.trim s | None -> ""

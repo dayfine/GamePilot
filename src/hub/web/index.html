@@ -76,7 +76,30 @@
 
   <section>
     <h2><span>Run History</span><span id="historyDir" class="muted"></span></h2>
+    <div class="row history-controls">
+      <label style="flex:2 1 220px">Filter
+        <input id="historySearch" placeholder="program, run folder, or reason..." oninput="onHistoryFilter()">
+      </label>
+      <label style="flex:0 1 130px">Result
+        <select id="historyResult" onchange="onHistoryFilter()">
+          <option value="all" selected>all</option>
+          <option value="pass">pass</option>
+          <option value="fail">fail</option>
+        </select>
+      </label>
+      <label style="flex:0 1 150px">Sort
+        <select id="historySort" onchange="onHistoryFilter()">
+          <option value="newest" selected>newest first</option>
+          <option value="oldest">oldest first</option>
+        </select>
+      </label>
+    </div>
     <div id="historyList" class="muted">Loading history...</div>
+    <div id="historyPager" class="pager hidden">
+      <button id="historyPrev" class="secondary" onclick="pageHistory(-1)">Prev</button>
+      <span id="historyPageInfo" class="muted"></span>
+      <button id="historyNext" class="secondary" onclick="pageHistory(1)">Next</button>
+    </div>
   </section>
 </main>
 <script src="/app.js"></script>

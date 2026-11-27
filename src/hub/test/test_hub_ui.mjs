@@ -81,11 +81,20 @@ function createHubSandbox(mockRoutes) {
     'runsList',
     'historyDir',
     'historyList',
+    'historySearch',
+    'historyResult',
+    'historySort',
+    'historyPager',
+    'historyPageInfo',
+    'historyPrev',
+    'historyNext',
   ];
   const els = Object.fromEntries(ids.map((id) => [id, makeFakeElement(id)]));
   els.addSection.classList.toggle('hidden', true);
   els.modeSelect.value = 'default';
   els.addBackend.value = 'switch';
+  els.historyResult.value = 'all';
+  els.historySort.value = 'newest';
 
   const optInputs = [];
   const fetchLog = [];
@@ -119,6 +128,7 @@ function createHubSandbox(mockRoutes) {
 
   const sandbox = {
     document,
+    window: { location: { hostname: 'Mac-mini.local' } },
     fetch,
     setInterval: () => 0,
     encodeURIComponent,
@@ -241,7 +251,7 @@ test('Initial load renders Console A external run + Watch link and Console B rea
   assert.equal(els.consoleCount.textContent, '2 configured');
   assert.match(els.consolesGrid.innerHTML, /Console A/);
   assert.match(els.consolesGrid.innerHTML, /bdsp\.underground/);
-  assert.match(els.consolesGrid.innerHTML, /http:\/\/127\.0\.0\.1:57023\//);
+  assert.match(els.consolesGrid.innerHTML, /http:\/\/Mac-mini\.local:57023\//);
   assert.match(els.consolesGrid.innerHTML, /Console B/);
   assert.equal(els.runCount.textContent, '1 run(s)');
   assert.doesNotMatch(els.runsList.innerHTML, /stopRun\('ext-80610'\)/);
