@@ -133,4 +133,29 @@ let () =
       case "allow-home: no frame still fails fast"
         (check_no_frame allow_home)
         "error: no frame received from the capture card";
-    ]
+    ];
+  (* Typed tests for Initial_screen.check_unless_chained. *)
+  let logged = ref [] in
+  let chained_res =
+    Initial_screen.check_unless_chained ~already_at_start:true
+      ~log:(fun s -> logged := s :: !logged)
+      ~picture:Fire_red.nso_gba_picture read_only
+  in
+  Table_test.report
+    "check_unless_chained: already_at_start=true skips without effect handler"
+    (if chained_res = Ok () && List.length !logged = 1 then Ok ()
+     else Error "expected Ok () and one log line");
+  let cold_res = ref (Ok ()) in
+  let _ =
+    S.play ~start:S.Black (console ()) (fun () ->
+        cold_res :=
+          Initial_screen.check_unless_chained ~already_at_start:false ~log
+            ~picture:Fire_red.nso_gba_picture read_only;
+        "")
+  in
+  Table_test.report
+    "check_unless_chained: already_at_start=false runs check and fails on black"
+    (match !cold_res with
+    | Error _ -> Ok ()
+    | Ok () -> Error "expected Error on black screen");
+  Table_test.finish ()

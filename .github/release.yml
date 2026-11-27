@@ -1,0 +1,30 @@
+changelog:
+  exclude:
+    labels:
+      - rule-audit
+  categories:
+    - title: Games
+      labels:
+        - "game:frlg"
+        - "game:bdsp"
+        - "game:plza"
+        - "game:sv"
+        - "game:swsh"
+    - title: Hub UI
+      labels:
+        - "area:ui"
+    - title: Daemon
+      labels:
+        - "area:daemon"
+    - title: Engine & CLI
+      labels:
+        - "area:engine"
+    - title: Bug Fixes
+      labels:
+        - bug
+    - title: Documentation
+      labels:
+        - documentation
+    - title: Other Changes
+      labels:
+        - "*"

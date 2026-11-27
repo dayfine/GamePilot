@@ -97,4 +97,56 @@ let () =
             (F.plan_file ~plan_dir:"plans" "mg-04"
             = Filename.concat "plans" "mg-04.plan.json"))
         "true";
-    ]
+    ];
+  (* Typed tests for Plan_folder.select_range. *)
+  let dir =
+    folder
+      [
+        "03.02-out-of-hotel-z.plan.json";
+        "03.03-battle-taunie.plan.json";
+        "03.10-fourth-species.plan.json";
+        "03.11-fifth-species.plan.json";
+      ]
+  in
+  let check_range name actual expected =
+    Table_test.report name
+      (if actual = expected then Ok ()
+       else Error "selection did not match expected value")
+  in
+  check_range "select_range resolves shorthand bounds and keeps after + all"
+    (F.select_range ~plan_dir:dir ~from_id:"03.02" ~to_id:"03.10")
+    (Ok
+       {
+         F.from_id = "03.02-out-of-hotel-z";
+         to_id = "03.10-fourth-species";
+         selected =
+           [
+             "03.02-out-of-hotel-z";
+             "03.03-battle-taunie";
+             "03.10-fourth-species";
+           ];
+         after = Some "03.11-fifth-species";
+         all = plza_ids;
+       });
+  check_range "select_range to last id has after = None"
+    (F.select_range ~plan_dir:dir ~from_id:"03.10" ~to_id:"03.11")
+    (Ok
+       {
+         F.from_id = "03.10-fourth-species";
+         to_id = "03.11-fifth-species";
+         selected = [ "03.10-fourth-species"; "03.11-fifth-species" ];
+         after = None;
+         all = plza_ids;
+       });
+  Table_test.report "select_range rejects reversed bounds"
+    (match F.select_range ~plan_dir:dir ~from_id:"03.10" ~to_id:"03.02" with
+    | Error _ -> Ok ()
+    | Ok _ -> Error "expected Error for reversed bounds");
+  Table_test.report "select_range rejects missing folder"
+    (match
+       F.select_range ~plan_dir:"/nonexistent/gamepilot-plan-folder"
+         ~from_id:"03.02" ~to_id:"03.10"
+     with
+    | Error _ -> Ok ()
+    | Ok _ -> Error "expected Error for missing folder");
+  Table_test.finish ()

@@ -1,0 +1,8 @@
+(library
+ (name bdsp_blink_rng)
+ (public_name gamepilot.bdsp_blink_rng)
+ (libraries
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.bdsp_readers
+  gamepilot.bdsp_rng))

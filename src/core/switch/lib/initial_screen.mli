@@ -67,5 +67,16 @@ val check :
     [expectation]. Returns [Ok ()] when the console is ready for the program,
     else [Error reason] explaining what screen the console is on. *)
 
+val check_unless_chained :
+  already_at_start:bool ->
+  log:(string -> unit) ->
+  picture:Wire.box ->
+  expectation ->
+  (unit, string) result
+(** When [already_at_start] is [false], runs {!check}; when [true] (continuing
+    directly from a previous passing checkpoint or round), logs that the check
+    is skipped and returns [Ok ()] without reading a frame or pressing any
+    button. *)
+
 val screen_to_string : screen -> string
 (** Human-readable description of a {!screen} reading, for logs and errors. *)

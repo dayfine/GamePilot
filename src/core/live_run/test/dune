@@ -25,3 +25,9 @@
  (flags
   (:standard -open Live_run))
  (libraries gamepilot.table_test gamepilot.live_run))
+
+(test
+ (name test_series_daemons_format)
+ (flags
+  (:standard -open Live_run))
+ (libraries gamepilot.table_test gamepilot.live_run gamepilot.run_record))

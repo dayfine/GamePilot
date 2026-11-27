@@ -36,6 +36,61 @@ val create :
     page, if any. No daemon has run yet; the series' record is written
     ({!Series_watch.start}). *)
 
+val create_for_runs :
+  daemon:string ->
+  runs_dir:string ->
+  backend:Daemon_process.backend ->
+  viewport:string option ->
+  ?program_flags:string list ->
+  daemon_flags:string list ->
+  port:int ->
+  watch:Daemon_process.watch option ->
+  series ->
+  t
+(** Builds a series' daemons from its run settings: prepends the backend's
+    [--viewport] flags ({!Daemon_process.viewport_args}) and any [program_flags]
+    before [daemon_flags], registers the watch page with the runs directory's
+    hub ({!Watch_hub.for_runs_dir}), and delegates to {!create}. *)
+
+val run_name :
+  ?unit_name:string ->
+  ?attempts:int ->
+  id:string ->
+  n:int ->
+  attempt:int ->
+  unit ->
+  string
+(** Formats a run's label: ["<id> <unit_name> <n>"] (default
+    [unit_name = "run"]), with [" attempt <attempt>/<attempts>"] when [attempts]
+    is given and [> 1], or [" attempt <attempt>"] when [attempts] is omitted and
+    [attempt > 1]. *)
+
+val format_ending :
+  name:string ->
+  ?suffix:string ->
+  (unit, string * string) result ->
+  string * Run_record.ending
+(** Formats the ["PASS <name><suffix>"] or
+    ["FAIL <name> at <at>: <reason><suffix>"] summary line and its matching
+    {!Run_record.ending}. *)
+
+val start_and_run :
+  t ->
+  ?attempt:int * int ->
+  ?events:string * string ->
+  runs_dir:string ->
+  checkpoint:string ->
+  mode:string ->
+  n:int ->
+  failed:(Daemon_run.failed -> 'o) ->
+  ending:('o -> string * Run_record.ending) ->
+  banner:string ->
+  (log:(string -> unit) -> Run_record.t -> Wire.backend -> 'o) ->
+  (Run_record.t * 'o, string) result
+(** Starts a run folder via {!Run_record.start} (using [(series t).info]) and,
+    on success, executes [body] inside {!run_in}, returning the created folder
+    record and the body's outcome. *)
+
 val series : t -> series
 (** The series given to {!create}. *)
 
@@ -62,11 +117,12 @@ val run_in :
   banner:string ->
   Run_record.run ->
   n:int ->
-  (log:(string -> unit) -> Daemon_process.t -> 'o) ->
+  (log:(string -> unit) -> Wire.backend -> 'o) ->
   'o
 (** [run_in t ~runs_dir ~failed ~ending ~banner run ~n body] opens the run's
-    log, writes [banner], runs [body ~log] inside {!with_daemon}, closes the
-    log, and finishes the run with [ending outcome] via {!finish}. *)
+    log, writes [banner], runs [body ~log] inside {!with_daemon} and
+    {!Daemon_run.run_live}, closes the log, and finishes the run with
+    [ending outcome] via {!finish}. *)
 
 val finish :
   t ->
@@ -112,3 +168,14 @@ val close_game_after_pass :
     closes the running game ({!Switch.Console_park.park_and_close}), and stops
     the daemon afterward. Returns [true] on success or when skipped/no-op, and
     [false] if closing the game failed. *)
+
+val finish_series :
+  t ->
+  close_game:bool ->
+  ?tile:Switch.Home_screen.tile_color ->
+  passed:bool ->
+  unit ->
+  int
+(** Marks the series finished ({!finished}), runs post-series [--close-game]
+    handling ({!close_game_after_pass}), and returns the process exit code ([0]
+    when [passed] and closing succeeded or was not needed, [1] otherwise). *)
