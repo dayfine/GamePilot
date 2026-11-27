@@ -98,7 +98,7 @@ Recipe: lint `doc_listing`; judgment on 14 `.mli`s of action tables. 3 hits, 1 f
 
 Recipe: `ls docs/programs/*.md | grep -v README.md`. 5 hits, 5 findings.
 
-- [ ] `docs/programs/frlg-supplies.md`: fold into `docs/guide/frlg.supplies.md` "How it works"; point the descriptor's `doc` at the guide.
+- [ ] `docs/programs/frlg-supplies.md`: fold into `docs/guide/frlg/supplies.md` "How it works"; point the descriptor's `doc` at the guide.
 ...
 
 ## Recipes to fix
