@@ -31,6 +31,9 @@ function makeFakeElement(id) {
     innerHTML: '',
     textContent: '',
     value: '',
+    href: '',
+    checked: false,
+    disabled: false,
     dataset: {},
     classList: {
       toggle(c, force) {
@@ -50,10 +53,11 @@ function makeFakeElement(id) {
   };
 }
 
-function createHubSandbox(mockRoutes) {
+function createHubSandbox(mockRoutes, opts = {}) {
   const { html, script } = loadWebAssets();
   const ids = [
     'cfgPath',
+    'liveRunLink',
     'addSection',
     'addId',
     'addName',
@@ -81,10 +85,17 @@ function createHubSandbox(mockRoutes) {
     'runsList',
     'historyDir',
     'historyList',
-    'historySearch',
     'historyGame',
+    'historyProgram',
+    'historyBackend',
+    'historyMode',
     'historyResult',
-    'historySort',
+    'historySince',
+    'historyUntil',
+    'historySearch',
+    'historyGroup',
+    'historyClear',
+    'historyCount',
     'historyPager',
     'historyPageInfo',
     'historyPrev',
@@ -94,12 +105,10 @@ function createHubSandbox(mockRoutes) {
   els.addSection.classList.toggle('hidden', true);
   els.modeSelect.value = 'default';
   els.addBackend.value = 'switch';
-  els.historyResult.value = 'all';
-  els.historyGame.value = 'all';
-  els.historySort.value = 'newest';
 
   const optInputs = [];
   const fetchLog = [];
+  const replacedUrls = [];
 
   const document = {
     getElementById(id) {
@@ -130,7 +139,19 @@ function createHubSandbox(mockRoutes) {
 
   const sandbox = {
     document,
-    window: { location: { hostname: 'Mac-mini.local' } },
+    window: {
+      location: {
+        hostname: 'Mac-mini.local',
+        pathname: '/',
+        search: opts.search || '',
+      },
+      history: {
+        replaceState(_s, _t, url) {
+          replacedUrls.push(url);
+        },
+      },
+    },
+    URLSearchParams,
     fetch,
     setInterval: () => 0,
     encodeURIComponent,
@@ -139,7 +160,7 @@ function createHubSandbox(mockRoutes) {
   };
   vm.createContext(sandbox);
   vm.runInContext(script, sandbox);
-  return { html, sandbox, els, optInputs, fetchLog };
+  return { html, sandbox, els, optInputs, fetchLog, replacedUrls };
 }
 
 const sampleFixtures = () => ({
@@ -224,33 +245,67 @@ const sampleFixtures = () => ({
   'GET /api/history': {
     json: {
       runs_dir: '/tmp/runs',
+      watch_hub_port: 47901,
       entries: [
         {
-          time: '2026-11-26T15:14:19',
-          game: 'bdsp',
           run: '2026-11-26-bdsp.underground-run-15',
+          kind: 'checkpoints',
+          game: 'bdsp',
+          game_name: 'Pokemon BDSP',
+          program: 'bdsp.underground',
+          program_name: 'Underground',
+          group: 'Farming',
           checkpoint: 'bdsp.underground',
+          from: 'bdsp.underground',
+          to: 'bdsp.underground',
+          backend: 'switch',
           mode: 'run',
           result: 'pass',
           at: '',
           reason: '',
+          started_ms: 1795700000000,
+          ended_ms: 1795700125000,
+          recorded: true,
+        },
+        {
+          run: '2026-11-25-su-01-testing-3',
+          kind: 'checkpoints',
+          game: 'frlg',
+          game_name: 'Pokemon FireRed / LeafGreen',
+          program: 'frlg.supplies',
+          program_name: 'Supplies',
+          group: 'Farming',
+          checkpoint: 'su-01',
+          from: 'su-01',
+          to: 'su-02',
+          backend: 'mgba',
+          mode: 'testing',
+          result: 'fail',
+          at: '#4 mart',
+          reason: 'menu cursor timed out',
+          started_ms: 1795600000000,
+          ended_ms: 1795600060000,
+          recorded: false,
         },
       ],
     },
   },
 });
 
-test('Hub HTML offers default and verification modes', () => {
+test('Hub HTML offers default/verification modes and Newest Live Run link', () => {
   const { html } = loadWebAssets();
   assert.match(html, /<option value="default" selected>default<\/option>/);
   assert.match(html, /<option value="verification">verification<\/option>/);
+  assert.match(html, /id="liveRunLink"/);
+  assert.match(html, /Newest Live Run/);
   assert.match(html, /<link rel="stylesheet" href="\/style\.css">/);
   assert.match(html, /<script src="\/app\.js"><\/script>/);
 });
 
-test('Initial load renders Console A external run + Watch link and Console B ready', async () => {
+test('Initial load renders consoles, Newest Live Run link, and full 9-column Run History', async () => {
   const { sandbox, els } = createHubSandbox(sampleFixtures());
   await sandbox.refreshAll();
+  assert.equal(els.liveRunLink.href, 'http://Mac-mini.local:47901/live');
   assert.equal(els.consoleCount.textContent, '2 configured');
   assert.match(els.consolesGrid.innerHTML, /Console A/);
   assert.match(els.consolesGrid.innerHTML, /bdsp\.underground/);
@@ -258,7 +313,71 @@ test('Initial load renders Console A external run + Watch link and Console B rea
   assert.match(els.consolesGrid.innerHTML, /Console B/);
   assert.equal(els.runCount.textContent, '1 run(s)');
   assert.doesNotMatch(els.runsList.innerHTML, /stopRun\('ext-80610'\)/);
-  assert.match(els.historyList.innerHTML, /2026-11-26-bdsp\.underground-run-15/);
+  assert.equal(els.historyCount.textContent, '2 of 2 runs');
+  assert.match(
+    els.historyList.innerHTML,
+    /http:\/\/Mac-mini\.local:47901\/runs\/2026-11-26-bdsp\.underground-run-15\//
+  );
+  assert.match(els.historyList.innerHTML, /<span class="tag">frames<\/span>/);
+  assert.match(els.historyList.innerHTML, /<b>su-01<\/b> → su-02/);
+  assert.match(els.historyList.innerHTML, /failed at #4 mart/);
+  assert.match(els.historyList.innerHTML, /menu cursor timed out/);
+  assert.match(els.historyList.innerHTML, /Switch/);
+  assert.match(els.historyList.innerHTML, /mGBA/);
+  assert.match(els.historyList.innerHTML, /2:05/);
+});
+
+test('Run History filters, Group by program, Clear, and column sorting work', async () => {
+  const { sandbox, els } = createHubSandbox(sampleFixtures());
+  await sandbox.refreshAll();
+
+  // Filter by Game
+  els.historyGame.value = 'frlg';
+  sandbox.onHistoryFilter();
+  assert.equal(els.historyCount.textContent, '1 of 2 runs');
+  assert.match(els.historyList.innerHTML, /2026-11-25-su-01-testing-3/);
+  assert.doesNotMatch(els.historyList.innerHTML, /bdsp\.underground-run-15/);
+
+  // Filter by Backend + Mode + Result + Program + Search
+  sandbox.clearHistoryFilters();
+  assert.equal(els.historyCount.textContent, '2 of 2 runs');
+
+  els.historyProgram.value = 'bdsp.underground';
+  els.historyBackend.value = 'switch';
+  els.historyMode.value = 'run';
+  els.historyResult.value = 'pass';
+  sandbox.onHistoryFilter();
+  assert.equal(els.historyCount.textContent, '1 of 2 runs');
+  assert.match(els.historyList.innerHTML, /bdsp\.underground-run-15/);
+
+  // Search by failure reason after clearing
+  sandbox.clearHistoryFilters();
+  els.historySearch.value = 'cursor timed out';
+  sandbox.onHistoryFilter();
+  assert.equal(els.historyCount.textContent, '1 of 2 runs');
+  assert.match(els.historyList.innerHTML, /2026-11-25-su-01-testing-3/);
+
+  // Group by program
+  sandbox.clearHistoryFilters();
+  els.historyGroup.checked = true;
+  sandbox.onHistoryFilter();
+  assert.match(els.historyList.innerHTML, /<tr class="group">/);
+  assert.match(els.historyList.innerHTML, /Supplies/);
+  assert.match(els.historyList.innerHTML, /Underground/);
+
+  // Column sorting: click 'run' -> asc, click again -> desc
+  els.historyGroup.checked = false;
+  sandbox.sortHistory('run');
+  assert.match(els.historyList.innerHTML, /data-sort="run" aria-sort="ascending"/);
+  const idxFrlgAsc = els.historyList.innerHTML.indexOf('2026-11-25-su-01-testing-3');
+  const idxBdspAsc = els.historyList.innerHTML.indexOf('2026-11-26-bdsp.underground-run-15');
+  assert.ok(idxFrlgAsc < idxBdspAsc, 'expected ascending run order');
+
+  sandbox.sortHistory('run');
+  assert.match(els.historyList.innerHTML, /data-sort="run" aria-sort="descending"/);
+  const idxFrlgDesc = els.historyList.innerHTML.indexOf('2026-11-25-su-01-testing-3');
+  const idxBdspDesc = els.historyList.innerHTML.indexOf('2026-11-26-bdsp.underground-run-15');
+  assert.ok(idxBdspDesc < idxFrlgDesc, 'expected descending run order');
 });
 
 test('Opening + Add Console loads /api/devices into datalists', async () => {

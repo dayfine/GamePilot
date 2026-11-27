@@ -13,6 +13,7 @@
     <div id="cfgPath" class="muted">Loading...</div>
   </div>
   <div class="row">
+    <a id="liveRunLink" class="btn-link" href="http://127.0.0.1:47901/live" target="_blank" title="Bookmark this: it always opens the newest live run">Newest Live Run</a>
     <button class="secondary" onclick="toggleAdd()">+ Add Console</button>
     <button class="secondary" onclick="refreshAll()">Refresh</button>
   </div>
@@ -77,29 +78,50 @@
   <section>
     <h2><span>Run History</span><span id="historyDir" class="muted"></span></h2>
     <div class="row history-controls">
-      <label style="flex:2 1 220px">Filter
-        <input id="historySearch" placeholder="program, run folder, or reason..." oninput="onHistoryFilter()">
-      </label>
-      <label style="flex:0 1 140px">Game
+      <label class="history-filter">Game
         <select id="historyGame" onchange="onHistoryFilter()">
-          <option value="all" selected>all</option>
+          <option value="">all</option>
         </select>
       </label>
-      <label style="flex:0 1 130px">Result
+      <label class="history-filter">Program
+        <select id="historyProgram" onchange="onHistoryFilter()">
+          <option value="">all</option>
+        </select>
+      </label>
+      <label class="history-filter">Backend
+        <select id="historyBackend" onchange="onHistoryFilter()">
+          <option value="">all</option>
+        </select>
+      </label>
+      <label class="history-filter">Mode
+        <select id="historyMode" onchange="onHistoryFilter()">
+          <option value="">all</option>
+        </select>
+      </label>
+      <label class="history-filter">Result
         <select id="historyResult" onchange="onHistoryFilter()">
-          <option value="all" selected>all</option>
-          <option value="pass">pass</option>
-          <option value="fail">fail</option>
+          <option value="">all</option>
         </select>
       </label>
-      <label style="flex:0 1 150px">Sort
-        <select id="historySort" onchange="onHistoryFilter()">
-          <option value="newest" selected>newest first</option>
-          <option value="oldest">oldest first</option>
-        </select>
+      <label class="history-filter">Since
+        <input id="historySince" type="date" onchange="onHistoryFilter()">
       </label>
+      <label class="history-filter">Until
+        <input id="historyUntil" type="date" onchange="onHistoryFilter()">
+      </label>
+      <label class="history-search">Search
+        <input id="historySearch" type="search" placeholder="run name or failure reason" oninput="onHistoryFilter()">
+      </label>
+      <label class="history-toggle">
+        <input id="historyGroup" type="checkbox" onchange="onHistoryFilter()">
+        Group by program
+      </label>
+      <button id="historyClear" type="button" class="secondary" onclick="clearHistoryFilters()">Clear</button>
+      <span id="historyCount" class="muted history-count"></span>
     </div>
-    <div id="historyList" class="muted">Loading history...</div>
+    <div class="history-table-wrap">
+      <div id="historyList" class="muted">Loading history...</div>
+    </div>
     <div id="historyPager" class="pager hidden">
       <button id="historyPrev" class="secondary" onclick="pageHistory(-1)">Prev</button>
       <span id="historyPageInfo" class="muted"></span>

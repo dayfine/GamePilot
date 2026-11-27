@@ -4,6 +4,36 @@ let selectedConsole = null;
 let historyEntries = [];
 let historyPage = 0;
 const historyPageSize = 25;
+let watchHubPort = 47901;
+
+const HISTORY_CHOICES = ['game', 'program', 'backend', 'mode', 'result'];
+const HISTORY_FILTERS = ['game', 'program', 'backend', 'mode', 'result', 'since', 'until', 'q'];
+const HISTORY_FILTER_IDS = {
+  game: 'historyGame',
+  program: 'historyProgram',
+  backend: 'historyBackend',
+  mode: 'historyMode',
+  result: 'historyResult',
+  since: 'historySince',
+  until: 'historyUntil',
+  q: 'historySearch',
+};
+const HISTORY_UNKNOWN = '(unknown)';
+const BACKEND_NAMES = { mgba: 'mGBA', switch: 'Switch', view: 'View' };
+const NAME_OF = { game: 'game_name', program: 'program_name' };
+const HISTORY_COLUMNS = [
+  ['run', 'Run'],
+  ['game', 'Game'],
+  ['program', 'Program'],
+  ['checkpoint', 'Checkpoints'],
+  ['backend', 'Backend'],
+  ['mode', 'Mode'],
+  ['result', 'Result'],
+  ['start', 'Started'],
+  ['duration', 'Duration'],
+];
+const FIRST_SORT_DIR = { start: 'desc', duration: 'desc' };
+let historySort = { key: 'start', dir: 'desc' };
 
 function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => ({
@@ -21,6 +51,18 @@ function watchHref(url) {
     /^http:\/\/(127\.0\.0\.1|localhost|0\.0\.0\.0)(?=[:/])/,
     'http://' + window.location.hostname
   );
+}
+
+function watchHubBase() {
+  const host =
+    (typeof window !== 'undefined' && window.location && window.location.hostname) ||
+    '127.0.0.1';
+  return 'http://' + host + ':' + watchHubPort;
+}
+
+function updateLiveLink() {
+  const link = document.getElementById('liveRunLink');
+  if (link) link.href = watchHubBase() + '/live';
 }
 
 function toggleAdd() {
@@ -222,8 +264,232 @@ async function loadRuns() {
     .join('');
 }
 
+// --- Run History ---------------------------------------------------------------
+
+function runEndMs(r) {
+  return r.result === 'running' ? Date.now() : r.ended_ms || 0;
+}
+
+const HISTORY_SORT_KEYS = {
+  run: (r) => r.run || '',
+  game: (r) => r.game_name || r.game || '',
+  program: (r) => r.program_name || r.program || '',
+  checkpoint: (r) => r.checkpoint || '',
+  backend: (r) => BACKEND_NAMES[r.backend] || r.backend || '',
+  mode: (r) => r.mode || r.kind || '',
+  result: (r) => r.result || '',
+  start: (r) => r.started_ms || 0,
+  duration: (r) => (r.started_ms && runEndMs(r) ? runEndMs(r) - r.started_ms : 0),
+};
+
+function compareHistoryRuns(a, b) {
+  const key = HISTORY_SORT_KEYS[historySort.key] || HISTORY_SORT_KEYS.start;
+  const x = key(a);
+  const y = key(b);
+  const known = (v) => v !== '' && v !== 0 && v != null;
+  if (known(x) !== known(y)) return known(x) ? -1 : 1;
+  let c =
+    typeof x === 'number'
+      ? x - y
+      : String(x).localeCompare(String(y), undefined, { numeric: true });
+  if (historySort.dir === 'desc') c = -c;
+  return c || (b.started_ms || 0) - (a.started_ms || 0) || (a.run < b.run ? 1 : -1);
+}
+
+function historyFilterValues() {
+  const values = {};
+  for (const name of HISTORY_FILTERS) {
+    const el = document.getElementById(HISTORY_FILTER_IDS[name]);
+    values[name] = el ? el.value || '' : '';
+  }
+  return values;
+}
+
+function isHistoryGrouped() {
+  const el = document.getElementById('historyGroup');
+  return Boolean(el && el.checked);
+}
+
+function readHistoryQuery() {
+  if (typeof window === 'undefined' || !window.location || typeof URLSearchParams === 'undefined') {
+    return;
+  }
+  const query = new URLSearchParams(window.location.search || '');
+  const s = query.get('sort');
+  if (s && HISTORY_SORT_KEYS[s]) historySort.key = s;
+  const dir = query.get('dir');
+  if (dir === 'asc' || dir === 'desc') historySort.dir = dir;
+  else if (s && HISTORY_SORT_KEYS[s]) historySort.dir = FIRST_SORT_DIR[s] || 'asc';
+  const grp = document.getElementById('historyGroup');
+  if (grp) grp.checked = query.get('group') === 'program';
+  for (const name of HISTORY_FILTERS) {
+    const v = query.get(name);
+    if (v === null) continue;
+    const el = document.getElementById(HISTORY_FILTER_IDS[name]);
+    if (el) el.value = v;
+  }
+}
+
+function writeHistoryQuery() {
+  if (
+    typeof window === 'undefined' ||
+    !window.location ||
+    !window.history ||
+    typeof window.history.replaceState !== 'function' ||
+    typeof URLSearchParams === 'undefined'
+  ) {
+    return;
+  }
+  const query = new URLSearchParams();
+  for (const [k, v] of Object.entries(historyFilterValues())) {
+    if (v) query.set(k, v);
+  }
+  query.set('sort', historySort.key);
+  query.set('dir', historySort.dir);
+  if (isHistoryGrouped()) query.set('group', 'program');
+  const text = query.toString();
+  const base = window.location.pathname || '/';
+  try {
+    window.history.replaceState(null, '', base + (text ? '?' + text : ''));
+  } catch (e) {}
+}
+
+function fillHistoryChoices() {
+  for (const name of HISTORY_CHOICES) {
+    const sel = document.getElementById(HISTORY_FILTER_IDS[name]);
+    if (!sel) continue;
+    const chosen = sel.value || '';
+    const values = new Set(historyEntries.map((r) => r[name] || HISTORY_UNKNOWN));
+    if (chosen) values.add(chosen);
+    const names = new Map();
+    if (NAME_OF[name]) {
+      for (const r of historyEntries) {
+        if (r[NAME_OF[name]]) names.set(r[name], r[NAME_OF[name]]);
+      }
+    }
+    const label = (v) =>
+      name === 'backend' ? BACKEND_NAMES[v] || v : names.get(v) || v;
+    const sorted = Array.from(values).sort((a, b) => label(a).localeCompare(label(b)));
+    sel.innerHTML =
+      '<option value="">all</option>' +
+      sorted.map((v) => `<option value="${esc(v)}">${esc(label(v))}</option>`).join('');
+    sel.value = chosen;
+  }
+}
+
+function dayStartMs(text) {
+  const parts = String(text).split('-').map(Number);
+  if (parts.length !== 3 || parts.some((n) => !Number.isFinite(n))) return 0;
+  return new Date(parts[0], parts[1] - 1, parts[2]).getTime();
+}
+
+function matchesHistory(row, f) {
+  for (const name of HISTORY_CHOICES) {
+    if (f[name] && (row[name] || HISTORY_UNKNOWN) !== f[name]) return false;
+  }
+  const t = row.started_ms || row.ended_ms || 0;
+  if (f.since && (!t || t < dayStartMs(f.since))) return false;
+  if (f.until && (!t || t >= dayStartMs(f.until) + 86400000)) return false;
+  if (f.q) {
+    const q = f.q.toLowerCase();
+    const hay = [
+      row.run,
+      row.game,
+      row.game_name,
+      row.program,
+      row.program_name,
+      row.checkpoint,
+      row.reason,
+      row.at,
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+    if (!hay.includes(q)) return false;
+  }
+  return true;
+}
+
+function formatWhen(ms) {
+  if (!ms) return '–';
+  const d = new Date(ms);
+  const hm = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+  return d.toDateString() === new Date().toDateString()
+    ? 'today ' + hm
+    : d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + hm;
+}
+
+function formatDuration(ms) {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const two = (n) => String(n).padStart(2, '0');
+  const h = Math.floor(s / 3600);
+  const m = Math.floor(s / 60) % 60;
+  return (h ? h + ':' + two(m) : String(m)) + ':' + two(s % 60);
+}
+
+function formatRangeHtml(row) {
+  const part = (id) =>
+    id === row.checkpoint ? `<b>${esc(id)}</b>` : esc(id || '–');
+  if (!row.from || row.from === row.to) {
+    return part(row.checkpoint || row.from);
+  }
+  let html = part(row.from) + ' → ' + part(row.to);
+  if (row.checkpoint && row.checkpoint !== row.from && row.checkpoint !== row.to) {
+    html += ` (<b>${esc(row.checkpoint)}</b>)`;
+  }
+  return html;
+}
+
+function formatResultHtml(row) {
+  if (row.result === 'running') return '<span class="pill running">running</span>';
+  if (row.result === 'pass') return '<span class="pill pass">passed</span>';
+  if (row.result === 'fail') {
+    const title = row.reason ? ` title="${esc(row.reason)}"` : '';
+    const at = row.at ? ' at ' + esc(row.at) : '';
+    return `<span class="pill fail"${title}>failed${at}</span>`;
+  }
+  return `<span class="muted">${esc(row.result || '–')}</span>`;
+}
+
+function sortedHistoryRows(rows) {
+  const sorted = rows.slice().sort(compareHistoryRuns);
+  if (!isHistoryGrouped()) return sorted;
+  const name = (r) => r.program_name || r.program || '';
+  return sorted
+    .map((r, i) => [r, i])
+    .sort(
+      ([a, i], [b, j]) =>
+        (!name(a) - !name(b)) || name(a).localeCompare(name(b)) || i - j
+    )
+    .map(([r]) => r);
+}
+
 function onHistoryFilter() {
   historyPage = 0;
+  writeHistoryQuery();
+  renderHistory();
+}
+
+function clearHistoryFilters() {
+  for (const name of HISTORY_FILTERS) {
+    const el = document.getElementById(HISTORY_FILTER_IDS[name]);
+    if (el) el.value = '';
+  }
+  const grp = document.getElementById('historyGroup');
+  if (grp) grp.checked = false;
+  historyPage = 0;
+  writeHistoryQuery();
+  renderHistory();
+}
+
+function sortHistory(key) {
+  if (!HISTORY_SORT_KEYS[key]) return;
+  historySort =
+    key === historySort.key
+      ? { key, dir: historySort.dir === 'asc' ? 'desc' : 'asc' }
+      : { key, dir: FIRST_SORT_DIR[key] || 'asc' };
+  historyPage = 0;
+  writeHistoryQuery();
   renderHistory();
 }
 
@@ -232,46 +498,84 @@ function pageHistory(delta) {
   renderHistory();
 }
 
-function renderHistory() {
-  const q = (document.getElementById('historySearch').value || '').trim().toLowerCase();
-  const gameFilter = document.getElementById('historyGame').value || 'all';
-  const resFilter = document.getElementById('historyResult').value || 'all';
-  const sort = document.getElementById('historySort').value || 'newest';
-  let filtered = historyEntries.filter((e) => {
-    if (gameFilter !== 'all' && (e.game || '') !== gameFilter) return false;
-    if (resFilter !== 'all' && e.result !== resFilter) return false;
-    if (!q) return true;
-    const hay = `${e.game || ''} ${e.checkpoint} ${e.run} ${e.mode} ${e.at} ${e.reason}`.toLowerCase();
-    return hay.includes(q);
-  });
-  if (sort === 'oldest') filtered = filtered.slice().reverse();
+function renderHistoryRow(row) {
+  const runUrl = watchHubBase() + '/runs/' + encodeURIComponent(row.run) + '/';
+  const framesTag = row.recorded ? '<span class="tag">frames</span>' : '';
+  const why =
+    row.result === 'fail' && row.reason
+      ? `<div class="muted why">${esc(row.reason.slice(0, 90))}</div>`
+      : '';
+  const gameTitle = row.game_name ? ` title="${esc(row.game)}"` : '';
+  const progTitle = row.program_name
+    ? ` title="${esc(row.program + (row.group ? ' · ' + row.group : ''))}"`
+    : '';
+  const end = runEndMs(row);
+  const dur = row.started_ms && end ? formatDuration(end - row.started_ms) : '–';
+  return `<tr>
+    <td><a href="${esc(runUrl)}" target="_blank">${esc(row.run)}</a>${framesTag}${why}</td>
+    <td class="nowrap"${gameTitle}>${esc(row.game_name || row.game || '–')}</td>
+    <td class="nowrap"${progTitle}>${esc(row.program_name || row.program || '–')}</td>
+    <td class="range">${formatRangeHtml(row)}</td>
+    <td class="nowrap">${esc(BACKEND_NAMES[row.backend] || row.backend || '–')}</td>
+    <td class="nowrap">${esc(row.mode || row.kind || '–')}</td>
+    <td class="nowrap">${formatResultHtml(row)}</td>
+    <td class="num">${esc(formatWhen(row.started_ms))}</td>
+    <td class="num">${esc(dur)}</td>
+  </tr>`;
+}
 
-  const total = filtered.length;
+function renderHistory() {
+  const f = historyFilterValues();
+  const rows = sortedHistoryRows(historyEntries.filter((r) => matchesHistory(r, f)));
+  const total = rows.length;
+  const countEl = document.getElementById('historyCount');
+  if (countEl) countEl.textContent = total + ' of ' + historyEntries.length + ' runs';
+
   const maxPage = Math.max(0, Math.ceil(total / historyPageSize) - 1);
   if (historyPage > maxPage) historyPage = maxPage;
   const start = historyPage * historyPageSize;
-  const slice = filtered.slice(start, start + historyPageSize);
+  const slice = rows.slice(start, start + historyPageSize);
 
-  const el = document.getElementById('historyList');
-  const pager = document.getElementById('historyPager');
-  if (!total) {
-    el.innerHTML = '<div class="muted">No matching runs in RESULTS.tsv.</div>';
-    pager.classList.toggle('hidden', true);
-    return;
+  const thead = HISTORY_COLUMNS.map(([key, label]) => {
+    const aria =
+      historySort.key === key
+        ? ` aria-sort="${historySort.dir === 'asc' ? 'ascending' : 'descending'}"`
+        : '';
+    return `<th class="sortable" data-sort="${key}"${aria} onclick="sortHistory('${key}')">${label}</th>`;
+  }).join('');
+
+  let bodyHtml = '';
+  if (!slice.length) {
+    const msg = historyEntries.length ? 'no run matches the filters' : 'no runs yet';
+    bodyHtml = `<tr><td class="empty" colspan="9">${msg}</td></tr>`;
+  } else {
+    const grouped = isHistoryGrouped();
+    let curGroup = null;
+    const parts = [];
+    for (const row of slice) {
+      const pid = row.program || '';
+      if (grouped && pid !== curGroup) {
+        curGroup = pid;
+        const n = rows.filter((r) => (r.program || '') === pid).length;
+        const meta = [row.group, row.program, n + ' run' + (n === 1 ? '' : 's')]
+          .filter(Boolean)
+          .join(' · ');
+        parts.push(
+          `<tr class="group"><td colspan="9">${esc(row.program_name || row.program || HISTORY_UNKNOWN)}<span class="muted">${esc(meta)}</span></td></tr>`
+        );
+      }
+      parts.push(renderHistoryRow(row));
+    }
+    bodyHtml = parts.join('');
   }
-  el.innerHTML = `<table><thead><tr><th>Time</th><th>Game</th><th>Program / Checkpoint</th><th>Mode</th><th>Result</th><th>Detail</th></tr></thead><tbody>${slice.map((e) => `
-    <tr>
-      <td class="muted nowrap">${esc(e.time.replace('T', ' '))}</td>
-      <td class="muted nowrap">${esc((e.game || '—').toUpperCase())}</td>
-      <td class="nowrap"><strong>${esc(e.checkpoint)}</strong><div class="muted">${esc(e.run)}</div></td>
-      <td class="muted nowrap">${esc(e.mode)}</td>
-      <td class="nowrap"><span class="pill ${esc(e.result)}">${esc(e.result)}</span></td>
-      <td class="muted detail">${esc([e.at, e.reason].filter(Boolean).join(' — '))}</td>
-    </tr>`).join('')}</tbody></table>`;
 
+  document.getElementById('historyList').innerHTML =
+    `<table><thead><tr id="historyColumns">${thead}</tr></thead><tbody>${bodyHtml}</tbody></table>`;
+
+  const pager = document.getElementById('historyPager');
   pager.classList.toggle('hidden', total <= historyPageSize);
   document.getElementById('historyPageInfo').textContent =
-    `Showing ${start + 1}–${start + slice.length} of ${total}`;
+    total ? `Showing ${start + 1}–${start + slice.length} of ${total}` : '';
   document.getElementById('historyPrev').disabled = historyPage === 0;
   document.getElementById('historyNext').disabled = historyPage >= maxPage;
 }
@@ -280,15 +584,11 @@ async function loadHistory() {
   const r = await fetch('/api/history');
   if (!r.ok) return;
   const j = await r.json();
+  if (j.watch_hub_port) watchHubPort = j.watch_hub_port;
+  updateLiveLink();
   document.getElementById('historyDir').textContent = j.runs_dir || '';
   historyEntries = j.entries || [];
-  const gameSel = document.getElementById('historyGame');
-  const prev = gameSel.value || 'all';
-  const games = Array.from(new Set(historyEntries.map((e) => e.game).filter(Boolean))).sort();
-  gameSel.innerHTML =
-    '<option value="all">all</option>' +
-    games.map((g) => `<option value="${esc(g)}">${esc(g.toUpperCase())}</option>`).join('');
-  gameSel.value = games.includes(prev) ? prev : 'all';
+  fillHistoryChoices();
   renderHistory();
 }
 
@@ -296,6 +596,8 @@ async function refreshAll() {
   await Promise.all([loadConsoles(), loadRuns(), loadHistory()]);
 }
 
+updateLiveLink();
+readHistoryQuery();
 loadPrograms();
 refreshAll();
 setInterval(refreshAll, 2000);

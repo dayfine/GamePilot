@@ -82,6 +82,60 @@ let router_error_codes () =
       Printf.sprintf "%d:%d:%d:%d" c_bad_json c_missing_console c_missing_stop
         c_404)
 
+let write_file path content =
+  Out_channel.with_open_text path (fun oc -> output_string oc content)
+
+let rec rm_rf path =
+  if Sys.file_exists path then
+    if Sys.is_directory path then (
+      Array.iter
+        (fun name -> rm_rf (Filename.concat path name))
+        (Sys.readdir path);
+      Sys.rmdir path)
+    else Sys.remove path
+
+let run_history_merge_test () =
+  let dir = Filename.temp_file "ui_hub_hist_" "" in
+  Sys.remove dir;
+  Unix.mkdir dir 0o755;
+  let r1 = Filename.concat dir "2026-11-26-su-01-testing-1" in
+  let r2 = Filename.concat dir "2026-11-26-02.99-unknown-testing-1" in
+  Unix.mkdir r1 0o755;
+  Unix.mkdir (Filename.concat r1 "frames") 0o755;
+  Unix.mkdir r2 0o755;
+  write_file
+    (Filename.concat dir "RESULTS.tsv")
+    "time\trun\tcheckpoint\tmode\tresult\tat\treason\n\
+     2026-11-26T10:00:00\t2026-11-26-su-01-testing-1\tsu-01\ttesting\tpass\t\t\n\
+     2026-11-26T11:00:00\t2026-11-26-02.99-unknown-testing-1\t02.99-unknown\ttesting\tfail\t#2\tbad \
+     fade\n";
+  write_file
+    (Filename.concat r1 "run.json")
+    {|{"game":"frlg","game_name":"Pokemon FireRed / LeafGreen","program":"frlg.supplies","program_name":"Supplies","group":"Farming","from":"su-01","to":"su-02","checkpoint":"su-01","backend":"switch","mode":"testing","result":"pass","started_ms":1700000000000,"ended_ms":1700000060000}|};
+  write_file (Filename.concat (Filename.concat r1 "frames") "index.jsonl") "";
+  write_file
+    (Filename.concat r2 "daemon.json")
+    {|{"backend":"mgba","clock_zero_unix_ms":1700000100000}|};
+  let entries = Run_history.load ~runs_dir:dir () in
+  let json = Run_history.to_json ~runs_dir:dir entries in
+  let port =
+    match json with
+    | `Assoc fs -> (
+        match List.assoc_opt "watch_hub_port" fs with
+        | Some (`Int p) -> p
+        | _ -> 0)
+    | _ -> 0
+  in
+  rm_rf dir;
+  let summary =
+    List.map
+      (fun (e : Run_history.entry) ->
+        Printf.sprintf "%s:%s:%s:%s:%s:%s:%b" e.run e.game e.program e.from
+          e.to_ e.backend e.recorded)
+      entries
+  in
+  Printf.sprintf "port=%d | %s" port (String.concat " | " summary)
+
 let () =
   Table_test.run "ui_api"
     [
@@ -146,4 +200,10 @@ let () =
                  Printf.sprintf "%s:%s:%s" e.game e.checkpoint e.result)
                entries))
         "bdsp:bdsp.underground:fail | plza:01.02-platform-to-plaza:pass";
+      case "run_history merges run.json, daemon.json, frames, and RESULTS.tsv"
+        run_history_merge_test
+        "port=47901 | \
+         2026-11-26-02.99-unknown-testing-1:::02.99-unknown:02.99-unknown:mgba:false \
+         | \
+         2026-11-26-su-01-testing-1:frlg:frlg.supplies:su-01:su-02:switch:true";
     ]
