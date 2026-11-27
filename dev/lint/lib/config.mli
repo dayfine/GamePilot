@@ -17,7 +17,8 @@
       document every type, constructor and value (see {!Interface_docs}).
     - [max_function_lines N], [max_function_avg_depth F],
       [max_function_depth N], [max_file_avg_depth F], [max_file_lines N],
-      [max_interface_lines N], [complexity_advisory N]: thresholds.
+      [max_interface_lines N], [complexity_advisory N], [flat_constants_max N]:
+      thresholds.
     - [layer NAME PATTERN] (repeatable, first match wins): dune directories
       matching [PATTERN] belong to layer [NAME]. A pattern is [/]-separated
       segments: a literal, [{var}] (one segment, bound to [var]) or a final [**]
@@ -57,6 +58,7 @@ type t = {
   max_file_lines : int;
   max_interface_lines : int;
   complexity_advisory : int;
+  flat_constants_max : int;
   layers : layer list;
   allowed : (string * string list) list;
   families : family list;
