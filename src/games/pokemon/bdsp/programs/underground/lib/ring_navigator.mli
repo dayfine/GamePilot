@@ -6,6 +6,28 @@
     that bucket and calls [on_prompt] whenever a dig dialog or wild battle
     triggers. *)
 
+val primary_wall_dir :
+  along_dir:Bdsp_underground.Corridor_nav.direction ->
+  Grid_geometry.Direction.t list ->
+  Bdsp_underground.Corridor_nav.direction
+(** Default wall direction to face at a stop given its non-South adjacent walls.
+*)
+
+val wall_from_offset :
+  along_dir:Bdsp_underground.Corridor_nav.direction ->
+  wall_dirs:Grid_geometry.Direction.t list ->
+  fallback:Bdsp_underground.Corridor_nav.direction ->
+  Bdsp_readers.Wall_sparkle.offset ->
+  Bdsp_underground.Corridor_nav.direction
+(** Choose which adjacent non-South wall to face from a radar sparkle offset. *)
+
+val servo_step_toward :
+  face_dir:Bdsp_underground.Corridor_nav.direction ->
+  Bdsp_readers.Wall_sparkle.offset ->
+  Bdsp_underground.Corridor_nav.direction option
+(** Step parallel to the wall [face_dir] toward the sparkle offset, or [None]
+    when already aligned along that wall's axis. *)
+
 val visit_targets :
   log:(string -> unit) ->
   picture:Wire.box ->

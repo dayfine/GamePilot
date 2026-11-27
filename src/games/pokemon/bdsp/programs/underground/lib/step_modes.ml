@@ -149,8 +149,23 @@ let step_dig_one ~log ~picture ~goal =
   in
   Ok (Mining_counters.format_summary ~goal counters)
 
+let run_check_bag ~log ~picture =
+  let* () = OW.inspect_treasures_bag ~log ~picture () in
+  Ok "treasures pocket captured"
+
+let run_check_map ~log =
+  log "Mode check-map: opening full-sized Underground map (Y -> A)...";
+  P.press ~hold_ms:map_press_hold_ms ~cooldown_ms:map_restore_wait_ms Wire.Y;
+  P.press ~hold_ms:map_press_hold_ms ~cooldown_ms:map_view_wait_ms Wire.A;
+  P.wait map_view_wait_ms;
+  P.press ~hold_ms:map_press_hold_ms ~cooldown_ms:map_restore_wait_ms Wire.B;
+  P.press ~hold_ms:map_press_hold_ms ~cooldown_ms:map_restore_wait_ms Wire.B;
+  Ok "full-sized map captured"
+
 let run ~mode ~door ~log ~picture ~goal =
   match mode with
+  | "check-bag" -> Some (run_check_bag ~log ~picture)
+  | "check-map" -> Some (run_check_map ~log)
   | "step-refresh" -> Some (step_refresh ~log ~picture)
   | "step-read-map" -> Some (step_read_map ~log ~picture)
   | "step-route-one" -> Some (step_route_one ~log ~picture ~door)

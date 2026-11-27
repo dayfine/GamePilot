@@ -59,3 +59,8 @@ val to_tally : t -> Mining_goal.tally
 val format_summary : goal:Mining_goal.goal -> t -> string
 (** Format a concise single-line counter summary suitable for Watch Page logs.
 *)
+
+val watch_items :
+  goal:Mining_goal.goal -> total_cycles:int -> t -> (string * string) list
+(** Format counters as [(label, value)] pairs for the Watch Page Counters card.
+*)

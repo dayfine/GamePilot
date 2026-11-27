@@ -1,9 +1,10 @@
 # Grand Underground
 
-Farms the Grand Underground in *Pokémon Brilliant Diamond* / *Shining Pearl* by anchoring at a
-Pokémon Hideaway doorway, bouncing in and out to instantly respawn sparkling wall dig spots,
-sweeping adjacent walls, and playing the 13×10 mining minigame with a live vision-driven solver
-targeting Mysterious Shards for Ramanas Park slates.
+Farms Mysterious Shards in the Grand Underground in *Pokémon Brilliant Diamond* / *Shining Pearl*
+for Ramanas Park slates. Starts from anywhere outdoors (or already inside the Underground), dives
+into the Central Grassland Cave corridor, bounces through a Pokémon Hideaway doorway to respawn
+sparkling dig spots, locks onto walls with radar blob-diffing, plays the 13×10 mining minigame
+with a live vision-driven solver, auto-saves progress, and leaves the Underground when finished.
 
 <!-- generated:backends -->
 Runs on: the Switch.
@@ -13,10 +14,12 @@ Runs on: the Switch.
 
 <!-- needs: bdsp.underground has no checkpoints -->
 
-- Load a post-game BDSP save with the National Pokédex and enter the Grand Underground offline
-  (`Play Alone`, row 2 of the Explorer Kit mode menu).
-- Stand outside a Pokémon Hideaway doorway adjacent to an L-shaped corridor (for example, the
-  South-East corridor of the central Hideaway).
+- Load a post-game BDSP save with the National Pokédex and Fly unlocked.
+- Register the **Explorer Kit** on **Down** of the `+` shortcut wheel (used when starting
+  outdoors).
+- Stand anywhere outdoors (the program will fly to Oreburgh City, dive offline via `Play Alone`,
+  and home to the South Hideaway doorway), or already inside the Grand Underground outside the
+  Central Grassland Cave Hideaway doorway.
 
 ## Options
 
@@ -39,7 +42,7 @@ cd src && opam exec -- dune exec -- gamepilot run bdsp.underground
 ```
 <!-- /generated -->
 
-To run with the live Watch Page on a Switch console:
+To run with the live Watch Page (including the live **Counters** card) on a Switch console:
 
 ```sh
 cd src && opam exec -- dune exec -- gamepilot run bdsp.underground \
@@ -50,28 +53,34 @@ cd src && opam exec -- dune exec -- gamepilot run bdsp.underground \
 
 <!-- checkpoints: bdsp.underground has no checkpoints -->
 
-Each cycle:
-
-1. Bounces through the Hideaway doorway (`West` → `East`, with a perpendicular 1-tile auto-centering
-   nudge if off-center) to refresh all nearby dig spots without triggering wild Pokémon encounters.
-2. Hugs the North wall and sweeps East toward the corner, then hugs the East wall and sweeps North,
-   checking for sparkling walls (and escaping any unexpected wild battle via `Battle_detector`).
-3. When a dig prompt appears, waits for the 13×10 wall to load, reads all 130 cells via
-   `Bdsp_readers.Mining_grid` (masking the cursor sprite), and runs `Mining_solver.decide`:
-   coarse 3-tile-spaced Hammer scan, Pickaxe excavation when a pink Mysterious Shard appears, and
-   fast-bail wall collapse when no shards are found.
-4. Returns along the South and West walls to the Hideaway doorway for the next cycle.
+1. **Startup transit:** Checks `Underground_screen.in_underground` (the Diglett `XX/40` HUD). If
+   outdoors, flies to Oreburgh City (`Bdsp_actions.Fly`), dives offline via the Explorer Kit on
+   `+ -> Down`, and homes (`N -> E -> S -> W`) to the South Hideaway doorway.
+2. **Doorway refresh:** Bounces through the Hideaway doorway (`West` → `East`, with automatic
+   re-homing if drifted) to respawn all nearby dig spots without triggering wild encounters.
+3. **Map routing & wall-lock:** Opens the full map (`Y -> A`) to plan stops around the ring
+   corridor, walks to each stop, pulses `[R]` radar, and locks onto the sparkling wall via
+   `Wall_sparkle` blob-diffing and `Wall_lock` servo steps (escaping any wild battle via
+   `Battle_detector`).
+4. **Vision-driven mining:** Reads the 13×10 wall through `Bdsp_readers.Mining_grid` and runs
+   `Mining_solver.decide`: Hammer coverage scan with full-wall greedy fallback, Pickaxe excavation
+   once a pink Mysterious Shard appears, and fast bail when no shards are found.
+5. **Yield accounting & auto-save:** Classifies spotlight items with `Dig_result_reader`
+   (distinguishing Shard S, Shard L, spheres, stones, fossils, and boxes), updates live
+   `watch.counters`, and saves via `Bdsp_actions.Save_game` every 3 cycles and after any shard.
 
 ## When it stops
 
 <!-- preflight: bdsp.underground has no checkpoints -->
 
-Stops after completing its configured number of cycles (`total_cycles = 3` in the PoC) and prints
-the cycle, dig, and bail counts.
+Stops as soon as either the configured `slates` budget (`shard_L + shard_S / 3 >= slates`) or the
+`cycles` limit is reached, performs a final save, exits the Grand Underground back outdoors
+(`Y -> Down -> A -> A`), and prints the final counter summary.
 
 ## Known limits
 
-- Does not yet OCR the end-of-dig item summary screen to count exact Mysterious Shard S/L totals
-  against the 14-slate Ramanas Park goal (the `Mining_goal` tally model is ready for it).
-- Assumes the player is already positioned outside a West-facing Hideaway doorway at an L-shaped
-  corridor.
+- Starting outdoors expects the Explorer Kit on **Down** of the `+` shortcut wheel and assumes the
+  Town Map cursor can be clamped to top-left without an open tutorial/overlay.
+- Yield counting classifies end-of-dig spotlight icons by calibrated color/area thresholds rather
+  than text OCR, so it tallies Mysterious Shard S, Mysterious Shard L, spheres, stones, fossils,
+  and boxes accurately without reading individual item names.
