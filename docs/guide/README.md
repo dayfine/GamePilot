@@ -19,6 +19,7 @@ Each page ends with "How it works", for developers: the ported files, the mechan
 | [Claim Gifts](plza.claim-gifts.md) | `plza.claim-gifts` | the Switch | Claims the Mystery Gifts of its catalog that have not expired, puts their Pokémon in the Boxes and saves. |
 | [Bank PLZA in HOME](pokemon_home.bank-plza.md) | `pokemon_home.bank-plza` | the Switch | Moves the claimed gifts from the game's box into their Pokémon HOME boxes and saves HOME. |
 | [Grand Underground](bdsp.underground.md) | `bdsp.underground` | the Switch | Farms Mysterious Shards and treasures in the Grand Underground. |
+| [Battle Catch](bdsp.battle_catch.md) | `bdsp.battle_catch` | the Switch | Catches an active BDSP wild encounter using Sleep, optional tank heavy-chipping to 20–30%, False Swipe to 1 HP, and Poké Balls. |
 <!-- /generated -->
 
 The Mail Glitch has a second page for its last checkpoint:

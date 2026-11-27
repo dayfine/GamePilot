@@ -195,6 +195,11 @@ let plza_gifts =
     guide = { plza.guide with program_block = gifts_block };
   }
 
+let run_pass_fail ~log ~cause (passed, line) =
+  log line;
+  if passed then Ok ()
+  else Error (Engine_run.Failure.cause ~repeats:true cause line)
+
 let run_bdsp_action ~log ~picture ~options = function
   | Bdsp_rules.Action.Save_game -> (
       match Bdsp_actions.Save_game.save_game ~log ~picture () with
@@ -202,11 +207,11 @@ let run_bdsp_action ~log ~picture ~options = function
       | Error msg ->
           Error (Engine_run.Failure.cause ~repeats:true "save_game_failed" msg))
   | Bdsp_rules.Action.Underground_farm ->
-      let passed, line = Bdsp_underground_program.Underground.run ~options () in
-      log line;
-      if passed then Ok ()
-      else
-        Error (Engine_run.Failure.cause ~repeats:true "underground_failed" line)
+      run_pass_fail ~log ~cause:"underground_failed"
+        (Bdsp_underground_program.Underground.run ~options ())
+  | Bdsp_rules.Action.Battle_catch ->
+      run_pass_fail ~log ~cause:"battle_catch_paused"
+        (Bdsp_battle_catch.Battle_catch.run ~picture ~options ())
 
 let bdsp_load_title ~plan_dir id =
   Result.map

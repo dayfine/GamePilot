@@ -6,6 +6,9 @@
     + Active member survival (when [active_hp_ratio] is known and below
       [hp_floor], heal or retreat to a healthy wall; falls back to
       {!Catch_state.Heal_active} when no healthy wall is available).
+    + Optional heavy chipping via a healthy tank/bruiser before the first ball
+      (when [foe_hp_ratio] is known and above [heavy_chipper.foe_hp_floor],
+      applying status first when [require_status] is set).
     + HP chipping via a healthy False Swiper (when [foe_hp_ratio] is known and
       above threshold; applies status first when [require_status] is set). Uses
       [foe_hp_target] before the first ball and [foe_hp_rechip] after, so

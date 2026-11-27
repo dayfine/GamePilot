@@ -15,9 +15,15 @@ let underground_farm ~where args =
       known_fields_only ~where [] args;
       T.Action.Underground_farm)
 
+let battle_catch ~where args =
+  F.catch (fun () ->
+      known_fields_only ~where [] args;
+      T.Action.Battle_catch)
+
 let action_of_plan = function
   | "save_game" -> Some save_game
   | "underground_farm" -> Some underground_farm
+  | "battle_catch" -> Some battle_catch
   | _ -> None
 
 let postconditions_of_plan ~where obj =

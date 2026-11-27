@@ -1,0 +1,9 @@
+(library
+ (name bdsp_battle_catch)
+ (public_name gamepilot.bdsp_battle_catch)
+ (libraries
+  gamepilot.wire
+  gamepilot.run_options
+  gamepilot.effects
+  gamepilot.pokemon_catch
+  gamepilot.bdsp_actions))

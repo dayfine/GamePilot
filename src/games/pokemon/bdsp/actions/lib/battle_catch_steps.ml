@@ -238,7 +238,7 @@ let make ?(log = ignore) cfg : CR.game_steps =
     send_in = send_in ~log cfg tr;
   }
 
-let build_policy ~ball_name ~max_balls ~max_turns ~foe_hp_rechip
+let build_policy ~ball_name ~max_balls ~max_turns ~foe_hp_rechip ~heavy_chipper
     (slots : party_slots) : CS.policy =
   let status_setter : CS.role_config =
     {
@@ -264,6 +264,7 @@ let build_policy ~ball_name ~max_balls ~max_turns ~foe_hp_rechip
   in
   {
     status_setter = Some status_setter;
+    heavy_chipper;
     false_swiper = Some false_swiper;
     wall = Some wall;
     ball_name;
@@ -276,11 +277,13 @@ let build_policy ~ball_name ~max_balls ~max_turns ~foe_hp_rechip
   }
 
 let kyogre_policy ?(ball_name = defaults.ball_name)
-    ?(max_balls = defaults.max_balls) ?(max_turns = defaults.max_turns) slots =
+    ?(max_balls = defaults.max_balls) ?(max_turns = defaults.max_turns)
+    ?heavy_chipper slots =
   build_policy ~ball_name ~max_balls ~max_turns
-    ~foe_hp_rechip:defaults.kyogre_rechip slots
+    ~foe_hp_rechip:defaults.kyogre_rechip ~heavy_chipper slots
 
 let groudon_policy ?(ball_name = defaults.ball_name)
-    ?(max_balls = defaults.max_balls) ?(max_turns = defaults.max_turns) slots =
+    ?(max_balls = defaults.max_balls) ?(max_turns = defaults.max_turns)
+    ?heavy_chipper slots =
   build_policy ~ball_name ~max_balls ~max_turns
-    ~foe_hp_rechip:extra.groudon_rechip slots
+    ~foe_hp_rechip:extra.groudon_rechip ~heavy_chipper slots

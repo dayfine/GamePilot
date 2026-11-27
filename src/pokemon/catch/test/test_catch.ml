@@ -40,6 +40,7 @@ let fake_game_steps events =
 let kyogre_policy : Catch_state.policy =
   {
     status_setter = Some { slot = 2; move_slot = 1; hp_floor = 0.35 };
+    heavy_chipper = None;
     false_swiper =
       Some { slot = 5; move_slot = 2; require_status = true; hp_floor = 0.40 };
     wall = Some { slot = 3; heal_move_slot = Some 4; hp_floor = 0.45 };
@@ -55,6 +56,7 @@ let kyogre_policy : Catch_state.policy =
 let groudon_policy : Catch_state.policy =
   {
     status_setter = Some { slot = 2; move_slot = 1; hp_floor = 0.35 };
+    heavy_chipper = None;
     false_swiper =
       Some { slot = 5; move_slot = 2; require_status = true; hp_floor = 0.40 };
     wall = Some { slot = 6; heal_move_slot = None; hp_floor = 0.40 };
@@ -70,6 +72,7 @@ let groudon_policy : Catch_state.policy =
 let dex_policy : Catch_state.policy =
   {
     status_setter = None;
+    heavy_chipper = None;
     false_swiper = None;
     wall = None;
     ball_name = "Ultra Ball";
@@ -321,6 +324,69 @@ let test_limits_and_unexpected () =
          summary = { turns = 0; balls_thrown = 0; switches = 2; heals = 0 };
        })
 
+let test_lead_tank_chip_then_false_swipe_and_balls () =
+  let policy : Catch_state.policy =
+    {
+      status_setter = Some { slot = 1; move_slot = 3; hp_floor = 0.35 };
+      heavy_chipper =
+        Some
+          {
+            slot = 5;
+            move_slot = 1;
+            hp_floor = 0.40;
+            foe_hp_floor = 0.30;
+            require_status = true;
+          };
+      false_swiper =
+        Some { slot = 1; move_slot = 2; require_status = true; hp_floor = 0.35 };
+      wall = Some { slot = 6; heal_move_slot = None; hp_floor = 0.40 };
+      ball_name = "Luxury Ball";
+      max_balls = 50;
+      foe_hp_target = 0.15;
+      foe_hp_rechip = 0.35;
+      reapply_status = true;
+      max_turns = 60;
+      send_in_order = [ 6; 1; 5 ];
+    }
+  in
+  let events =
+    [
+      menu ~active_slot:1 ~active_hp:(Some 1.0) ~foe_hp:(Some 1.0)
+        ~foe_status:(Some Catch_state.Healthy) ();
+      menu ~active_slot:1 ~active_hp:(Some 1.0) ~foe_hp:(Some 1.0)
+        ~foe_status:(Some Catch_state.Asleep) ();
+      menu ~active_slot:5 ~active_hp:(Some 1.0) ~foe_hp:(Some 1.0)
+        ~foe_status:(Some Catch_state.Asleep) ();
+      menu ~active_slot:5 ~active_hp:(Some 1.0) ~foe_hp:(Some 0.65)
+        ~foe_status:(Some Catch_state.Asleep) ();
+      menu ~active_slot:5 ~active_hp:(Some 1.0) ~foe_hp:(Some 0.30)
+        ~foe_status:(Some Catch_state.Asleep) ();
+      menu ~active_slot:1 ~active_hp:(Some 1.0) ~foe_hp:(Some 0.30)
+        ~foe_status:(Some Catch_state.Asleep) ();
+      menu ~active_slot:1 ~active_hp:(Some 1.0) ~foe_hp:(Some 0.10)
+        ~foe_status:(Some Catch_state.Asleep) ();
+      menu ~active_slot:6 ~active_hp:(Some 1.0) ~foe_hp:(Some 0.10)
+        ~foe_status:(Some Catch_state.Asleep) ();
+      Catch_runner.Caught;
+    ]
+  in
+  let steps, record = fake_game_steps events in
+  let outcome = Catch_runner.run steps policy in
+  assert_eq "lead + tank + false_swipe caught" outcome
+    (Catch_runner.Caught
+       { turns = 8; balls_thrown = 1; switches = 3; heals = 0 });
+  assert_eq "lead + tank + false_swipe trace" (record ())
+    [
+      Cmd (Catch_state.Use_move 3);
+      Cmd (Catch_state.Switch_to 5);
+      Cmd (Catch_state.Use_move 1);
+      Cmd (Catch_state.Use_move 1);
+      Cmd (Catch_state.Switch_to 1);
+      Cmd (Catch_state.Use_move 2);
+      Cmd (Catch_state.Switch_to 6);
+      Cmd (Catch_state.Throw_ball "Luxury Ball");
+    ]
+
 let () =
   test_kyogre_full_flow ();
   test_groudon_rest_and_forced_switch ();
@@ -328,4 +394,5 @@ let () =
   test_mid_battle_fainted_roles ();
   test_terminal_no_balls_and_foe_ended ();
   test_limits_and_unexpected ();
+  test_lead_tank_chip_then_false_swipe_and_balls ();
   print_endline "OK"

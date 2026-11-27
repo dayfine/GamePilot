@@ -226,6 +226,7 @@ let build_policy ~ball_name ~max_balls ~max_turns ~sleeper_slot ~spore_move
   {
     status_setter =
       Some { slot = sleeper_slot; move_slot = spore_move; hp_floor };
+    heavy_chipper = None;
     false_swiper =
       Some
         {

@@ -43,6 +43,21 @@ type role_config = {
 }
 (** Configuration for a single-move support role such as a status setter. *)
 
+type heavy_chipper_config = {
+  slot : int;  (** 1-based party slot of the bruiser/tank chipper. *)
+  move_slot : int;  (** 1-based move slot of its safe neutral attack. *)
+  hp_floor : float;
+      (** Minimum HP ratio before retreating to the wall (or healing). *)
+  foe_hp_floor : float;
+      (** Stop heavy-chipping once the foe's HP ratio is at or below this floor
+          (e.g. [0.30] for 30%) so a critical hit cannot KO the target. *)
+  require_status : bool;
+      (** When [true], apply a status condition before sending in the chipper.
+      *)
+}
+(** Configuration for an optional bruiser/tank that winds a healthy foe down to
+    [foe_hp_floor] before handing off to {!false_swipe_config}. *)
+
 type false_swipe_config = {
   slot : int;  (** 1-based party slot of the False Swipe user. *)
   move_slot : int;  (** 1-based move slot of False Swipe. *)
@@ -68,6 +83,10 @@ type policy = {
   status_setter : role_config option;
       (** Optional party member that applies a status condition (e.g. Sleep
           Powder or Thunder Wave). *)
+  heavy_chipper : heavy_chipper_config option;
+      (** Optional bruiser/tank that winds the foe down to [foe_hp_floor] (e.g.
+          20%–30%) before handing off to [false_swiper]. Only runs before the
+          first ball is thrown. *)
   false_swiper : false_swipe_config option;
       (** Optional party member that chips the foe's HP with False Swipe. *)
   wall : wall_config option;

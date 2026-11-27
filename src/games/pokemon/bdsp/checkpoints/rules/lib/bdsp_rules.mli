@@ -16,6 +16,8 @@ module Action : sig
     | Save_game  (** Save the game in-game ([X -> R -> A]). *)
     | Underground_farm
         (** Farm Mysterious Shards and treasures in the Grand Underground. *)
+    | Battle_catch
+        (** Catch an active wild encounter without ever selecting Run. *)
 
   include Engine_rules.ACTION with type t := t
 end

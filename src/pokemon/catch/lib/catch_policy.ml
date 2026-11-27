@@ -3,10 +3,16 @@ open Catch_state
 let is_fainted state slot = List.mem slot state.fainted
 
 let active_hp_floor policy active_slot =
-  match (policy.status_setter, policy.false_swiper, policy.wall) with
-  | Some ss, _, _ when ss.slot = active_slot -> ss.hp_floor
-  | _, Some fs, _ when fs.slot = active_slot -> fs.hp_floor
-  | _, _, Some w when w.slot = active_slot -> w.hp_floor
+  match
+    ( policy.status_setter,
+      policy.heavy_chipper,
+      policy.false_swiper,
+      policy.wall )
+  with
+  | Some ss, _, _, _ when ss.slot = active_slot -> ss.hp_floor
+  | _, Some hc, _, _ when hc.slot = active_slot -> hc.hp_floor
+  | _, _, Some fs, _ when fs.slot = active_slot -> fs.hp_floor
+  | _, _, _, Some w when w.slot = active_slot -> w.hp_floor
   | _ -> 0.0
 
 let use_or_switch ~active_slot ~target_slot ~move_slot =
@@ -41,6 +47,23 @@ let status_or_pause policy state =
         (use_or_switch ~active_slot:state.active_slot ~target_slot:ss.slot
            ~move_slot:ss.move_slot)
   | Some _ | None -> Some (Pause_for_user "need status before false swipe")
+
+let heavy_chip_for policy state ratio (hc : heavy_chipper_config) =
+  if
+    state.balls_thrown > 0 || ratio <= hc.foe_hp_floor
+    || is_fainted state hc.slot
+  then None
+  else if hc.require_status && needs_status state then
+    status_or_pause policy state
+  else
+    Some
+      (use_or_switch ~active_slot:state.active_slot ~target_slot:hc.slot
+         ~move_slot:hc.move_slot)
+
+let heavy_chip_command policy state =
+  match (state.foe_hp_ratio, policy.heavy_chipper) with
+  | Some ratio, Some hc -> heavy_chip_for policy state ratio hc
+  | _ -> None
 
 let chip_for_swiper policy state (fs : false_swipe_config) =
   if is_fainted state fs.slot then None
@@ -100,6 +123,7 @@ let decide policy state =
     [
       limit_command policy state;
       survival_command policy state;
+      heavy_chip_command policy state;
       chip_command policy state;
       status_command policy state;
     ]

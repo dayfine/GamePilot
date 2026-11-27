@@ -68,16 +68,20 @@ val kyogre_policy :
   ?ball_name:string ->
   ?max_balls:int ->
   ?max_turns:int ->
+  ?heavy_chipper:Pokemon_catch.Catch_state.heavy_chipper_config ->
   party_slots ->
   Pokemon_catch.Catch_state.policy
-(** Catch policy tuned for Ramanas Park Kyogre (sleep-first, fragile False
-    Swiper, Aqua Ring re-chip threshold, Luxury Ball default). *)
+(** Catch policy tuned for Ramanas Park Kyogre (sleep-first, optional tank
+    heavy-chipper down to 20–30%, False Swiper, Aqua Ring re-chip threshold,
+    Luxury Ball default). *)
 
 val groudon_policy :
   ?ball_name:string ->
   ?max_balls:int ->
   ?max_turns:int ->
+  ?heavy_chipper:Pokemon_catch.Catch_state.heavy_chipper_config ->
   party_slots ->
   Pokemon_catch.Catch_state.policy
-(** Catch policy tuned for Ramanas Park Groudon (sleep-first, fragile False
-    Swiper, Rest re-chip threshold, Luxury Ball default). *)
+(** Catch policy tuned for Ramanas Park Groudon (sleep-first, optional tank
+    heavy-chipper down to 20–30%, False Swiper, Rest re-chip threshold, Luxury
+    Ball default). *)

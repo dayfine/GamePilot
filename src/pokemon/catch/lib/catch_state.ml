@@ -16,6 +16,14 @@ type t = {
 
 type role_config = { slot : int; move_slot : int; hp_floor : float }
 
+type heavy_chipper_config = {
+  slot : int;
+  move_slot : int;
+  hp_floor : float;
+  foe_hp_floor : float;
+  require_status : bool;
+}
+
 type false_swipe_config = {
   slot : int;
   move_slot : int;
@@ -27,6 +35,7 @@ type wall_config = { slot : int; heal_move_slot : int option; hp_floor : float }
 
 type policy = {
   status_setter : role_config option;
+  heavy_chipper : heavy_chipper_config option;
   false_swiper : false_swipe_config option;
   wall : wall_config option;
   ball_name : string;
