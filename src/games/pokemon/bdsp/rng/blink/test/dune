@@ -1,8 +1,8 @@
 (tests
- (names test_munchlax_seed_finder)
+ (names test_munchlax_seed_finder test_in_chamber_1pk_trigger)
  (libraries
   gamepilot.wire
   gamepilot.effects
   gamepilot.bdsp_readers
   gamepilot.bdsp_rng
-  gamepilot.bdsp_actions))
+  gamepilot.bdsp_blink_rng))
