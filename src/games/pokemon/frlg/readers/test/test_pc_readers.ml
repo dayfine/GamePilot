@@ -46,10 +46,74 @@ let cases backend images =
       })
     images
 
+let stats id mean stddev = (id, Wire.Color_stats { mean; stddev })
+let rgb r g b : Wire.rgb = { r; g; b }
+
+(* Switch capture of "Deposit in which BOX?" with an 8-character box name
+   ("xFUnDRRn", 2026-11-27): the relocated pc.chooser patch sits in the yellow
+   margin above the name's glyphs (y 69..75) and reads flat yellow instead of
+   overlapping the text and falling through to Box_grid. *)
+let switch_long_name_chooser_probes =
+  [
+    stats "pc.game" (rgb 156.82 174.32 162.78) (rgb 76.29 53.2 64.54);
+    stats "pc.data_panel" (rgb 149.59 152.45 179.9) (rgb 16.24 16.08 15.63);
+    stats "pc.mon_menu" (rgb 218.18 172.47 109.71) (rgb 17.98 19.27 19.55);
+    stats "pc.yes_no" (rgb 209.82 167.12 109.07) (rgb 30.81 20.78 14.13);
+    stats "pc.chooser" (rgb 255. 226. 97.) (rgb 0. 0. 0.);
+    stats "pc.party_panel" (rgb 141.01 183.18 127.94) (rgb 92.34 42.67 42.15);
+  ]
+
+(* Box_grid on Desert wallpaper (no popup): pc.chooser is tan with pattern
+   stddev > 30, so it must still classify as Box_grid. *)
+let desert_box_grid_probes =
+  [
+    stats "pc.game" (rgb 156.82 174.32 162.78) (rgb 76.29 53.2 64.54);
+    stats "pc.data_panel" (rgb 149.59 152.45 179.9) (rgb 16.24 16.08 15.63);
+    stats "pc.mon_menu" (rgb 218.18 172.47 109.71) (rgb 17.98 19.27 19.55);
+    stats "pc.yes_no" (rgb 209.82 167.12 109.07) (rgb 30.81 20.78 14.13);
+    stats "pc.chooser" (rgb 218.18 172.47 109.71) (rgb 17.98 19.27 19.55);
+    stats "pc.party_panel" (rgb 218.18 172.47 109.71) (rgb 17.98 19.27 19.55);
+  ]
+
+let chooser_above_box_name () =
+  match
+    List.find_opt
+      (fun (p : Wire.probe_spec) -> p.id = "pc.chooser")
+      Pc_screen.probes
+  with
+  | Some { box; _ } ->
+      let bottom_gba_y = (box.y +. box.h) *. Game_pixels.height in
+      if bottom_gba_y <= 76. then "above-name"
+      else Printf.sprintf "overlaps-name (bottom=%.1f)" bottom_gba_y
+  | None -> "missing"
+
+let extra_cases : Table_test.case list =
+  [
+    {
+      name = "pc.chooser sits strictly above box name glyphs (y <= 76)";
+      input = chooser_above_box_name;
+      expectation = "above-name";
+    };
+    {
+      name = "switch Deposit in which BOX? with 8-char box name -> boxchooser";
+      input =
+        (fun () ->
+          tag (Pc_screen.read (measurements switch_long_name_chooser_probes)));
+      expectation = "boxchooser";
+    };
+    {
+      name = "desert wallpaper box grid -> boxgrid (not boxchooser)";
+      input =
+        (fun () -> tag (Pc_screen.read (measurements desert_box_grid_probes)));
+      expectation = "boxgrid";
+    };
+  ]
+
 let () =
   Table_test.run "pc readers"
     (List.concat_map
        (fun backend ->
          cases backend
            (Wire.read_image_probes ("fixtures/pc." ^ backend ^ ".probes.jsonl")))
-       [ "switch"; "mgba" ])
+       [ "switch"; "mgba" ]
+    @ extra_cases)

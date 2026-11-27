@@ -70,6 +70,18 @@ let test_hp_ratios () =
       @ hp_bar_probes "battle.hud.player_hp." ~filled:3 ~rgb:(248., 88., 56.))
   in
   assert_eq "player red 25%" (Battle_hud.player_hp_ratio low_player) (Some 0.25);
+  (* Switch 1080p scaling clips 1px of the player HP bar border (sd_sum ~131..216). *)
+  let switch_full_player =
+    frame
+      (player_box_probes
+      @ List.init 12 (fun idx ->
+            let id = Printf.sprintf "battle.hud.player_hp.%d" idx in
+            if idx < 11 then (id, cs (140.9, 246.3, 181.9) (55., 22., 54.))
+            else (id, cs (149.6, 204.2, 157.4) (72., 72., 72.))))
+  in
+  assert_eq "switch player full green"
+    (Battle_hud.player_hp_ratio switch_full_player)
+    (Some 1.0);
   (* Gating: without Battle_screen.foe_box / player_box, ratios return None. *)
   let ungated_foe =
     frame (hp_bar_probes "battle.hud.foe_hp." ~filled:12 ~rgb:(80., 240., 128.))
@@ -96,11 +108,20 @@ let test_foe_status () =
     (Battle_hud.foe_status (with_status (255., 255., 222.)))
     (Some Battle_hud.Healthy);
   assert_eq "caught mark on cream is still Healthy"
-    (Battle_hud.foe_status (with_status (235., 235., 205.)))
+    (Battle_hud.foe_status (with_status (231.0, 226.0, 193.6)))
     (Some Battle_hud.Healthy);
   assert_eq "grey SLP badge is Asleep"
     (Battle_hud.foe_status (with_status (148., 152., 148.)))
     (Some Battle_hud.Asleep);
+  assert_eq "Switch SLP badge with cream border is Asleep"
+    (Battle_hud.foe_status (with_status (212.3, 213.8, 177.6)))
+    (Some Battle_hud.Asleep);
+  assert_eq "Switch uncaught SLP badge is Asleep"
+    (Battle_hud.foe_status (with_status (218.2, 219.7, 190.6)))
+    (Some Battle_hud.Asleep);
+  assert_eq "Switch uncaught Healthy is Healthy"
+    (Battle_hud.foe_status (with_status (255.0, 255.0, 236.5)))
+    (Some Battle_hud.Healthy);
   assert_eq "foe_asleep true on SLP"
     (Battle_hud.foe_asleep (with_status (148., 152., 148.)))
     (Some true);

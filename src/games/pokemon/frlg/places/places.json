@@ -128,6 +128,12 @@
       "stand": [7, 4],
       "facing": "north"
     },
+    "mt_moon_b1f_paras": {
+      "map": "MtMoon_B1F",
+      "object": {"not_in_maps": "encounter floor one step south-west of Mt. Moon B1F's east ladder (43, 21), where 100% of wild encounters are Paras"},
+      "stand": [42, 22],
+      "facing": "east"
+    },
     "one_island_harbor_sailor": {
       "map": "OneIsland_Harbor",
       "object": {"npc": "OneIsland_Harbor_EventScript_Sailor"},
@@ -169,6 +175,12 @@
       "object": {"npc": "Route10_PokemonCenter_1F_EventScript_Nurse"},
       "stand": [7, 4],
       "facing": "north"
+    },
+    "route4_center_outside": {
+      "map": "Route4",
+      "object": {"warp": "warp_2", "to_map": "Route4_PokemonCenter_1F"},
+      "stand": [12, 6],
+      "facing": "south"
     },
     "route4_center_pc": {
       "map": "Route4_PokemonCenter_1F",
@@ -300,7 +312,7 @@
     "lavender": {"nurse": "lavender_nurse", "fly": "LavenderTown", "mart": "lavender_mart_clerk", "pc": "lavender_center_pc", "outside": "lavender_center_outside"},
     "pewter": {"nurse": "pewter_nurse", "fly": "PewterCity"},
     "route10": {"nurse": "route10_nurse", "fly": "Route10", "pc": "route10_center_pc", "outside": "route10_center_outside"},
-    "route4": {"nurse": "route4_nurse", "fly": "Route4", "pc": "route4_center_pc"},
+    "route4": {"nurse": "route4_nurse", "fly": "Route4", "pc": "route4_center_pc", "outside": "route4_center_outside"},
     "saffron": {"nurse": "saffron_nurse", "fly": "SaffronCity", "pc": "saffron_center_pc", "outside": "saffron_center_outside"},
     "vermilion": {"nurse": "vermilion_nurse", "fly": "VermilionCity", "pc": "vermilion_center_pc", "outside": "vermilion_center_outside"},
     "viridian": {"nurse": "viridian_nurse", "fly": "ViridianCity", "pc": "viridian_center_pc", "outside": "viridian_center_outside"}
