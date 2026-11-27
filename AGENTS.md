@@ -33,6 +33,7 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
     `programs/<program>/`.
   - `program_registry/`: every program's descriptor (game, group, name, doc, checkpoints folder,
     backends), as PA/CC's program list. A new program registers there (`docs/guide/README.md`, "Adding a program").
+  - `hub/`: the local `gamepilot ui` control hub (`Ui_api`, `Ui_page`, `Http_router`, `Run_manager`, `External_runs`), sitting above `program_registry` and `core`.
   - `bin/`: the `gamepilot` command.
 - `protocol/`: golden JSON-RPC messages both sides must parse. The only thing they share.
   Formatted by `dev/lint/fmt_json.py` (one key per line, lists of scalars inline).

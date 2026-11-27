@@ -24,7 +24,7 @@ let usage =
      run)\n" ^ Programs_command.usage ^ Guide_command.usage
   ^ Status_command.usage ^ Ctl_command.usage ^ Runs_command.usage
   ^ Switch_devices.usage ^ Bring_up_command.usage ^ Console_park_command.usage
-  ^ Setup_command.usage
+  ^ Setup_command.usage ^ Ui_command.usage
 
 let die msg =
   prerr_string msg;
@@ -73,6 +73,7 @@ let () =
   | "console" :: args -> exit_with (Console_park_command.main args)
   | "setup" :: args -> exit_with (Setup_command.main_setup args)
   | "doctor" :: args -> exit_with (Setup_command.main_doctor args)
+  | "ui" :: args -> exit_with (Ui_command.main args)
   | "programs" :: flags -> exit_with (Programs_command.main flags)
   | "guide" :: args -> exit_with (Guide_command.main args)
   | "replay" :: "checkpoint" :: wirelog :: plan :: flags ->
