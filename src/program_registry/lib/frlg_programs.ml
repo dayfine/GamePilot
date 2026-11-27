@@ -190,9 +190,10 @@ let team_training =
       ];
   }
 
-(* 16-bit trainer and secret IDs (0..65535), and max RNG attempts (99). *)
+(* 16-bit trainer and secret IDs (0..65535), max RNG attempts (99), max ball row (20). *)
 let max_trainer_id = 0xffff
 let max_rng_attempts = 99
+let max_cal_ball_row = 20
 
 let opt ?(presence = Run_options.Optional) key value doc : Run_options.declared
     =
@@ -217,8 +218,12 @@ let dex_collection_options : Run_options.declared list =
       (Int_range (1, bag_most))
       "max balls to throw per catch attempt (overrides plan default)";
     opt "catch_mode"
-      (One_of [ "throw_only"; "phase1"; "phase2" ])
+      (One_of [ "throw_only"; "phase1"; "phase2"; "spore_ball" ])
       "wild catch strategy (overrides each plan's catch_mode)";
+    opt "cal_ball_row"
+      (Int_range (0, max_cal_ball_row))
+      "0-based Poké Balls pocket row for non-shiny calibration catches \
+       (default 0; e.g. 1 for Master Ball)";
     opt "attempts"
       (Int_range (1, max_rng_attempts))
       "max RNG reset attempts per checkpoint (overrides plan default)";

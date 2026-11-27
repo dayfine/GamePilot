@@ -51,6 +51,13 @@ let defaults : policy_defaults =
 
 let default_event_timeout_ms = 30_000
 
+let default_config : config =
+  {
+    initial_active_slot = 1;
+    bag = { ball_row = 0; heal_row = 0 };
+    event_timeout_ms = default_event_timeout_ms;
+  }
+
 let default_phase1_slots : phase1_slots =
   {
     sleeper_slot = 1;
@@ -269,3 +276,20 @@ let phase2_policy ?(ball_name = defaults.ball_name)
     ~spore_move:slots.spore_move ~swiper_slot:slots.catcher_slot
     ~false_swipe_move:slots.false_swipe_move ~wall:None
     ~send_in_order:slots.send_in_order
+
+let spore_ball_policy ?(ball_name = defaults.ball_name)
+    ?(max_balls = defaults.max_balls) ?(max_turns = defaults.max_turns) () :
+    CS.policy =
+  {
+    status_setter =
+      Some { slot = 1; move_slot = 1; hp_floor = defaults.hp_floor };
+    false_swiper = None;
+    wall = None;
+    ball_name;
+    max_balls;
+    foe_hp_target = 1.0;
+    foe_hp_rechip = 1.0;
+    reapply_status = true;
+    max_turns;
+    send_in_order = default_phase1_slots.send_in_order;
+  }

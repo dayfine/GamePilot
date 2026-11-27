@@ -48,7 +48,8 @@ Give each as `--options KEY=VALUE`:
 |---|---|---|---|
 | `ball` | poke-ball \| great-ball \| ultra-ball \| luxury-ball | optional | the ball to throw (overrides each catch plan's default) |
 | `balls` | 1 to 999 | optional | max balls to throw per catch attempt (overrides plan default) |
-| `catch_mode` | throw_only \| phase1 \| phase2 | optional | wild catch strategy (overrides each plan's catch_mode) |
+| `catch_mode` | throw_only \| phase1 \| phase2 \| spore_ball | optional | wild catch strategy (overrides each plan's catch_mode) |
+| `cal_ball_row` | 0 to 20 | optional | 0-based Poké Balls pocket row for non-shiny calibration catches (default 0; e.g. 1 for Master Ball) |
 | `attempts` | 1 to 99 | optional | max RNG reset attempts per checkpoint (overrides plan default) |
 | `target` | everything \| missing-on-dex \| version-exclusive \| version-exclusive-uncaught \| specific-list | default `everything` | which species to catch (everything and missing-on-dex skip species recorded in local dex_progress.json) |
 | `species` | text | optional | comma-separated species slugs for target=specific-list (e.g. ekans,voltorb) |

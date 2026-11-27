@@ -49,7 +49,13 @@ let options_of pairs =
       };
       {
         key = "catch_mode";
-        value = One_of [ "throw_only"; "phase1"; "phase2" ];
+        value = One_of [ "throw_only"; "phase1"; "phase2"; "spore_ball" ];
+        presence = Optional;
+        doc = "";
+      };
+      {
+        key = "cal_ball_row";
+        value = Int_range (0, 20);
         presence = Optional;
         doc = "";
       };
@@ -325,19 +331,70 @@ let policy_decoding =
             "catch_mode": "phase1", "visual_shiny_check": true,
             "ball": "luxury-ball"}|})
       "policy(ball=luxury-ball,wall=true) visual=true boot=0 shift=0 ingame=0";
-    case "phase2 catch_mode has no wall"
+    case "phase2 catch_mode on switch defaults visual_shiny_check to true"
       (decode_mode
          {|{"species": "ekans", "location": "route_10", "tid": 1, "sid": 2,
             "seeds": "x.json", "frame_model": "switch",
             "catch_mode": "phase2", "ball": "ultra-ball"}|})
+      "policy(ball=ultra-ball,wall=false) visual=true boot=0 shift=0 ingame=0";
+    case "visual_shiny_check=false overrides switch policy default"
+      (decode_mode
+         {|{"species": "ekans", "location": "route_10", "tid": 1, "sid": 2,
+            "seeds": "x.json", "frame_model": "switch",
+            "catch_mode": "phase2", "visual_shiny_check": false,
+            "ball": "ultra-ball"}|})
       "policy(ball=ultra-ball,wall=false) visual=false boot=0 shift=0 ingame=0";
+    case "mgba policy catch_mode defaults visual_shiny_check to false"
+      (decode_mode
+         {|{"species": "ekans", "location": "route_10", "tid": 1, "sid": 2,
+            "seeds": "x.json", "frame_model": "mgba",
+            "catch_mode": "phase2", "ball": "ultra-ball"}|})
+      "policy(ball=ultra-ball,wall=false) visual=false boot=0 shift=0 ingame=0";
+    case "switch throw_only defaults visual_shiny_check to false"
+      (decode_mode
+         {|{"species": "ekans", "location": "route_10", "tid": 1, "sid": 2,
+            "seeds": "x.json", "frame_model": "switch",
+            "catch_mode": "throw_only"}|})
+      "throw_only visual=false boot=0 shift=0 ingame=0";
+    case "spore_ball catch_mode spores without false swipe or wall"
+      (fun () ->
+        let options =
+          options_of
+            [
+              ("tid", "1");
+              ("sid", "2");
+              ("ball", "luxury-ball");
+              ("catch_mode", "spore_ball");
+              ("cal_ball_row", "1");
+            ]
+        in
+        let json =
+          {|{"species": "ekans", "location": "route_10",
+             "frame_model": "switch"}|}
+        in
+        match Wild_rng_plan.decode ~options (obj json) with
+        | Ok t -> (
+            match t.catch_mode with
+            | Throw_only -> "throw_only"
+            | Catch_policy { policy; _ } ->
+                Printf.sprintf
+                  "status=%b swiper=%b wall=%b reapply=%b hp=%.1f/%.1f \
+                   visual=%b cal_row=%d"
+                  (Option.is_some policy.status_setter)
+                  (Option.is_some policy.false_swiper)
+                  (Option.is_some policy.wall)
+                  policy.reapply_status policy.foe_hp_target
+                  policy.foe_hp_rechip t.visual_shiny_check t.cal_ball_row)
+        | Error c -> Pokemon_engine.Failure.cause_to_string c)
+      "status=true swiper=false wall=false reapply=true hp=1.0/1.0 visual=true \
+       cal_row=1";
     case "invalid catch_mode rejected"
       (decode_mode
          {|{"species": "ekans", "location": "route_10", "tid": 1, "sid": 2,
             "seeds": "x.json", "frame_model": "switch",
             "catch_mode": "master_only"}|})
       "bad_args: wild_rng: catch_mode is master_only, not throw_only, phase1, \
-       or phase2";
+       phase2, or spore_ball";
     case "apply_calibration updates switch plan offsets" decode_calibrated
       "visual=true boot=-50 shift=4 ingame=-2";
     case "--options overrides catch_mode, attempts, ball, and balls"

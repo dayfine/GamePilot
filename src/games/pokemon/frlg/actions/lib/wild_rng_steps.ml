@@ -152,10 +152,7 @@ let check_summary ~log ~slot ~read_miss =
     (Frlg_readers.Summary_screen.probes @ Frlg_readers.Shiny_star.probes)
     (check_open_summary ~log ~slot ~read_miss)
 
-let shiny_at ~log ~slot =
-  match check_summary ~log ~slot ~read_miss:false with
-  | `Shiny -> true
-  | `Not_shiny _ -> false
+let shiny_at ~log ~slot = check_summary ~log ~slot ~read_miss:false = `Shiny
 
 let next_wild_target ~first_attempt ~current_plan ~current_target =
   if !first_attempt then (
@@ -250,15 +247,20 @@ let calibrated_shiny_at ~log ~is_switch ~current_plan ~prev_seed_delta
         ~tgt:!current_target miss;
       false
 
-(* Fast throw-only catch on a visual Not_shiny miss (no Spore, no False Swipe,
-   no party switching — throws the top ball in the Poké Balls pocket on Turn 1),
-   then reads Summary to calibrate the next attempt. *)
+(* Fast throw-only catch on a visual Not_shiny miss (throws cal_ball_row in the
+   Poké Balls pocket on Turn 1), then reads Summary to calibrate the next try. *)
 let fast_calibration_on_miss ~log ~current_plan ~shiny_at ~party =
   log "Wild RNG: visual miss — fast throw-only catch for calibration.";
   let (p : Wild_rng_plan.t) = !current_plan in
-  let policy = Wild_rng_plan.throw_only_policy p.capture in
-  let steps = Battle_catch_steps.make ~log Wild_rng_plan.default_catch_config in
-  match Pokemon_catch.Catch_runner.run ~log steps policy with
+  let bag : Battle_catch_steps.bag_layout =
+    { ball_row = p.cal_ball_row; heal_row = 0 }
+  in
+  let config = { Wild_rng_plan.default_catch_config with bag } in
+  let steps = Battle_catch_steps.make ~log config in
+  match
+    Pokemon_catch.Catch_runner.run ~log steps
+      (Wild_rng_plan.throw_only_policy p.capture)
+  with
   | Pokemon_catch.Catch_runner.Caught _ ->
       if Capture_steps.finish_catch ~log Party then
         ignore (shiny_at (party + 1) : bool)

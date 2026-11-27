@@ -24,6 +24,7 @@ type t = {
   capture : Capture_plan.t;
   catch_mode : catch_mode;
   visual_shiny_check : bool;
+  cal_ball_row : int;
 }
 
 type trainer_ids = { tid : int option; sid : int option }
@@ -35,6 +36,7 @@ let default_max_advance = 4000
 let default_attempts = 1
 let max_attempts = 99
 let max_ingame_offset = 99
+let max_cal_ball_row = 20
 let throw_only_max_turns = 80
 let no_trainer_ids = { tid = None; sid = None }
 let assets = "src/games/pokemon/frlg/assets/"
@@ -62,26 +64,14 @@ let encounter_table_kind = function
   | Surf -> "surfing"
   | Super_rod -> "superrod"
 
-let default_catch_config : Battle_catch_steps.config =
-  {
-    initial_active_slot = 1;
-    bag = { ball_row = 0; heal_row = 0 };
-    event_timeout_ms = Battle_catch_steps.default_event_timeout_ms;
-  }
+let default_catch_config = Battle_catch_steps.default_config
 
-let throw_only_policy (capture : Capture_plan.t) : CS.policy =
-  {
-    status_setter = None;
-    false_swiper = None;
-    wall = None;
-    ball_name = capture.ball;
-    max_balls = capture.max_balls;
-    foe_hp_target = 1.0;
-    foe_hp_rechip = 1.0;
-    reapply_status = false;
-    max_turns = throw_only_max_turns;
-    send_in_order = [ 1; 2; 3; 4; 5 ];
-  }
+let throw_only_policy (c : Capture_plan.t) : CS.policy =
+  let base =
+    Battle_catch_steps.spore_ball_policy ~ball_name:c.ball
+      ~max_balls:c.max_balls ~max_turns:throw_only_max_turns ()
+  in
+  { base with status_setter = None; reapply_status = false }
 
 let env_var name = "GAMEPILOT_FRLG_" ^ String.uppercase_ascii name
 
@@ -123,10 +113,11 @@ let pick a b = if Option.is_some a then a else b
 let load_trainer_ids () =
   let* tid = env_id "tid" in
   let* sid = env_id "sid" in
-  if Option.is_some tid && Option.is_some sid then Ok { tid; sid }
-  else
-    let* f = file_trainer_ids () in
-    Ok { tid = pick tid f.tid; sid = pick sid f.sid }
+  let* f =
+    if Option.is_some tid && Option.is_some sid then Ok no_trainer_ids
+    else file_trainer_ids ()
+  in
+  Ok { tid = pick tid f.tid; sid = pick sid f.sid }
 
 let find_frame_model = function
   | "mgba" -> Some R.Rng_timings.mgba
@@ -141,9 +132,9 @@ let opt_int ~where ~default ~low ~high name args =
       if n >= low && n <= high then n
       else J.fail "%s%s is %d, not %d..%d" where name n low high
 
-let visual_shiny_check ~where args =
+let visual_shiny_check ~where ~frame_model ~catch_mode args =
   match J.find "visual_shiny_check" args with
-  | None -> false
+  | None -> frame_model = "switch" && catch_mode <> Throw_only
   | Some (`Bool b) -> b
   | Some _ -> J.fail "%svisual_shiny_check is not a boolean" where
 
@@ -180,15 +171,19 @@ let catch_mode ~where ~options (c : Capture_plan.t) args =
       wrap (B.phase1_policy ~ball_name ~max_balls B.default_phase1_slots)
   | Some "phase2" ->
       wrap (B.phase2_policy ~ball_name ~max_balls B.default_phase2_slots)
+  | Some "spore_ball" -> wrap (B.spore_ball_policy ~ball_name ~max_balls ())
   | Some other ->
-      J.fail "%scatch_mode is %s, not throw_only, phase1, or phase2" where other
+      J.fail "%scatch_mode is %s, not throw_only, phase1, phase2, or spore_ball"
+        where other
 
-let resolved_attempts ~where ~options args =
-  match Run_options.int options "attempts" with
-  | Some n when n >= 1 && n <= max_attempts -> n
-  | _ ->
-      opt_int ~where ~default:default_attempts ~low:1 ~high:max_attempts
-        "attempts" args
+let resolved_opt_int ~where ~options ~default ~low ~high name args =
+  match Run_options.int options name with
+  | Some n when n >= low && n <= high -> n
+  | _ -> opt_int ~where ~default ~low ~high name args
+
+let resolved_attempts ~where ~options =
+  resolved_opt_int ~where ~options ~default:default_attempts ~low:1
+    ~high:max_attempts "attempts"
 
 let resolved_id ~where ~options ~fallback name args =
   match (Run_options.int options name, J.find name args, fallback) with
@@ -203,21 +198,24 @@ let read ~options ~fallback ~default_frame_model ~where args =
   let min_advance, max_advance = advances ~where args in
   let tid = resolved_id ~where ~options ~fallback:fallback.tid "tid" args in
   let sid = resolved_id ~where ~options ~fallback:fallback.sid "sid" args in
-  let p = Capture_plan.read ~where args in
-  let max_encounters = resolved_attempts ~where ~options args in
   let cap =
-    Capture_plan.apply_options options { p with max_encounters; catches = 1 }
+    let max_encounters = resolved_attempts ~where ~options args in
+    Capture_plan.apply_options options
+      { (Capture_plan.read ~where args) with max_encounters; catches = 1 }
   in
   let frame_model = frame_model ~default:default_frame_model ~where args in
+  let catch_mode = catch_mode ~where ~options cap args in
   let opt = opt_int ~where ~default:0 in
-  let default = default_seeds_for_model frame_model in
   {
     encounter_method = encounter_method ~where args;
     species = J.string ~where "species" args;
     location = J.string ~where "location" args;
     tid;
     sid;
-    seeds = Option.value ~default (J.string_opt ~where "seeds" args);
+    seeds =
+      Option.value
+        ~default:(default_seeds_for_model frame_model)
+        (J.string_opt ~where "seeds" args);
     boot_offset_ms = 0;
     seed_shift = opt ~low:0 ~high:max_id "seed_shift" args;
     ingame_offset =
@@ -226,16 +224,17 @@ let read ~options ~fallback ~default_frame_model ~where args =
     min_advance;
     max_advance;
     capture = cap;
-    catch_mode = catch_mode ~where ~options cap args;
-    visual_shiny_check = visual_shiny_check ~where args;
+    catch_mode;
+    visual_shiny_check = visual_shiny_check ~where ~frame_model ~catch_mode args;
+    cal_ball_row =
+      resolved_opt_int ~where ~options ~default:0 ~low:0 ~high:max_cal_ball_row
+        "cal_ball_row" args;
   }
 
 let apply_timing_delta ~boot_delta_ms ~ingame_delta t =
-  {
-    t with
-    boot_offset_ms = t.boot_offset_ms + boot_delta_ms;
-    ingame_offset = t.ingame_offset + ingame_delta;
-  }
+  let boot_offset_ms = t.boot_offset_ms + boot_delta_ms in
+  let ingame_offset = t.ingame_offset + ingame_delta in
+  { t with boot_offset_ms; ingame_offset }
 
 let apply_calibration (e : R.Switch_rng_calibration.entry) t =
   let seed_shift = (t.seed_shift + e.seed_shift) land seed_mask in
@@ -243,10 +242,9 @@ let apply_calibration (e : R.Switch_rng_calibration.entry) t =
     ~ingame_delta:e.ingame_offset { t with seed_shift }
 
 let decode ?(options = Run_options.none) ?(fallback = no_trainer_ids)
-    ?(default_frame_model = default_frame_model) args =
+    ?(default_frame_model = default_frame_model) =
   Action_args.decode ~action:"wild_rng"
     (read ~options ~fallback ~default_frame_model)
-    args
 
 let json path =
   match Repo_io.Repo_files.locate path with
@@ -274,8 +272,9 @@ let calibrated_model ~boot_offset_ms ~ingame_offset
   let csf_offset =
     if m.ingame_advances_per_frame > 1.0 then ingame_offset land 1 else 0
   in
+  let ingame_offset = ingame_offset - csf_offset in
   ( { m with fixed_seed_offset_ms = m.fixed_seed_offset_ms + boot_offset_ms },
-    { R.Rng_timings.no_calibrations with csf_offset; ingame_offset = ingame_offset - csf_offset } )
+    { R.Rng_timings.no_calibrations with csf_offset; ingame_offset } )
 
 let target t =
   let* delays, seeds = seed_column_of ~seeds:t.seeds ~seed_shift:t.seed_shift in

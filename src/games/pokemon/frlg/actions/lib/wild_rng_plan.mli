@@ -68,10 +68,17 @@ type t = {
       (** The species, the ball, the balls; its encounters are the attempts. *)
   catch_mode : catch_mode;
       (** Catch strategy: [Throw_only] by default, or [Catch_policy] for
-          {!Battle_catch_steps} Phase 1 / Phase 2 catching. *)
+          {!Battle_catch_steps} Phase 1, Phase 2, or Spore-then-throw catching.
+      *)
   visual_shiny_check : bool;
       (** When [true], run {!Frlg_readers.Shiny_encounter_detector} during the
-          wild battle intro to skip catch turns and balls on visual misses. *)
+          wild battle intro to skip catch turns and balls on visual misses.
+          Defaults to [true] when [frame_model = "switch"] and
+          [catch_mode <> Throw_only], [false] otherwise. *)
+  cal_ball_row : int;
+      (** 0-based row in the Poké Balls pocket thrown during fast non-shiny
+          calibration catches (default [0]; e.g. [1] for Master Ball on row 1).
+      *)
 }
 (** Decoded arguments for one ["wild_rng"] action. *)
 
@@ -211,8 +218,10 @@ val decode :
     ["frame_model"] (defaults to [default_frame_model], itself ["mgba"]),
     ["advances"] ([[min, max]], default [[900, 4000]]), ["ball"]
     (["poke-ball"]), ["balls"] (5), ["attempts"] (1), ["catch_mode"]
-    (["throw_only"] | ["phase1"] | ["phase2"], default ["throw_only"]),
-    ["visual_shiny_check"] ([false]). *)
+    (["throw_only"] | ["phase1"] | ["phase2"] | ["spore_ball"], default
+    ["throw_only"]), ["visual_shiny_check"] (defaults to [true] on ["switch"]
+    with a policy [catch_mode], [false] otherwise), ["cal_ball_row"] (0..20,
+    default [0], overridable via [--options cal_ball_row=N]). *)
 
 val encounter_slots : string
 (** The file the encounter slots are read from, FireRed's:
