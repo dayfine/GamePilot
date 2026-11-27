@@ -15,6 +15,7 @@ type setup = {
   save_after_pass : bool;
       (** On the Switch: save in the game after a pass
           (Checkpoints_series.Console_runs). *)
+  home_tile : Switch.Home_screen.tile_color option;
   info : Run_record.info;  (** For each run's run.json. *)
   program_options : Run_options.t;
       (** --options, checked: for each run's game actions. *)

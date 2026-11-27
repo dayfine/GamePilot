@@ -4,9 +4,11 @@
  (libraries
   gamepilot.wire
   gamepilot.effects
+  gamepilot.switch
   gamepilot.watch_report
   gamepilot.engine_run
   gamepilot.run_options
+  gamepilot.plza_readers
   gamepilot.plza_story
   gamepilot.plza_engine
   gamepilot.plza_checkpoint_series

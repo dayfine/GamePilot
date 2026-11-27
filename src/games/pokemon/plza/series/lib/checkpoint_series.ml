@@ -19,6 +19,7 @@ type program = {
   with_end_place :
     next:P.Plan.t option -> P.Plan.t -> (P.Plan.t, string) result;
   daemon_flags : string list;
+  initial_screen : P.Plan.t -> Switch.Initial_screen.expectation;
   attempt : attempt;
 }
 
@@ -27,6 +28,7 @@ type setup = {
   policy : Checkpoint_trials.policy;
   info : Run_record.info;
   daemons : Live_run.Series_daemons.t;
+  initial_screen : P.Plan.t -> Switch.Initial_screen.expectation;
   attempt : attempt;
 }
 
@@ -62,11 +64,18 @@ let watched attempt ~log ~picture ~reload report plan =
       Watch_report.end_run report ~passed:false;
       failed "raised" (Printexc.to_string e)
 
-let in_session attempt ~log ~reload record plan (backend : Wire.backend) =
+let in_session initial_screen attempt ~log ~reload record plan
+    (backend : Wire.backend) =
   let picture = backend.viewport in
   let log = Watch_report.log log in
   let report = P.Plan_watch.create plan.P.Plan.checkpoint in
-  let outcome = watched attempt ~log ~picture ~reload report plan in
+  let outcome =
+    match Switch.Initial_screen.check ~log ~picture (initial_screen plan) with
+    | Error reason ->
+        Watch_report.end_run report ~passed:false;
+        failed ~repeats:true "start" reason
+    | Ok () -> watched attempt ~log ~picture ~reload report plan
+  in
   (match outcome with
   | Failed _ -> Live_run.Daemon_run.save_failure ~log record ~save_states:false
   | Passed -> ());
@@ -74,12 +83,13 @@ let in_session attempt ~log ~reload record plan (backend : Wire.backend) =
 
 (* Any exception Daemon_run.in_session passes on fails the run here, so the
    story log, the run record and the watch run still close. *)
-let live attempt ~log ~reload record plan (daemon : Live_run.Daemon_process.t) =
+let live initial_screen attempt ~log ~reload record plan
+    (daemon : Live_run.Daemon_process.t) =
   match
     Live_run.Daemon_run.in_session ~failed:of_runner ~dir:record.Run_record.dir
       (fun () ->
         Live.run_with_backend ~port:daemon.port
-          (in_session attempt ~log ~reload record plan))
+          (in_session initial_screen attempt ~log ~reload record plan))
   with
   | outcome -> outcome
   | exception e -> failed "raised" (Printexc.to_string e)
@@ -103,7 +113,7 @@ let run_in setup plan n ~attempt ~reload (run : Run_record.run) =
   log ("[Run] " ^ name ^ if reload then " (after a reload)" else "");
   let outcome =
     Live_run.Series_daemons.with_daemon setup.daemons ~failed:of_runner run ~n
-      (live setup.attempt ~log ~reload run.record plan)
+      (live setup.initial_screen setup.attempt ~log ~reload run.record plan)
   in
   close ();
   let ending : Run_record.ending =
@@ -238,6 +248,7 @@ let setup_of program (f : Flags.t) ~program_fields ~options ~from_id ~to_id ~ids
     daemons =
       daemons f backend ~viewport ~program_flags:program.daemon_flags
         { info; mode; checkpoints = ids };
+    initial_screen = program.initial_screen;
     attempt = program.attempt;
   }
 
