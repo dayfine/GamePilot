@@ -133,6 +133,18 @@ let cases =
            look Text;
          ])
       "A wait UP wait";
+    case
+      "switch 8-char box name chooser: confirms deposit with A instead of \
+       Box_grid failure"
+      (presses [ "eevee" ]
+         [
+           look Overworld;
+           look Party_panel ~cursor:5 ~species:"eevee";
+           look Mon_menu ~cursor:0 ~label:"STORE";
+           look Box_chooser;
+           look Party_panel ~cursor:5;
+         ])
+      "A A A A B";
     case "a fade that never ends"
       (presses [ "eevee" ] (List.init P.max_others (fun _ -> look Other)))
       "wait wait wait wait wait wait wait wait wait fail: no PC screen settled \
