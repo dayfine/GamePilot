@@ -30,12 +30,16 @@ let attempt inputs ~log ~picture ~reload:_ report plan : Attempts.outcome =
       | Ok () -> Passed
       | Error f -> Attempts.of_failure f)
 
+let initial_screen _ : Switch.Initial_screen.expectation =
+  In_game_or_resume (Some Plza_readers.Switch_home_tile.tile_color)
+
 let run_series inputs ~program ~options ~viewport plan_dir args =
   Series.run_series
     {
       check_plans = Series.each_plan Plza_claim_gifts.Claim_gifts.check_plan;
       with_end_place = Series.no_end_place;
       daemon_flags = Series.keepawake_stick;
+      initial_screen;
       attempt = attempt inputs;
     }
     ~program_fields:program ~options ~viewport plan_dir args

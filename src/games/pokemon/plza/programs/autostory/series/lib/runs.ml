@@ -97,6 +97,11 @@ let attempt ~options ~starter ~log ~picture ~reload report plan :
       | Ok () -> Passed
       | Error f -> f)
 
+let initial_screen (plan : P.Plan.t) : Switch.Initial_screen.expectation =
+  match plan.checkpoint.start with
+  | None -> In_game_or_home
+  | Some _ -> In_game_or_resume (Some Plza_readers.Switch_home_tile.tile_color)
+
 (* The story's runs, playing [new_game]'s choices at 00.00-new-game and
    walking to [starter] in 01.04 (Chikorita when not given). *)
 let story new_game starter : Series.program =
@@ -104,6 +109,7 @@ let story new_game starter : Series.program =
     check_plans = Series_check.check_all ~options:new_game ~starter;
     with_end_place;
     daemon_flags = Series.keepawake_stick;
+    initial_screen;
     attempt =
       attempt ~options:new_game
         ~starter:(Option.value starter ~default:Plza_story.Starter.default);

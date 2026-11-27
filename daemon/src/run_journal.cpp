@@ -85,6 +85,10 @@ void RunJournal::chain(const std::string& json) {
   write("watch_run.json", json + "\n");
 }
 
+void RunJournal::counters(const std::string& json) {
+  write("watch_counters.json", json + "\n");
+}
+
 void RunJournal::log_line(const pa::JsonObject& params, double unix_ms) {
   if (!log_.is_open()) {
     return;

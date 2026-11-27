@@ -207,6 +207,9 @@ void WatchServer::start_stream(Connection& connection) {
   if (!plan_.empty()) {
     snapshot += event_message("plan", plan_);
   }
+  if (!counters_.empty()) {
+    snapshot += event_message("counters", counters_);
+  }
   if (!source_.empty()) {
     snapshot += event_message("source", source_);
   }
@@ -269,6 +272,11 @@ void WatchServer::set_source(std::string json) {
 void WatchServer::set_plan(std::string json) {
   plan_ = std::move(json);
   broadcast("plan", plan_);
+}
+
+void WatchServer::set_counters(std::string json) {
+  counters_ = std::move(json);
+  broadcast("counters", counters_);
 }
 
 void WatchServer::add_log(std::string json) {

@@ -40,6 +40,7 @@ let bank_home moves : Series.program =
     check_plans = Series.each_plan Game.check_plan;
     with_end_place = Series.no_end_place;
     daemon_flags = [];
+    initial_screen = (fun _ -> Switch.Initial_screen.In_game_or_home);
     attempt = attempt moves;
   }
 

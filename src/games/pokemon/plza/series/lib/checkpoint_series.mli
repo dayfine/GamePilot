@@ -35,6 +35,9 @@ type program = {
   daemon_flags : string list;
       (** Its daemons' flags before the user's (plza.autostory's keep-awake
           stick). *)
+  initial_screen : Plza_engine.Plan.t -> Switch.Initial_screen.expectation;
+      (** What screen the console must show before an attempt starts (checked by
+          {!Switch.Initial_screen.check}). *)
   attempt : attempt;
 }
 (** What a program's runs do. *)

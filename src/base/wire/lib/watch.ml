@@ -99,6 +99,21 @@ let plan_ms ~now_ms plan =
   | [], _ | _, None -> None
   | _, Some stop -> Some (stop - List.fold_left min max_int starts)
 
+type counter = { label : string; value : string }
+
+let counter_of_json j =
+  let what = "watch.counters.params.items" in
+  { label = string_field what "label" j; value = string_field what "value" j }
+
+let json_of_counter { label; value } =
+  `Assoc [ ("label", `String label); ("value", `String value) ]
+
+let counters_of_json j =
+  List.map counter_of_json (list_field "watch.counters.params" "items" j)
+
+let json_of_counters items =
+  `Assoc [ ("items", `List (List.map json_of_counter items)) ]
+
 let line_of_json j = string_field "watch.log.params" "line" j
 let json_of_line line = `Assoc [ ("line", `String line) ]
 let reason_of_json j = string_field "stop.params" "reason" j

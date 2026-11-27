@@ -48,6 +48,7 @@ type notification =
   | Watch_plan of Watch.plan
   | Watch_log of string
   | Watch_run of Watch_run.t
+  | Watch_counters of Watch.counter list
   | Stop of string
   | Keepawake of { key : string; idle_ms : int }
 
@@ -221,6 +222,8 @@ let notification_of_json m j =
       Notification (Watch_log (Watch.line_of_json (params j)))
   | `String "watch.run" ->
       Notification (Watch_run (Watch_run.of_json (params j)))
+  | `String "watch.counters" ->
+      Notification (Watch_counters (Watch.counters_of_json (params j)))
   | `String "stop" -> Notification (Stop (Watch.reason_of_json (params j)))
   | `String "keepawake" -> Notification (keepawake_of_json (params j))
   | m -> fail "unknown notification %s" (Yojson.Safe.to_string m)
@@ -262,6 +265,11 @@ let json_of_notification = function
       [ ("method", `String "watch.log"); ("params", Watch.json_of_line line) ]
   | Watch_run run ->
       [ ("method", `String "watch.run"); ("params", Watch_run.to_json run) ]
+  | Watch_counters items ->
+      [
+        ("method", `String "watch.counters");
+        ("params", Watch.json_of_counters items);
+      ]
   | Stop reason ->
       [ ("method", `String "stop"); ("params", Watch.json_of_reason reason) ]
   | Keepawake { key; idle_ms } ->

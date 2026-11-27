@@ -94,6 +94,7 @@ include Run_flags
 type program = {
   fields : string -> (string * string) list;
   viewport : (string option, string) result;
+  home_tile : Switch.Home_screen.tile_color option;
   options : Run_options.t;
 }
 
@@ -118,7 +119,16 @@ let preflight_setup program plan_dir f backend ~viewport ~from_id :
     Preflight_command.setup =
   let info = run_info program plan_dir f Preflight ~from_id ~to_id:from_id in
   let { states; runs_dir; daemon; _ } = f in
-  { states; runs_dir; daemon; backend; viewport; info; watch = watch_of f }
+  {
+    states;
+    runs_dir;
+    daemon;
+    backend;
+    viewport;
+    home_tile = program.home_tile;
+    info;
+    watch = watch_of f;
+  }
 
 (* --from-event: testing by default, one checkpoint (--to is --from unless
    given). *)
@@ -198,6 +208,7 @@ let run_series program plan_dir (f : Pokemon_flags.flags) =
          program_options = program.options;
          daemons = daemons f backend ~viewport series;
          save_after_pass = f.save_after_pass;
+         home_tile = program.home_tile;
          max_rounds = f.max_rounds;
          from_event = from_event f;
        }
