@@ -1,6 +1,8 @@
-(** Color tests on a [core.color_stats@1] result, ported from the fork's
-    CommonTools/Images/SolidColorTest: is a box one flat color, white, grey?
-    Readers combine these on several thin boxes along a window's edges. *)
+(** Color tests on a [core.color_stats@1] result, ported from
+    CommonTools/Images/SolidColorTest
+    (https://github.com/PokemonAutomation/Arduino-Source): is a box one flat
+    color, white, grey? Readers combine these on several thin boxes along a
+    window's edges. *)
 
 type stats = { mean : Wire.rgb; stddev : Wire.rgb }
 (** A box's per-channel mean and stddev, 0..255. *)

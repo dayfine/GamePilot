@@ -2,12 +2,13 @@
     calibrations: the title screen's (which picks the seed), the continue
     screen's, Teachy TV's and the in-game one (which reaches the advance).
 
-    Port of the fork's timing preparation in
+    Port of the timing preparation in
     [PokemonFRLG/Programs/RngManipulation/PokemonFRLG_RngCalibration.cpp], its
     Sweet Scent in-game sequence and timing checks in
     [PokemonFRLG_BlindNavigation.cpp], and the frame constants of
-    [PokemonFRLG_RngCalibration.h]. The C++ logs and throws; this returns the
-    timings or the C++'s message.
+    [PokemonFRLG_RngCalibration.h]
+    (https://github.com/PokemonAutomation/Arduino-Source). The C++ logs and
+    throws; this returns the timings or the C++'s message.
 
     Where it differs: the C++ has one frame model, the Switch's (59.999977
     frames a second, two advances per in-game frame, a seed 845 ms after the
