@@ -82,6 +82,7 @@ function createHubSandbox(mockRoutes) {
     'historyDir',
     'historyList',
     'historySearch',
+    'historyGame',
     'historyResult',
     'historySort',
     'historyPager',
@@ -94,6 +95,7 @@ function createHubSandbox(mockRoutes) {
   els.modeSelect.value = 'default';
   els.addBackend.value = 'switch';
   els.historyResult.value = 'all';
+  els.historyGame.value = 'all';
   els.historySort.value = 'newest';
 
   const optInputs = [];
@@ -225,6 +227,7 @@ const sampleFixtures = () => ({
       entries: [
         {
           time: '2026-11-26T15:14:19',
+          game: 'bdsp',
           run: '2026-11-26-bdsp.underground-run-15',
           checkpoint: 'bdsp.underground',
           mode: 'run',

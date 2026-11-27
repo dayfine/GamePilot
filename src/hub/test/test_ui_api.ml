@@ -140,7 +140,8 @@ let () =
           let entries = Run_history.parse_tsv ~limit:1 tsv in
           match entries with
           | [ e ] ->
-              Printf.sprintf "%s:%s:%s:%s" e.run e.checkpoint e.result e.reason
+              Printf.sprintf "%s:%s:%s:%s:%s" e.game e.run e.checkpoint e.result
+                e.reason
           | _ -> "bad count")
-        "run-2:bdsp.underground:fail:bad fade";
+        "bdsp:run-2:bdsp.underground:fail:bad fade";
     ]

@@ -234,12 +234,14 @@ function pageHistory(delta) {
 
 function renderHistory() {
   const q = (document.getElementById('historySearch').value || '').trim().toLowerCase();
+  const gameFilter = document.getElementById('historyGame').value || 'all';
   const resFilter = document.getElementById('historyResult').value || 'all';
   const sort = document.getElementById('historySort').value || 'newest';
   let filtered = historyEntries.filter((e) => {
+    if (gameFilter !== 'all' && (e.game || '') !== gameFilter) return false;
     if (resFilter !== 'all' && e.result !== resFilter) return false;
     if (!q) return true;
-    const hay = `${e.checkpoint} ${e.run} ${e.mode} ${e.at} ${e.reason}`.toLowerCase();
+    const hay = `${e.game || ''} ${e.checkpoint} ${e.run} ${e.mode} ${e.at} ${e.reason}`.toLowerCase();
     return hay.includes(q);
   });
   if (sort === 'oldest') filtered = filtered.slice().reverse();
@@ -257,9 +259,10 @@ function renderHistory() {
     pager.classList.toggle('hidden', true);
     return;
   }
-  el.innerHTML = `<table><thead><tr><th>Time</th><th>Program / Checkpoint</th><th>Mode</th><th>Result</th><th>Detail</th></tr></thead><tbody>${slice.map((e) => `
+  el.innerHTML = `<table><thead><tr><th>Time</th><th>Game</th><th>Program / Checkpoint</th><th>Mode</th><th>Result</th><th>Detail</th></tr></thead><tbody>${slice.map((e) => `
     <tr>
       <td class="muted nowrap">${esc(e.time.replace('T', ' '))}</td>
+      <td class="muted nowrap">${esc((e.game || '—').toUpperCase())}</td>
       <td class="nowrap"><strong>${esc(e.checkpoint)}</strong><div class="muted">${esc(e.run)}</div></td>
       <td class="muted nowrap">${esc(e.mode)}</td>
       <td class="nowrap"><span class="pill ${esc(e.result)}">${esc(e.result)}</span></td>
@@ -279,6 +282,13 @@ async function loadHistory() {
   const j = await r.json();
   document.getElementById('historyDir').textContent = j.runs_dir || '';
   historyEntries = j.entries || [];
+  const gameSel = document.getElementById('historyGame');
+  const prev = gameSel.value || 'all';
+  const games = Array.from(new Set(historyEntries.map((e) => e.game).filter(Boolean))).sort();
+  gameSel.innerHTML =
+    '<option value="all">all</option>' +
+    games.map((g) => `<option value="${esc(g)}">${esc(g.toUpperCase())}</option>`).join('');
+  gameSel.value = games.includes(prev) ? prev : 'all';
   renderHistory();
 }
 

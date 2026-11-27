@@ -4,6 +4,7 @@
 
 type entry = {
   time : string;  (** ISO-8601 local timestamp of the run. *)
+  game : string;  (** Game identifier (e.g. ["frlg"], ["plza"], ["bdsp"]). *)
   run : string;
       (** Run folder name (e.g. ["2026-11-26-bdsp.underground-run-15"]). *)
   checkpoint : string;  (** Program or checkpoint identifier. *)

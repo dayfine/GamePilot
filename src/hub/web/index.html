@@ -80,6 +80,11 @@
       <label style="flex:2 1 220px">Filter
         <input id="historySearch" placeholder="program, run folder, or reason..." oninput="onHistoryFilter()">
       </label>
+      <label style="flex:0 1 140px">Game
+        <select id="historyGame" onchange="onHistoryFilter()">
+          <option value="all" selected>all</option>
+        </select>
+      </label>
       <label style="flex:0 1 130px">Result
         <select id="historyResult" onchange="onHistoryFilter()">
           <option value="all" selected>all</option>

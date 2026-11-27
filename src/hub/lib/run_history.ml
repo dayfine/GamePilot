@@ -1,5 +1,6 @@
 type entry = {
   time : string;
+  game : string;
   run : string;
   checkpoint : string;
   mode : string;
@@ -10,14 +11,31 @@ type entry = {
 
 let default_limit = 200
 
+let checkpoint_games =
+  lazy
+    (List.concat_map
+       (fun (p : Program_registry.t) ->
+         List.map (fun cp -> (cp, p.game.game_id)) (Ui_api.checkpoints_of p))
+       Program_registry.all)
+
+let infer_game checkpoint =
+  match String.index_opt checkpoint '.' with
+  | Some i when i > 0 -> String.sub checkpoint 0 i
+  | _ -> (
+      match List.assoc_opt checkpoint (Lazy.force checkpoint_games) with
+      | Some g -> g
+      | None -> "")
+
 let field_at cols i =
   match List.nth_opt cols i with Some s -> String.trim s | None -> ""
 
 let make_entry time run checkpoint mode result rest =
+  let cp = String.trim checkpoint in
   {
     time = String.trim time;
+    game = infer_game cp;
     run = String.trim run;
-    checkpoint = String.trim checkpoint;
+    checkpoint = cp;
     mode = String.trim mode;
     result = String.trim result;
     at = field_at rest 0;
@@ -57,6 +75,7 @@ let entry_to_json e =
   `Assoc
     [
       ("time", `String e.time);
+      ("game", `String e.game);
       ("run", `String e.run);
       ("checkpoint", `String e.checkpoint);
       ("mode", `String e.mode);
