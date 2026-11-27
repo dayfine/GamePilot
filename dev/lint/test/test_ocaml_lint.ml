@@ -444,4 +444,117 @@ let () =
     | Ok c -> c.interface_docs_roots
     | Error e -> [ e ])
 
+(* --- flat_constants (R27) --- *)
+
+let () =
+  case "flat_constants: more than max top-level numeric constants is caught"
+    ~expect:[ "flat_constants" ]
+    (checks
+       (Flat_constants.check
+          { config with flat_constants_max = 3 }
+          (parse "let a = 1\nlet b = -2\nlet c = 3.5\nlet d = -. 4.0\n")));
+  case "flat_constants: records, strings and counts within limit pass"
+    ~expect:[]
+    (checks
+       (Flat_constants.check
+          { config with flat_constants_max = 3 }
+          (parse
+             "let a = 1\n\
+              let b = 2\n\
+              let label = \"ok\"\n\
+              let cfg = { x = 10; y = 20; z = 30; w = 40 }\n")));
+  case "config: flat_constants_max is read" ~expect:[ "20" ]
+    (match Config.parse "root .\nflat_constants_max 20\n" with
+    | Ok c -> [ string_of_int c.flat_constants_max ]
+    | Error e -> [ e ])
+
+(* --- text_assertions (R28) --- *)
+
+let () =
+  let findings =
+    Text_assertions.check
+      (parse
+         "let () =\n\
+         \  assert (Printf.sprintf \"%d\" 1 = \"1\");\n\
+         \  assert (String.equal \"x\" (item_to_string y));\n\
+         \  assert (status_text s <> \"bad\");\n\
+         \  assert (x = 1)\n")
+  in
+  case "text_assertions: formatted text vs string literal is advisory"
+    ~expect:
+      [
+        "text_assertions advisory";
+        "text_assertions advisory";
+        "text_assertions advisory";
+      ]
+    (List.map
+       (fun (f : Finding.t) ->
+         f.check ^ if f.severity = Advisory then " advisory" else " error")
+       findings);
+  case "text_assertions: structural and non-formatter checks pass" ~expect:[]
+    (checks
+       (Text_assertions.check
+          (parse "let () = assert (name = \"pikachu\"); assert (a = b)\n")))
+
+(* --- variant_with_suffix (R17) --- *)
+
+let () =
+  case "variant_with_suffix: *_with_* constructor in .ml is caught"
+    ~expect:[ "variant_with_suffix"; "variant_with_suffix" ]
+    (checks
+       (Variant_with_suffix.check_implementation
+          (parse "type t = Plain | Walk_with_timeout of int | Run_With_Retry\n")));
+  case "variant_with_suffix: *_with_* constructor in .mli is caught"
+    ~expect:[ "variant_with_suffix" ]
+    (checks
+       (Variant_with_suffix.check_interface ~path:"lib/m.mli"
+          "type t = Ok_state | Retry_with_backoff\n"));
+  case "variant_with_suffix: plain constructors and re-exports pass" ~expect:[]
+    (checks
+       (Variant_with_suffix.check_interface ~path:"lib/m.mli"
+          "type a = With_lead | Plain\ntype b = M.t = Reexport_with_other\n"))
+
+(* --- ambiguous_return (R19) --- *)
+
+let () =
+  case "ambiguous_return: result option, option option, bool * bool are caught"
+    ~expect:[ "ambiguous_return"; "ambiguous_return"; "ambiguous_return" ]
+    (checks
+       (Ambiguous_return.check ~path:"lib/m.mli"
+          "val a : int -> (int, string) result option\n\
+           val b : string -> int option option\n\
+           val c : unit -> bool * bool\n"));
+  case "ambiguous_return: option result, plain result and named types pass"
+    ~expect:[]
+    (checks
+       (Ambiguous_return.check ~path:"lib/m.mli"
+          "val a : int -> (int option, string) result\n\
+           val b : (bool * bool) -> int\n\
+           val c : unit -> bool\n"))
+
+(* --- direct_io (A1) --- *)
+
+let () =
+  case "direct_io: Unix, In_channel and open Out_channel are caught"
+    ~expect:[ "direct_io"; "direct_io"; "direct_io" ]
+    (checks
+       (Direct_io.check
+          (parse
+             "open Out_channel\n\
+              let f () = Unix.sleep 1; ignore (In_channel.open_bin \"x\")\n")));
+  case "direct_io: effect calls and Stdlib pass" ~expect:[]
+    (checks
+       (Direct_io.check
+          (parse "let f () = Effects.now (); List.length [ 1; 2 ]\n")));
+  case "direct_io: in_scope matches game programs and actions only"
+    ~expect:[ "true"; "true"; "true"; "false"; "false" ]
+    (List.map string_of_bool
+       [
+         Direct_io.in_scope "src/games/pokemon/frlg/programs/ace/lib/a.ml";
+         Direct_io.in_scope "src/games/pokemon/plza/actions/story/lib/a.ml";
+         Direct_io.in_scope "src/games/other/programs/p/lib/a.ml";
+         Direct_io.in_scope "src/core/live/lib/a.ml";
+         Direct_io.in_scope "src/games/pokemon/frlg/series/lib/a.ml";
+       ])
+
 let () = if !failures > 0 then exit 1

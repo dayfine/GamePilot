@@ -104,6 +104,7 @@ class WatchServer {
   void set_info(std::string json);
   void set_run(std::string json);
   void set_plan(std::string json);
+  void set_counters(std::string json);
   // A view-only source's picture state (view_source.h); also in
   // /summary.json once set.
   void set_source(std::string json);
@@ -135,6 +136,7 @@ class WatchServer {
   std::string info_;
   std::string run_;
   std::string plan_;
+  std::string counters_;
   std::string source_;
   std::string probes_;
   std::deque<std::string> log_;

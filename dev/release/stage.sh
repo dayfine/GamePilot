@@ -96,6 +96,11 @@ if [ -f "daemon/tools/list_capture_devices.swift" ]; then
   copy_tree "daemon/tools/list_capture_devices.swift"
 fi
 
+# Local Control Hub static web assets (HTML/CSS/JS)
+if [ -d "src/hub/web" ]; then
+  copy_tree "src/hub/web"
+fi
+
 cat > "$OUT_DIR/README.txt" <<'EOF'
 GamePilot release bundle
 ========================

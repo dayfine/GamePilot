@@ -63,6 +63,15 @@ val line_of_json : json -> string
 val json_of_line : string -> json
 (** A [watch.log] notification's params for this line. *)
 
+type counter = { label : string; value : string }
+(** One live counter row in a [watch.counters] notification (v1.21). *)
+
+val counters_of_json : json -> counter list
+(** A [watch.counters] notification's items. *)
+
+val json_of_counters : counter list -> json
+(** A [watch.counters] notification's params for these items. *)
+
 val reason_of_json : json -> string
 (** A [stop] notification's reason. *)
 

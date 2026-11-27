@@ -27,6 +27,17 @@ let parse ~path text =
         (Finding.error ~check:"parse" ~path ~line
            "does not parse; no other check ran on this file")
 
+let parse_interface ~path text =
+  let lexbuf = Lexing.from_string text in
+  Lexing.set_filename lexbuf path;
+  match Parse.interface lexbuf with
+  | items -> Ok items
+  | exception _ ->
+      let line = lexbuf.lex_curr_p.pos_lnum in
+      Error
+        (Finding.error ~check:"parse" ~path ~line
+           "does not parse; no other check ran on this file")
+
 let rec is_function e =
   match e.pexp_desc with
   | Pexp_function _ -> true

@@ -1,5 +1,6 @@
-(** Reader: the black a launch shows once the game starts. Ported from the
-    fork's CommonTools/VisualDetectors/BlackScreenDetector.cpp, set up as
+(** Reader: the black a launch shows once the game starts. Ported from
+    CommonTools/VisualDetectors/BlackScreenDetector.cpp
+    (https://github.com/PokemonAutomation/Arduino-Source), set up as
     NintendoSwitch_GameEntry.cpp watches for the black after a launch: the box
     (0.1, 0.15, 0.8, 0.7) of the frame, converted to the game picture
     ({!Picture_box}), its mean's channels 100 at most and their stddev 10 at

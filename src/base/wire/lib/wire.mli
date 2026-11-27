@@ -1,4 +1,4 @@
-(** Wire protocol v1.19 (protocol/v1): message types and their JSON codec.
+(** Wire protocol v1.21 (protocol/v1): message types and their JSON codec.
 
     The codec lives in one module per message family ([Command], [Probe],
     [Backend], [Jsonrpc], [Wire_log], [Probe_images]); this module re-exports
@@ -104,8 +104,8 @@ type probe_spec = Probe.probe_spec = {
   box : box;
   delivery : delivery;
   template : string option;
-      (** [core.template_match@1] and [core.find@1] only: the hash
-          [probe.upload_template] returned on this connection. *)
+      (** [core.template_match@1], [core.template_ncc@1] and [core.find@1] only:
+          the hash [probe.upload_template] returned on this connection. *)
   ink : color_range option;
       (** [core.template_match@1] only: compare the masks of the pixels in this
           range instead of the colors. *)
@@ -143,6 +143,11 @@ val template_match_probe :
     pixels: at a fractional scale (6.5 on the Switch's GBA picture) a seam pixel
     of the mask holds a blend that a binary box mask can only half agree with,
     which costs about 1/4 of a pixel whatever the frame shows. *)
+
+val template_ncc_probe :
+  id:string -> box:box -> delivery:delivery -> template:string -> probe_spec
+(** [core.template_ncc@1]: grayscale zero-mean normalized cross-correlation
+    ([-1..1], higher is better) of an uploaded template inside [box]. *)
 
 val color_count_probe :
   id:string ->
@@ -192,6 +197,10 @@ type probe_result = Probe.probe_result =
           pixel and channel over 255² (with ink, of the masks), 0 = identical,
           lower is better; [x], [y] the placement's top-left corner, normalized
           to the game picture. *)
+  | Template_ncc of { score : float; x : float; y : float }
+      (** [core.template_ncc@1]: [score] is the grayscale zero-mean normalized
+          cross-correlation in [-1..1] (higher is better); [x], [y] the
+          placement's top-left corner, normalized to the game picture. *)
   | Color_count of { fraction : float; mean : rgb option }
       (** [core.color_count@1]: pixels in range over pixels in the box, and the
           mean of those in range ([None] when there are none). *)
@@ -280,7 +289,11 @@ type call = Jsonrpc.call =
   | Subscribe of probe_spec list
   | Unsubscribe of string list
       (** probe ids; the daemon stops measuring them *)
-  | Submit of { batch_id : string; commands : command list }
+  | Submit of {
+      batch_id : string;
+      start_at_t_ms : float option;
+      commands : command list;
+    }
   | Cancel
   | Cancel_then of { batch_id : string; commands : command list }
       (** (v1.15) [cancel] with [then]: drops the queued commands with no
@@ -299,12 +312,24 @@ type response = Jsonrpc.response = { id : int; outcome : (json, error) result }
 (** A response does not name its method (JSON-RPC pairs it with its request by
     [id]); decode [Ok] with the [*_result] decoder for that request's method. *)
 
+type gap = Jsonrpc.gap = {
+  from_seq : int;
+  to_seq : int;
+  from_t_ms : float;
+  to_t_ms : float;
+}
+(** A [gap] notification (v1.21): frame sequence numbers [from_seq..to_seq]
+    (inclusive) were missed while an [every] probe was subscribed, between
+    [from_t_ms] and [to_t_ms]. *)
+
 (** A message no one answers, from the daemon or from the program. *)
 type notification = Jsonrpc.notification =
   | Frame of { load : int; frame : frame }
-      (** [load]: how many [backend.load_state] calls had succeeded when the
+      (** [frame]: how many [backend.load_state] calls had succeeded when the
           daemon took the frame. Session bookkeeping, not a measurement, so it
           stays out of {!frame}. *)
+  | Gap of gap
+      (** [gap], from the daemon: skipped frames under [delivery: "every"]. *)
   | Batch_done of batch_done
   | Watch_plan of Watch.plan
       (** From the program: its checkpoint's events and their states, for the
@@ -315,6 +340,9 @@ type notification = Jsonrpc.notification =
   | Watch_run of Watch_run.t
       (** From the program: the chain of checkpoints it runs and the current
           one's trials, for the watch page; off the wire log too. *)
+  | Watch_counters of Watch.counter list
+      (** From the program: live key-value counters for the watch page (v1.21);
+          off the wire log too. *)
   | Stop of string
       (** From the daemon: someone pressed Stop on the watch page (the reason).
           The daemon has already cancelled the queued commands and released

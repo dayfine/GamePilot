@@ -1,0 +1,10 @@
+(library
+ (name ui_hub)
+ (public_name gamepilot.ui_hub)
+ (libraries
+  gamepilot.console_config
+  gamepilot.program_registry
+  gamepilot.run_options
+  gamepilot.repo_io
+  unix
+  yojson))

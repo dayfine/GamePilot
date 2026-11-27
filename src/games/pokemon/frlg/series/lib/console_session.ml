@@ -64,11 +64,16 @@ let start_check ~log ~frame_path ~start_path party =
       Ok ()
   | l -> Error ("not at the checkpoint's start: " ^ String.concat "; " l)
 
-let before ~log ~frame_path ~start_path party =
-  log "[Console] back to the last save";
-  match Frlg_actions.Soft_reset.return_to_save ~log () with
-  | Error c -> Error ("could not return to the last save: " ^ cause c)
-  | Ok () -> start_check ~log ~frame_path ~start_path party
+let before ~log ~picture ~home_tile ~frame_path ~start_path party =
+  match
+    Switch.Initial_screen.check ~log ~picture (In_game_or_resume home_tile)
+  with
+  | Error e -> Error e
+  | Ok () -> (
+      log "[Console] back to the last save";
+      match Frlg_actions.Soft_reset.return_to_save ~log () with
+      | Error c -> Error ("could not return to the last save: " ^ cause c)
+      | Ok () -> start_check ~log ~frame_path ~start_path party)
 
 let return_to_save ~log =
   match Frlg_actions.Soft_reset.return_to_save ~log () with

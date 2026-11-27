@@ -41,6 +41,9 @@ exception Stop_requested of string
 
 type _ Effect.t +=
   | Submit : Wire.command list -> Wire.batch_done Effect.t
+  | Submit_at : float * Wire.command list -> Wire.batch_done Effect.t
+        (** {!submit_at}: queues one batch starting no earlier than the given
+            [start_at_t_ms] on the daemon clock (protocol v1.21). *)
   | Await : (measurements -> bool) * int -> awaited Effect.t
   | Race : Wire.command list * (measurements -> bool) -> raced Effect.t
   | Race_held : Wire.command list * (measurements -> bool) -> raced Effect.t
@@ -53,6 +56,13 @@ type _ Effect.t +=
   | Queue : Wire.command list -> unit Effect.t
   | Now : float Effect.t
   | Read : measurements option Effect.t
+  | Take_gaps : Wire.gap list Effect.t
+        (** {!take_gaps}: drains and returns any [gap] notifications received
+            under [delivery: "every"] since the previous call. *)
+  | Renew_lease : int option -> unit Effect.t
+        (** {!renew_lease}: renews the connection's input lease without sending
+            controller input, suppressing keep-awake during long read-only
+            waits. *)
   | Load_state : string -> int Effect.t
   | Reset : int Effect.t
   | Save_state : string -> int Effect.t
@@ -63,11 +73,16 @@ type _ Effect.t +=
   | Show_plan : Wire.Watch.plan -> unit Effect.t
   | Show_log : string -> unit Effect.t
   | Show_run : Wire.Watch_run.t -> unit Effect.t
+  | Show_counters : Wire.Watch.counter list -> unit Effect.t
 
 (** {1 Ops} *)
 
 val submit : Wire.command list -> Wire.batch_done
 (** Queues one batch and returns when its [batch_done] arrives. *)
+
+val submit_at : start_at_t_ms:float -> Wire.command list -> Wire.batch_done
+(** Queues one batch starting no earlier than [start_at_t_ms] on the daemon
+    clock (protocol v1.21) and returns when its [batch_done] arrives. *)
 
 val await : timeout_ms:int -> (measurements -> bool) -> awaited
 (** Returns [Holds m] for the first frame [m] (the latest one included) on which
@@ -112,6 +127,16 @@ val now : unit -> float
 
 val read : unit -> measurements option
 (** The latest frame, if any arrived since subscribing. *)
+
+val take_gaps : unit -> Wire.gap list
+(** Drains and returns any [gap] notifications received since the last call (or
+    since the last [load_state] / [reset]), in arrival order. *)
+
+val renew_lease : ?ttl_ms:int -> unit -> unit
+(** Renews the connection's input lease via [lease.acquire] without sending
+    controller input, keeping the lease active and suppressing keep-awake during
+    long read-only waits. Uses the session's configured TTL when [ttl_ms] is
+    omitted. *)
 
 (** {1 Setup ops} *)
 
@@ -179,6 +204,9 @@ val show_log : string -> unit
 
 val show_run : Wire.Watch_run.t -> unit
 (** The chain of checkpoints and the current one's trials. *)
+
+val show_counters : Wire.Watch.counter list -> unit
+(** Live key-value counters shown in the watch page's Counters card. *)
 
 (** {1 Helpers for readers} *)
 

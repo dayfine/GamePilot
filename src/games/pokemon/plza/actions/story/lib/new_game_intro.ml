@@ -140,8 +140,6 @@ let rec pick_language steps (info : Choices.language_info) attempt =
 
 let look_columns = 4
 let look_cell look = ((look - 1) mod look_columns, (look - 1) / look_columns)
-let tilt_hold_ms = 150
-let tilt_release_ms = 500
 
 let stick = function
   | Wire.Up -> Wire.stick 0. 1.
@@ -150,7 +148,8 @@ let stick = function
   | _ -> Wire.stick 1. 0.
 
 let tilt_command s =
-  Wire.press ~left_stick:s ~hold_ms:tilt_hold_ms ~cooldown_ms:tilt_release_ms []
+  let hold_ms = 150 and cooldown_ms = 500 in
+  Wire.press ~left_stick:s ~hold_ms ~cooldown_ms []
 
 (* One portrait per tilt. *)
 let tilt steps direction =
@@ -159,10 +158,8 @@ let tilt steps direction =
   | Error _ -> ()
 
 (* read_settled_look: two reads in a row agree. *)
-let settled_reads = 14
-let settled_gap_ms = 150
-
 let read_settled_look steps =
+  let settled_reads = 14 and settled_gap_ms = 150 in
   let rec go previous n =
     if n >= settled_reads then None
     else
@@ -173,10 +170,6 @@ let read_settled_look steps =
         go look (n + 1))
   in
   go None 0
-
-let picker_wait_ms = 20_000
-let look_tries = 24
-let max_unread = 6
 
 let look_not_read look =
   Error
@@ -197,6 +190,7 @@ let tilt_toward steps ~from look =
       true
 
 let rec tilt_to_look steps look ~unread attempt =
+  let look_tries = 24 and max_unread = 6 in
   if attempt >= look_tries || unread > max_unread then look_not_read look
   else
     match read_settled_look steps with
@@ -212,6 +206,7 @@ let rec tilt_to_look steps look ~unread attempt =
         else look_not_read look
 
 let pick_look steps look =
+  let picker_wait_ms = 20_000 in
   if not (wait_for steps ~timeout_ms:picker_wait_ms (fun s -> s.look_picker))
   then
     Error
@@ -219,10 +214,8 @@ let pick_look steps look =
   else tilt_to_look steps look ~unread:0 0
 
 (* Presses while the keyboard slides in are dropped. *)
-let keyboard_wait_ms = 20_000
-let keyboard_settle_ms = 1000
-
 let wait_for_keyboard steps =
+  let keyboard_wait_ms = 20_000 and keyboard_settle_ms = 1000 in
   if wait_for steps ~timeout_ms:keyboard_wait_ms (fun s -> s.name_keyboard) then (
     wait steps keyboard_settle_ms;
     Ok ())
@@ -239,12 +232,11 @@ let typing_steps steps : Switch.Keyboard_typing.game_steps =
 
 (* One + submits the name; Chinese keyboards first take one to accept it. *)
 let submit_presses = 3
-let submit_wait_ms = 5000
-let confirm_wait_ms = 15_000
 let on_confirm s = s.confirm_choices
 
 (* One +; whether Confirm Choices then read within 5 s. *)
 let plus steps pressed =
+  let submit_wait_ms = 5000 in
   steps.log
     (Printf.sprintf "AutoStory intro: keyboard: + (%d of at most %d)." pressed
        submit_presses);
@@ -262,6 +254,7 @@ let rec submit_name steps pressed =
     submit_name steps (pressed + 1))
 
 and confirm_at_last steps =
+  let confirm_wait_ms = 15_000 in
   if wait_for steps ~timeout_ms:confirm_wait_ms on_confirm then Ok ()
   else Error (failed "Confirm Choices did not show after the name's +.")
 

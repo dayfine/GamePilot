@@ -2,12 +2,13 @@
     of NPC blinks against the rolls that follow it: either the ticks between
     blinks or the blinks' types (single or double).
 
-    Port of the fork's
+    Port of
     [PokemonBDSP/Programs/RngManipulation/PokemonBDSP_StateReidentifier.{h,cpp}]
-    (R21: same scans, same match cap, same messages). The C++'s method enum and
-    its two vectors become one variant, so there is no "unknown method" failure;
-    where the C++ takes an optional [Logger] and logs a success, this port logs
-    nothing. Advances are OCaml [int]s (the C++ [uint64_t]). *)
+    (https://github.com/PokemonAutomation/Arduino-Source; R21: same scans, same
+    match cap, same messages). The C++'s method enum and its two vectors become
+    one variant, so there is no "unknown method" failure; where the C++ takes an
+    optional [Logger] and logs a success, this port logs nothing. Advances are
+    OCaml [int]s (the C++ [uint64_t]). *)
 
 type observation =
   | Intervals of int list
@@ -41,3 +42,8 @@ val reidentify_advances : request -> result
     types: the run of blinks on one NPC's rolls starting there must have the
     observed types; refused up front when fewer types than the range needs (one
     bit per blink). Succeeds only on exactly one match. *)
+
+val reidentify_with_pokemon_models :
+  Mixed_reidentifier.request -> Mixed_reidentifier.result
+(** [1PK] re-identification with one player and one 3D Pokemon model; delegates
+    to {!Mixed_reidentifier.reidentify}. *)

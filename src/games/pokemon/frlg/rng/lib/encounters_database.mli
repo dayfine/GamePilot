@@ -1,9 +1,10 @@
 (** The wild encounter slots of every location, by encounter type ([grass],
     [surfing], [rocksmash], [oldrod], [goodrod], [superrod]).
 
-    Port of the fork's
-    [PokemonFRLG/Programs/RngManipulation/PokemonFRLG_EncountersDatabase.cpp],
-    reading [src/games/pokemon/frlg/assets/encounter_slots_firered.json] (or
+    Port of
+    [PokemonFRLG/Programs/RngManipulation/PokemonFRLG_EncountersDatabase.cpp]
+    (https://github.com/PokemonAutomation/Arduino-Source), reading
+    [src/games/pokemon/frlg/assets/encounter_slots_firered.json] (or
     LeafGreen's), Packages' slots in the same shape: an object of types, each an
     object of locations, each an array of [{species, minLevel, maxLevel}]. *)
 

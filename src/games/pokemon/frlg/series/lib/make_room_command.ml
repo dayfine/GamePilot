@@ -106,8 +106,11 @@ let action f : Pokemon_engine.Game.game_action = fun _ _ -> f ()
 let failed code why =
   Error (Pokemon_engine.Failure.cause ~repeats:true code why)
 
-let soft_reset setup result log () =
-  match Pf.reload setup M.id log with
+let soft_reset setup ~picture result log () =
+  let expectation =
+    Switch.Initial_screen.In_game_or_resume setup.Pf.home_tile
+  in
+  match Pf.reload setup ~picture ~expectation M.id log with
   | () -> Ok ()
   | exception Pf.Not_back e ->
       result := Error ("could not return to the save: " ^ e);
@@ -132,10 +135,10 @@ let plan_deposit decide members result say log () =
 
 (* The shadow plan's steps (Frlg_checkpoints.Shadow_plan.make_room_steps); the
    party read and the decision in [result]. *)
-let actions (setup : Pf.setup) decide result say log =
+let actions (setup : Pf.setup) ~picture decide result say log =
   let members = ref [] in
   [
-    ("soft_reset", action (soft_reset setup result log));
+    ("soft_reset", action (soft_reset setup ~picture result log));
     ("read_party", action (read_members members result log));
     ("plan_deposit", action (plan_deposit decide members result say log));
   ]
@@ -146,12 +149,13 @@ let shadow_plan =
 
 (* In the session: the shadow plan through the checkpoint runner, on the
    page. *)
-let session setup world decide say log () =
+let session setup world decide say log (backend : Wire.backend) =
+  let picture = backend.viewport in
   let result = ref (Error "the party read did not finish") in
   (match
      Frlg_checkpoints.Plan_watch.run_shadow ~mode:"preflight" ~log world
        shadow_plan
-       (actions setup decide result say)
+       (actions setup ~picture decide result say)
    with
   | Ok () -> ()
   | Error f when Result.is_ok !result ->
@@ -160,7 +164,7 @@ let session setup world decide say log () =
   !result
 
 let read_live setup world decide say log port =
-  match Live.run ~port (session setup world decide say log) with
+  match Live.run_with_backend ~port (session setup world decide say log) with
   | result -> result
   | exception Effects.Disconnected e -> Error ("disconnected: " ^ e)
 

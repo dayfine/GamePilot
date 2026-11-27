@@ -95,6 +95,15 @@ void check_requests(const std::map<std::string, pa::JsonValue>& files) {
   CHECK(title.probes.size() == 1);
   CHECK(title.probes[0].ink && title.probes[0].skip_seams);
 
+  const SubscribeParams ncc = decode_subscribe(
+      decode_request(files.at("56-subscribe.template_ncc.request.json"))
+          .params);
+  CHECK(ncc.probes.size() == 1);
+  CHECK(ncc.probes[0].kind == kTemplateNccKind &&
+        ncc.probes[0].delivery == "every" &&
+        ncc.probes[0].template_hash.size() == 64 && !ncc.probes[0].ink &&
+        !ncc.probes[0].skip_seams);
+
   const Request unsubscribe =
       decode_request(files.at("21-unsubscribe.request.json"));
   CHECK(unsubscribe.method == "unsubscribe");
@@ -155,6 +164,13 @@ void check_requests(const std::map<std::string, pa::JsonValue>& files) {
   CHECK(batch.commands[0].hold_ms == 100 &&
         batch.commands[0].cooldown_ms == 100);
   CHECK(batch.commands[1].is_wait && batch.commands[1].wait_ms == 250);
+  CHECK(!batch.start_at_t_ms.has_value());
+
+  const SubmitParams timed = decode_submit(
+      decode_request(files.at("59-submit.start_at.request.json")).params);
+  CHECK(timed.batch_id == "timed1" && timed.start_at_t_ms == 25000.5 &&
+        timed.commands.size() == 1 &&
+        timed.commands[0].buttons == button_mask("A"));
 
   // The Switch's Home, and its refusal by a backend without it.
   const SubmitParams home = decode_submit(
@@ -346,7 +362,8 @@ void check_encoders(const std::map<std::string, pa::JsonValue>& files) {
   // The program's watch notes are notifications the daemon passes to the page.
   for (const char* name :
        {"30-watch_plan.notification.json", "31-watch_log.notification.json",
-        "33-watch_run.notification.json"}) {
+        "33-watch_run.notification.json",
+        "60-watch_counters.notification.json"}) {
     const Request note = decode_request(files.at(name));
     CHECK(!note.has_id && note.method.starts_with("watch."));
   }
@@ -361,6 +378,12 @@ void check_encoders(const std::map<std::string, pa::JsonValue>& files) {
                            probe_results_json({{"cursor", cursor},
                                                {"bag.1/TM CASE", word}})) ==
         files.at("18-frame.template_match.notification.json"));
+  const ProbeResult eye = TemplateNcc{0.874215, 0.4625, 0.41296};
+  CHECK(frame_notification(1001, 0, 16683.3,
+                           probe_results_json({{"eye.player", eye}})) ==
+        files.at("57-frame.template_ncc.notification.json"));
+  CHECK(gap_notification(1002, 1004, 16683.3, 16750.0) ==
+        files.at("58-gap.notification.json"));
   CHECK(result_message(pa::JsonValue(std::int64_t{10}),
                        unsubscribe_result({"bag.1/TM CASE"})) ==
         files.at("22-unsubscribe.response.json"));
@@ -560,6 +583,27 @@ void check_errors() {
           .c_str()));  // skip_seams is a boolean
   CHECK(subscribe_error((find + filter + R"(,"min_area":1,"skip_seams":true})")
                             .c_str()));  // skip_seams only for template_match
+  const std::string ncc_probe =
+      std::string(R"({"id":"p","kind":"core.template_ncc@1",)") + kBox;
+  CHECK(subscribe_error((ncc_probe + "}").c_str()));  // needs template
+  CHECK(subscribe_error(
+      (ncc_probe +
+       R"(,"template":"t","ink":{"min":[0,0,0],"max":[1,1,1]}})")
+          .c_str()));  // no ink on template_ncc
+  CHECK(subscribe_error(
+      (ncc_probe + R"(,"template":"t","skip_seams":true})")
+          .c_str()));  // no skip_seams on template_ncc
+
+  threw = false;
+  try {
+    decode_submit(
+        parse_message(
+            R"({"batch_id":"x","start_at_t_ms":-1,"commands":[]})")
+            .to_object_throw());
+  } catch (const RpcError& error) {
+    threw = error.code() == kInvalidParams;
+  }
+  CHECK(threw);  // start_at_t_ms must be >= 0
 
   // A stick is [x, y], each a number in -1..1.
   const auto stick_error = [](const char* stick) {
@@ -606,7 +650,7 @@ int main() {
   const auto files = load_contracts();
   // One per protocol/v1 golden file. The checks below index files by name,
   // so they run only when every one is there.
-  constexpr std::size_t kGoldenFiles = 55;
+  constexpr std::size_t kGoldenFiles = 60;
   CHECK(files.size() == kGoldenFiles);
   if (files.size() == kGoldenFiles) {
     check_requests(files);

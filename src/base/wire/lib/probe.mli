@@ -33,8 +33,8 @@ type probe_spec = {
   box : box;
   delivery : delivery;
   template : string option;
-      (** [core.template_match@1] and [core.find@1] only: the hash
-          [probe.upload_template] returned on this connection. *)
+      (** [core.template_match@1], [core.template_ncc@1] and [core.find@1] only:
+          the hash [probe.upload_template] returned on this connection. *)
   ink : color_range option;
       (** [core.template_match@1] only: compare the masks of the pixels in this
           range instead of the colors. *)
@@ -68,6 +68,12 @@ val template_match_probe :
     pixels lie in that range instead of their colours, and with [skip_seams]
     (default [false]; ignored without [ink]) only the scaled mask's whole
     pixels. *)
+
+val template_ncc_probe :
+  id:string -> box:box -> delivery:delivery -> template:string -> probe_spec
+(** A [core.template_ncc@1] probe: grayscale zero-mean normalized
+    cross-correlation ([-1..1], higher is better) of the uploaded template whose
+    hash is [template] inside [box]. *)
 
 val color_count_probe :
   id:string ->
@@ -117,6 +123,10 @@ type probe_result =
   | Template_match of { score : float; x : float; y : float }
       (** [core.template_match@1]: the best placement's difference from the
           template (0 = identical, lower is better) and its top-left corner,
+          normalized to the game picture *)
+  | Template_ncc of { score : float; x : float; y : float }
+      (** [core.template_ncc@1]: the best placement's grayscale normalized
+          cross-correlation ([-1..1], higher is better) and its top-left corner,
           normalized to the game picture *)
   | Color_count of { fraction : float; mean : rgb option }
       (** [core.color_count@1]: the box's pixels in range over all its pixels,

@@ -3,6 +3,7 @@
  (public_name gamepilot.plza_bank_home_series)
  (libraries
   gamepilot.effects
+  gamepilot.switch
   gamepilot.watch_report
   gamepilot.repo_io
   gamepilot.engine_run

@@ -16,6 +16,7 @@ type t = {
   max_file_lines : int;
   max_interface_lines : int;
   complexity_advisory : int;
+  flat_constants_max : int;
   layers : layer list;
   allowed : (string * string list) list;
   families : family list;
@@ -39,6 +40,7 @@ let default =
     max_file_lines = 300;
     max_interface_lines = 300;
     complexity_advisory = 10;
+    flat_constants_max = 15;
     layers = [];
     allowed = [];
     families = [];
@@ -85,6 +87,9 @@ let set_threshold c key v =
   | "complexity_advisory" ->
       let* n = int_value key v in
       Ok { c with complexity_advisory = n }
+  | "flat_constants_max" ->
+      let* n = int_value key v in
+      Ok { c with flat_constants_max = n }
   | _ -> Error (Printf.sprintf "unknown key '%s'" key)
 
 let apply_line c = function

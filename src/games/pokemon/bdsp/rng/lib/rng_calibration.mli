@@ -4,12 +4,13 @@
     press.
 
     Port of the fork's
-    [PokemonBDSP/Programs/RngManipulation/PokemonBDSP_RngCalibration.{h,cpp}],
-    with the two stat formulas it calls from [Pokemon/Pokemon_StatsCalculation]
-    (R21: same 16-bit integer arithmetic, same order, same messages). Readings
-    that were not taken are [None] where the C++ uses -1 or a [*_known] flag.
-    The C++'s observed nature is a [NatureCheckerValue], which maps one to one
-    onto the game's nature index; this port keeps the index. *)
+    [PokemonBDSP/Programs/RngManipulation/PokemonBDSP_RngCalibration.{h,cpp}]
+    (https://github.com/dayfine/Arduino-Source), with the two stat formulas it
+    calls from [Pokemon/Pokemon_StatsCalculation] (R21: same 16-bit integer
+    arithmetic, same order, same messages). Readings that were not taken are
+    [None] where the C++ uses -1 or a [*_known] flag. The C++'s observed nature
+    is a [NatureCheckerValue], which maps one to one onto the game's nature
+    index; this port keeps the index. *)
 
 type adjustment =
   | Neutral
@@ -21,7 +22,7 @@ val nature_adjustment : nature:int -> stat_index:int -> adjustment
     Speed, Sp. Atk, Sp. Def (the game's nature table); [Neutral] for an index or
     nature out of range and for the five neutral natures. *)
 
-type 'a per_stat = {
+type 'a per_stat = 'a Static_encounter.per_stat = {
   hp : 'a;
   attack : 'a;
   defense : 'a;
@@ -71,15 +72,18 @@ type miss = {
 (** Why no single advance was found. *)
 
 val identify_hit_advance :
+  ?synchronize_nature:int option ->
   Xorshift128.state ->
   Static_encounter.template ->
   intended_advance:int ->
   radius:int ->
   observed ->
   (hit, miss) result
-(** [identify_hit_advance]: the one advance within [radius] of the intended one
-    (TSV 0, no Synchronize) whose Pokemon is {!consistent_with} the reading.
-    [Error] when none or several are, with the C++'s [failure_reason]. *)
+(** [identify_hit_advance ?synchronize_nature state template ~intended_advance
+     ~radius observed]: the one advance within [radius] of the intended one (TSV
+    0, with [synchronize_nature] defaulting to [None]) whose Pokemon is
+    {!consistent_with} the reading. [Error] when none or several are, with the
+    C++'s [failure_reason]. *)
 
 val advances_between :
   from:Xorshift128.state ->

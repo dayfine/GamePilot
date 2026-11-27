@@ -22,30 +22,43 @@ let body = Game_pixels.box { x = 24.; y = 56.; w = 88.; h = 8. }
 let strip = Game_pixels.box { x = 12.; y = 130.; w = 16.; h = 12. }
 
 (* A badge slot's middle: the slot's 16 by 16 less 2 pixels each side. *)
-let first_badge_x = 34.
-let badge_pitch = 24.
-let badge_y = 130.
-let badge_side = 12.
-let first_star_x = 120.
-let star_y = 56.
-let star_side = 8.
+type slot_geom = {
+  first_badge_x : float;
+  badge_pitch : float;
+  badge_y : float;
+  badge_side : float;
+  first_star_x : float;
+  star_y : float;
+  star_side : float;
+}
+
+let geom =
+  {
+    first_badge_x = 34.;
+    badge_pitch = 24.;
+    badge_y = 130.;
+    badge_side = 12.;
+    first_star_x = 120.;
+    star_y = 56.;
+    star_side = 8.;
+  }
 
 let badge_box i =
   Game_pixels.box
     {
-      x = first_badge_x +. (badge_pitch *. float i);
-      y = badge_y;
-      w = badge_side;
-      h = badge_side;
+      x = geom.first_badge_x +. (geom.badge_pitch *. float i);
+      y = geom.badge_y;
+      w = geom.badge_side;
+      h = geom.badge_side;
     }
 
 let star_box k =
   Game_pixels.box
     {
-      x = first_star_x +. (star_side *. float k);
-      y = star_y;
-      w = star_side;
-      h = star_side;
+      x = geom.first_star_x +. (geom.star_side *. float k);
+      y = geom.star_y;
+      w = geom.star_side;
+      h = geom.star_side;
     }
 
 let dark_max = 100

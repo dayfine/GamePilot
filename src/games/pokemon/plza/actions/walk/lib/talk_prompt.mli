@@ -16,14 +16,17 @@ type game_steps = {
 }
 (** What the talk reads and does in the game (the walk's own steps). *)
 
-val talk :
-  game_steps ->
-  string ->
-  held_ms:int ->
-  (unit, Engine_run.Failure.cause) result option
-(** [talk steps walk ~held_ms]: [Some (Ok ())] once the talk started,
-    [Some (Error _)] when the prompt stayed up, [None] when it went with nothing
-    started. [held_ms] (of the last leg) is for the log. *)
+(** Outcome of pressing A on an A prompt during a walk into a talk. *)
+type talk_result =
+  | Started  (** A scene is under way on two reads in a row. *)
+  | Prompt_stayed of Engine_run.Failure.cause
+      (** The prompt stayed up after three As with nothing open. *)
+  | Nothing_started  (** The prompt went with nothing started. *)
+
+val talk : game_steps -> string -> held_ms:int -> talk_result
+(** [talk steps walk ~held_ms]: presses A on the prompt until a talk starts, the
+    prompt stays up after three As, or the prompt goes with nothing started.
+    [held_ms] (of the last leg) is for the log. *)
 
 val press_through : game_steps -> unit
 (** Through a prompt, as PokemonLZA_AutoStoryWalks.cpp: A on the prompt until

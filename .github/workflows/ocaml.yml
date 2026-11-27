@@ -66,6 +66,9 @@ jobs:
           status=${PIPESTATUS[0]}
           if [ "$status" -ne 0 ]; then sh ../dev/ci/report_test_failures.sh dune-test.log; fi
           exit "$status"
+      - name: Run Hub JS UI tests (Node, dev-only)
+        if: runner.os == 'Linux'
+        run: node --test src/hub/test/test_hub_ui.mjs
       - name: Check the user guides (docs/guide/) against the registry and the plans
         if: runner.os == 'Linux'
         working-directory: src

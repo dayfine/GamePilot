@@ -72,6 +72,7 @@ module Blob_find = Blob_find
 
 let color_stats_probe = Probe.color_stats_probe
 let template_match_probe = Probe.template_match_probe
+let template_ncc_probe = Probe.template_ncc_probe
 let color_count_probe = Probe.color_count_probe
 let line_shares_probe = Probe.line_shares_probe
 let find_probe = Probe.find_probe
@@ -81,6 +82,7 @@ type rgb = Probe.rgb = { r : float; g : float; b : float }
 type probe_result = Probe.probe_result =
   | Color_stats of { mean : rgb; stddev : rgb }
   | Template_match of { score : float; x : float; y : float }
+  | Template_ncc of { score : float; x : float; y : float }
   | Color_count of { fraction : float; mean : rgb option }
   | Line_shares of Line_shares.t
   | Find of { blobs : Blob_find.blob list }
@@ -136,7 +138,11 @@ type call = Jsonrpc.call =
   | Upload_template of { png : string }
   | Subscribe of probe_spec list
   | Unsubscribe of string list
-  | Submit of { batch_id : string; commands : command list }
+  | Submit of {
+      batch_id : string;
+      start_at_t_ms : float option;
+      commands : command list;
+    }
   | Cancel
   | Cancel_then of { batch_id : string; commands : command list }
   | Status
@@ -146,12 +152,21 @@ type call = Jsonrpc.call =
 type request = Jsonrpc.request = { id : int; call : call }
 type response = Jsonrpc.response = { id : int; outcome : (json, error) result }
 
+type gap = Jsonrpc.gap = {
+  from_seq : int;
+  to_seq : int;
+  from_t_ms : float;
+  to_t_ms : float;
+}
+
 type notification = Jsonrpc.notification =
   | Frame of { load : int; frame : frame }
+  | Gap of gap
   | Batch_done of batch_done
   | Watch_plan of Watch.plan
   | Watch_log of string
   | Watch_run of Watch_run.t
+  | Watch_counters of Watch.counter list
   | Stop of string
   | Keepawake of { key : string; idle_ms : int }
 
