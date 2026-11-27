@@ -12,6 +12,7 @@
   gamepilot.strings
   gamepilot.grid_planning
   gamepilot.pokemon_engine
+  gamepilot.pokemon_catch
   gamepilot.room_policy
   gamepilot.frlg_readers
   gamepilot.frlg_menu_cursor

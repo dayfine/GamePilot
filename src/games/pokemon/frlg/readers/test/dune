@@ -103,3 +103,13 @@
   gamepilot.effects
   gamepilot.table_test
   gamepilot.frlg_readers))
+
+(test
+ (name test_battle_hud)
+ (modules test_battle_hud)
+ (libraries gamepilot.wire gamepilot.effects gamepilot.frlg_readers))
+
+(test
+ (name test_shiny_encounter_detector)
+ (modules test_shiny_encounter_detector)
+ (libraries gamepilot.wire gamepilot.effects gamepilot.frlg_readers))
