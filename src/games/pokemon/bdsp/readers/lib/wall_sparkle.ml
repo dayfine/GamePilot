@@ -1,120 +1,156 @@
 open Bdsp_underground
 module PB = Switch_home.Picture_box
-module CS = Switch_home.Color_share
+module BF = Wire.Blob_find
 
-type offset = { dx : int; dy : int }
+type offset = { dx : int; dy : int; dx_norm : float; dy_norm : float }
 
-(* 3x3 screen grid around the player (x=0.50, y=0.48), excluding the top-left
-   minimap (x<0.24, y<0.36). Row 0 starts at y=0.06 so North-wall stars stay
-   inside row 0; col 0 extends left to x=0.14 in rows 1-2 (below the minimap)
-   so oblique West-wall stars are covered, and col 2 extends to x=0.88 so
-   East-wall stars are covered even when hugging the West wall. *)
-let col_left_top_x = 0.25
-let col_left_top_w = 0.17
-let col_left_x = 0.14
-let col_left_w = 0.28
-let col_mid_x = 0.42
-let col_mid_w = 0.16
-let col_right_x = 0.58
-let col_right_w = 0.30
-let row_top_y = 0.06
-let row_top_h = 0.30
-let row_mid_y = 0.36
-let row_mid_h = 0.22
-let row_bot_y = 0.58
-let row_bot_h = 0.28
+type star_config = {
+  min_r : int;
+  min_g : int;
+  min_b : int;
+  max_ch : int;
+  min_area : float;
+  max_area : float;
+  static_match_px : float;
+}
 
-let row_bounds =
-  [| (row_top_y, row_top_h); (row_mid_y, row_mid_h); (row_bot_y, row_bot_h) |]
+type playfield_geometry = {
+  game_w : float;
+  game_h : float;
+  player_x : float;
+  player_y : float;
+  exclude_dx : float;
+  exclude_dy : float;
+  deadzone_x : float;
+  deadzone_y : float;
+}
 
-let col_bounds_for ri ci =
-  match ci with
-  | 0 ->
-      if ri = 0 then (col_left_top_x, col_left_top_w)
-      else (col_left_x, col_left_w)
-  | 1 -> (col_mid_x, col_mid_w)
-  | _ -> (col_right_x, col_right_w)
+(* Two playfield boxes excluding the top-left minimap (x < 0.24, y < 0.36). *)
+let right_box : Wire.box = { x = 0.24; y = 0.04; w = 0.72; h = 0.86 }
+let left_box : Wire.box = { x = 0.08; y = 0.36; w = 0.16; h = 0.54 }
+let right_probe_id = "bdsp_wall_star_right"
+let left_probe_id = "bdsp_wall_star_left"
 
-let star_r_min = 240
-let star_g_min = 245
-let star_b_min = 235
-let star_r_max = 255
-let star_g_max = 255
-let star_b_max = 255
-let star_min = (star_r_min, star_g_min, star_b_min)
-let star_max = (star_r_max, star_g_max, star_b_max)
-let torch_r_min = 240
-let torch_g_min = 0
-let torch_b_min = 0
-let torch_r_max = 255
-let torch_g_max = 140
-let torch_b_max = 40
-let torch_min = (torch_r_min, torch_g_min, torch_b_min)
-let torch_max = (torch_r_max, torch_g_max, torch_b_max)
+(* Measured from Console A captures run-2/000231.jpg, prev-run-2/000268.jpg,
+   and run-1/000128.jpg: sparkle stars have bright white-gold cores in RGB
+   (245..255, 240..255, 230..255) with area 50..2500 px on 1920x1080, while
+   expanding cyan radar rings exceed 2500 px and red-orange wall torches have
+   blue < 140 (or stay static across pre/post radar frames). *)
+let star =
+  {
+    min_r = 245;
+    min_g = 240;
+    min_b = 230;
+    max_ch = 255;
+    min_area = 50.;
+    max_area = 2500.;
+    static_match_px = 35.;
+  }
 
-(* Area-normalized screen-fraction thresholds (share * box.w * box.h) so the
-   same sparkle star scores identically in wide side cells (East/West walls)
-   and narrow center cells. Measured from run-64, run-74, and run-78/000055.jpg:
-   wall torches have ~765 red-orange halo pixels (screen share ~0.0033) while
-   sparkle stars have 0 red-orange halo pixels. *)
-let min_star_screen_share = 0.000045
-let min_diff_screen_share = 0.000025
-let max_torch_screen_share = 0.0008
-let cell_id ci ri = Printf.sprintf "bdsp_wall_star_%d_%d" ci ri
-let torch_id ci ri = Printf.sprintf "bdsp_wall_torch_%d_%d" ci ri
+let field =
+  {
+    game_w = 1920.;
+    game_h = 1080.;
+    player_x = 0.50;
+    player_y = 0.48;
+    exclude_dx = 0.035;
+    exclude_dy = 0.055;
+    deadzone_x = 0.035;
+    deadzone_y = 0.045;
+  }
 
-let all_cells =
-  List.concat_map (fun ri -> List.init 3 (fun ci -> (ci, ri))) [ 0; 1; 2 ]
+let star_filter : BF.filter =
+  {
+    low = (star.min_r, star.min_g, star.min_b);
+    high = (star.max_ch, star.max_ch, star.max_ch);
+  }
 
-let cell_box ci ri : Wire.box =
-  let x, w = col_bounds_for ri ci in
-  let y, h = row_bounds.(ri) in
-  { x; y; w; h }
+let find_params =
+  match
+    BF.params ~filters:[ star_filter ] ~min_area:star.min_area
+      ~max_area:star.max_area ()
+  with
+  | Ok p -> p
+  | Error _ ->
+      {
+        BF.filters = [ star_filter ];
+        min_area = star.min_area;
+        max_area = Some star.max_area;
+        min_size = None;
+        max_size = None;
+        margin = None;
+        shape = None;
+        masked = false;
+      }
 
-let cell_area ci ri =
-  let b = cell_box ci ri in
-  b.w *. b.h
+let make_probe ~picture id box =
+  Option.map
+    (fun b -> Wire.find_probe ~id ~box:b ~delivery:Every find_params)
+    (PB.clipped ~picture box)
 
-let make_probes ~picture (ci, ri) =
-  match PB.clipped ~picture (cell_box ci ri) with
-  | None -> []
-  | Some b ->
-      [
-        Wire.color_count_probe ~id:(cell_id ci ri) ~box:b ~min:star_min
-          ~max:star_max ~delivery:Every;
-        Wire.color_count_probe ~id:(torch_id ci ri) ~box:b ~min:torch_min
-          ~max:torch_max ~delivery:Every;
-      ]
+let probes ~picture =
+  List.filter_map Fun.id
+    [
+      make_probe ~picture right_probe_id right_box;
+      make_probe ~picture left_probe_id left_box;
+    ]
 
-let probes ~picture = List.concat_map (make_probes ~picture) all_cells
-let share m id = Option.value (CS.read m id) ~default:0.
+let blobs_of m id =
+  match Effects.probe m id with Some (Wire.Find { blobs }) -> blobs | _ -> []
 
-let has_torch m ci ri =
-  share m (torch_id ci ri) *. cell_area ci ri >= max_torch_screen_share
+let all_blobs m = blobs_of m right_probe_id @ blobs_of m left_probe_id
+let blob_center (b : BF.blob) = (b.x +. (b.w /. 2.), b.y +. (b.h /. 2.))
+let blob_area (b : BF.blob) = b.w *. b.h *. b.fill
 
-let pick_better ~min_score ~torch_frame score_of acc (ci, ri) =
-  if has_torch torch_frame ci ri then acc
-  else
-    let s = score_of (cell_id ci ri) *. cell_area ci ri in
+let on_player_sprite (b : BF.blob) =
+  let cx, cy = blob_center b in
+  let nx = cx /. field.game_w and ny = cy /. field.game_h in
+  Float.abs (nx -. field.player_x) < field.exclude_dx
+  && Float.abs (ny -. field.player_y) < field.exclude_dy
+
+let near_any_before before (b : BF.blob) =
+  let cx, cy = blob_center b in
+  List.exists
+    (fun prev ->
+      let px, py = blob_center prev in
+      Float.abs (cx -. px) <= star.static_match_px
+      && Float.abs (cy -. py) <= star.static_match_px)
+    before
+
+let sign_with_deadzone dz v = if v < -.dz then -1 else if v > dz then 1 else 0
+
+let offset_of_blob (b : BF.blob) =
+  let cx, cy = blob_center b in
+  let dx_norm = (cx /. field.game_w) -. field.player_x in
+  let dy_norm = (cy /. field.game_h) -. field.player_y in
+  {
+    dx = sign_with_deadzone field.deadzone_x dx_norm;
+    dy = sign_with_deadzone field.deadzone_y dy_norm;
+    dx_norm;
+    dy_norm;
+  }
+
+let pick_largest blobs =
+  let step acc b =
+    let a = blob_area b in
     match acc with
-    | None when s >= min_score -> Some (ci, ri, s)
-    | Some (_, _, bs) when s > bs -> Some (ci, ri, s)
+    | None -> Some (b, a)
+    | Some (_, best_a) when a > best_a -> Some (b, a)
     | _ -> acc
-
-let best_cell ~min_score ~torch_frame score_of =
-  let best =
-    List.fold_left (pick_better ~min_score ~torch_frame score_of) None all_cells
   in
-  Option.map (fun (ci, ri, _) -> { dx = ci - 1; dy = ri - 1 }) best
+  Option.map (fun (b, _) -> offset_of_blob b) (List.fold_left step None blobs)
 
 let locate m =
-  best_cell ~min_score:min_star_screen_share ~torch_frame:m (share m)
+  all_blobs m |> List.filter (fun b -> not (on_player_sprite b)) |> pick_largest
 
 let locate_diff ~before ~after =
-  best_cell ~min_score:min_diff_screen_share ~torch_frame:after (fun id ->
-      share after id -. share before id)
+  let static = all_blobs before in
+  all_blobs after
+  |> List.filter (fun b ->
+         (not (on_player_sprite b)) && not (near_any_before static b))
+  |> pick_largest
 
-let dir_of_offset { dx; dy } =
+let dir_of_offset { dx; dy; _ } =
   if dy < 0 then Corridor_nav.North
   else if dy > 0 then Corridor_nav.South
   else if dx > 0 then Corridor_nav.East
