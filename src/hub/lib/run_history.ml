@@ -18,13 +18,19 @@ let checkpoint_games =
          List.map (fun cp -> (cp, p.game.game_id)) (Ui_api.checkpoints_of p))
        Program_registry.all)
 
+let is_game_prefix s =
+  let len = String.length s in
+  len > 0 && s.[0] >= 'a' && s.[0] <= 'z'
+
 let infer_game checkpoint =
-  match String.index_opt checkpoint '.' with
-  | Some i when i > 0 -> String.sub checkpoint 0 i
-  | _ -> (
-      match List.assoc_opt checkpoint (Lazy.force checkpoint_games) with
-      | Some g -> g
-      | None -> "")
+  match List.assoc_opt checkpoint (Lazy.force checkpoint_games) with
+  | Some g -> g
+  | None -> (
+      match String.index_opt checkpoint '.' with
+      | Some i when i > 0 ->
+          let prefix = String.sub checkpoint 0 i in
+          if is_game_prefix prefix then prefix else ""
+      | _ -> "")
 
 let field_at cols i =
   match List.nth_opt cols i with Some s -> String.trim s | None -> ""

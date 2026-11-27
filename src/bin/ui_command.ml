@@ -74,7 +74,10 @@ let serve (f : flags) =
   let config_path =
     Option.value f.config ~default:(Console_config.default_path ())
   in
-  let st = Ui_hub.Run_manager.create ~config_path ?runs_dir:f.runs_dir () in
+  let st =
+    Ui_hub.Run_manager.create ~config_path ?runs_dir:f.runs_dir ~listen:f.listen
+      ()
+  in
   let sock = Unix.socket Unix.PF_INET Unix.SOCK_STREAM 0 in
   Unix.setsockopt sock Unix.SO_REUSEADDR true;
   let addr = Unix.inet_addr_of_string f.listen in

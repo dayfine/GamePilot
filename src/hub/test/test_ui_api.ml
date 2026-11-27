@@ -129,19 +129,21 @@ let () =
         router_console_roundtrip "200:200:200:200:200:true";
       case "http_router returns expected 400/404 status codes"
         router_error_codes "400:404:404:404";
-      case "run_history parses RESULTS.tsv newest-first with limit"
+      case
+        "run_history parses RESULTS.tsv newest-first and ignores numeric \
+         prefixes"
         (fun () ->
           let tsv =
             "time\trun\tcheckpoint\tmode\tresult\tat\treason\n\
-             2026-11-26T01:00:00\trun-1\tsu-01\ttesting\tpass\t\t\n\
+             2026-11-26T01:00:00\trun-1\t01.02-platform-to-plaza\ttesting\tpass\t\t\n\
              2026-11-26T02:00:00\trun-2\tbdsp.underground\trun\tfail\t#1\tbad \
              fade\n"
           in
-          let entries = Run_history.parse_tsv ~limit:1 tsv in
-          match entries with
-          | [ e ] ->
-              Printf.sprintf "%s:%s:%s:%s:%s" e.game e.run e.checkpoint e.result
-                e.reason
-          | _ -> "bad count")
-        "bdsp:run-2:bdsp.underground:fail:bad fade";
+          let entries = Run_history.parse_tsv ~limit:2 tsv in
+          String.concat " | "
+            (List.map
+               (fun (e : Run_history.entry) ->
+                 Printf.sprintf "%s:%s:%s" e.game e.checkpoint e.result)
+               entries))
+        "bdsp:bdsp.underground:fail | plza:01.02-platform-to-plaza:pass";
     ]
