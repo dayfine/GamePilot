@@ -30,6 +30,21 @@ let game =
         };
   }
 
+let program ~id ~name ~category ~description ~dir ~backends ?(options = []) () =
+  {
+    id;
+    game;
+    name;
+    category;
+    description;
+    doc = "docs/guide/" ^ id ^ ".md";
+    checkpoints = Some ("src/games/pokemon/frlg/programs/" ^ dir ^ "/plans");
+    backends;
+    viewport = Nso_gba;
+    rules = Pokemon_grid;
+    options;
+  }
+
 let sweeper_option : Run_options.declared =
   {
     key = "sweeper";
@@ -39,156 +54,110 @@ let sweeper_option : Run_options.declared =
   }
 
 let sevii_story =
-  {
-    id = "frlg.sevii_story";
-    game;
-    name = "Sevii Story";
-    category = Story;
-    description = "Plays the Sevii Islands story after the Cinnabar Gym.";
-    doc = "docs/guide/frlg.sevii_story.md";
-    checkpoints = Some "src/games/pokemon/frlg/programs/sevii_story/plans";
-    backends = [ Mgba ];
-    viewport = Nso_gba;
-    rules = Pokemon_grid;
-    options = [ sweeper_option ];
-  }
+  program ~id:"frlg.sevii_story" ~name:"Sevii Story" ~category:Story
+    ~description:"Plays the Sevii Islands story after the Cinnabar Gym."
+    ~dir:"sevii_story" ~backends:[ Mgba ] ~options:[ sweeper_option ] ()
+
+let mail_glitch_options : Run_options.declared list =
+  [
+    sweeper_option;
+    {
+      key = "depleted-move";
+      value = Text;
+      presence = Default "blizzard";
+      doc =
+        "sweeper move whose PP is drained on Route 8 so the Leppa Berry fires";
+    };
+  ]
 
 let mail_glitch =
-  {
-    id = "frlg.mail_glitch";
-    game;
-    name = "Mail Glitch";
-    category = Glitch_setup;
-    description =
+  program ~id:"frlg.mail_glitch" ~name:"Mail Glitch" ~category:Glitch_setup
+    ~description:
       "Turns on the Mail Glitch against Lea & Jed on Route 16 and copies one \
-       item with it.";
-    doc = "docs/guide/frlg.mail_glitch.md";
-    checkpoints = Some "src/games/pokemon/frlg/programs/mail_glitch/plans";
-    backends = [ Mgba; Switch ];
-    viewport = Nso_gba;
-    rules = Pokemon_grid;
-    options =
-      [
-        sweeper_option;
-        {
-          key = "depleted-move";
-          value = Text;
-          presence = Default "blizzard";
-          doc =
-            "sweeper move whose PP is drained on Route 8 so the Leppa Berry \
-             fires";
-        };
-      ];
-  }
+       item with it."
+    ~dir:"mail_glitch" ~backends:[ Mgba; Switch ] ~options:mail_glitch_options
+    ()
 
 let ace_setup =
-  {
-    id = "frlg.ace_setup";
-    game;
-    name = "ACE Setup";
-    category = Glitch_setup;
-    description =
+  program ~id:"frlg.ace_setup" ~name:"ACE Setup" ~category:Glitch_setup
+    ~description:
       "Sets up arbitrary code execution: the ? Mail puts species 0x0351 in Box \
-       3 slot 1.";
-    doc = "docs/guide/frlg.ace_setup.md";
-    checkpoints = Some "src/games/pokemon/frlg/programs/ace_setup/plans";
-    backends = [ Mgba ];
-    viewport = Nso_gba;
-    rules = Pokemon_grid;
-    options = [];
-  }
+       3 slot 1."
+    ~dir:"ace_setup" ~backends:[ Mgba ] ()
 
 (* The most of one item the bag holds. *)
 let bag_most = 999
 
+let ace_options : Run_options.declared list =
+  [
+    {
+      key = "item";
+      value = One_of [ "master-ball"; "luxury-ball" ];
+      presence = Required;
+      doc = "the item the code makes, 999 of it in the PC's item storage";
+    };
+    {
+      key = "withdraw";
+      value = Int_range (1, bag_most);
+      presence = Required;
+      doc = "how many of them go from the PC to the bag";
+    };
+  ]
+
 let ace =
-  {
-    id = "frlg.ace";
-    game;
-    name = "ACE";
-    category = Glitch_setup;
-    description =
+  program ~id:"frlg.ace" ~name:"ACE" ~category:Glitch_setup
+    ~description:
       "Runs code typed as PC box names through species 0x0351: 999 of an item \
-       in the PC, some of them to the bag.";
-    doc = "docs/guide/frlg.ace.md";
-    checkpoints = Some "src/games/pokemon/frlg/programs/ace/plans";
-    backends = [ Mgba ];
-    viewport = Nso_gba;
-    rules = Pokemon_grid;
-    options =
-      [
-        {
-          key = "item";
-          value = One_of [ "master-ball"; "luxury-ball" ];
-          presence = Required;
-          doc = "the item the code makes, 999 of it in the PC's item storage";
-        };
-        {
-          key = "withdraw";
-          value = Int_range (1, bag_most);
-          presence = Required;
-          doc = "how many of them go from the PC to the bag";
-        };
-      ];
-  }
+       in the PC, some of them to the bag."
+    ~dir:"ace" ~backends:[ Mgba ] ~options:ace_options ()
 
 let max_repels = 99
 
+let supplies_options : Run_options.declared list =
+  [
+    {
+      key = "retro-mail";
+      value = Int_range (0, bag_most);
+      presence = Default "100";
+      doc = "how many Retro Mail to buy at Celadon Dept. Store 4F (0 to skip)";
+    };
+    {
+      key = "super-repel";
+      value = Int_range (0, max_repels);
+      presence = Default "5";
+      doc = "how many Super Repels to buy at Lavender Mart (0 to skip)";
+    };
+  ]
+
 let supplies =
-  {
-    id = "frlg.supplies";
-    game;
-    name = "Supplies";
-    category = Farming;
-    description =
-      "Stocks what the duplication programs use: Retro Mail and Super Repels.";
-    doc = "docs/guide/frlg.supplies.md";
-    checkpoints = Some "src/games/pokemon/frlg/programs/supplies/plans";
-    backends = [ Mgba; Switch ];
-    viewport = Nso_gba;
-    rules = Pokemon_grid;
-    options =
-      [
-        {
-          key = "retro-mail";
-          value = Int_range (0, bag_most);
-          presence = Default "100";
-          doc =
-            "how many Retro Mail to buy at Celadon Dept. Store 4F (0 to skip)";
-        };
-        {
-          key = "super-repel";
-          value = Int_range (0, max_repels);
-          presence = Default "5";
-          doc = "how many Super Repels to buy at Lavender Mart (0 to skip)";
-        };
-      ];
-  }
+  program ~id:"frlg.supplies" ~name:"Supplies" ~category:Farming
+    ~description:
+      "Stocks what the duplication programs use: Retro Mail and Super Repels."
+    ~dir:"supplies" ~backends:[ Mgba; Switch ] ~options:supplies_options ()
 
 let max_candies = 99
 
+let team_training_options : Run_options.declared list =
+  [
+    {
+      key = "candies";
+      value = Int_range (1, max_candies);
+      presence = Default "98";
+      doc = "how many Rare Candies to duplicate into the bag";
+    };
+  ]
+
 let team_training =
-  {
-    id = "frlg.team_training";
-    game;
-    name = "Team Training";
-    category = Farming;
-    description = "Copies Rare Candies with the Mail Glitch to level the team.";
-    doc = "docs/guide/frlg.team_training.md";
-    checkpoints = Some "src/games/pokemon/frlg/programs/team_training/plans";
-    backends = [ Mgba; Switch ];
-    viewport = Nso_gba;
-    rules = Pokemon_grid;
-    options =
-      [
-        {
-          key = "candies";
-          value = Int_range (1, max_candies);
-          presence = Default "98";
-          doc = "how many Rare Candies to duplicate into the bag";
-        };
-      ];
-  }
+  program ~id:"frlg.team_training" ~name:"Team Training" ~category:Farming
+    ~description:"Copies Rare Candies with the Mail Glitch to level the team."
+    ~dir:"team_training" ~backends:[ Mgba; Switch ]
+    ~options:team_training_options ()
+
+let catcher_prep =
+  program ~id:"frlg.catcher_prep" ~name:"Catcher Prep" ~category:Farming
+    ~description:
+      "Catches and levels a Sleep and False Swipe catching pair for wild hunts."
+    ~dir:"catcher_prep" ~backends:[ Mgba; Switch ] ()
 
 (* 16-bit trainer and secret IDs (0..65535). *)
 let max_trainer_id = 0xffff
@@ -293,6 +262,7 @@ let all =
     ace;
     supplies;
     team_training;
+    catcher_prep;
     dex_collection;
     wild_rng;
   ]

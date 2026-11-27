@@ -44,6 +44,32 @@ postconditions:
 item retro-mail used 1
 marks mail, mail, mail, mail, mail, none
 no repeat
+== catcher_prep/plans/01-catch-paras.plan.json
+frlg 01-catch-paras from anywhere outdoors: 3 game_action, 3 route, 1 heal
+fly_route4: [fly] game_action {"town":"Route4"} => Route4 (12, 6) south
+to_mt_moon_b1f_paras: [run] route to MtMoon_B1F (42, 22) east
+catch_paras: [capture] game_action {"species":"paras","catches":1,"encounters":20,"balls":10,"ball":"ultra-ball","pace":"east"} skip_if party_has_species:paras,party_has_species:parasect
+save_after_catch: [save_game] game_action {}
+heal_route4.walk: [run] route to Route4_PokemonCenter_1F (7, 4) north
+heal_route4: heal
+outside_route4: [run] route to Route4 (12, 6) south
+retries 0
+postconditions:
+party includes paras
+no repeat
+== catcher_prep/plans/02-train-catchers.plan.json
+frlg 02-train-catchers from Route4 (12, 6) south: 3 game_action
+level_paras_spore: [candy_level] game_action {"species":"paras","target_level":27,"evolve":true,"learn":[{"move":"spore","replacing":"scratch"}],"expect_species":"parasect","expect_moves":["spore"]}
+level_farfetchd_false_swipe: [candy_level] game_action {"species":"farfetchd","target_level":46,"evolve":false,"learn":[{"move":"false-swipe","replacing":"leer"}],"expect_species":"farfetchd","expect_moves":["false-swipe"]}
+save_catchers: [save_game] game_action {}
+retries 0
+postconditions:
+party includes parasect, farfetchd
+parasect knows spore
+farfetchd knows false-swipe
+parasect at least Lv 27
+farfetchd at least Lv 46
+no repeat
 == dex_collection/plans/01-ultra-balls.plan.json
 frlg 01-ultra-balls from anywhere outdoors: 2 game_action, 3 route, 1 heal
 fly_indigo: [fly] game_action {"town":"IndigoPlateau"} => IndigoPlateau_Exterior (11, 7) south

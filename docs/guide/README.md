@@ -13,6 +13,7 @@ Each page ends with "How it works", for developers: the ported files, the mechan
 | [ACE](frlg.ace.md) | `frlg.ace` | mGBA | Runs code typed as PC box names through species 0x0351: 999 of an item in the PC, some of them to the bag. |
 | [Supplies](frlg.supplies.md) | `frlg.supplies` | mGBA, the Switch | Stocks what the duplication programs use: Retro Mail and Super Repels. |
 | [Team Training](frlg.team_training.md) | `frlg.team_training` | mGBA, the Switch | Copies Rare Candies with the Mail Glitch to level the team. |
+| [Catcher Prep](frlg.catcher_prep.md) | `frlg.catcher_prep` | mGBA, the Switch | Catches and levels a Sleep and False Swipe catching pair for wild hunts. |
 | [Dex Collection](frlg.dex_collection.md) | `frlg.dex_collection` | mGBA | Catches Pokemon the Pokedex lacks, toward the National Pokedex. |
 | [Wild RNG](frlg.wild_rng.md) | `frlg.wild_rng` | mGBA | Catches a chosen shiny wild Pokemon by timing the game's random numbers. |
 | [AutoStory](plza.autostory.md) | `plza.autostory` | the Switch | Plays the story from a new game, checkpoint by checkpoint. |

@@ -1,0 +1,69 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "checkpoint": {
+    "id": "01-catch-paras",
+    "title": "From anywhere outdoors: catch a Paras in Mt. Moon B1F, save, heal at Route 4 Center, outdoors",
+    "start": {"anywhere": "outdoors"},
+    "events": [
+      {
+        "id": "fly_route4",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {"town": "Route4"},
+        "declared_after": {"place": "route4_center_outside"},
+        "why": "Fly to Route 4's Pokemon Center, just west of Mt. Moon's main entrance."
+      },
+      {
+        "id": "to_mt_moon_b1f_paras",
+        "kind": "route",
+        "action": "run",
+        "args": {"target": {"place": "mt_moon_b1f_paras"}},
+        "why": "Enter Mt. Moon 1F and descend the east ladder to B1F, where 100% of wild encounters are Paras (Lv 5-10)."
+      },
+      {
+        "id": "catch_paras",
+        "kind": "game_action",
+        "action": "capture",
+        "args": {
+          "species": "paras",
+          "catches": 1,
+          "encounters": 20,
+          "balls": 10,
+          "ball": "ultra-ball",
+          "pace": "east"
+        },
+        "skip_if": ["party_has_species:paras", "party_has_species:parasect"],
+        "why": "Catch 1 Paras in Mt. Moon B1F for the Phase 1 Spore catcher."
+      },
+      {
+        "id": "save_after_catch",
+        "kind": "game_action",
+        "action": "save_game",
+        "args": {},
+        "why": "Save after catching Paras before walking back through Mt. Moon."
+      },
+      {
+        "id": "heal_route4",
+        "fragment": "heal_at",
+        "args": {"town": "route4"},
+        "why": "Exit Mt. Moon to Route 4 and heal at the Pokemon Center nurse."
+      },
+      {
+        "id": "outside_route4",
+        "kind": "route",
+        "action": "run",
+        "args": {"target": {"place": "route4_center_outside"}},
+        "why": "Step outdoors outside Route 4's Pokemon Center where 02-train-catchers starts."
+      }
+    ]
+  },
+  "execution": {"menu": "full"},
+  "metadata": {
+    "phase": "testing",
+    "notes": "Starts anywhere outdoors in Kanto with at least one free party slot and Ultra Balls, catches a Lv 5-10 Paras in Mt. Moon B1F (100% Paras encounter table in FireRed), saves, heals at Route 4 Center, and steps outdoors.",
+    "postconditions": {
+      "party_includes": ["paras"]
+    }
+  }
+}
