@@ -1,8 +1,9 @@
 (** Verified BDSP static legendary and bonus encounter templates, base stats,
     and default trigger metadata for Ramanas Park and Sinnoh static encounters.
 
-    Port and correction of the static encounter table in the fork's
-    [PokemonBDSP/Programs/RngManipulation/PokemonBDSP_RngTargets.{h,cpp}]
+    Port and correction of the static encounter table in
+    [https://github.com/dayfine/Arduino-Source]
+    [SerialPrograms/Source/PokemonBDSP/Programs/RngManipulation/PokemonBDSP_RngTargets.{h,cpp}]
     (fixing Giratina to Lv. 70, Ramanas Park Regirock/Regice/Registeel to Lv. 70
     with forced Hidden Ability, and [advances_after_accept] to 84). Excludes
     shiny-locked gifts (Mew, Jirachi), uncatchable Origin Giratina, Shaymin
@@ -28,16 +29,9 @@ type t = {
 }
 (** One verified static encounter target. *)
 
-val kyogre : t
-(** Kyogre (Ramanas Park, Oceanic Slate): Lv. 70, 3 IVs, Drizzle, genderless. *)
-
-val groudon : t
-(** Groudon (Ramanas Park, Tectonic Slate): Lv. 70, 3 IVs, Drought, genderless.
-*)
-
 val all : t list
-(** Every supported Ramanas Park and Sinnoh static encounter, starting with
-    {!kyogre} and {!groudon}. *)
+(** Every supported Ramanas Park and Sinnoh static encounter. *)
 
 val find : string -> t option
-(** Looks up a target by its lowercase {!t.id} slug. *)
+(** Looks up a target by its lowercase {!t.id} slug (e.g. ["kyogre"],
+    ["groudon"]). *)

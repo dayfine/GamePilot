@@ -6,9 +6,11 @@
     last observed player blinks and bounds the Pokemon model's next blink time.
 
     Implements the [1PK] re-identification design in
-    [docs/design/BDSP-Static-Legendary-RNG.md] (§1.3), extending
+    [docs/design/BDSP-Static-Legendary-RNG.md] (§1.3, carried over from
+    [https://github.com/dayfine/Arduino-Source/pull/782]), extending
     {!State_reidentifier} (ported from
-    [PokemonBDSP/Programs/RngManipulation/PokemonBDSP_StateReidentifier.{h,cpp}]).
+    [https://github.com/dayfine/Arduino-Source]
+    [SerialPrograms/Source/PokemonBDSP/Programs/RngManipulation/PokemonBDSP_StateReidentifier.{h,cpp}]).
     Handles player tick period drift (fitting the period from the blinks when
     omitted), arbitrary initial Pokemon blink phases, order-swap branching when
     a player tick and Pokemon blink may swap, and frame-drop uncertainty

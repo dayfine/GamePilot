@@ -1,8 +1,8 @@
 (** Mixed-actor BDSP RNG timeline simulation: periodic human/NPC ticks alongside
     aperiodic 3D Pokemon model float-interval blinks sharing one {!Xorshift128}.
 
-    Port of the fork's
-    [PokemonBDSP/Programs/RngManipulation/PokemonBDSP_RngTimeline.{h,cpp}]
+    Port of [https://github.com/dayfine/Arduino-Source]
+    [SerialPrograms/Source/PokemonBDSP/Programs/RngManipulation/PokemonBDSP_RngTimeline.{h,cpp}]
     ([simulate_timeline]), plus {!simulate_from_phase} for continuing a [1PK]
     (one player + one Pokemon model) scene from an arbitrary re-identified
     anchor. *)

@@ -22,10 +22,32 @@ let pokemon_text (p : Static_encounter.pokemon) =
     (Static_encounter.ivs_to_string p.ivs)
     p.ability (gender_value p.gender) p.nature p.level p.height p.weight
 
-let check_eq name ~expected ~actual =
+let check_pokemon name ~(expected : Static_encounter.pokemon)
+    ~(actual : Static_encounter.pokemon) =
   Table_test.report name
     (if expected = actual then Ok ()
-     else Error (Printf.sprintf "expected %S, got %S" expected actual))
+     else
+       Error
+         (Printf.sprintf "expected %S, got %S" (pokemon_text expected)
+            (pokemon_text actual)))
+
+let ivs hp attack defense spatk spdef speed : Static_encounter.ivs =
+  { hp; attack; defense; spatk; spdef; speed }
+
+let mk_pokemon ~ec ~pid ~shiny ~ivs ~ability ~nature ~height ~weight :
+    Static_encounter.pokemon =
+  {
+    ec;
+    pid;
+    shiny;
+    ivs;
+    ability;
+    gender = Static_encounter.Genderless;
+    nature;
+    level = 70;
+    height;
+    weight;
+  }
 
 let seed_one = { Xorshift128.s0 = 1; s1 = 0; s2 = 0; s3 = 0 }
 let seed_809 = { Xorshift128.s0 = 0; s1 = 0; s2 = 0; s3 = 0x809 }
@@ -38,35 +60,47 @@ let seed_mix = { Xorshift128.s0 = 0; s1 = 0; s2 = 0x809; s3 = 0x809 }
    - Regirock & Mewtwo (HA Ramanas): Lv. 70, 3 IVs, genderless, ability_kind=2
      (1 dummy roll consumed, forced HA=2), shiny_locked=false. *)
 let test_golden_vectors () =
-  let check_gen name seed (target : Static_targets.t) ~tsv ~sync expected =
+  let find_exn id = Option.get (Static_targets.find id) in
+  let check_gen name seed target_id ~tsv ~sync expected =
+    let target = find_exn target_id in
     let actual =
       Static_encounter.generate seed target.template ~tsv
         ~synchronize_nature:sync
-      |> pokemon_text
     in
-    check_eq name ~expected ~actual
+    check_pokemon name ~expected ~actual
   in
-  let regirock = Option.get (Static_targets.find "regirock") in
-  let mewtwo = Option.get (Static_targets.find "mewtwo") in
   let adamant = Some 3 in
-  check_gen "kyogre seed_one no sync" seed_one Static_targets.kyogre ~tsv:0
-    ~sync:None "80000809 08090809 2 31/31/8/9/1/31 0 2 22 70 67 66";
-  check_gen "kyogre seed_one tsv 12345" seed_one Static_targets.kyogre
-    ~tsv:12345 ~sync:None "80000809 38300809 2 31/31/8/9/1/31 0 2 22 70 67 66";
-  check_gen "kyogre seed_one sync adamant" seed_one Static_targets.kyogre ~tsv:0
-    ~sync:adamant "80000809 08090809 2 31/31/8/9/1/31 0 2 3 70 71 103";
-  check_gen "groudon seed_809 no sync" seed_809 Static_targets.groudon ~tsv:0
-    ~sync:None "80000809 08090809 2 31/9/31/1/0/31 0 2 5 70 103 121";
-  check_gen "groudon seed_809 sync adamant" seed_809 Static_targets.groudon
-    ~tsv:0 ~sync:adamant "80000809 08090809 2 31/9/31/1/0/31 0 2 3 70 67 66";
-  check_gen "regirock HA seed_one no sync" seed_one regirock ~tsv:0 ~sync:None
-    "80000809 08090809 2 31/31/8/9/1/31 2 2 22 70 67 66";
-  check_gen "regirock HA seed_one sync adamant" seed_one regirock ~tsv:0
-    ~sync:adamant "80000809 08090809 2 31/31/8/9/1/31 2 2 3 70 71 103";
-  check_gen "mewtwo HA seed_mix no sync" seed_mix mewtwo ~tsv:0 ~sync:None
-    "80000809 08410840 1 1/31/31/0/8/31 2 2 3 70 66 124";
-  check_gen "mewtwo HA seed_mix sync adamant" seed_mix mewtwo ~tsv:0
-    ~sync:adamant "80000809 08410840 1 1/31/31/0/8/31 2 2 3 70 103 121"
+  check_gen "kyogre seed_one no sync" seed_one "kyogre" ~tsv:0 ~sync:None
+    (mk_pokemon ~ec:0x80000809 ~pid:0x08090809 ~shiny:Square
+       ~ivs:(ivs 31 31 8 9 1 31) ~ability:0 ~nature:22 ~height:67 ~weight:66);
+  check_gen "kyogre seed_one tsv 12345" seed_one "kyogre" ~tsv:12345 ~sync:None
+    (mk_pokemon ~ec:0x80000809 ~pid:0x38300809 ~shiny:Square
+       ~ivs:(ivs 31 31 8 9 1 31) ~ability:0 ~nature:22 ~height:67 ~weight:66);
+  check_gen "kyogre seed_one sync adamant" seed_one "kyogre" ~tsv:0
+    ~sync:adamant
+    (mk_pokemon ~ec:0x80000809 ~pid:0x08090809 ~shiny:Square
+       ~ivs:(ivs 31 31 8 9 1 31) ~ability:0 ~nature:3 ~height:71 ~weight:103);
+  check_gen "groudon seed_809 no sync" seed_809 "groudon" ~tsv:0 ~sync:None
+    (mk_pokemon ~ec:0x80000809 ~pid:0x08090809 ~shiny:Square
+       ~ivs:(ivs 31 9 31 1 0 31) ~ability:0 ~nature:5 ~height:103 ~weight:121);
+  check_gen "groudon seed_809 sync adamant" seed_809 "groudon" ~tsv:0
+    ~sync:adamant
+    (mk_pokemon ~ec:0x80000809 ~pid:0x08090809 ~shiny:Square
+       ~ivs:(ivs 31 9 31 1 0 31) ~ability:0 ~nature:3 ~height:67 ~weight:66);
+  check_gen "regirock HA seed_one no sync" seed_one "regirock" ~tsv:0 ~sync:None
+    (mk_pokemon ~ec:0x80000809 ~pid:0x08090809 ~shiny:Square
+       ~ivs:(ivs 31 31 8 9 1 31) ~ability:2 ~nature:22 ~height:67 ~weight:66);
+  check_gen "regirock HA seed_one sync adamant" seed_one "regirock" ~tsv:0
+    ~sync:adamant
+    (mk_pokemon ~ec:0x80000809 ~pid:0x08090809 ~shiny:Square
+       ~ivs:(ivs 31 31 8 9 1 31) ~ability:2 ~nature:3 ~height:71 ~weight:103);
+  check_gen "mewtwo HA seed_mix no sync" seed_mix "mewtwo" ~tsv:0 ~sync:None
+    (mk_pokemon ~ec:0x80000809 ~pid:0x08410840 ~shiny:Star
+       ~ivs:(ivs 1 31 31 0 8 31) ~ability:2 ~nature:3 ~height:66 ~weight:124);
+  check_gen "mewtwo HA seed_mix sync adamant" seed_mix "mewtwo" ~tsv:0
+    ~sync:adamant
+    (mk_pokemon ~ec:0x80000809 ~pid:0x08410840 ~shiny:Star
+       ~ivs:(ivs 1 31 31 0 8 31) ~ability:2 ~nature:3 ~height:103 ~weight:121)
 
 let test_table_invariants () =
   let check name cond =
@@ -168,7 +202,7 @@ let test_synchronize_calibration () =
   check_hit "darkrai" ~sync:timid ~intended:200 ~actual:199;
   check_hit "arceus" ~sync:None ~intended:200 ~actual:204;
   (* Verify that a Synchronize-forced nature fails when calibrate omits sync. *)
-  let kyogre = Static_targets.kyogre in
+  let kyogre = Option.get (Static_targets.find "kyogre") in
   let searcher =
     Static_encounter.searcher seed kyogre.template ~tsv:0
       ~synchronize_nature:timid

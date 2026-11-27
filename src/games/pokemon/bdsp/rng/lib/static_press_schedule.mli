@@ -2,9 +2,11 @@
     target, supporting both direct [pokemon_models = 0] triggers and single
     confirm presses placed inside a blink-free {!Static_timeline} gap.
 
-    Port of the pure scheduling logic from the fork's
-    [PokemonBDSP/Programs/RngManipulation/PokemonBDSP_StaticRngExecution.{h,cpp}]
-    ([StaticPressSchedule], [schedule_static_presses]). *)
+    Port of the pure scheduling logic from
+    [https://github.com/dayfine/Arduino-Source]
+    [SerialPrograms/Source/PokemonBDSP/Programs/RngManipulation/PokemonBDSP_StaticRngExecution.{h,cpp}]
+    ([StaticPressSchedule], [schedule_static_presses]; see also
+    [https://github.com/dayfine/Arduino-Source/pull/782]). *)
 
 type timings = {
   ready_seconds : float;
