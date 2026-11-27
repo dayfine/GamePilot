@@ -12,7 +12,7 @@ import vm from 'node:vm';
 
 const uiPagePath = path.resolve(
   path.dirname(new URL(import.meta.url).pathname),
-  '../../src/bin/ui_hub/lib/ui_page.ml'
+  '../../src/hub/lib/ui_page.ml'
 );
 
 function extractHtmlAndScript() {
