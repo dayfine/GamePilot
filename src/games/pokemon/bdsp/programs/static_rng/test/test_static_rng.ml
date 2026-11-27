@@ -128,6 +128,7 @@ let make_fake_steps ~readings ~resets ~captured_delay_ms ~captured_sync () :
     recover_boot_seed = (fun ~timeout_s:_ -> Ok dummy_seed);
     enter_save = (fun () -> Ok ());
     reidentify_in_chamber = (fun ~base_state:_ -> Ok dummy_anchor);
+    face_target = (fun () -> ());
     trigger_encounter =
       (fun cfg _anchor ->
         captured_delay_ms := Some cfg.aim_offset_ms;

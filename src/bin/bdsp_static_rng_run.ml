@@ -29,7 +29,7 @@ let resolve_template ~env_var ~repo_path =
 let load_templates () =
   let* munchlax_eye_png =
     resolve_template ~env_var:"GAMEPILOT_BDSP_MUNCHLAX_EYE_PNG"
-      ~repo_path:"src/games/pokemon/bdsp/assets/munchlax_eye.png"
+      ~repo_path:Bdsp_readers.Eye_blink_reader.munchlax_template_asset
   in
   let* player_eye_png =
     resolve_template ~env_var:"GAMEPILOT_BDSP_PLAYER_EYE_PNG"

@@ -9,7 +9,7 @@ type templates = {
 }
 
 let default_player_eye_box : Wire.box =
-  { x = 0.48; y = 0.42; w = 0.04; h = 0.06 }
+  { x = 0.475; y = 0.730; w = 0.046; h = 0.042 }
 
 let rgb_max = 255
 
@@ -57,6 +57,8 @@ let reidentify_in_chamber ~picture ~target ~base_state =
 let detect_shiny ~picture () =
   Bdsp_readers.Shiny_encounter_detector.detect ~picture ()
 
+let face_target () = Bdsp_actions.Overworld_actions.turn North
+
 let live_game_steps ~picture ~munchlax_template ~player_eye_target :
     WF.game_steps =
   {
@@ -66,6 +68,7 @@ let live_game_steps ~picture ~munchlax_template ~player_eye_target :
     enter_save = enter_save ~picture;
     reidentify_in_chamber =
       reidentify_in_chamber ~picture ~target:player_eye_target;
+    face_target;
     trigger_encounter = Bdsp_blink_rng.Static_rng_trigger.run;
     detect_shiny = detect_shiny ~picture;
     soft_reset = soft_reset_switch ~picture;

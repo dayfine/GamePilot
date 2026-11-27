@@ -42,6 +42,10 @@ type game_steps = {
     base_state:Bdsp_rng.Xorshift128.state ->
     (Bdsp_blink_rng.In_chamber_reidentifier.anchor, string) result;
       (** Locks the current [1PK] advance anchor inside the chamber. *)
+  face_target : unit -> unit;
+      (** Turns the player North to face the static legendary right after [1PK]
+          blink re-identification (during which the player faces South so the
+          camera sees their eyes). *)
   trigger_encounter :
     Bdsp_blink_rng.Static_rng_trigger.config ->
     Bdsp_blink_rng.In_chamber_reidentifier.anchor ->
