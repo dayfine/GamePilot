@@ -186,3 +186,5 @@ let reidentify_advances request =
     | Intervals intervals -> reidentify_by_intervals request intervals
     | Types [] -> failure "No blink types were given."
     | Types types -> reidentify_by_types request types
+
+let reidentify_with_pokemon_models = Mixed_reidentifier.reidentify

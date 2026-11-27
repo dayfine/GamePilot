@@ -42,17 +42,16 @@ let centre b =
   ((b.x +. (b.w *. half)) /. frame_width, (b.y +. (b.h *. half)) /. frame_height)
 
 (* The mark's box, as the fork truncates its pixel bounds. *)
-let mark_left = 0.6
-let mark_right = 1.5
-let mark_top = 0.85
-let mark_bottom = 0.45
+type mark_bounds = { left : float; right : float; top : float; bottom : float }
+
+let mark = { left = 0.6; right = 1.5; top = 0.85; bottom = 0.45 }
 
 let mark_box b : Native_box.t =
   let trunc v = int_of_float (Float.max 0. v) in
-  let x0 = trunc (b.x +. (mark_left *. b.w))
-  and x1 = min Native_box.frame_width (trunc (b.x +. (mark_right *. b.w)))
-  and y0 = trunc (b.y -. (mark_top *. b.w))
-  and y1 = trunc (b.y -. (mark_bottom *. b.w)) in
+  let x0 = trunc (b.x +. (mark.left *. b.w))
+  and x1 = min Native_box.frame_width (trunc (b.x +. (mark.right *. b.w)))
+  and y0 = trunc (b.y -. (mark.top *. b.w))
+  and y1 = trunc (b.y -. (mark.bottom *. b.w)) in
   { x = x0; y = y0; w = x1 - x0; h = y1 - y0 }
 
 (* The Poke Ball's red half and the female mark's pinkish red alike, and
@@ -77,19 +76,30 @@ let mark_probes ~picture b =
    top no higher than 0.35 of the red's height above the red's bottom and no
    lower than 1.5 heights below it, its centre over the red or within a
    quarter of its width beside it, and at least 0.4 times as wide. *)
-let min_half_aspect = 1.4
-let top_slack = 0.35
-let max_drop = 1.5
-let centre_slack = 0.25
-let min_width_ratio = 0.4
+type ball_thresholds = {
+  min_half_aspect : float;
+  top_slack : float;
+  max_drop : float;
+  centre_slack : float;
+  min_width_ratio : float;
+}
+
+let ball_th =
+  {
+    min_half_aspect = 1.4;
+    top_slack = 0.35;
+    max_drop = 1.5;
+    centre_slack = 0.25;
+    min_width_ratio = 0.4;
+  }
 
 let under (r : Wire.Blob_find.blob) (w : Wire.Blob_find.blob) =
   let bottom = r.y +. r.h and centre = w.x +. (w.w *. half) in
-  w.y >= bottom -. (top_slack *. r.h)
-  && w.y <= bottom +. (max_drop *. r.h)
-  && centre >= r.x -. (centre_slack *. r.w)
-  && centre <= r.x +. r.w +. (centre_slack *. r.w)
-  && w.w >= min_width_ratio *. r.w
+  w.y >= bottom -. (ball_th.top_slack *. r.h)
+  && w.y <= bottom +. (ball_th.max_drop *. r.h)
+  && centre >= r.x -. (ball_th.centre_slack *. r.w)
+  && centre <= r.x +. r.w +. (ball_th.centre_slack *. r.w)
+  && w.w >= ball_th.min_width_ratio *. r.w
 
 let ball blobs =
   let reds, whites =
@@ -99,7 +109,7 @@ let ball blobs =
   in
   List.exists
     (fun (r : Wire.Blob_find.blob) ->
-      r.w >= min_half_aspect *. r.h && List.exists (under r) whites)
+      r.w >= ball_th.min_half_aspect *. r.h && List.exists (under r) whites)
     reds
 
 let caught m b =
@@ -107,8 +117,4 @@ let caught m b =
   else
     match Effects.probe m mark_id with
     | Some (Wire.Find { blobs }) -> Some (ball blobs)
-    | Some
-        ( Wire.Color_stats _ | Wire.Template_match _ | Wire.Color_count _
-        | Wire.Line_shares _ | Wire.Other _ )
-    | None ->
-        None
+    | _ -> None

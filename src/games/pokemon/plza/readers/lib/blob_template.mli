@@ -1,11 +1,12 @@
-(** Whether a [core.find@1] blob is a template's shape, as the fork matches a
-    template to a blob (CommonTools/ImageMatch/WaterfillTemplateMatcher.cpp,
-    CommonTools/Images/WaterfillUtilities.cpp): its aspect against the
-    template's, its fill against the template's, then the daemon's score (the
-    root mean square colour difference from the template) under a limit. The
-    template is the crop the fork makes from its Packages image, kept in
-    assets/templates with its size and fill in templates.json (written by
-    assets/extract/write_find_templates.py). *)
+(** Whether a [core.find@1] blob is a template's shape, as
+    CommonTools/ImageMatch/WaterfillTemplateMatcher.cpp and
+    CommonTools/Images/WaterfillUtilities.cpp
+    (https://github.com/PokemonAutomation/Arduino-Source) match a template to a
+    blob: its aspect against the template's, its fill against the template's,
+    then the daemon's score (the root mean square colour difference from the
+    template) under a limit. The template is the crop the fork makes from its
+    Packages image, kept in assets/templates with its size and fill in
+    templates.json (written by assets/extract/write_find_templates.py). *)
 
 type t = {
   width : int;  (** the crop's size, pixels *)

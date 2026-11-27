@@ -19,7 +19,7 @@ let nature_adjustment ~nature ~stat_index =
     row_adjustment ~raised:(nature / nature_stats)
       ~lowered:(nature mod nature_stats) stat_index
 
-type 'a per_stat = {
+type 'a per_stat = 'a Static_encounter.per_stat = {
   hp : 'a;
   attack : 'a;
   defense : 'a;
@@ -139,12 +139,13 @@ let several_candidates_reason (matches : Static_encounter.hit list) =
           (fun (m : Static_encounter.hit) -> string_of_int m.advances)
           matches))
 
-let identify_hit_advance state template ~intended_advance ~radius observed =
+let identify_hit_advance ?(synchronize_nature = None) state template
+    ~intended_advance ~radius observed =
   let first =
     if intended_advance > radius then intended_advance - radius else 0
   in
   let searcher =
-    Static_encounter.searcher state template ~tsv:0 ~synchronize_nature:None
+    Static_encounter.searcher state template ~tsv:0 ~synchronize_nature
   in
   let matches =
     Static_encounter.scan searcher ~min_advances:first

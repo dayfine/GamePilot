@@ -29,7 +29,7 @@ let check_golden_run () =
     ]
   in
   (match golden_call "44-submit.sticks.request.json" with
-  | Wire.Submit { batch_id = "run"; commands } when commands = expected -> ()
+  | Wire.Submit { batch_id = "run"; commands; _ } when commands = expected -> ()
   | _ -> failwith "FAILED the golden run decodes to other commands");
   print_endline "ok golden run"
 
@@ -43,7 +43,12 @@ let check_press_without_sticks () =
   let json =
     Wire.json_of_message
       (Wire.Request
-         { id = 1; call = Wire.Submit { batch_id = "b"; commands = [ start ] } })
+         {
+           id = 1;
+           call =
+             Wire.Submit
+               { batch_id = "b"; start_at_t_ms = None; commands = [ start ] };
+         })
   in
   let text = Yojson.Safe.to_string json in
   if

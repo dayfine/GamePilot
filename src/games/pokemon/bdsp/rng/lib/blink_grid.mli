@@ -1,13 +1,14 @@
 (** Every watcher's blink events placed on one grid of advances: the watched
     rolls {!State_solver} reads, and anchors for the advance of a later blink.
 
-    Port of the second half of the fork's
+    Port of the second half of
     [PokemonBDSP/Inference/Rng/PokemonBDSP_BlinkExtraction.{h,cpp}]
-    ([assign_tick_indices], [build_samples], [last_blink_anchor],
-    [step_blink_anchor]; R21: same origin, same rounding, same messages); the
-    first half is {!Blink_extraction}. A [false] return with out-parameters
-    becomes a [result] or an option. Advances, slots and NPC counts are OCaml
-    [int]s (the C++ narrows the stream count to 8 bits). *)
+    (https://github.com/PokemonAutomation/Arduino-Source; [assign_tick_indices],
+    [build_samples], [last_blink_anchor], [step_blink_anchor]; R21: same origin,
+    same rounding, same messages); the first half is {!Blink_extraction}. A
+    [false] return with out-parameters becomes a [result] or an option.
+    Advances, slots and NPC counts are OCaml [int]s (the C++ narrows the stream
+    count to 8 bits). *)
 
 val build_samples :
   Blink_extraction.blink_event list list ->
@@ -19,6 +20,23 @@ val build_samples :
     watched sample ([advance = tick * npcs + slot], [npcs] being the number of
     streams), sorted by advance. [slots.(s)] is stream [s]'s place in the NPCs'
     order. [Error] names the problem, as the C++'s [failure_reason]. *)
+
+val build_samples_with_gaps :
+  ?double_blink_seconds:float ->
+  Blink_extraction.blink_event list list ->
+  gaps:Blink_extraction.frame_gap list list ->
+  slots:int list ->
+  period_seconds:float ->
+  (State_solver.blink_sample list, string) result
+(** Like {!build_samples}, but uses each watcher's {!Blink_extraction.frame_gap}
+    list to guard against dropped frames and capture stalls:
+    - a [Single] blink followed by a gap within [double_blink_seconds] (default
+      0.55) keeps its tick timing as [Blinked None] so an unobserved second dip
+      never injects a wrong bit-0 equation;
+    - a blink preceded by a gap within [double_blink_seconds] (which may have
+      hidden the first dip of a double blink) becomes [Unknown];
+    - an unobserved tick whose expected window overlaps a gap becomes [Unknown]
+      instead of an inferred [No_blink]. *)
 
 type anchor = {
   advance : int;  (** The blink's roll on the {!build_samples} grid. *)

@@ -30,10 +30,11 @@ struct EndedBatch {
 
 class LiveSchedule {
  public:
-  // Queues a batch after the queued ones (or at `now_ms` when idle); returns
-  // its start time.
+  // Queues a batch after the queued ones (or at `now_ms` when idle), and no
+  // earlier than `start_at_t_ms` when given; returns its start time.
   double submit(std::string batch_id, const std::vector<InputCommand>& commands,
-                double now_ms);
+                double now_ms,
+                std::optional<double> start_at_t_ms = std::nullopt);
 
   // Removes and returns, in order, the segments that start at or before
   // `now_ms`.

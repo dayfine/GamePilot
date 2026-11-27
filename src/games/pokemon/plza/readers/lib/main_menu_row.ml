@@ -44,22 +44,27 @@ let band_probe ~picture r =
 (* The sixth row's button: its left and right edges (x 96 and 672 of the
    1080p frame) in a strip above its name (y 870 to 896), each read 8 px
    inside and 8 px outside, 4 px off the edge. *)
-let edge_top = 870
-let edge_height = 26
-let edge_width = 8
-let left_edge = 96
-let right_edge = 672
-let edge_gap = 4
+type edge_geom = {
+  top : int;
+  height : int;
+  width : int;
+  left : int;
+  right : int;
+  gap : int;
+}
+
+let edge =
+  { top = 870; height = 26; width = 8; left = 96; right = 672; gap = 4 }
 
 let edge_box x : Native_box.t =
-  { x; y = edge_top; w = edge_width; h = edge_height }
+  { x; y = edge.top; w = edge.width; h = edge.height }
 
 let edges =
   [
-    ("left_outside", left_edge - edge_gap - edge_width);
-    ("left_inside", left_edge + edge_gap);
-    ("right_inside", right_edge - edge_gap - edge_width);
-    ("right_outside", right_edge + edge_gap);
+    ("left_outside", edge.left - edge.gap - edge.width);
+    ("left_inside", edge.left + edge.gap);
+    ("right_inside", edge.right - edge.gap - edge.width);
+    ("right_outside", edge.right + edge.gap);
   ]
 
 let edge_id name = "main_menu_row.link_play_" ^ name

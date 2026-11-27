@@ -185,8 +185,4 @@ let text_pixels m =
   match Effects.probe m text_id with
   | Some (Wire.Color_count { fraction; _ }) ->
       Float.to_int (Float.round (fraction *. field_pixels))
-  | Some
-      ( Wire.Color_stats _ | Wire.Template_match _ | Wire.Line_shares _
-      | Wire.Find _ | Wire.Other _ )
-  | None ->
-      0
+  | _ -> 0

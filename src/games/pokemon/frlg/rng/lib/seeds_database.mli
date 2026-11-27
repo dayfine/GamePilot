@@ -2,12 +2,12 @@
     button mode and seed button setting gives, and the lookup that picks the
     earliest delay giving a target seed.
 
-    Port of the fork's
-    [PokemonFRLG/Programs/RngManipulation/PokemonFRLG_SeedsDatabase.{h,cpp}].
-    {!of_columns} takes what the C++ reads from the JSON: the [Delay] array, and
-    every other array with its key. The C++ keeps the columns sorted by name
-    (byte order); pass them in that order to get its tie-breaking in
-    {!find_seed}. *)
+    Port of
+    [PokemonFRLG/Programs/RngManipulation/PokemonFRLG_SeedsDatabase.{h,cpp}]
+    (https://github.com/PokemonAutomation/Arduino-Source). {!of_columns} takes
+    what the C++ reads from the JSON: the [Delay] array, and every other array
+    with its key. The C++ keeps the columns sorted by name (byte order); pass
+    them in that order to get its tie-breaking in {!find_seed}. *)
 
 type sound = Mono | Stereo  (** The game's sound option. *)
 

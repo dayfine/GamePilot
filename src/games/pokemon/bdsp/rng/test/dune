@@ -2,10 +2,13 @@
  (names
   test_xorshift128
   test_static_encounter
+  test_static_targets
   test_blink_model
   test_state_solver
+  test_gap_aware_solver
   test_blink_extraction
   test_state_reidentifier
+  test_mixed_reidentifier
   test_advance_clock
   test_rng_calibration
   test_provisional_state
@@ -15,10 +18,13 @@
   fixture_lines
   test_xorshift128
   test_static_encounter
+  test_static_targets
   test_blink_model
   test_state_solver
+  test_gap_aware_solver
   test_blink_extraction
   test_state_reidentifier
+  test_mixed_reidentifier
   test_advance_clock
   test_rng_calibration
   test_provisional_state

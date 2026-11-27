@@ -85,6 +85,11 @@ let a_at_prompt steps at =
   press_a steps at;
   watch steps at ~presses:1 ~since:0 ~looks:0
 
+type talk_result =
+  | Started
+  | Prompt_stayed of Engine_run.Failure.cause
+  | Nothing_started
+
 let started steps walk ~held_ms look =
   steps.log
     (Printf.sprintf
@@ -94,7 +99,7 @@ let started steps walk ~held_ms look =
   steps.log_detail
     (Printf.sprintf "[PLZA] %s: started on: %s" walk
        (Walk_screen.describe look));
-  Some (Ok ())
+  Started
 
 let no_scene walk presses =
   Failure.cause "talk_no_scene"
@@ -106,12 +111,12 @@ let no_scene walk presses =
 let talk steps walk ~held_ms =
   match a_at_prompt steps { walk_talk with name = walk } with
   | Taken look -> started steps walk ~held_ms look
-  | Prompt_stays { presses; _ } -> Some (Error (no_scene walk presses))
+  | Prompt_stays { presses; _ } -> Prompt_stayed (no_scene walk presses)
   | Nothing ->
       steps.log
         (Printf.sprintf
            "[PLZA] %s: the A prompt went with nothing started after A: on." walk);
-      None
+      Nothing_started
 
 let still_up since_ms presses =
   Printf.sprintf
