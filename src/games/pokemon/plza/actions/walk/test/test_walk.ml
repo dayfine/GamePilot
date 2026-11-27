@@ -451,8 +451,9 @@ let has_line prefix text =
   |> string_of_bool
 
 let talk_outcome = function
-  | Some r -> result_text r
-  | None -> "nothing started"
+  | Talk_prompt.Started -> result_text (Ok ())
+  | Talk_prompt.Prompt_stayed cause -> result_text (Error cause)
+  | Talk_prompt.Nothing_started -> "nothing started"
 
 let talk screens =
   recorded screens

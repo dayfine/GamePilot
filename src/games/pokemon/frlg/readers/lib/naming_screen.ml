@@ -5,22 +5,37 @@ let rows = 4
 
 (* sPageColumnXPos: the letters in groups of three and four 12 apart, the
    full stop and comma column apart; the others 22 apart. *)
-let letter_pitch = 12
-let letter_first_group = 3
-let letter_second_group = 4
-let letter_second_x = 56
-let letter_last_x = 123
-let others_pitch = 22
-let others_count = 6
+type letter_layout = {
+  pitch : int;
+  first_group : int;
+  second_group : int;
+  second_x : int;
+  last_x : int;
+}
+
+let letters =
+  { pitch = 12; first_group = 3; second_group = 4; second_x = 56; last_x = 123 }
+
+type others_layout = { pitch : int; count : int }
+
+let others = { pitch = 22; count = 6 }
+
+type cursor_grid = { left : int; top : int; row_pitch : int }
+
+let cursor = { left = 38; top = 88; row_pitch = 16 }
+
+type cursor_edge = { dx : int; dy : int; width : int; height : int }
+
+let edge = { dx = 6; dy = 6; width = 3; height = 5 }
 
 let letter_columns =
   Array.of_list
-    (List.init letter_first_group (fun i -> letter_pitch * i)
-    @ List.init letter_second_group (fun i ->
-          letter_second_x + (letter_pitch * i))
-    @ [ letter_last_x ])
+    (List.init letters.first_group (fun i -> letters.pitch * i)
+    @ List.init letters.second_group (fun i ->
+          letters.second_x + (letters.pitch * i))
+    @ [ letters.last_x ])
 
-let others_columns = Array.init others_count (fun i -> others_pitch * i)
+let others_columns = Array.init others.count (fun i -> others.pitch * i)
 
 let columns_x = function
   | Upper | Lower -> letter_columns
@@ -30,20 +45,12 @@ let columns page = Array.length (columns_x page)
 let column_x page col = (columns_x page).(col)
 
 (* SetCursorPos: the cursor sprite's centre. *)
-let cursor_left = 38
-let cursor_top = 88
-let row_pitch = 16
-let centre_x page col = column_x page col + cursor_left
-let centre_y row = cursor_top + (row_pitch * row)
+let centre_x page col = column_x page col + cursor.left
+let centre_y row = cursor.top + (cursor.row_pitch * row)
 
 (* Boxes here are stated in whole game pixels. *)
 let box ~x ~y ~w ~h =
   Game_pixels.box { x = float x; y = float y; w = float w; h = float h }
-
-let edge_dx = 6
-let edge_dy = 6
-let edge_width = 3
-let edge_height = 5
 
 (* The letter pages share one layout, so their edge boxes are the same. *)
 let layout = function Upper | Lower -> "letters" | Others -> "others"
@@ -53,9 +60,9 @@ let edge_id page k =
 
 let edge_box page k =
   box
-    ~x:(centre_x page k.col - edge_dx)
-    ~y:(centre_y k.row - edge_dy)
-    ~w:edge_width ~h:edge_height
+    ~x:(centre_x page k.col - edge.dx)
+    ~y:(centre_y k.row - edge.dy)
+    ~w:edge.width ~h:edge.height
 
 let keys page =
   List.concat_map

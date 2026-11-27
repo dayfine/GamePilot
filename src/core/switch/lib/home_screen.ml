@@ -39,13 +39,27 @@ let tiles = 4
    2026-11-25: the same edges unscrolled and scrolled). A part tile at either
    edge of a scrolled row lies outside the picture and is not read; the cursor
    never rests on one (the row scrolls to keep its tile whole). *)
-let tile_left = 0.098
-let tile_pitch = 0.2125
-let tile_inner_w = 0.17
-let cursor_y = 0.252
-let cursor_h = 0.014
-let art_y = 0.30
-let art_h = 0.30
+type tile_layout = {
+  left : float;
+  pitch : float;
+  inner_w : float;
+  cursor_y : float;
+  cursor_h : float;
+  art_y : float;
+  art_h : float;
+}
+
+let tile_geom =
+  {
+    left = 0.098;
+    pitch = 0.2125;
+    inner_w = 0.17;
+    cursor_y = 0.252;
+    cursor_h = 0.014;
+    art_y = 0.30;
+    art_h = 0.30;
+  }
+
 let cursor_id k = Printf.sprintf "home.cursor%d" k
 let art_id k = Printf.sprintf "home.tile%d" k
 
@@ -55,13 +69,41 @@ let art_id k = Printf.sprintf "home.tile%d" k
    HOME). The limits sit clear of both ends of the pulse: with every limit
    12 tighter or looser, console B's captures read the same
    (0.34 at least above the cursor's tile, 0.00 above the others). *)
-let cursor_min_green = 130
-let cursor_min_blue = 180
-let cursor_max_red = 160
-let channel_max = 255
-let cursor_min = (0, cursor_min_green, cursor_min_blue)
-let cursor_max = (cursor_max_red, channel_max, channel_max)
-let tile_x k = tile_left +. (tile_pitch *. float_of_int k)
+type rgb_bounds = {
+  r_min : int;
+  g_min : int;
+  b_min : int;
+  r_max : int;
+  g_max : int;
+  b_max : int;
+}
+
+let cursor_rgb =
+  { r_min = 0; g_min = 130; b_min = 180; r_max = 160; g_max = 255; b_max = 255 }
+
+let cursor_cyan : tile_color =
+  {
+    min = (cursor_rgb.r_min, cursor_rgb.g_min, cursor_rgb.b_min);
+    max = (cursor_rgb.r_max, cursor_rgb.g_max, cursor_rgb.b_max);
+  }
+
+let tile_x k = tile_geom.left +. (tile_geom.pitch *. float_of_int k)
+
+let cursor_box k : Wire.box =
+  {
+    x = tile_x k;
+    y = tile_geom.cursor_y;
+    w = tile_geom.inner_w;
+    h = tile_geom.cursor_h;
+  }
+
+let art_box k : Wire.box =
+  {
+    x = tile_x k;
+    y = tile_geom.art_y;
+    w = tile_geom.inner_w;
+    h = tile_geom.art_h;
+  }
 
 let count_probe ~picture ~id ~min ~max frame_box =
   Option.map
@@ -71,10 +113,10 @@ let count_probe ~picture ~id ~min ~max frame_box =
 let tile_probes ~picture (color : tile_color) k =
   List.filter_map Fun.id
     [
-      count_probe ~picture ~id:(cursor_id k) ~min:cursor_min ~max:cursor_max
-        { x = tile_x k; y = cursor_y; w = tile_inner_w; h = cursor_h };
+      count_probe ~picture ~id:(cursor_id k) ~min:cursor_cyan.min
+        ~max:cursor_cyan.max (cursor_box k);
       count_probe ~picture ~id:(art_id k) ~min:color.min ~max:color.max
-        { x = tile_x k; y = art_y; w = tile_inner_w; h = art_h };
+        (art_box k);
     ]
 
 let stats_probe id box = Wire.color_stats_probe ~id ~box ~delivery:Every
@@ -92,44 +134,67 @@ let probes ~picture color =
   @ List.concat_map (tile_probes ~picture color) (List.init tiles Fun.id)
 
 let fraction m id = Option.value ~default:0. (Color_share.read m id)
-let dark_max_sum = 200.
-let max_flat_stddev = 20.
-let min_icons_stddev = 10.
-let min_detail_stddev = 50.
-let max_same_color = 20.
+
+type home_limits = {
+  dark_max_sum : float;
+  max_flat_stddev : float;
+  min_icons_stddev : float;
+  min_detail_stddev : float;
+  max_same_color : float;
+  min_user_icons_stddev : float;
+}
+
+let home_lim =
+  {
+    dark_max_sum = 200.;
+    max_flat_stddev = 20.;
+    min_icons_stddev = 10.;
+    min_detail_stddev = 50.;
+    max_same_color = 20.;
+    min_user_icons_stddev = 40.;
+  }
+
+type dimmed_limits = { lit_sum : float; min_sum : float; max_sum : float }
+type grey_band = { grey_min : float; grey_max : float }
+type tile_limits = { min_cursor : float; min_art : float }
+type black_limits = { max_sum : float; max_stddev : float }
+
+let dimmed = { lit_sum = 153.; min_sum = 8.; max_sum = 100. }
+let user_grey = { grey_min = 50.; grey_max = 300. }
+let tile_lim = { min_cursor = 0.15; min_art = 0.2 }
+let black_lim = { max_sum = 80.; max_stddev = 24. }
 
 (* HomeMenuDetector::detect_only, its boxes clipped to the picture and the
    user icons read only when probed (whole in the picture). *)
 let home_theme g =
   let row = g "home.bottom_row" in
   let total = sum row.mean in
-  if total < dark_max_sum then Some false
+  if total < home_lim.dark_max_sum then Some false
   else if total > white_min_sum then Some true
   else None
 
 (* The detail limits scale with the picture's brightness: [scale] 1 lit. *)
-let min_user_icons_stddev = 40.
-
 let home_detail ~scale ~icons g =
   let at_least id limit = sum (g id).stddev >= limit *. scale in
   let icons_detailed (s : stats) =
-    sum s.stddev >= min_user_icons_stddev *. scale
+    sum s.stddev >= home_lim.min_user_icons_stddev *. scale
   in
   Option.fold ~none:true ~some:icons_detailed icons
-  && at_least "home.close_game_top" min_detail_stddev
-  && sum (g "home.top").stddev <= max_flat_stddev *. scale
-  && at_least "home.bottom_icons" min_icons_stddev
-  && at_least "home.iconrow_icons" min_detail_stddev
-  && at_least "home.game_slot" min_detail_stddev
+  && at_least "home.close_game_top" home_lim.min_detail_stddev
+  && sum (g "home.top").stddev <= home_lim.max_flat_stddev *. scale
+  && at_least "home.bottom_icons" home_lim.min_icons_stddev
+  && at_least "home.iconrow_icons" home_lim.min_detail_stddev
+  && at_least "home.game_slot" home_lim.min_detail_stddev
 
 let home_flat g white =
   let row = g "home.bottom_row" and right = g "home.iconrow_right" in
   let solid s =
-    if white then is_white s else is_grey ~min_sum:0. ~max_sum:dark_max_sum s
+    if white then is_white s
+    else is_grey ~min_sum:0. ~max_sum:home_lim.dark_max_sum s
   in
   solid row && solid right
-  && distance row.mean right.mean <= max_same_color
-  && distance (g "home.top").mean row.mean <= max_same_color
+  && distance row.mean right.mean <= home_lim.max_same_color
+  && distance (g "home.top").mean row.mean <= home_lim.max_same_color
 
 let is_home ~icons g =
   match home_theme g with
@@ -146,49 +211,40 @@ let is_home ~icons g =
    most. The floor only keeps those limits above 0, which an all-black picture
    would otherwise meet; 8, half the dimmed HOME's lowest, leaves it clear of
    both. *)
-let dark_lit_sum = 153.
-let dimmed_min_sum = 8.
-let dimmed_max_sum = 100.
-
 let is_home_dimmed ~icons g =
   let total = sum (g "home.bottom_row").mean in
-  total >= dimmed_min_sum && total < dimmed_max_sum && home_flat g false
-  && home_detail ~scale:(total /. dark_lit_sum) ~icons g
+  total >= dimmed.min_sum && total < dimmed.max_sum && home_flat g false
+  && home_detail ~scale:(total /. dimmed.lit_sum) ~icons g
 
 (* StartGameUserSelectDetector_Switch1::detect. *)
-let user_grey_min = 50.
-let user_grey_max = 300.
-
 let is_user_select g =
   let row = g "user.top_row" and mid = g "user.mid_row" in
   let bottom = g "home.bottom_row" in
-  let grey = is_grey ~min_sum:user_grey_min ~max_sum:user_grey_max in
+  let grey = is_grey ~min_sum:user_grey.grey_min ~max_sum:user_grey.grey_max in
   let white = (not (grey bottom)) && sum bottom.mean > white_min_sum in
   let solid s = if white then is_white s else grey s in
   sum bottom.stddev <= solid_max_stddev
   && (grey bottom || white)
-  && sum (g "home.bottom_icons").stddev >= min_detail_stddev
+  && sum (g "home.bottom_icons").stddev >= home_lim.min_detail_stddev
   && sum row.stddev <= solid_max_stddev
   && sum mid.stddev <= solid_max_stddev
   && solid row && solid mid
-  && distance bottom.mean row.mean <= max_same_color
-  && sum (g "user.user_slot").stddev >= min_detail_stddev
+  && distance bottom.mean row.mean <= home_lim.max_same_color
+  && sum (g "user.user_slot").stddev >= home_lim.min_detail_stddev
 
 (* The cursor's cyan covers 0.40 to 0.47 of the strip above its tile, none
    above the others; the FireRed tile's orange 0.41, the others' 0.09 at
    most. On the shifted captures (test_home_screen): the cursor 0.33 at least,
    0.00 elsewhere; FireRed's tile 0.36 at least, the others 0.13 at most. *)
-let min_cursor_fraction = 0.15
-let min_art_fraction = 0.2
 let first_tile pred = List.find_opt pred (List.init tiles Fun.id)
 
 let home m =
   Home
     {
       cursor =
-        first_tile (fun k -> fraction m (cursor_id k) >= min_cursor_fraction);
+        first_tile (fun k -> fraction m (cursor_id k) >= tile_lim.min_cursor);
       game_tile =
-        first_tile (fun k -> fraction m (art_id k) >= min_art_fraction);
+        first_tile (fun k -> fraction m (art_id k) >= tile_lim.min_art);
     }
 
 let classify m g =
@@ -210,12 +266,10 @@ let read m =
    least (46 and 41 on test/images' copy, redacted to the probed boxes over
    its own mean colour), the launch's Game Freak intro 104 at least. Each limit
    sits midway. *)
-let black_max_sum = 80.
-let black_max_stddev = 24.
-
 let black m =
   match stats m picture_id with
-  | Some s -> sum s.mean < black_max_sum && sum s.stddev < black_max_stddev
+  | Some s ->
+      sum s.mean < black_lim.max_sum && sum s.stddev < black_lim.max_stddev
   | None -> false
 
 let tile = function None -> "none" | Some k -> string_of_int k
