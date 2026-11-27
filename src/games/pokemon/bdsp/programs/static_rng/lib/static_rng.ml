@@ -41,30 +41,6 @@ let timings =
 type reid_defaults = { threshold : float; search_min : int; search_max : int }
 
 let reid_cfg = { threshold = 0.20; search_min = 50; search_max = 10_000 }
-
-type wait_defaults = {
-  ms_per_s : float;
-  secs_per_min : float;
-  poll_ms : int;
-  handoff_guard_ms : float;
-  lease_ms : float;
-  keepawake_ms : float;
-  keepawake_press_ms : int;
-  log_ms : float;
-}
-
-let wait_cfg =
-  {
-    ms_per_s = 1000.0;
-    secs_per_min = 60.0;
-    poll_ms = 500;
-    handoff_guard_ms = 5_000.0;
-    lease_ms = 30_000.0;
-    keepawake_ms = 90_000.0;
-    keepawake_press_ms = 50;
-    log_ms = 60_000.0;
-  }
-
 let rgb_max = 255
 
 let fallback_home_tile : Switch.Home_screen.tile_color =
@@ -143,92 +119,31 @@ let recover_pedestal_seed ~picture ~target ~timeout_s =
   Pedestal_seed_finder.run
     { base with timeout_seconds = float_of_int timeout_s }
 
-let reidentify_in_chamber ~picture ~target ~base_state =
+let reidentify_with_bounds ~picture ~target ~base_state ~search_min ~search_max
+    =
   let base =
     Bdsp_blink_rng.In_chamber_reidentifier.default_config ~picture ~target
       ~base_state
   in
-  let bounds =
-    {
-      base.bounds with
-      search_min = reid_cfg.search_min;
-      search_max = reid_cfg.search_max;
-    }
-  in
+  let bounds = { base.bounds with search_min; search_max } in
   Bdsp_blink_rng.In_chamber_reidentifier.run
     { base with bounds; threshold = reid_cfg.threshold }
+
+let reidentify_in_chamber ~picture ~target ~base_state =
+  reidentify_with_bounds ~picture ~target ~base_state
+    ~search_min:reid_cfg.search_min ~search_max:reid_cfg.search_max
 
 let detect_shiny ~picture () =
   Bdsp_readers.Shiny_encounter_detector.detect ~picture ()
 
-let send_keepawake () =
-  let cmd =
-    Wire.press ~hold_ms:wait_cfg.keepawake_press_ms
-      ~cooldown_ms:wait_cfg.keepawake_press_ms [ Wire.LStick ]
-  in
-  ignore (Effects.submit [ cmd ] : Wire.batch_done)
-
-let rec wait_before_trigger ~target_adv ~stop_ms ~open_t_ms ~last_lease ~last_ka
-    ~last_log =
-  let now = Effects.now () in
-  let last_lease =
-    if now -. last_lease >= wait_cfg.lease_ms then (
-      Effects.renew_lease ();
-      now)
-    else last_lease
-  in
-  let last_ka =
-    if now -. last_ka >= wait_cfg.keepawake_ms then (
-      send_keepawake ();
-      now)
-    else last_ka
-  in
-  let last_log =
-    if now -. last_log >= wait_cfg.log_ms then (
-      let rem_s = Float.max 0.0 ((open_t_ms -. now) /. wait_cfg.ms_per_s) in
-      log_line
-        (Printf.sprintf "Countdown: %.0fs remaining until adv=%d..." rem_s
-           target_adv);
-      now)
-    else last_log
-  in
-  if now >= stop_ms then ()
-  else (
-    ignore
-      (Effects.await ~timeout_ms:wait_cfg.poll_ms
-         (fun (m : Effects.measurements) -> m.t_ms >= stop_ms)
-        : Effects.awaited);
-    wait_before_trigger ~target_adv ~stop_ms ~open_t_ms ~last_lease ~last_ka
-      ~last_log)
-
-let log_planned_hit (cfg : Bdsp_blink_rng.Static_rng_trigger.config)
-    (p : Bdsp_blink_rng.Static_rng_trigger.plan) ~now =
-  let wait_s = Float.max 0.0 ((p.open_t_ms -. now) /. wait_cfg.ms_per_s) in
-  log_line
-    (Printf.sprintf
-       "Planned %s at adv=%d (%s, %s, IVs %s) — waiting %.0fs (%.1f min)..."
-       cfg.target.template.species p.hit.advances
-       (Bdsp_rng.Static_encounter.shiny_name p.hit.pokemon.shiny)
-       (Bdsp_rng.Static_encounter.nature_name p.hit.pokemon.nature)
-       (Bdsp_rng.Static_encounter.ivs_to_string p.hit.pokemon.ivs)
-       wait_s
-       (wait_s /. wait_cfg.secs_per_min))
-
-let run_planned_trigger cfg anchor (p : Bdsp_blink_rng.Static_rng_trigger.plan)
-    () =
-  let now = Effects.now () in
-  log_planned_hit cfg p ~now;
-  let stop_ms = p.open_t_ms -. wait_cfg.handoff_guard_ms in
-  wait_before_trigger ~target_adv:p.hit.advances ~stop_ms ~open_t_ms:p.open_t_ms
-    ~last_lease:now ~last_ka:now ~last_log:now;
-  Bdsp_blink_rng.Static_rng_trigger.run cfg anchor
-
-let trigger_encounter ~picture cfg anchor =
-  match Bdsp_blink_rng.Static_rng_trigger.plan cfg anchor with
-  | Error e -> Error e
-  | Ok p ->
-      let probes = Bdsp_readers.Battle_detector.probes ~picture in
-      Effects.with_probes probes (run_planned_trigger cfg anchor p)
+let trigger_encounter ~picture ~chamber_eye_target cfg
+    (anchor : Bdsp_blink_rng.In_chamber_reidentifier.anchor) =
+  Trigger_wait.run ~picture ~chamber_eye_target ~log:log_line
+    ~prepare_for_trigger
+    ~reidentify_with_bounds:
+      (reidentify_with_bounds ~picture ~target:chamber_eye_target
+         ~base_state:anchor.base_state)
+    cfg anchor
 
 let live_game_steps ~picture ~pedestal_eye_target ~chamber_eye_target :
     WF.game_steps =
@@ -241,8 +156,7 @@ let live_game_steps ~picture ~pedestal_eye_target ~chamber_eye_target :
     enter_chamber;
     reidentify_in_chamber =
       reidentify_in_chamber ~picture ~target:chamber_eye_target;
-    prepare_for_trigger;
-    trigger_encounter = trigger_encounter ~picture;
+    trigger_encounter = trigger_encounter ~picture ~chamber_eye_target;
     detect_shiny = detect_shiny ~picture;
     soft_reset_to_pedestal = soft_reset_to_pedestal ~picture;
   }

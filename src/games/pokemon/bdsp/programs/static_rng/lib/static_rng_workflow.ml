@@ -17,7 +17,6 @@ type game_steps = {
   reidentify_in_chamber :
     base_state:Bdsp_rng.Xorshift128.state ->
     (Bdsp_blink_rng.In_chamber_reidentifier.anchor, string) result;
-  prepare_for_trigger : unit -> unit;
   trigger_encounter :
     Trigger.config ->
     Bdsp_blink_rng.In_chamber_reidentifier.anchor ->
@@ -59,7 +58,6 @@ let run_attempt ~steps ~attempt ~(opts : Opts.t) =
     log_phase ~steps ~attempt ~opts "reidentify_1pk"
       "Re-identifying in-chamber 1PK advance anchor...";
     let* anchor = steps.reidentify_in_chamber ~base_state:seed.state in
-    steps.prepare_for_trigger ();
     log_phase ~steps ~attempt ~opts "trigger"
       (Printf.sprintf "Anchor locked at adv=%d. Scheduling %s encounter..."
          anchor.advances_to_last_blink opts.target.template.species);

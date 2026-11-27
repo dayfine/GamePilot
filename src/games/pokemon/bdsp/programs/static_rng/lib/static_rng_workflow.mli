@@ -50,15 +50,13 @@ type game_steps = {
     base_state:Bdsp_rng.Xorshift128.state ->
     (Bdsp_blink_rng.In_chamber_reidentifier.anchor, string) result;
       (** Locks the current [1PK] advance anchor inside the Mystery Space. *)
-  prepare_for_trigger : unit -> unit;
-      (** Dismisses the Bike dialog and turns North to face the legendary right
-          before scheduling the encounter presses. *)
   trigger_encounter :
     Bdsp_blink_rng.Static_rng_trigger.config ->
     Bdsp_blink_rng.In_chamber_reidentifier.anchor ->
     (Bdsp_blink_rng.Static_rng_trigger.outcome, string) result;
-      (** Plans the next matching shiny advance and fires the timed confirm
-          press. *)
+      (** Plans the next matching shiny advance, optionally re-anchors when far
+          away, dismisses the freeze dialog, faces North, and fires the timed
+          confirm press. *)
   detect_shiny : unit -> Bdsp_readers.Shiny_encounter_reader.reading;
       (** Watches the battle opening and classifies wild shininess. *)
   soft_reset_to_pedestal : unit -> (unit, string) result;
