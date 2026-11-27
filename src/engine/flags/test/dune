@@ -1,3 +1,7 @@
 (test
  (name test_run_flags)
- (libraries gamepilot.table_test gamepilot.run_flags))
+ (libraries
+  gamepilot.table_test
+  gamepilot.run_flags
+  gamepilot.live_run
+  gamepilot.engine_run))

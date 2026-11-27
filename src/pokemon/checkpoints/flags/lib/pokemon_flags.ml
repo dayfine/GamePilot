@@ -69,6 +69,8 @@ let usage =
   \      [--watch-port N] [--listen ADDR]\n\
   \      [--backend mgba|switch --serial PORT --capture DEVICE]\n\
   \      [--replay VIDEO] [--save-after-pass|--no-save-after-pass]\n\
+  \      [--close-game]   (Switch: return to HOME and close the game after a \
+   pass)\n\
   \      [--record|--no-record] [--keepawake SECONDS] [--speed S] [--make-room \
    MAP]\n\
   \      [--viewport nso-gba|native|x,y,w,h]   (Switch: where the game picture \
