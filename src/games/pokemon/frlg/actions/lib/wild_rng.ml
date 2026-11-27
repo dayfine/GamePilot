@@ -90,7 +90,12 @@ let run_attempt game_steps (plan : Capture_plan.t) ~party =
   | Some pc -> run_policy_catch game_steps pc plan ~party
   | None -> run_legacy game_steps plan ~party
 
-let is_miss = function Not_shiny | Not_shiny_intro -> true | _ -> false
+let is_miss = function
+  | Not_shiny | Not_shiny_intro -> true
+  (* Foe ended the battle (e.g. Roar/Whirlwind on Route 7): reset and retry the
+     next attempt, matching PA/CC's WildRng loop. *)
+  | Capture_ended (Failed "foe ended battle") -> true
+  | _ -> false
 
 let run game_steps (plan : Capture_plan.t) ~party =
   if party >= Capture.party_size then { end_ = Party_full; capture = None }
