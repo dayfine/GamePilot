@@ -5,10 +5,14 @@ on:
   push:
     tags:
       - "v*"
+  schedule:
+    # Daily at 04:00 UTC; skipped by preflight when main has no new commits
+    # since the last nightly-* tag.
+    - cron: "0 4 * * *"
   workflow_dispatch:
     inputs:
       version:
-        description: "Version label for dry-run artifacts (e.g. v0.1.0-rc1)"
+        description: "Version label for dry-run artifacts (e.g. v0.1.0-rc.1)"
         required: false
         default: "dev"
 
@@ -16,7 +20,107 @@ permissions:
   contents: read
 
 jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      should_build: ${{ steps.plan.outputs.should_build }}
+      should_publish: ${{ steps.plan.outputs.should_publish }}
+      version: ${{ steps.plan.outputs.version }}
+      short_sha: ${{ steps.plan.outputs.short_sha }}
+      release_kind: ${{ steps.plan.outputs.release_kind }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          fetch-tags: true
+
+      - name: Plan release and check nightly diff
+        id: plan
+        shell: bash
+        run: |
+          HEAD_SHA=$(git rev-parse HEAD)
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          echo "short_sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+
+          if [ "${GITHUB_EVENT_NAME}" = "schedule" ]; then
+            VERSION="nightly-$(date -u +%Y-%m-%d)"
+            LAST_NIGHTLY=$(git tag -l 'nightly-*' --sort=-refname | head -n 1)
+            if [ -n "$LAST_NIGHTLY" ]; then
+              LAST_SHA=$(git rev-parse "${LAST_NIGHTLY}^{commit}")
+              if [ "$LAST_SHA" = "$HEAD_SHA" ]; then
+                echo "No new commits on main since ${LAST_NIGHTLY} (${HEAD_SHA}); skipping nightly."
+                echo "should_build=false" >> "$GITHUB_OUTPUT"
+                echo "should_publish=false" >> "$GITHUB_OUTPUT"
+                echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+                echo "release_kind=nightly" >> "$GITHUB_OUTPUT"
+                exit 0
+              fi
+            fi
+            if git rev-parse -q --verify "refs/tags/${VERSION}" >/dev/null 2>&1; then
+              echo "Tag ${VERSION} already exists; skipping duplicate nightly."
+              echo "should_build=false" >> "$GITHUB_OUTPUT"
+              echo "should_publish=false" >> "$GITHUB_OUTPUT"
+              echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+              echo "release_kind=nightly" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "should_build=true" >> "$GITHUB_OUTPUT"
+            echo "should_publish=true" >> "$GITHUB_OUTPUT"
+            echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+            echo "release_kind=nightly" >> "$GITHUB_OUTPUT"
+          elif [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            VERSION="${GITHUB_REF_NAME}"
+            echo "should_build=true" >> "$GITHUB_OUTPUT"
+            echo "should_publish=true" >> "$GITHUB_OUTPUT"
+            echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+            case "$VERSION" in
+              *-*) echo "release_kind=rc" >> "$GITHUB_OUTPUT" ;;
+              *)   echo "release_kind=stable" >> "$GITHUB_OUTPUT" ;;
+            esac
+          else
+            VERSION="${{ inputs.version || 'dev' }}"
+            echo "should_build=true" >> "$GITHUB_OUTPUT"
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
+            echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+            echo "release_kind=dry-run" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Verify CI is green on target commit
+        if: steps.plan.outputs.should_publish == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          RUNS_JSON=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs?head_sha=${GITHUB_SHA}&per_page=100")
+          CI_WORKFLOWS='[".github/workflows/ocaml.yml", ".github/workflows/daemon.yml", ".github/workflows/review-tools.yml"]'
+
+          MATCHED=$(echo "$RUNS_JSON" | jq --argjson wfs "$CI_WORKFLOWS" '
+            [.workflow_runs[] | select(.path as $p | $wfs | index($p))]
+            | group_by(.path)
+            | map(max_by(.id))
+          ')
+
+          COUNT=$(echo "$MATCHED" | jq 'length')
+          if [ "$COUNT" -eq 0 ]; then
+            echo "::error::No completed CI workflow runs found for ${GITHUB_SHA}; refusing to release."
+            exit 1
+          fi
+
+          echo "CI runs for ${GITHUB_SHA}:"
+          echo "$MATCHED" | jq -r '.[] | "  \(.path): status=\(.status) conclusion=\(.conclusion)"'
+
+          BAD=$(echo "$MATCHED" | jq '[.[] | select(.status != "completed" or .conclusion != "success")] | length')
+          if [ "$BAD" -ne 0 ]; then
+            echo "::error::One or more CI workflows are not green on ${GITHUB_SHA}; refusing to release."
+            exit 1
+          fi
+
   build:
+    needs: preflight
+    if: needs.preflight.outputs.should_build == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -33,6 +137,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       DUNE_CACHE: enabled
+      GAMEPILOT_VERSION: ${{ needs.preflight.outputs.version }}
+      GAMEPILOT_GIT_SHA: ${{ needs.preflight.outputs.short_sha }}
     steps:
       - uses: actions/checkout@v4
 
@@ -42,15 +148,11 @@ jobs:
           git submodule update --init --depth 1 third_party/Arduino-Source
           git submodule update --init --depth 1 third_party/PokemonSimulation
 
-      - name: Resolve version
+      - name: Resolve bundle name
         id: ver
         shell: bash
         run: |
-          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
-            VERSION="${GITHUB_REF_NAME}"
-          else
-            VERSION="${{ inputs.version || 'dev' }}"
-          fi
+          VERSION="${GAMEPILOT_VERSION}"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "bundle=gamepilot-${VERSION}-${{ matrix.target }}" >> "$GITHUB_OUTPUT"
 
@@ -80,9 +182,11 @@ jobs:
         run: |
           if [ "$RUNNER_OS" = "Windows" ]; then
             cmake -S daemon -B daemon/build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+              -DGAMEPILOT_VERSION="${GAMEPILOT_VERSION}" \
               -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl
           else
-            cmake -S daemon -B daemon/build -G Ninja -DCMAKE_BUILD_TYPE=Release
+            cmake -S daemon -B daemon/build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+              -DGAMEPILOT_VERSION="${GAMEPILOT_VERSION}"
           fi
           cmake --build daemon/build --config Release --parallel 4
 
@@ -114,7 +218,7 @@ jobs:
 
       - name: Out-of-tree smoke test
         shell: bash
-        run: sh dev/release/smoke_test.sh "dist/${{ steps.ver.outputs.bundle }}"
+        run: sh dev/release/smoke_test.sh "dist/${{ steps.ver.outputs.bundle }}" "${GAMEPILOT_VERSION}"
 
       - name: Package archive (tar.gz)
         if: matrix.archive == 'tar.gz'
@@ -134,10 +238,11 @@ jobs:
         with:
           name: release-${{ matrix.target }}
           path: artifacts/*
+          retention-days: 7
 
   publish:
-    needs: build
-    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [preflight, build]
+    if: needs.preflight.outputs.should_publish == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -154,8 +259,48 @@ jobs:
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ needs.preflight.outputs.version }}
+          RELEASE_KIND: ${{ needs.preflight.outputs.release_kind }}
+          TARGET_SHA: ${{ github.sha }}
         run: |
-          gh release create "$TAG" dist-artifacts/* \
-            --title "GamePilot $TAG" \
-            --generate-notes
+          if [ "$RELEASE_KIND" = "stable" ]; then
+            gh release create "$TAG" dist-artifacts/* \
+              --title "GamePilot $TAG" \
+              --generate-notes \
+              --draft
+          elif [ "$RELEASE_KIND" = "nightly" ]; then
+            gh release create "$TAG" dist-artifacts/* \
+              --target "$TARGET_SHA" \
+              --title "GamePilot $TAG" \
+              --generate-notes \
+              --prerelease
+          else
+            gh release create "$TAG" dist-artifacts/* \
+              --title "GamePilot $TAG" \
+              --generate-notes \
+              --prerelease
+          fi
+
+      - name: Prune superseded prereleases
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.preflight.outputs.version }}
+          RELEASE_KIND: ${{ needs.preflight.outputs.release_kind }}
+        run: |
+          if [ "$RELEASE_KIND" = "nightly" ]; then
+            gh release list --limit 200 --json tagName \
+              | jq -r '[.[] | .tagName | select(startswith("nightly-"))] | sort | reverse | .[7:] | .[]' \
+              | while IFS= read -r old_tag; do
+                  [ -n "$old_tag" ] || continue
+                  echo "Pruning old nightly release: $old_tag"
+                  gh release delete "$old_tag" --yes --cleanup-tag
+                done
+          elif [ "$RELEASE_KIND" = "stable" ]; then
+            gh release list --limit 200 --json tagName \
+              | jq -r --arg prefix "${TAG}-rc." '[.[] | .tagName | select(startswith($prefix))] | .[]' \
+              | while IFS= read -r rc_tag; do
+                  [ -n "$rc_tag" ] || continue
+                  echo "Pruning superseded RC release: $rc_tag"
+                  gh release delete "$rc_tag" --yes --cleanup-tag
+                done
+          fi
