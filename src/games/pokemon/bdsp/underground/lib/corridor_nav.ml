@@ -1,30 +1,13 @@
-type direction = North | South | East | West
-
-type move_mechanics = {
-  turn_tap_ms : int;
-  start_delay_ms : int;
-  walk_across_ms : int;
-  walk_up_down_ms : int;
-  run_across_ms : int;
-  run_up_down_ms : int;
-  step_tap_hold_ms : int;
-  step_tap_release_ms : int;
+type sparkle_target = {
+  offset_tiles : int;
+  wall_side : Grid_geometry.Direction.t;
 }
 
-let bdsp_move_mechanics =
-  {
-    turn_tap_ms = 50;
-    start_delay_ms = 250;
-    walk_across_ms = 340;
-    walk_up_down_ms = 280;
-    run_across_ms = 360;
-    run_up_down_ms = 430;
-    step_tap_hold_ms = 160;
-    step_tap_release_ms = 640;
-  }
+type doorway_anchor = {
+  enter_dir : Grid_geometry.Direction.t;
+  exit_dir : Grid_geometry.Direction.t;
+}
 
-type sparkle_target = { offset_tiles : int; wall_side : direction }
-type doorway_anchor = { enter_dir : direction; exit_dir : direction }
 type walk_outcome = At_wall | Wild_battle
 type refresh_outcome = Refreshed | Refresh_wild_battle
 
