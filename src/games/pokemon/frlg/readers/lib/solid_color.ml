@@ -6,8 +6,8 @@ let read m id =
   match Effects.probe m id with
   | Some (Wire.Color_stats { mean; stddev }) -> Some { mean; stddev }
   | Some
-      ( Wire.Template_match _ | Wire.Color_count _ | Wire.Line_shares _
-      | Wire.Find _ | Wire.Other _ )
+      ( Wire.Template_match _ | Wire.Template_ncc _ | Wire.Color_count _
+      | Wire.Line_shares _ | Wire.Find _ | Wire.Other _ )
   | None ->
       None
 

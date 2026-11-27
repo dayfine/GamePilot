@@ -93,8 +93,8 @@ let is_game key m =
   match Effects.probe m (icon_id key) with
   | Some (Wire.Template_match { score; _ }) -> score <= max_icon_score
   | Some
-      ( Wire.Color_stats _ | Wire.Color_count _ | Wire.Line_shares _
-      | Wire.Find _ | Wire.Other _ )
+      ( Wire.Color_stats _ | Wire.Template_ncc _ | Wire.Color_count _
+      | Wire.Line_shares _ | Wire.Find _ | Wire.Other _ )
   | None ->
       false
 

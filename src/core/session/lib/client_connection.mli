@@ -35,6 +35,12 @@ type t = {
           takes its place *)
   queued : (string, unit) Hashtbl.t;
       (** the batches an [Effects.Queue] sent: their [batch_done] is dropped *)
+  gaps : Wire.gap Queue.t;
+      (** [gap] notifications received since the last [take_gaps] or load *)
+  mutable lease_owner : string;
+      (** owner label used when [Effects.renew_lease] sends [lease.acquire] *)
+  mutable lease_ttl_ms : int option;
+      (** default TTL used when [Effects.renew_lease] omits [ttl_ms] *)
 }
 
 val create : transport -> t

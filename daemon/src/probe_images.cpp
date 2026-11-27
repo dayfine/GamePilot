@@ -97,7 +97,8 @@ std::vector<gp::ProbeSpec> load_probes(const std::string& spec_path,
     path = *hash;
   };
   for (gp::ProbeSpec& probe : probes) {
-    if (probe.kind == gp::kTemplateMatchKind) {
+    if (probe.kind == gp::kTemplateMatchKind ||
+        probe.kind == gp::kTemplateNccKind) {
       upload(probe.template_hash);
     } else if (probe.find) {
       upload(probe.find->template_hash);

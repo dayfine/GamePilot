@@ -24,10 +24,11 @@ let check_submitted batch_id result =
   if r.batch_id <> batch_id then
     protocol_error "submit %s answered for batch %s" batch_id r.batch_id
 
-let submit t commands =
+let submit ?start_at_t_ms t commands =
   let batch_id = next_batch_id t in
   check_stop t;
-  check_submitted batch_id (call t (Wire.Submit { batch_id; commands }));
+  check_submitted batch_id
+    (call t (Wire.Submit { batch_id; start_at_t_ms; commands }));
   pump_until t (fun () ->
       check_stop t;
       take t.dones batch_id ())
@@ -37,7 +38,8 @@ let queue t commands =
   let batch_id = next_batch_id t in
   check_stop t;
   Hashtbl.replace t.queued batch_id ();
-  check_submitted batch_id (call t (Wire.Submit { batch_id; commands }))
+  check_submitted batch_id
+    (call t (Wire.Submit { batch_id; start_at_t_ms = None; commands }))
 
 (* A cancel drops every batch still queued, and the daemon sends no
    [batch_done] for a dropped one (server.cpp, clear_input and replace_input);
@@ -59,7 +61,9 @@ let cancel_batch t batch_id =
 let race_ending t commands stop after =
   check_stop t;
   let batch_id = next_batch_id t in
-  let id = send_request t (Wire.Submit { batch_id; commands }) in
+  let id =
+    send_request t (Wire.Submit { batch_id; start_at_t_ms = None; commands })
+  in
   let check_reply () =
     Option.iter
       (fun r -> check_submitted batch_id (result_of r))
@@ -174,13 +178,30 @@ let load_state t path =
   let r = Wire.load_state_result_of_json (call t (Wire.Load_state { path })) in
   t.load <- r.load;
   t.latest <- None;
+  Queue.clear t.gaps;
   r.seq
 
 let reset t =
   let r = Wire.load_state_result_of_json (call t Wire.Reset) in
   t.load <- r.load;
   t.latest <- None;
+  Queue.clear t.gaps;
   r.seq
+
+let take_gaps t =
+  let items = Queue.fold (fun acc g -> g :: acc) [] t.gaps in
+  Queue.clear t.gaps;
+  List.rev items
+
+let acquire_lease t (owner, ttl_ms) =
+  ignore
+    (Wire.Lease.acquire_result_of_json
+       (call t (Wire.Lease_acquire { owner; ttl_ms }))
+      : Wire.Lease.t)
+
+let renew_lease t ttl_ms =
+  let ttl = match ttl_ms with Some _ -> ttl_ms | None -> t.lease_ttl_ms in
+  acquire_lease t (t.lease_owner, ttl)
 
 let save t request = Wire.save_result_of_json (call t request)
 
@@ -217,6 +238,8 @@ let answer : type a. t -> a Effect.t -> (unit -> a) option =
  fun t eff ->
   match eff with
   | Effects.Submit commands -> Some (fun () -> submit t commands)
+  | Effects.Submit_at (start_at_t_ms, commands) ->
+      Some (fun () -> submit ~start_at_t_ms t commands)
   | Effects.Race (commands, stop) -> Some (fun () -> race t commands stop)
   | Effects.Race_held (commands, stop) ->
       Some (fun () -> race_held t commands stop)
@@ -225,6 +248,8 @@ let answer : type a. t -> a Effect.t -> (unit -> a) option =
   | Effects.Await (pred, timeout_ms) -> Some (fun () -> await t pred timeout_ms)
   | Effects.Now -> Some (fun () -> Option.value t.now ~default:0.)
   | Effects.Read -> Some (fun () -> t.latest)
+  | Effects.Take_gaps -> Some (fun () -> take_gaps t)
+  | Effects.Renew_lease ttl_ms -> Some (fun () -> renew_lease t ttl_ms)
   | Effects.Load_state path -> Some (fun () -> load_state t path)
   | Effects.Reset -> Some (fun () -> reset t)
   | Effects.Save_state path ->
@@ -257,14 +282,10 @@ let handle t f =
         (fun eff -> Option.map (fun answer k -> resume k answer) (answer t eff));
     }
 
-let acquire_lease t (owner, ttl_ms) =
-  ignore
-    (Wire.Lease.acquire_result_of_json
-       (call t (Wire.Lease_acquire { owner; ttl_ms }))
-      : Wire.Lease.t)
-
 let run_with_backend ?(client = client_name) ?lease transport f =
   let t = create transport in
+  t.lease_owner <- Option.fold ~none:client ~some:fst lease;
+  t.lease_ttl_ms <- Option.bind lease snd;
   let backend = hello ~client t in
   Option.iter (acquire_lease t) lease;
   handle t (fun () -> f backend)

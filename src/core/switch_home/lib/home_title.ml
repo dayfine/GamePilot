@@ -29,8 +29,8 @@ let score m id =
   match Effects.probe m id with
   | Some (Wire.Template_match { score; _ }) -> Some score
   | Some
-      ( Wire.Color_stats _ | Wire.Color_count _ | Wire.Line_shares _
-      | Wire.Find _ | Wire.Other _ )
+      ( Wire.Color_stats _ | Wire.Template_ncc _ | Wire.Color_count _
+      | Wire.Line_shares _ | Wire.Find _ | Wire.Other _ )
   | None ->
       None
 

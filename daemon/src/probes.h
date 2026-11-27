@@ -33,6 +33,16 @@ struct TemplateMatch {
   double y = 0;
 };
 
+// The best placement of a template inside a box, scored with TM_CCOEFF_NORMED
+// on grayscale (higher is better, -1..1).
+struct TemplateNcc {
+  double score = 0;
+  // Top-left corner of the placement: frame pixels from template_ncc,
+  // normalized to the game picture in a probe result.
+  double x = 0;
+  double y = 0;
+};
+
 // An inclusive per-channel range: r, g, b, 0..255.
 struct ColorRange {
   std::array<std::uint8_t, 3> min{};
@@ -95,10 +105,12 @@ struct FindResult {
 };
 
 using ProbeResult =
-    std::variant<ColorStats, TemplateMatch, ColorCount, LineShares, FindResult>;
+    std::variant<ColorStats, TemplateMatch, TemplateNcc, ColorCount, LineShares,
+                 FindResult>;
 
 inline constexpr std::string_view kColorStatsKind = "core.color_stats@1";
 inline constexpr std::string_view kTemplateMatchKind = "core.template_match@1";
+inline constexpr std::string_view kTemplateNccKind = "core.template_ncc@1";
 inline constexpr std::string_view kColorCountKind = "core.color_count@1";
 inline constexpr std::string_view kLineSharesKind = "core.line_shares@1";
 inline constexpr std::string_view kFindKind = "core.find@1";
@@ -124,6 +136,13 @@ TemplateMatch template_match(const cv::Mat& image,
                              const cv::Mat& template_image,
                              const cv::Rect& pixels,
                              const cv::Mat& compared = cv::Mat());
+
+// core.template_ncc@1: best grayscale zero-mean normalized cross-correlation
+// (OpenCV TM_CCOEFF_NORMED) of a one-channel grayscale template inside `pixels`
+// of a BGR frame. Score is clamped to [-1, 1] (0 if non-finite). x, y are frame
+// pixels.
+TemplateNcc template_ncc(const cv::Mat& bgr, const cv::Mat& template_gray,
+                         const cv::Rect& pixels);
 
 // The pixels of a BGR image inside the ink range as an 8-bit mask: 255 where
 // every channel is in range, 0 elsewhere.

@@ -8,8 +8,8 @@ let read m id =
   match Effects.probe m id with
   | Some (Wire.Find { blobs }) -> blobs
   | Some
-      ( Wire.Color_stats _ | Wire.Template_match _ | Wire.Color_count _
-      | Wire.Line_shares _ | Wire.Other _ )
+      ( Wire.Color_stats _ | Wire.Template_match _ | Wire.Template_ncc _
+      | Wire.Color_count _ | Wire.Line_shares _ | Wire.Other _ )
   | None ->
       []
 

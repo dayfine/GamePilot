@@ -40,8 +40,8 @@ let lines m id =
   match Effects.probe m id with
   | Some (Wire.Line_shares t) -> Some t
   | Some
-      ( Wire.Color_stats _ | Wire.Template_match _ | Wire.Color_count _
-      | Wire.Find _ | Wire.Other _ )
+      ( Wire.Color_stats _ | Wire.Template_match _ | Wire.Template_ncc _
+      | Wire.Color_count _ | Wire.Find _ | Wire.Other _ )
   | None ->
       None
 

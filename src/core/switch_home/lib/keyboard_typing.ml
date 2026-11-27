@@ -186,7 +186,7 @@ let text_pixels m =
   | Some (Wire.Color_count { fraction; _ }) ->
       Float.to_int (Float.round (fraction *. field_pixels))
   | Some
-      ( Wire.Color_stats _ | Wire.Template_match _ | Wire.Line_shares _
-      | Wire.Find _ | Wire.Other _ )
+      ( Wire.Color_stats _ | Wire.Template_match _ | Wire.Template_ncc _
+      | Wire.Line_shares _ | Wire.Find _ | Wire.Other _ )
   | None ->
       0
