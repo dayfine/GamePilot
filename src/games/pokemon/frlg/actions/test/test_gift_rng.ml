@@ -267,10 +267,95 @@ let test_frame_model_auto_selection () =
   check_eq ~show:Fun.id "gift_rng explicit switch preserved on mgba" "switch"
     gift_explicit_switch.frame_model
 
+let test_miss_calibration () =
+  let fallback : Wild_rng_plan.trainer_ids =
+    { tid = Some 12345; sid = Some 54321 }
+  in
+  let plan =
+    Result.get_ok
+      (Gift_rng.decode ~fallback
+         (obj
+            {|{"species": "scyther", "prize_row": 3, "frame_model": "switch"}|}))
+  in
+  let target = Result.get_ok (Gift_rng.target plan) in
+  let delays, seeds =
+    Result.get_ok
+      (Wild_rng_plan.seed_column_of ~seeds:plan.seeds
+         ~seed_shift:plan.seed_shift)
+  in
+  let target_idx =
+    Option.get
+      (Frlg_rng.Rng_miss_search.find_seed_index ~delays ~seeds ~seed:target.seed
+         ~table_delay_ms:target.table_delay_ms)
+  in
+  let miss_idx = target_idx + 1 in
+  let miss_adv = target.advance + 25 in
+  let gen =
+    Frlg_rng.Pokemon_generation.pokemon_of_state
+      (Frlg_rng.Rng_state.of_seed ~seed:seeds.(miss_idx) ~advance:miss_adv
+         Method1)
+  in
+  let db = Result.get_ok (Frlg_rng.Base_stats.load ()) in
+  let scyther = Option.get (Frlg_rng.Base_stats.find db "scyther") in
+  let stats =
+    Frlg_rng.Base_stats.compute_stats ~base:scyther.base ~nature:gen.nature
+      ~ivs:gen.ivs ~level:25
+  in
+  let gender : Frlg_rng.Rng_miss_search.gender =
+    match
+      Frlg_rng.Base_stats.gender_of_pid ~pid:gen.pid
+        ~gender_threshold:scyther.gender_threshold
+    with
+    | Male -> Male
+    | Female -> Female
+    | Genderless -> Genderless
+  in
+  let obs : Frlg_rng.Rng_miss_search.observation =
+    { nature = Some gen.nature; gender; level = 25; stats = Some stats }
+  in
+  let cal_path = Filename.temp_file "gp_cal_" ".json" in
+  Sys.remove cal_path;
+  let logs = ref [] in
+  let delta =
+    Rng_miss_calibration.report_and_calibrate
+      ~log:(fun s -> logs := s :: !logs)
+      ~label:"Gift RNG" ~species:plan.species ~seeds:plan.seeds
+      ~seed_shift:plan.seed_shift ~target_seed:target.seed
+      ~target_delay_ms:target.table_delay_ms ~target_advance:target.advance
+      ~persist:true ~calibration_path:cal_path obs
+  in
+  let expected_delay_delta = delays.(miss_idx) - target.table_delay_ms in
+  check_eq
+    ~show:
+      (Option.fold ~none:"None" ~some:(fun (b, i) ->
+           Printf.sprintf "(%d,%d)" b i))
+    "calibration delta"
+    (Some (-expected_delay_delta, -25))
+    delta;
+  let persisted =
+    Option.get
+      (Result.get_ok
+         (Frlg_rng.Switch_rng_calibration.load_console ~path:cal_path ()))
+  in
+  check_eq ~show:string_of_int "persisted boot_offset_ms"
+    (-expected_delay_delta) persisted.boot_offset_ms;
+  check_eq ~show:string_of_int "persisted ingame_offset" (-25)
+    persisted.ingame_offset;
+  let plan2 =
+    Gift_rng.apply_timing_delta ~boot_delta_ms:(-expected_delay_delta)
+      ~ingame_delta:(-25) plan
+  in
+  check_eq ~show:string_of_int "in-memory plan boot_offset_ms"
+    (-expected_delay_delta) plan2.boot_offset_ms;
+  check_eq ~show:string_of_int "in-memory plan ingame_offset" (-25)
+    plan2.ingame_offset;
+  if Sys.file_exists cal_path then Sys.remove cal_path
+
 let () =
   test_decode ();
   test_frame_model_auto_selection ();
   test_target_and_presses ();
   test_run ();
   test_surf_request ();
+  test_miss_calibration ();
   print_endline "gift_rng: all passed"

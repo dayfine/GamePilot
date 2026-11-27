@@ -64,6 +64,10 @@ val decode :
 val apply_calibration : Frlg_rng.Switch_rng_calibration.entry -> plan -> plan
 (** Applies a persisted per-console Switch calibration entry to [plan]. *)
 
+val apply_timing_delta : boot_delta_ms:int -> ingame_delta:int -> plan -> plan
+(** Adds [boot_delta_ms] to [plan.boot_offset_ms] and [ingame_delta] to
+    [plan.ingame_offset]. *)
+
 val target : plan -> (Frlg_rng.Gift_target.t, string) result
 (** Reads the seed table and searches for the soonest shiny Method 1 gift target
     in [plan.min_advance .. plan.max_advance]. *)
@@ -83,6 +87,18 @@ val live_game_steps :
 (** Live {!game_steps} that reset via {!Rng_reset.reset_and_submit} (default
     {!Rng_reset.Mgba}), submit {!blind_presses}, decline any nickname prompt,
     settle back to the overworld, and check {!Wild_rng_steps.shiny_at}. *)
+
+val live_calibrated_game_steps :
+  log:(string -> unit) ->
+  ?reset_mode:Rng_reset.mode ->
+  plan ->
+  Frlg_rng.Gift_target.t ->
+  game_steps
+(** Live {!game_steps} that recompute {!target} before each attempt and, on
+    Switch ([plan.frame_model = "switch"]), read Summary Page 1 & Page 2 on
+    misses, report the miss distance via {!Rng_miss_calibration}, update the
+    in-memory plan offsets for the next attempt, and persist the timing delta.
+*)
 
 val run : game_steps -> attempts:int -> party:int -> outcome
 (** Runs up to [attempts] timed gift claims, stopping as soon as the newly

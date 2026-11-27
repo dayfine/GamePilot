@@ -97,6 +97,21 @@ let screens =
       List.init Summary_level.max_digits Text_lines.summary_level_digit,
       Number_reading.digits,
       Summary_level.ink );
+    ( "summary_nature",
+      glyphs,
+      [ Summary_stats.nature_line ],
+      Summary_stats.nature_candidates,
+      dark );
+    ( "summary_hp",
+      glyphs,
+      List.init 3 Summary_stats.hp_digit,
+      Summary_stats.hp_candidates,
+      dark );
+    ( "summary_stats",
+      glyphs,
+      cells ~rows:5 ~cells:3 Summary_stats.stat_digit,
+      Number_reading.digits,
+      dark );
     ( "berry_pouch_numbers",
       small_glyphs,
       cells ~rows:7 ~cells:2 Text_lines.berry_pouch_number_digit,
@@ -240,4 +255,5 @@ let () =
   let mail = "mail_editor" in
   write_spec dir mail (mail_probes dir mail);
   let title = "box_title" in
-  write_spec dir title (box_title_probes dir title)
+  write_spec dir title (box_title_probes dir title);
+  write_spec dir "summary_gender" Summary_stats.gender_probes

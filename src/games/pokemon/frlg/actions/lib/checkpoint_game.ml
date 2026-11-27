@@ -247,6 +247,20 @@ let wild_rng_catch ~log ~reset_mode ~encounter_method timings capture ~party =
   Effects.with_probes Frlg_battle.Battle_look.probes (fun () ->
       Capture.run steps capture ~party)
 
+let wild_rng_shiny_at ~log (plan : Wild_rng_plan.t)
+    (target : Frlg_rng.Wild_target.t) slot =
+  let is_switch = plan.frame_model = "switch" in
+  match Wild_rng_steps.check_summary ~log ~slot ~read_miss:is_switch with
+  | `Shiny -> true
+  | `Not_shiny None -> false
+  | `Not_shiny (Some obs) ->
+      ignore
+        (Rng_miss_calibration.report_and_calibrate ~log ~label:"Wild RNG"
+           ~species:plan.species ~seeds:plan.seeds ~seed_shift:plan.seed_shift
+           ~target_seed:target.seed ~target_delay_ms:target.table_delay_ms
+           ~target_advance:target.advance ~persist:is_switch obs);
+      false
+
 let run_wild_rng t (plan : Wild_rng_plan.t) () =
   let log = t.config.log in
   let reset_mode = t.config.rng_reset_mode in
@@ -264,12 +278,7 @@ let run_wild_rng t (plan : Wild_rng_plan.t) () =
     wild_rng_policy_catch ~log ~reset_mode ~timings:target.timings plan
   in
   let game_steps : Wild_rng.game_steps =
-    {
-      catch;
-      policy_catch;
-      shiny_at = (fun slot -> Wild_rng_steps.shiny_at ~log ~slot);
-      log;
-    }
+    { catch; policy_catch; shiny_at = wild_rng_shiny_at ~log plan target; log }
   in
   let r =
     Wild_rng.run game_steps plan.capture ~party:(Party_roster.size !(t.party))
@@ -323,10 +332,9 @@ let run_gift_rng t (plan : Gift_rng.plan) () =
     | Ok target -> target
     | Error e -> Menu_input.fail "gift_rng_no_target" e
   in
-  log ("Gift RNG: " ^ Frlg_rng.Gift_target.describe target ^ ".");
   let steps =
-    Gift_rng.live_game_steps ~log ~reset_mode:t.config.rng_reset_mode
-      ~prize_row:plan.prize_row target.timings
+    Gift_rng.live_calibrated_game_steps ~log ~reset_mode:t.config.rng_reset_mode
+      plan target
   in
   let r =
     Gift_rng.run steps ~attempts:plan.attempts

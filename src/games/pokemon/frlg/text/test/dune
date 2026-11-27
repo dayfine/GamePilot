@@ -25,3 +25,11 @@
  (name test_easy_chat_words)
  (modules test_easy_chat_words)
  (libraries gamepilot.table_test gamepilot.frlg_text))
+
+(test
+ (name test_summary_stats)
+ (modules test_summary_stats)
+ (deps
+  (glob_files fixtures/summary_*_switch.probes.jsonl)
+  ../../assets/font_latin_normal.glyphs)
+ (libraries gamepilot.wire gamepilot.effects gamepilot.frlg_text))

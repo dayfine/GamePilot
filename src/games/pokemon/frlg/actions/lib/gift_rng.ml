@@ -103,6 +103,13 @@ let apply_calibration (entry : R.Switch_rng_calibration.entry) p =
     ingame_offset = p.ingame_offset + entry.ingame_offset;
   }
 
+let apply_timing_delta ~boot_delta_ms ~ingame_delta p =
+  {
+    p with
+    boot_offset_ms = p.boot_offset_ms + boot_delta_ms;
+    ingame_offset = p.ingame_offset + ingame_delta;
+  }
+
 let target p =
   let* delays, seeds =
     Wild_rng_plan.seed_column_of ~seeds:p.seeds ~seed_shift:p.seed_shift
@@ -147,19 +154,63 @@ let prize_presses ~prize_row (t : T.t) =
 let blind_presses ~prize_row t =
   Wild_rng_steps.title_presses t @ prize_presses ~prize_row t
 
+let execute_claim ~log ~reset_mode ~prize_row timings =
+  Rng_reset.reset_and_submit ~log reset_mode (blind_presses ~prize_row timings);
+  M.mash Wire.B nickname_mash_ms;
+  M.settle_back ~label:"gift rng prize" ~log;
+  true
+
 let live_game_steps ~log ?(reset_mode = Rng_reset.Mgba) ~prize_row timings =
-  let claim_prize () =
-    Rng_reset.reset_and_submit ~log reset_mode
-      (blind_presses ~prize_row timings);
-    M.mash Wire.B nickname_mash_ms;
-    M.settle_back ~label:"gift rng prize" ~log;
-    true
-  in
   {
-    claim_prize;
+    claim_prize = (fun () -> execute_claim ~log ~reset_mode ~prize_row timings);
     shiny_at = (fun slot -> Wild_rng_steps.shiny_at ~log ~slot);
     log;
   }
+
+let next_gift_target ~first_attempt ~current_plan ~current_target =
+  if !first_attempt then (
+    first_attempt := false;
+    Ok !current_target)
+  else target !current_plan
+
+let calibrate_miss ~log ~is_switch ~current_plan ~(tgt : R.Gift_target.t) obs =
+  let p = !current_plan in
+  match
+    Rng_miss_calibration.report_and_calibrate ~log ~label:"Gift RNG"
+      ~species:p.species ~seeds:p.seeds ~seed_shift:p.seed_shift
+      ~target_seed:tgt.seed ~target_delay_ms:tgt.table_delay_ms
+      ~target_advance:tgt.advance ~persist:is_switch obs
+  with
+  | None -> ()
+  | Some (boot_delta_ms, ingame_delta) ->
+      current_plan := apply_timing_delta ~boot_delta_ms ~ingame_delta p
+
+let live_calibrated_game_steps ~log ?(reset_mode = Rng_reset.Mgba) initial_plan
+    initial_target =
+  let current_plan = ref initial_plan in
+  let current_target = ref initial_target in
+  let first_attempt = ref true in
+  let is_switch = initial_plan.frame_model = "switch" in
+  let claim_prize () =
+    match next_gift_target ~first_attempt ~current_plan ~current_target with
+    | Error e ->
+        log ("Gift RNG: failed to recompute target: " ^ e);
+        false
+    | Ok tgt ->
+        current_target := tgt;
+        log ("Gift RNG: " ^ R.Gift_target.describe tgt ^ ".");
+        execute_claim ~log ~reset_mode ~prize_row:!current_plan.prize_row
+          tgt.timings
+  in
+  let shiny_at slot =
+    match Wild_rng_steps.check_summary ~log ~slot ~read_miss:is_switch with
+    | `Shiny -> true
+    | `Not_shiny None -> false
+    | `Not_shiny (Some obs) ->
+        calibrate_miss ~log ~is_switch ~current_plan ~tgt:!current_target obs;
+        false
+  in
+  { claim_prize; shiny_at; log }
 
 let run game_steps ~attempts ~party =
   if party >= Capture.party_size then { end_ = Party_full; attempts = 0 }

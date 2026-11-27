@@ -130,14 +130,56 @@ let read_star () =
   | Holds _ -> true
   | Timeout -> false
 
-let shiny_at ~log ~slot =
+let skills_page = 2
+
+let miss_gender_of = function
+  | Some Frlg_text.Summary_stats.Male -> Frlg_rng.Rng_miss_search.Male
+  | Some Female -> Female
+  | Some Genderless -> Genderless
+  | None -> Unknown
+
+let miss_stats_of (s : Frlg_text.Summary_stats.stats) :
+    Frlg_rng.Rng_miss_search.stats =
+  { hp = s.hp; atk = s.atk; def = s.def; spa = s.spa; spd = s.spd; spe = s.spe }
+
+let read_page2_stats glyphs =
+  Summary_paging.to_page skills_page;
+  Summary_paging.settled (fun () -> Frlg_text.Summary_stats.read_stats glyphs)
+  |> Option.map miss_stats_of
+
+let read_miss_observation () =
+  let glyphs = Text_data.glyphs () in
+  let level =
+    Summary_paging.settled (fun () -> Frlg_text.Summary_stats.read_level glyphs)
+  in
+  Option.map
+    (fun level ->
+      let nature = Frlg_text.Summary_stats.read_nature glyphs in
+      let gender = miss_gender_of (Frlg_text.Summary_stats.read_gender ()) in
+      let stats = read_page2_stats glyphs in
+      { Frlg_rng.Rng_miss_search.nature; gender; level; stats })
+    level
+
+let check_open_summary ~log ~slot ~read_miss () =
+  Summary_moves.open_summary slot;
+  let shiny = read_star () in
+  log
+    (Printf.sprintf "Wild RNG: slot %d's summary %s the shiny star." slot
+       (if shiny then "shows" else "does not show"));
+  let result =
+    if shiny then `Shiny
+    else if read_miss then `Not_shiny (read_miss_observation ())
+    else `Not_shiny None
+  in
+  M.close_to_overworld ~label:"summary" ~log;
+  result
+
+let check_summary ~log ~slot ~read_miss =
   Effects.with_probes
     (Frlg_readers.Summary_screen.probes @ Frlg_readers.Shiny_star.probes)
-    (fun () ->
-      Summary_moves.open_summary slot;
-      let shiny = read_star () in
-      log
-        (Printf.sprintf "Wild RNG: slot %d's summary %s the shiny star." slot
-           (if shiny then "shows" else "does not show"));
-      M.close_to_overworld ~label:"summary" ~log;
-      shiny)
+    (check_open_summary ~log ~slot ~read_miss)
+
+let shiny_at ~log ~slot =
+  match check_summary ~log ~slot ~read_miss:false with
+  | `Shiny -> true
+  | `Not_shiny _ -> false
