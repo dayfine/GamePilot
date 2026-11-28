@@ -17,9 +17,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 00:40:00–00:45:00 | Reviewed |
 | 00:45:00–00:50:00 | Reviewed |
 | 00:50:00–00:55:00 | Reviewed |
-| 00:55:00–03:18:16 | Pending |
+| 00:55:00–01:00:00 | Reviewed |
+| 01:00:00–03:18:16 | Pending |
 
-Resume at **00:55:00** on Route 207, after picking up the hidden Revive and heading east.
+Resume at **01:00:00** on Route 209, heading toward Solaceon Town with Repel active.
 
 ## Review method
 
@@ -255,3 +256,25 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 - **Route 207**, east of the Cycling Road exit and heading toward Mt. Coronet. The Bike, Explorer Kit, Vs. Seeker and Dowsing Machine are obtained.
 - **Kazza Lv. 22** leads. **Monferno Lv. 22** is second, last shown at **22/66 HP** and poisoned in Eterna. Its held Pecha Berry was consumed in the Jupiter fight.
 - **4 Super Potions** remain after the observed use. The Revive was picked up, and the separate Revival Herb is still in the Bag.
+
+## 55:00–01:00:00 | Mt. Coronet, Hearthome and the second rival battle
+
+| Video time | Observed action and outcome |
+|---|---|
+| 55:00–55:16 | Navigate east through Route 207’s rocky terraces. Pause near the hiker, then take the cave entrance into **Mt. Coronet**. |
+| 55:16–55:29 | Use a **Super Potion** on Monferno to restore it from **22/66** to **66/66 HP**. Use the last **Antidote** to cure the poison. Use a **Repel** and register the **Bike** to the left shortcut. |
+| 55:29–55:58 | Move around the pools and approach the stairs. Advance **Cyrus’s** dialogue. Climb the stairs, pick up the hidden **Ether**, and continue east to **Route 208**. |
+| 55:58–56:32 | Cross the wooden bridges and wait near the hikers to pass. Renew **Repel** at the expiry prompt before descending into the grass. Go through the east gatehouse into **Hearthome City**. |
+| 56:33–57:05 | Advance the scene with **Keira’s Buneary** at the city entrance. Decline another Repel in town. Ride to the **Contest Hall** and speak with **Fantina**, who leaves after her dialogue. |
+| 57:06–57:29 | Enter the Contest Hall. Receive **1 Ethereal Sticker C** from Keira and a **tuxedo** from Mom. Leave without entering a contest. |
+| 57:30–58:03 | Ride to the southeast part of Hearthome and trigger the second **rival** battle. **Kazza Lv. 22, 55/55 HP** uses **Confusion** to knock out male **Starly Lv. 19** in one hit. |
+| 58:04–58:32 | The rival sends out male **Prinplup Lv. 21**. Kazza uses **Confusion** three times. Prinplup sets **Stealth Rock** after the first hit and uses **Bubble Beam** after the second, dropping Kazza to **22/55 HP**. The third Confusion knocks it out. |
+| 58:33–59:03 | One **Confusion** knocks out male **Roselia Lv. 20**. Kazza reaches **Lv. 23**, and Monferno also reaches **Lv. 23**. Against male **Ponyta Lv. 20**, use another Confusion. Ponyta survives and uses **Flame Charge**, knocking out Kazza from **25/58 HP**. Select Monferno. |
+| 59:04–59:33 | **Monferno** takes damage from Stealth Rock on entry. Use **Mach Punch** to finish Ponyta and win. Clear the rival’s post-battle dialogue. |
+| 59:34–01:00:00 | Go east through Hearthome’s gatehouse onto **Route 209**. Open the Bag and use a **Repel**. Ride across the short bridges and turn north through the grass and paths. |
+
+### State at 01:00:00
+
+- **Route 209**, northbound toward Solaceon Town. Repel is active.
+- **Kazza Lv. 23** remains in party slot 1 and is fainted at **0/58 HP**. **Monferno Lv. 23** is the usable party member. It was healed before the rival battle and took Stealth Rock damage when sent out.
+- Picked up the hidden **Ether** and obtained the **Ethereal Sticker C** and **tuxedo**. **3 Super Potions** remain by count after the observed use in Mt. Coronet.
