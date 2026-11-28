@@ -45,9 +45,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 03:00:00–03:05:00 | Reviewed |
 | 03:05:00–03:10:00 | Reviewed |
 | 03:10:00–03:15:00 | Reviewed |
-| 03:15:00–03:18:16 | Pending |
+| 03:15:00–03:18:16 | Reviewed |
+| 03:18:16–03:18:16 | Pending |
 
-Resume at **03:15:00** on the first turn against Cynthia’s Spiritomb after using X Sp. Def.
+Review complete through **03:18:16**, the end of the recording.
 
 ## Review method
 
@@ -725,3 +726,17 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 | 3:14:55–3:15:00 | Use one X Sp. Def on Palkia. Spiritomb responds with Shadow Ball. |
 
 **State at 3:15:00.** Palkia is the only party member at Lv. 56 with Choice Specs. It entered the battle at 186/186 HP, and its X Sp. Def boost is active. There are 39 Full Restores in the Bag.
+
+## 3:15:00–3:18:16 | Cynthia and the Hall of Fame
+
+| Video time | Observed action |
+| --- | --- |
+| 3:15:00–3:15:18 | Spiritomb Lv. 61 lands Shadow Ball, leaving Palkia at 149/186 HP. Use one X Speed and two X Sp. Atk on consecutive turns. Spiritomb attempts Sucker Punch on all three item turns and each attempt fails. |
+| 3:15:19–3:15:40 | Palkia KOs Spiritomb with Dragon Pulse. Spiritomb’s Pressure costs two PP. The next Dragon Pulse KOs Lucario Lv. 63 despite its resistance. |
+| 3:15:41–3:16:07 | Dragon Pulse KOs Roserade Lv. 60 and Gastrodon Lv. 60. Palkia reaches Lv. 57 after Gastrodon. |
+| 3:16:08–3:16:38 | Dragon Pulse KOs Milotic Lv. 63. Palkia then moves first against Garchomp Lv. 66 and KOs it with the sixth consecutive Dragon Pulse. The victory text appears at about 3:16:38. |
+| 3:16:39–3:17:25 | Cynthia recognizes the player as Champion. Take the lift and follow the corridor to the Hall of Fame, where Cynthia and Rowan meet the player. |
+| 3:17:26–3:17:57 | The player joins Cynthia and Rowan at the terminal. The machine records the player and Palkia, and the Hall of Fame display shows Palkia Lv. 57 as the only party member. |
+| 3:17:58–3:18:16 | The League Champion screen appears and shows an in-game time of 003:11. The overlay run timer stops at 3:17:02.31 around video 3:18:07. The source title reports 3:17:01. The recording ends in the opening of the credits sequence. |
+
+**Final state.** The player defeats Cynthia and registers Palkia alone in the Hall of Fame. Palkia is Lv. 57 with Choice Specs. Its last visible battle HP is 152/189 before the final Dragon Pulse. Kazza and Monferno remain boxed.
