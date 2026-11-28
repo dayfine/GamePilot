@@ -37,7 +37,7 @@ let program ~id ~name ~category ~description ~dir ~backends ?(options = []) () =
     name;
     category;
     description;
-    doc = "docs/guide/" ^ id ^ ".md";
+    doc = "docs/guide/frlg/" ^ dir ^ ".md";
     checkpoints = Some ("src/games/pokemon/frlg/programs/" ^ dir ^ "/plans");
     backends;
     viewport = Nso_gba;
@@ -229,7 +229,7 @@ let dex_collection =
     category = Dex_collection;
     description =
       "Catches Pokemon the Pokedex lacks, toward the National Pokedex.";
-    doc = "docs/guide/frlg.dex_collection.md";
+    doc = "docs/guide/frlg/dex_collection.md";
     checkpoints = Some "src/games/pokemon/frlg/programs/dex_collection/plans";
     backends = [ Mgba ];
     viewport = Nso_gba;
@@ -245,7 +245,7 @@ let wild_rng =
     category = Shiny_hunting;
     description =
       "Catches a chosen shiny wild Pokemon by timing the game's random numbers.";
-    doc = "docs/guide/frlg.wild_rng.md";
+    doc = "docs/guide/frlg/wild_rng.md";
     checkpoints = Some "src/games/pokemon/frlg/programs/wild_rng/plans";
     backends = [ Mgba ];
     viewport = Nso_gba;
