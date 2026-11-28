@@ -35,7 +35,7 @@ Runs on: mGBA.
 - the thunder badge (fly)
 - the soul badge (surf)
 - money at least ¥24000 (all the purchases)
-- poke-ball at least x4 (wild_rng)
+- poke-ball at least x20 (wild_rng)
 - at the start, anywhere outdoors where Fly works
 <!-- /generated -->
 
@@ -86,13 +86,13 @@ sh run/run_checkpoints_on_mgba.sh frlg.dex_collection --from 01-ultra-balls --to
 | Resume from | The pre-flight checks |
 |---|---|
 | 01-ultra-balls | a member knows fly (fly); the thunder badge (fly); money at least ¥24000 (mart); at the start, anywhere outdoors where Fly works |
-| 02-shiny-voltorb | a member holds no Mail (pc_deposit); a member knows fly (fly); the thunder badge (fly); ultra-ball at least x1 (wild_rng); at the start, anywhere outdoors where Fly works |
-| 03-shiny-drowzee | a member knows fly (fly); the thunder badge (fly); ultra-ball at least x1 (wild_rng); at the start, anywhere outdoors where Fly works |
-| 04-shiny-ekans | a member knows fly (fly); the thunder badge (fly); ultra-ball at least x1 (wild_rng); at the start, anywhere outdoors where Fly works |
-| 05-shiny-growlithe | a member knows fly (fly); the thunder badge (fly); poke-ball at least x1 (wild_rng); at the start, anywhere outdoors where Fly works |
-| 06-shiny-oddish | a member knows fly (fly); the thunder badge (fly); poke-ball at least x1 (wild_rng); at the start, anywhere outdoors where Fly works |
-| 07-shiny-psyduck | a member knows fly (fly); a member knows surf (surf); the thunder badge (fly); the soul badge (surf); poke-ball at least x1 (wild_rng); at the start, anywhere outdoors where Fly works |
-| 08-shiny-shellder | a member knows fly (fly); the thunder badge (fly); poke-ball at least x1 (wild_rng); at the start, anywhere outdoors where Fly works |
+| 02-shiny-voltorb | a member holds no Mail (pc_deposit); a member knows fly (fly); the thunder badge (fly); ultra-ball at least x5 (wild_rng); at the start, anywhere outdoors where Fly works |
+| 03-shiny-drowzee | a member knows fly (fly); the thunder badge (fly); ultra-ball at least x5 (wild_rng); at the start, anywhere outdoors where Fly works |
+| 04-shiny-ekans | a member knows fly (fly); the thunder badge (fly); ultra-ball at least x5 (wild_rng); at the start, anywhere outdoors where Fly works |
+| 05-shiny-growlithe | a member knows fly (fly); the thunder badge (fly); poke-ball at least x5 (wild_rng); at the start, anywhere outdoors where Fly works |
+| 06-shiny-oddish | a member knows fly (fly); the thunder badge (fly); poke-ball at least x5 (wild_rng); at the start, anywhere outdoors where Fly works |
+| 07-shiny-psyduck | a member knows fly (fly); a member knows surf (surf); the thunder badge (fly); the soul badge (surf); poke-ball at least x5 (wild_rng); at the start, anywhere outdoors where Fly works |
+| 08-shiny-shellder | a member knows fly (fly); the thunder badge (fly); poke-ball at least x5 (wild_rng); at the start, anywhere outdoors where Fly works |
 | 09-shiny-scyther | a member knows fly (fly); the thunder badge (fly); at the start, anywhere outdoors where Fly works |
 <!-- /generated -->
 

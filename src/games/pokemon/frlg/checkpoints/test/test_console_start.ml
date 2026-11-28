@@ -608,6 +608,111 @@ let deposit_cases =
       "";
   ]
 
+let capture_plan_of ~action args =
+  let json =
+    Printf.sprintf
+      {|{"format": "gamepilot-checkpoint/1", "game": "frlg",
+       "execution": {"menu": "full"},
+       "checkpoint": {"id": "catch", "title": "Catch a Pokemon",
+         "events": [{"id": "catch", "kind": "game_action",
+           "action": %S, "args": %s,
+           "why": "Catch target."}]}}|}
+      action args
+  in
+  match Plan_file.decode ~source:"catch" (Yojson.Safe.from_string json) with
+  | Ok p -> p
+  | Error e -> failwith e
+
+let ball_options pairs =
+  let decl : Run_options.declared list =
+    [
+      {
+        key = "ball";
+        value = One_of Frlg_actions.Capture_plan.balls;
+        presence = Optional;
+        doc = "ball";
+      };
+      {
+        key = "balls";
+        value = Int_range (1, 999);
+        presence = Optional;
+        doc = "balls";
+      };
+    ]
+  in
+  match Run_options.check decl pairs with Ok o -> o | Error e -> failwith e
+
+let describe_needs ?options plan =
+  match Plan_needs.needs ?options stocks ~before:None plan with
+  | Error e -> "error: " ^ e
+  | Ok ns -> String.concat "; " (List.map Preflight.describe ns)
+
+let capture_ball_cases =
+  let default_capture =
+    capture_plan_of ~action:"capture" {|{"species": "pidgey"}|}
+  in
+  let small_capture =
+    capture_plan_of ~action:"capture" {|{"species": "rattata", "balls": 3}|}
+  in
+  let legendary_capture =
+    capture_plan_of ~action:"capture"
+      {|{"species": "articuno", "ball": "ultra-ball", "balls": 50}|}
+  in
+  let wild_rng_plan =
+    capture_plan_of ~action:"wild_rng"
+      {|{"species": "voltorb", "ball": "ultra-ball", "balls": 5}|}
+  in
+  [
+    case "preflight capture: default ball budget is 5 poke-balls"
+      (fun () -> describe_needs default_capture)
+      "poke-ball at least x5 (capture)";
+    case "preflight capture: explicit smaller balls budget is respected"
+      (fun () -> describe_needs small_capture)
+      "poke-ball at least x3 (capture)";
+    case "preflight capture: large/legendary balls budget is respected"
+      (fun () -> describe_needs legendary_capture)
+      "ultra-ball at least x50 (capture)";
+    case "preflight 02-trade-farfetchd: capture requires its 10 poke-balls"
+      (fun () ->
+        needs "02-trade-farfetchd" None
+        |> List.filter_map (function
+             | Need.Item_at_least _ as n -> Some (Preflight.describe n)
+             | _ -> None)
+        |> String.concat "; ")
+      "poke-ball at least x10 (capture)";
+    case "preflight wild_rng: uses plan ball and balls budget"
+      (fun () -> describe_needs wild_rng_plan)
+      "ultra-ball at least x5 (wild_rng)";
+    case "preflight options: --options ball and balls override capture need"
+      (fun () ->
+        let options =
+          ball_options [ ("ball", "luxury-ball"); ("balls", "30") ]
+        in
+        describe_needs ~options wild_rng_plan)
+      "luxury-ball at least x30 (wild_rng)";
+    case "preflight options: overridden ball count is checked against bag"
+      (fun () ->
+        let options =
+          ball_options [ ("ball", "luxury-ball"); ("balls", "30") ]
+        in
+        let ns =
+          Result.get_ok
+            (Preflight.needs ~options stocks ~before:None wild_rng_plan)
+        in
+        let check count =
+          rows_text ns
+            {
+              observed = observed ~items:[ ("luxury-ball", count) ] ();
+              place = None;
+              members = None;
+              card = None;
+            }
+        in
+        check 29 ^ " || " ^ check 30)
+      "luxury-ball at least x30 (wild_rng): luxury-ball x29: MISMATCH => stop \
+       || luxury-ball at least x30 (wild_rng): luxury-ball x30: ok => go";
+  ]
+
 let test_rng_party_room_and_needs () =
   let decode source json =
     Result.get_ok (Plan_file.decode ~source (Yojson.Safe.from_string json))
@@ -653,7 +758,7 @@ let test_rng_party_room_and_needs () =
   check "wild_rng Plan_needs requires ball and no start member"
     (wild_needs
     = [
-        Need.Item_at_least { item = "poke-ball"; count = 1; for_ = "wild_rng" };
+        Need.Item_at_least { item = "poke-ball"; count = 5; for_ = "wild_rng" };
       ]);
   let gift_room = chain_need [ gift_plan ] in
   check "gift_rng needs 1 free slot" (Party_room.free_needed gift_room = 1);
@@ -670,4 +775,5 @@ let test_rng_party_room_and_needs () =
 let () =
   test_rng_party_room_and_needs ();
   Table_test.run "console start"
-    (start_cases @ preflight_cases @ deposit_cases @ room_cases @ room_row_cases)
+    (start_cases @ preflight_cases @ deposit_cases @ capture_ball_cases
+   @ room_cases @ room_row_cases)

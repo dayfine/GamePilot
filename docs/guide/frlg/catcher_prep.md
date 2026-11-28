@@ -19,7 +19,7 @@ Runs on: mGBA, the Switch (in its GBA app).
 - 1 free party slot (joining: paras in 01-catch-paras)
 - a member knows fly (fly)
 - the thunder badge (fly)
-- ultra-ball at least x1 (capture)
+- ultra-ball at least x10 (capture)
 - rare-candy at least x1 (candy_level)
 - at the start, anywhere outdoors where Fly works
 <!-- /generated -->
@@ -53,7 +53,7 @@ sh run/run_checkpoints_on_switch.sh frlg.catcher_prep --from 01-catch-paras --to
 <!-- generated:preflight -->
 | Resume from | The pre-flight checks |
 |---|---|
-| 01-catch-paras | a member knows fly (fly); the thunder badge (fly); ultra-ball at least x1 (capture); at the start, anywhere outdoors where Fly works |
+| 01-catch-paras | a member knows fly (fly); the thunder badge (fly); ultra-ball at least x10 (capture); at the start, anywhere outdoors where Fly works |
 | 02-train-catchers | party includes paras; paras in the party (candy_level); rare-candy at least x1 (candy_level); at the start, Route4 |
 <!-- /generated -->
 
