@@ -14,6 +14,7 @@ type game_steps = {
   policy_catch : policy_catch_steps option;
   shiny_at : int -> bool;
   log : string -> unit;
+  show_counters : Wire.Watch.counter list -> unit;
 }
 
 type end_ =
@@ -38,57 +39,80 @@ let synthetic_capture (plan : Capture_plan.t) (summary : CR.summary) :
     caught = [ { species; destination = Party } ];
   }
 
-let confirm_summary game_steps ~party cap =
-  let end_ = if game_steps.shiny_at (party + 1) then Shiny else Not_shiny in
-  { end_; capture = Some cap }
+let watch_counters ~attempt ~total ~phase : Wire.Watch.counter list =
+  [
+    { label = "attempt"; value = Printf.sprintf "%d/%d" attempt total };
+    { label = "phase"; value = phase };
+  ]
 
-let check_intro ~log ~party (pc : policy_catch_steps) =
+let report game_steps ~attempt ~total phase =
+  game_steps.show_counters (watch_counters ~attempt ~total ~phase)
+
+let confirm_summary game_steps ~attempt ~total ~party cap =
+  report game_steps ~attempt ~total "summary";
+  if game_steps.shiny_at (party + 1) then (
+    report game_steps ~attempt ~total "shiny";
+    { end_ = Shiny; capture = Some cap })
+  else { end_ = Not_shiny; capture = Some cap }
+
+let check_intro ~label game_steps ~attempt ~total ~party
+    (pc : policy_catch_steps) =
   match pc.detect_shiny with
   | None -> true
   | Some detect ->
+      report game_steps ~attempt ~total "encounter";
       let reading = detect () in
-      log ("Wild RNG: " ^ Shiny.format_reading reading);
+      game_steps.log (label ^ ": " ^ Shiny.format_reading reading);
       if reading.verdict = Shiny.Not_shiny then (
         pc.on_miss ~party;
         false)
       else true
 
-let finish_policy_catch game_steps (pc : policy_catch_steps) plan ~party summary
-    =
+let finish_policy_catch game_steps (pc : policy_catch_steps) plan ~attempt
+    ~total ~party summary =
   if pc.finish_catch Party then
-    confirm_summary game_steps ~party (synthetic_capture plan summary)
+    confirm_summary game_steps ~attempt ~total ~party
+      (synthetic_capture plan summary)
   else
     {
       end_ = Capture_ended (Failed "post-catch dialog did not return");
       capture = None;
     }
 
-let run_policy_catch game_steps (pc : policy_catch_steps) plan ~party =
+let run_policy_catch ~label game_steps (pc : policy_catch_steps)
+    (plan : Capture_plan.t) ~attempt ~total ~party =
+  report game_steps ~attempt ~total "reset";
   if not (pc.find_encounter ()) then
     { end_ = Capture_ended No_encounter; capture = None }
-  else if not (check_intro ~log:game_steps.log ~party pc) then
+  else if not (check_intro ~label game_steps ~attempt ~total ~party pc) then
     { end_ = Not_shiny_intro; capture = None }
-  else
+  else (
+    report game_steps ~attempt ~total "catch";
     match pc.catch_battle () with
-    | CR.Caught summary -> finish_policy_catch game_steps pc plan ~party summary
+    | CR.Caught summary ->
+        finish_policy_catch game_steps pc plan ~attempt ~total ~party summary
     | CR.Paused { reason; _ } -> { end_ = Catch_paused reason; capture = None }
     | CR.No_balls _ ->
         { end_ = Capture_ended (Out_of_balls None); capture = None }
     | CR.Foe_ended _ ->
         { end_ = Capture_ended (Failed "foe ended battle"); capture = None }
     | CR.Failed { reason; _ } ->
-        { end_ = Capture_ended (Failed reason); capture = None }
+        { end_ = Capture_ended (Failed reason); capture = None })
 
-let run_legacy game_steps plan ~party =
+let run_legacy game_steps (plan : Capture_plan.t) ~attempt ~total ~party =
+  report game_steps ~attempt ~total "reset";
   let r = game_steps.catch plan ~party in
   match r.end_ with
-  | All_caught -> confirm_summary game_steps ~party r
+  | All_caught ->
+      let shown = max attempt r.encounters in
+      confirm_summary game_steps ~attempt:shown ~total ~party r
   | e -> { end_ = Capture_ended e; capture = Some r }
 
-let run_attempt game_steps (plan : Capture_plan.t) ~party =
+let run_attempt ~label game_steps (plan : Capture_plan.t) ~attempt ~total ~party
+    =
   match game_steps.policy_catch with
-  | Some pc -> run_policy_catch game_steps pc plan ~party
-  | None -> run_legacy game_steps plan ~party
+  | Some pc -> run_policy_catch ~label game_steps pc plan ~attempt ~total ~party
+  | None -> run_legacy game_steps plan ~attempt ~total ~party
 
 let is_miss = function
   | Not_shiny | Not_shiny_intro -> true
@@ -97,12 +121,19 @@ let is_miss = function
   | Capture_ended (Failed "foe ended battle") -> true
   | _ -> false
 
-let run game_steps (plan : Capture_plan.t) ~party =
+let run ?(label = "Wild RNG") ?attempt ?total game_steps (plan : Capture_plan.t)
+    ~party =
   if party >= Capture.party_size then { end_ = Party_full; capture = None }
   else
     let max_attempts = max 1 plan.max_encounters in
+    let base = Option.value ~default:1 attempt in
+    let shown_total = Option.value ~default:max_attempts total in
     let rec loop n =
-      let r = run_attempt game_steps plan ~party in
+      let shown = base + n - 1 in
+      let r =
+        run_attempt ~label game_steps plan ~attempt:shown ~total:shown_total
+          ~party
+      in
       if is_miss r.end_ && n < max_attempts then loop (n + 1) else r
     in
     loop 1

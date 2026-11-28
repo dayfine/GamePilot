@@ -45,6 +45,9 @@ let store species cursor =
     look Box_chooser;
   ]
 
+let scan slots =
+  List.mapi (fun cursor species -> look Party_panel ~cursor ?species) slots
+
 let case name input expectation : Table_test.case = { name; input; expectation }
 
 let cases =
@@ -52,8 +55,32 @@ let cases =
     case "mGBA pc-01: Mr. Mime then Farfetch'd, and out"
       (presses [ "mr-mime"; "farfetchd" ]
          (to_panel
-         @ [ look Party_panel ~cursor:0 ~species:"blastoise" ]
-         @ store "mr-mime" 4 @ store "farfetchd" 4
+         @ scan
+             [
+               Some "blastoise";
+               Some "pidgey";
+               Some "rattata";
+               Some "spearow";
+               Some "mr-mime";
+               Some "farfetchd";
+             ]
+         @ store "mr-mime" 4
+         @ [
+             look Party_panel ~cursor:4 ~species:"farfetchd";
+             look Party_panel ~cursor:3 ~species:"spearow";
+             look Party_panel ~cursor:2 ~species:"rattata";
+             look Party_panel ~cursor:1 ~species:"pidgey";
+           ]
+         @ scan
+             [
+               Some "blastoise";
+               Some "pidgey";
+               Some "rattata";
+               Some "spearow";
+               Some "farfetchd";
+             ]
+         @ [ look Party_panel ~cursor:6 ]
+         @ store "farfetchd" 4
          @ [
              look Party_panel ~cursor:4;
              look Yes_no ~cursor:1;
@@ -61,7 +88,8 @@ let cases =
              look Pc_list ~cursor:0 ~label:"BILL'S PC";
              look Overworld;
            ]))
-      "A wait B A wait B DOWN A wait DOWN A A A A A A B B B B done";
+      "A wait B A wait B DOWN A wait DOWN DOWN DOWN DOWN DOWN UP A A A UP UP \
+       UP UP DOWN DOWN DOWN DOWN DOWN UP A A A B B B B done";
     case "a Pokémon's menu not on STORE: no A"
       (presses [ "eevee" ]
          [ look Overworld; look Mon_menu ~cursor:3 ~label:"RELEASE" ])
@@ -71,37 +99,114 @@ let cases =
       "A fail: the Pokemon's menu is not on STORE";
     case "the box is full: B, then RIGHT to the next box, then A"
       (presses [ "eevee" ]
-         [
-           look Overworld;
-           look Party_panel ~cursor:1 ~species:"eevee";
-           look Mon_menu ~cursor:0 ~label:"STORE";
-           look Box_chooser;
-           look Box_chooser ~box_full:true;
-           look Box_chooser;
-           look Box_chooser;
-           look Party_panel ~cursor:1;
-         ])
-      "A A A A B RIGHT A B";
+         ([ look Overworld ]
+         @ scan [ Some "blastoise"; Some "eevee" ]
+         @ [
+             look Party_panel ~cursor:6;
+             look Party_panel ~cursor:1 ~species:"eevee";
+             look Mon_menu ~cursor:0 ~label:"STORE";
+             look Box_chooser;
+             look Box_chooser ~box_full:true;
+             look Box_chooser;
+             look Box_chooser;
+             look Party_panel ~cursor:1;
+           ]))
+      "A DOWN DOWN UP A A A B RIGHT A B";
     case
-      "viridian-forest run 1 (2026-11-25): Farfetch'd holds Retro Mail, the \
-       game refuses: fail, not STORE again"
+      "viridian-forest run 1 (2026-11-25): Farfetch'd holds Retro Mail, no \
+       other copy: scan, step back, dismiss, fail"
       (presses [ "farfetchd" ]
          (to_panel
+         @ scan
+             [
+               Some "blastoise";
+               Some "pidgey";
+               Some "farfetchd";
+               Some "spearow";
+               Some "oddish";
+               Some "rattata";
+             ]
          @ [
+             look Party_panel ~cursor:4 ~species:"oddish";
+             look Party_panel ~cursor:3 ~species:"spearow";
              look Party_panel ~cursor:2 ~species:"farfetchd";
              look Mon_menu ~cursor:0 ~label:"STORE";
              look Party_panel ~cursor:6 ~species:"farfetchd" ~remove_mail:true;
+             look Party_panel ~cursor:2 ~species:"farfetchd";
            ]))
-      "A wait B A wait B DOWN A wait A A fail: farfetchd holds Mail: the game \
-       will not store it (\"Please remove the MAIL.\")";
+      "A wait B A wait B DOWN A wait DOWN DOWN DOWN DOWN DOWN UP UP UP A A B \
+       fail: farfetchd holds Mail: the game will not store it (\"Please remove \
+       the MAIL.\")";
+    case
+      "two oddish in party: slot 4 holds Mail, slot 5 has no Mail -> deposits \
+       slot 5 directly"
+      (presses [ "oddish" ]
+         (to_panel
+         @ scan
+             [
+               Some "blastoise";
+               Some "pidgey";
+               Some "rattata";
+               Some "spearow";
+               Some "oddish";
+             ]
+         @ store "oddish" 5
+         @ [ look Party_panel ~cursor:4 ]))
+      "A wait B A wait B DOWN A wait DOWN DOWN DOWN DOWN DOWN A A A B";
+    case
+      "two oddish in party: slot 5 holds Mail, slot 4 has no Mail -> skip slot \
+       5 and store slot 4"
+      (presses [ "oddish" ]
+         (to_panel
+         @ scan
+             [
+               Some "blastoise";
+               Some "pidgey";
+               Some "rattata";
+               Some "spearow";
+               Some "oddish";
+             ]
+         @ [
+             look Party_panel ~cursor:5 ~species:"oddish";
+             look Mon_menu ~cursor:0 ~label:"STORE";
+             look Party_panel ~cursor:6 ~species:"oddish" ~remove_mail:true;
+             look Party_panel ~cursor:5 ~species:"oddish";
+           ]
+         @ store "oddish" 4
+         @ [ look Party_panel ~cursor:4 ]))
+      "A wait B A wait B DOWN A wait DOWN DOWN DOWN DOWN DOWN A A B UP A A A B";
+    case "single oddish holding Mail at last slot: dismiss and fail"
+      (presses [ "oddish" ]
+         ([ look Overworld ]
+         @ scan
+             [
+               Some "blastoise";
+               Some "pidgey";
+               Some "rattata";
+               Some "spearow";
+               Some "caterpie";
+             ]
+         @ [
+             look Party_panel ~cursor:5 ~species:"oddish";
+             look Mon_menu ~cursor:0 ~label:"STORE";
+             look Party_panel ~cursor:6 ~species:"oddish" ~remove_mail:true;
+             look Party_panel ~cursor:5 ~species:"oddish";
+           ]))
+      "A DOWN DOWN DOWN DOWN DOWN A A B fail: oddish holds Mail: the game will \
+       not store it (\"Please remove the MAIL.\")";
     case "the member is not in the party: fail at the last slot"
       (presses [ "eevee" ]
-         [
-           look Overworld;
-           look Party_panel ~cursor:4 ~species:"pidgey";
-           look Party_panel ~cursor:5 ~species:"oddish";
-         ])
-      "A DOWN fail: no eevee in the party panel";
+         ([ look Overworld ]
+         @ scan
+             [
+               Some "blastoise";
+               Some "pidgey";
+               Some "rattata";
+               Some "spearow";
+               Some "caterpie";
+               Some "oddish";
+             ]))
+      "A DOWN DOWN DOWN DOWN DOWN fail: no eevee in the party panel";
     case "the PC list's top not read: no A"
       (presses [ "eevee" ] [ look Overworld; look Pc_list ~cursor:0 ])
       "A fail: the PC list's top row did not read as a storage PC";
@@ -133,6 +238,26 @@ let cases =
            look Text;
          ])
       "A wait UP wait";
+    case
+      "switch 8-char box name chooser: confirms deposit with A instead of \
+       Box_grid failure"
+      (presses [ "eevee" ]
+         ([ look Overworld ]
+         @ scan
+             [
+               Some "blastoise";
+               Some "pidgey";
+               Some "rattata";
+               Some "spearow";
+               Some "caterpie";
+             ]
+         @ [
+             look Party_panel ~cursor:5 ~species:"eevee";
+             look Mon_menu ~cursor:0 ~label:"STORE";
+             look Box_chooser;
+             look Party_panel ~cursor:5;
+           ]))
+      "A DOWN DOWN DOWN DOWN DOWN A A A B";
     case "a fade that never ends"
       (presses [ "eevee" ] (List.init P.max_others (fun _ -> look Other)))
       "wait wait wait wait wait wait wait wait wait fail: no PC screen settled \
@@ -222,4 +347,170 @@ let fake_cases =
       (to_party_panel true) "party panel after [A wait B wait A wait B DOWN A]";
   ]
 
-let () = Table_test.run "pc deposit steps" (cases @ fake_cases)
+(* A fake DEPOSIT party panel that tracks each member's original slot id and
+   whether it holds Mail, to verify which exact slot is stored when duplicate
+   species are present at any party size (2..6). *)
+type slot_mon = { slot : int; species : string; mail : bool }
+
+type panel_sim = {
+  mutable screen : S.screen;
+  mutable cursor : int;
+  mutable mail_dialog : bool;
+  mutable party : slot_mon list;
+  mutable stored : slot_mon list;
+  skip_empty : bool;
+}
+
+let sim_species sim =
+  match List.nth_opt sim.party sim.cursor with
+  | Some m -> Some m.species
+  | None -> None
+
+let sim_look sim =
+  match sim.screen with
+  | Party_panel when sim.mail_dialog ->
+      look Party_panel ~cursor:6 ?species:(sim_species sim) ~remove_mail:true
+  | Party_panel ->
+      look Party_panel ~cursor:sim.cursor ?species:(sim_species sim)
+  | Mon_menu -> look Mon_menu ~cursor:0 ~label:"STORE"
+  | Box_chooser -> look Box_chooser
+  | screen -> look screen
+
+let sim_down sim =
+  let n = List.length sim.party in
+  if sim.cursor >= 6 then 0
+  else if sim.skip_empty && sim.cursor + 1 >= n then 6
+  else sim.cursor + 1
+
+let sim_up sim =
+  let n = List.length sim.party in
+  if sim.cursor = 6 then if sim.skip_empty then n - 1 else 5
+  else if sim.cursor > 0 then sim.cursor - 1
+  else 6
+
+let sim_press sim (p : P.press) =
+  match (sim.screen, p) with
+  | Party_panel, B when sim.mail_dialog -> sim.mail_dialog <- false
+  | Party_panel, Down -> sim.cursor <- sim_down sim
+  | Party_panel, Up -> sim.cursor <- sim_up sim
+  | Party_panel, A when sim.cursor < List.length sim.party ->
+      sim.screen <- Mon_menu
+  | Party_panel, B -> sim.screen <- Overworld
+  | Mon_menu, A -> (
+      match List.nth_opt sim.party sim.cursor with
+      | Some m when m.mail ->
+          sim.screen <- Party_panel;
+          sim.mail_dialog <- true
+      | Some _ -> sim.screen <- Box_chooser
+      | None -> ())
+  | Box_chooser, A ->
+      let removed = List.nth sim.party sim.cursor in
+      sim.stored <- removed :: sim.stored;
+      sim.party <- List.filteri (fun i _ -> i <> sim.cursor) sim.party;
+      if sim.cursor >= List.length sim.party then
+        sim.cursor <- max 0 (List.length sim.party - 1);
+      sim.screen <- Party_panel
+  | _ -> ()
+
+let run_panel_sim ~skip_empty party targets () =
+  let sim =
+    {
+      screen = Party_panel;
+      cursor = 0;
+      mail_dialog = false;
+      party =
+        List.mapi (fun slot (species, mail) -> { slot; species; mail }) party;
+      stored = [];
+      skip_empty;
+    }
+  in
+  let rec loop t left =
+    if left = 0 then "timeout"
+    else
+      let t, p = P.next t (sim_look sim) in
+      match p with
+      | Done ->
+          let fmt ms =
+            String.concat ", "
+              (List.map (fun m -> Printf.sprintf "%d:%s" m.slot m.species) ms)
+          in
+          Printf.sprintf "stored [%s]; kept [%s]"
+            (fmt (List.rev sim.stored))
+            (fmt sim.party)
+      | Fail why -> "fail: " ^ why
+      | p ->
+          sim_press sim p;
+          loop t (left - 1)
+  in
+  loop (P.start targets) 60
+
+let duplicate_cases =
+  [
+    case
+      "6-member party, duplicate oddish with no Mail on either -> deposits \
+       slot 5 (last), leaves slot 4 untouched"
+      (run_panel_sim ~skip_empty:true
+         [
+           ("blastoise", false);
+           ("pidgey", false);
+           ("rattata", false);
+           ("spearow", false);
+           ("oddish", false);
+           ("oddish", false);
+         ]
+         [ "oddish" ])
+      "stored [5:oddish]; kept [0:blastoise, 1:pidgey, 2:rattata, 3:spearow, \
+       4:oddish]";
+    case
+      "3-member party, duplicate oddish with no Mail on either (empty slots \
+       skipped) -> deposits slot 2 (last), leaves slot 1 untouched"
+      (run_panel_sim ~skip_empty:true
+         [ ("blastoise", false); ("oddish", false); ("oddish", false) ]
+         [ "oddish" ])
+      "stored [2:oddish]; kept [0:blastoise, 1:oddish]";
+    case
+      "3-member party, duplicate oddish with no Mail on either (empty slots \
+       visited) -> deposits slot 2 (last), leaves slot 1 untouched"
+      (run_panel_sim ~skip_empty:false
+         [ ("blastoise", false); ("oddish", false); ("oddish", false) ]
+         [ "oddish" ])
+      "stored [2:oddish]; kept [0:blastoise, 1:oddish]";
+    case
+      "6-member party, duplicate oddish: slot 4 holds Mail, slot 5 has no Mail \
+       -> deposits slot 5"
+      (run_panel_sim ~skip_empty:true
+         [
+           ("blastoise", false);
+           ("pidgey", false);
+           ("rattata", false);
+           ("spearow", false);
+           ("oddish", true);
+           ("oddish", false);
+         ]
+         [ "oddish" ])
+      "stored [5:oddish]; kept [0:blastoise, 1:pidgey, 2:rattata, 3:spearow, \
+       4:oddish]";
+    case
+      "6-member party, duplicate oddish: slot 5 holds Mail, slot 4 has no Mail \
+       -> skips slot 5 and deposits slot 4"
+      (run_panel_sim ~skip_empty:true
+         [
+           ("blastoise", false);
+           ("pidgey", false);
+           ("rattata", false);
+           ("spearow", false);
+           ("oddish", false);
+           ("oddish", true);
+         ]
+         [ "oddish" ])
+      "stored [4:oddish]; kept [0:blastoise, 1:pidgey, 2:rattata, 3:spearow, \
+       5:oddish]";
+    case "3-member party, both oddish hold Mail -> fails with holds_mail"
+      (run_panel_sim ~skip_empty:true
+         [ ("blastoise", false); ("oddish", true); ("oddish", true) ]
+         [ "oddish" ])
+      "fail: oddish holds Mail: the game will not store it (\"Please remove \
+       the MAIL.\")";
+  ]
+
+let () = Table_test.run "pc deposit steps" (cases @ fake_cases @ duplicate_cases)

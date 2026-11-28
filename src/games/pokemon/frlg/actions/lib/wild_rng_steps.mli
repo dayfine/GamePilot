@@ -12,7 +12,8 @@
 
 val title_presses : Frlg_rng.Rng_timings.t -> Wire.command list
 (** From the reset: the title screen's wait, A held 3 s (the seed), the continue
-    screen's rest, A (continue) and B (the recap). Shared with {!Gift_rng}. *)
+    screen's rest, A (continue) and B (the recap). Shared with {!Gift_rng} and
+    {!Static_rng}. *)
 
 val blind_presses : Frlg_rng.Rng_timings.t -> Wire.command list
 (** From the reset: {!title_presses}, then Start, the party, the last member's
@@ -46,6 +47,7 @@ val battle_timeout_ms : int
 
 val game_steps :
   log:(string -> unit) ->
+  ?show_counters:(Wire.Watch.counter list -> unit) ->
   ?reset_mode:Rng_reset.mode ->
   ?encounter_method:Wild_rng_plan.encounter_method ->
   Frlg_rng.Rng_timings.t ->
@@ -54,6 +56,28 @@ val game_steps :
 (** {!Capture_steps}' throws and catch, with {!find_encounter} for the
     encounter, and no flee: a foe that is not the target is left in its battle,
     and the next attempt's reset ends it. *)
+
+val legacy_catch :
+  log:(string -> unit) ->
+  ?show_counters:(Wire.Watch.counter list -> unit) ->
+  find_encounter:(unit -> bool) ->
+  Capture_plan.t ->
+  party:int ->
+  Capture.result
+(** Runs {!Capture.run} under {!Frlg_battle.Battle_look.probes} with
+    [find_encounter] and no flee. Shared by {!Wild_rng} and {!Static_rng}. *)
+
+val policy_catch_for :
+  log:(string -> unit) ->
+  find_encounter:(unit -> bool) ->
+  ?on_miss:(party:int -> unit) ->
+  catch_mode:Wild_rng_plan.catch_mode ->
+  visual_shiny_check:bool ->
+  Capture_plan.t ->
+  Wild_rng.policy_catch_steps option
+(** Selects {!Wild_rng.policy_catch_steps} or [None] (legacy throw-only) from
+    [catch_mode] and [visual_shiny_check], using [find_encounter] to start each
+    battle. Shared by {!Wild_rng} and {!Static_rng}. *)
 
 val policy_catch_steps :
   log:(string -> unit) ->
@@ -91,11 +115,5 @@ val live_calibrated_game_steps :
   Wild_rng_plan.t ->
   Frlg_rng.Wild_target.t ->
   Wild_rng.game_steps
-(** Live {!Wild_rng.game_steps} that recompute {!Wild_rng_plan.target} before
-    each subsequent attempt and, on Switch ([plan.frame_model = "switch"]), read
-    Summary Page 1 & Page 2 on misses, report the miss distance via
-    {!Rng_miss_calibration}, update the in-memory plan offsets for the next
-    attempt (with a 10-attempt rolling average via
-    {!Frlg_rng.Rolling_calibrator}), persist the timing delta, and skip any
-    parity-locked [(seed, advance)] target while resetting the rolling advance
-    history. *)
+(** Live {!Wild_rng.game_steps} built via {!Rng_calibrated_steps.make} for wild
+    encounters. *)

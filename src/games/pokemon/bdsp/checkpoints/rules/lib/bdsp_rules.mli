@@ -16,6 +16,10 @@ module Action : sig
     | Save_game  (** Save the game in-game ([X -> R -> A]). *)
     | Underground_farm
         (** Farm Mysterious Shards and treasures in the Grand Underground. *)
+    | Static_rng
+        (** Hunt a shiny static legendary using 0PK pedestal player-blink seed
+            recovery, in-chamber 1PK re-identification, and timed encounter
+            triggers. *)
 
   include Engine_rules.ACTION with type t := t
 end

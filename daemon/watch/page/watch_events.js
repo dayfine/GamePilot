@@ -47,6 +47,7 @@ function connect() {
   on("plan", (d) => {
     lastPlan = d;
     plans.set(d.checkpoint, d);
+    resetAttemptForCheckpoint(d.checkpoint);
     trackCurrent(d);
     renderPlan();
     if (d.checkpoint === pastId) showPast(pastId);
@@ -71,6 +72,9 @@ function renderCounters(d) {
     const box = el("div", "counter");
     box.append(el("dt", "", item.label), el("dd", "", item.value));
     list.append(box);
+    if (/^(?:attempts?|resets?)$/i.test(item.label)) {
+      updateAttemptFromCounter(item.label, item.value);
+    }
   }
 }
 

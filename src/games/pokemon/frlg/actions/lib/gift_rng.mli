@@ -33,6 +33,8 @@ type game_steps = {
   shiny_at : int -> bool;
       (** Checks party slot [slot] (1-based) for the Summary shiny star. *)
   log : string -> unit;  (** Logs progress messages. *)
+  show_counters : Wire.Watch.counter list -> unit;
+      (** Publishes live [watch.counters] updates to the watch page. *)
 }
 (** What {!run} reads and does in the game. *)
 

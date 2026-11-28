@@ -6,6 +6,7 @@
   gamepilot.wire
   gamepilot.effects
   gamepilot.switch
+  gamepilot.watch_report
   gamepilot.screen_state
   gamepilot.grid_geometry
   gamepilot.grid_maps

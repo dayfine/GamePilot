@@ -33,6 +33,9 @@ type frame_model = {
   gift_advances_offset : int;
       (** Advances a Method 1 gift lands relative to the target's formula
           ([DEFAULT_ADVANCES_OFFSET = 160] on the Switch, 0 on mGBA). *)
+  static_advances_offset : int;
+      (** Advances a static overworld encounter lands relative to the target's
+          formula (160 on the Switch, 0 on mGBA). *)
 }
 (** How a machine runs the game: how long a frame lasts and how the RNG advances
     with it. *)
@@ -42,7 +45,7 @@ val switch : frame_model
 
 val mgba : frame_model
 (** mGBA: 59.7275 frames a second, one advance per frame, no seed offset, Sweet
-    Scent's offset -183. *)
+    Scent's offset -183, static encounter offset 0. *)
 
 val continue_screen_frames : int
 (** 200: the advances the continue screen is held for. *)
@@ -53,6 +56,10 @@ val sweet_scent_fixed_duration_ms : int
 val gift_fixed_duration_ms : int
 (** 8200: the Game Corner prize-claim presses' own share of the in-game wait, in
     ms ([GAMECORNER_FIXED_DURATION] in [PokemonFRLG_BlindNavigation.cpp]). *)
+
+val static_fixed_duration_ms : int
+(** 5000: the static encounter's own share of the in-game wait, in ms (4000 ms
+    save load + recap and 1000 ms opening and closing the Start menu). *)
 
 type calibrations = {
   seed_offset : int;
@@ -105,3 +112,16 @@ val gift :
 (** The waits for a Method 1 gift target (such as a Celadon Game Corner prize):
     same title-screen and continue-screen timing as {!sweet_scent}, without the
     Sweet Scent advance offset and checked against {!gift_fixed_duration_ms}. *)
+
+val static :
+  frame_model ->
+  seed_delay_ms:int ->
+  advances:int ->
+  use_teachy_tv:bool ->
+  calibrations ->
+  (t, string) result
+(** The waits for a Method 1 static overworld encounter (such as Zapdos,
+    Articuno, Moltres, or Electrode): same title-screen and continue-screen
+    timing as {!sweet_scent}, using [static_advances_offset] and checked against
+    {!static_fixed_duration_ms} with zero extra minimum wait, matching
+    [PokemonFRLG_BlindNavigation.cpp]. *)

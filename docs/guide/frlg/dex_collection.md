@@ -2,7 +2,7 @@
 
 Catches wild Pokemon your Pokedex has not caught yet, toward the 60 Professor Oak asks for before
 he gives you the National Pokedex, and every catch is shiny: each one is timed with the wild RNG
-of [Wild RNG](frlg.wild_rng.md), so the Pokemon Sweet Scent brings out is a shiny one chosen in
+of [Wild RNG](wild_rng.md), so the Pokemon Sweet Scent brings out is a shiny one chosen in
 advance.
 
 Each checkpoint flies to the target town, walks to the encounter spot or prize counter, saves,
@@ -20,7 +20,7 @@ Runs on: mGBA.
   Center; each catch starts and ends outdoors.
 - Bring ¥24,000 for 20 Ultra Balls at the Indigo Plateau's Pokemon Center.
 - The party's last Pokemon must know Sweet Scent, the game's sound must be Mono and its button
-  mode Help, as [Wild RNG](frlg.wild_rng.md) says. Supply your trainer ID and secret ID via
+  mode Help, as [Wild RNG](wild_rng.md) says. Supply your trainer ID and secret ID via
   `--options tid=N --options sid=N`, `GAMEPILOT_FRLG_TID` / `GAMEPILOT_FRLG_SID`, or
   `trainer_ids.json` in your local FRLG config directory.
 - 02 starts with a full party and stores one member to make room; from then on each catch joins
@@ -127,7 +127,7 @@ The first slice of the collector in `docs/roadmap/frlg-dex-exclusives.md` (issue
 every catch shiny (issue #14), toward the 60 caught the National Pokedex needs (Sevii checkpoint 07,
 `docs/roadmap/frlg-sevii-islands.md`).
 
-Each catch is the `wild_rng` action ([Wild RNG](frlg.wild_rng.md)) on the seed table
+Each catch is the `wild_rng` action ([Wild RNG](wild_rng.md)) on the seed table
 `src/games/pokemon/frlg/assets/rng_seeds_mgba_sevii_save.json`, measured on mGBA from the Sevii story's
 end save, plus the plan's `seed_shift`. On mGBA the seed a title-screen press gives depends a
 little on the save the game boots from: by where the last save left the flash sectors (the save

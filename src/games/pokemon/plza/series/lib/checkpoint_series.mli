@@ -74,6 +74,10 @@ val no_end_place :
 val load_plan : plan_dir:string -> string -> (Plza_engine.Plan.t, string) result
 (** The plan [<plan_dir>/<id>.plan.json], decoded. *)
 
+val load_title : plan_dir:string -> string -> (string * string, string) result
+(** Loads [<plan_dir>/<id>.plan.json] and returns [(checkpoint_id, title)] for
+    guide tables. *)
+
 val failed :
   ?repeats:bool -> ?off_start:bool -> string -> string -> Run_attempts.outcome
 (** [failed at reason]: a failed attempt; [repeats] and [off_start] false unless

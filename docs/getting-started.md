@@ -52,7 +52,7 @@ The rest of this page uses mGBA.
 
 ## A first run
 
-A good first program is [Supplies](guide/frlg.supplies.md): it stocks Retro Mail and Super Repels
+A good first program is [Supplies](guide/frlg/supplies.md): it stocks Retro Mail and Super Repels
 in one checkpoint (`su-01`). Set up `~/.config/gamepilot/env` and a save state for `su-01`
 ([Running on mGBA](mgba.md)), then run it with its watch page:
 

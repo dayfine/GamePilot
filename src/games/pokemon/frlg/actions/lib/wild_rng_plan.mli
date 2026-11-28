@@ -156,6 +156,11 @@ val resolved_attempts :
     ["attempts"] in [args], defaulting to {!default_attempts}
     ([1..max_attempts]). *)
 
+val resolved_cal_ball_row :
+  where:string -> options:Run_options.t -> Json_field.obj -> int
+(** Resolves the calibration ball pocket row from [--options cal_ball_row=N],
+    then ["cal_ball_row"] in [args], defaulting to [0] ([0..20]). *)
+
 val advances : where:string -> Json_field.obj -> int * int
 (** Reads optional ["advances"] as [[min, max]] with [0 <= min <= max],
     defaulting to [(900, 4000)]. *)
@@ -189,6 +194,26 @@ val default_catch_config : Battle_catch_steps.config
 val throw_only_policy : Capture_plan.t -> Pokemon_catch.Catch_state.policy
 (** Degenerate {!Pokemon_catch.Catch_state.policy} with no status setter, False
     Swiper, or wall: throws [capture.ball] directly up to [capture.max_balls].
+*)
+
+val catch_mode :
+  where:string ->
+  options:Run_options.t ->
+  Capture_plan.t ->
+  Json_field.obj ->
+  catch_mode
+(** Reads optional ["catch_mode"] (overridable via [--options catch_mode=...]:
+    ["throw_only"] | ["phase1"] | ["phase2"] | ["spore_ball"], default
+    ["throw_only"]). *)
+
+val visual_shiny_check :
+  where:string ->
+  frame_model:string ->
+  catch_mode:catch_mode ->
+  Json_field.obj ->
+  bool
+(** Reads optional boolean ["visual_shiny_check"], defaulting to [true] when
+    [frame_model = "switch"] and [catch_mode <> Throw_only], [false] otherwise.
 *)
 
 val load_trainer_ids : unit -> (trainer_ids, string) result

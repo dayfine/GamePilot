@@ -76,6 +76,29 @@ val report_and_calibrate_wild :
     {!Frlg_rng.Rng_miss_search.search_wild} using [slots], [super_rod], and the
     caught [species]'s base stats. *)
 
+val report_and_calibrate_method1_rolling :
+  log:(string -> unit) ->
+  label:string ->
+  species:string ->
+  seeds:string ->
+  seed_shift:int ->
+  target_seed:int ->
+  target_delay_ms:int ->
+  target_advance:int ->
+  persist:bool ->
+  calibrator:Frlg_rng.Rolling_calibrator.t ->
+  used_boot_offset_ms:int ->
+  used_ingame_offset:int ->
+  ?calibration_path:string ->
+  Frlg_rng.Rng_miss_search.observation ->
+  (Frlg_rng.Rolling_calibrator.t * Frlg_rng.Rolling_calibrator.estimate) option
+(** Like {!report_and_calibrate}, but feeds the closest Method 1 miss into
+    {!Frlg_rng.Rolling_calibrator.record} (10-attempt rolling average with
+    outlier rejection), logs the rolling history count alongside the updated
+    [boot_offset_ms] and [ingame_offset], and optionally persists the net delta
+    to {!Frlg_rng.Switch_rng_calibration.record_timing_miss}. Returns [None]
+    when no match is found or the hit is rejected as an outlier. *)
+
 val report_and_calibrate_wild_rolling :
   log:(string -> unit) ->
   label:string ->
