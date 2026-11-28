@@ -213,19 +213,19 @@ let range_args (p : Program_registry.t) (req : launch_request) =
   | None, None -> Ok (mode_args req.mode)
   | _ -> Error (p.id ^ " has incomplete checkpoint range")
 
-let opt_flag flag = Option.fold ~none:[] ~some:(fun v -> [ flag; v ])
+let opt_flag flag = function Some v when v <> "" -> [ flag; v ] | _ -> []
 
 let watch_args ~preflight ?listen ?watch_port () =
   if preflight then []
   else
     let listen_v =
-      Option.bind listen (fun a ->
-          if a <> "" && a <> "127.0.0.1" then Some a else None)
+      Option.bind listen (fun a -> if a <> "127.0.0.1" then Some a else None)
     in
     let port_v = Option.map string_of_int watch_port in
     ("--watch" :: opt_flag "--listen" listen_v) @ opt_flag "--watch-port" port_v
 
-let build_run_argv ~gamepilot ?listen ~(console : Console_config.console) req =
+let build_run_argv ~gamepilot ?listen ?runs_dir
+    ~(console : Console_config.console) req =
   let* prog =
     Option.to_result
       ~none:("unknown program " ^ req.program_id)
@@ -244,7 +244,9 @@ let build_run_argv ~gamepilot ?listen ~(console : Console_config.console) req =
   Ok
     ([ gamepilot; "run"; prog.id ]
     @ Console_config.to_run_args console
-    @ range @ watch @ opt_args)
+    @ range @ watch
+    @ opt_flag "--runs-dir" runs_dir
+    @ opt_args)
 
 let extract_watch_url line =
   let prefix = "http://" in

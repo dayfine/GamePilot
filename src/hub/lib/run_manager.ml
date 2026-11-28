@@ -188,7 +188,8 @@ let spawn st (req : Ui_api.launch_request) =
   let gp = Sys.executable_name in
   let* argv =
     map_err http_bad_request
-      (Ui_api.build_run_argv ~gamepilot:gp ?listen:st.listen ~console req)
+      (Ui_api.build_run_argv ~gamepilot:gp ?listen:st.listen
+         ~runs_dir:st.runs_dir ~console req)
   in
   launch_process st req gp argv
 
