@@ -111,10 +111,20 @@ let test_target_and_presses () =
      200/1800, Down 200/300, Down 200/300, Down 200/300, A 200/5000, A 200/800"
     cmds
 
+let format_counters_log history =
+  history |> List.rev
+  |> List.map (fun items ->
+         items
+         |> List.map (fun (c : Wire.Watch.counter) ->
+                Printf.sprintf "%s=%s" c.label c.value)
+         |> String.concat " ")
+  |> String.concat " -> "
+
 let test_run () =
   let run_case ~claim_ok ~shiny_on ~attempts ~party =
     let n = ref 0 in
     let checked_slots = ref [] in
+    let emitted = ref [] in
     let steps : Gift_rng.game_steps =
       {
         claim_prize =
@@ -126,12 +136,15 @@ let test_run () =
             checked_slots := slot :: !checked_slots;
             !n = shiny_on);
         log = ignore;
+        show_counters = (fun items -> emitted := items :: !emitted);
       }
     in
     let r = Gift_rng.run steps ~attempts ~party in
-    (r, List.rev !checked_slots)
+    (r, List.rev !checked_slots, format_counters_log !emitted)
   in
-  let r1, slots1 = run_case ~claim_ok:true ~shiny_on:1 ~attempts:3 ~party:5 in
+  let r1, slots1, c1 =
+    run_case ~claim_ok:true ~shiny_on:1 ~attempts:3 ~party:5
+  in
   check_eq
     ~show:(Option.value ~default:"ok")
     "shiny on attempt 1" None
@@ -140,8 +153,14 @@ let test_run () =
   check_eq
     ~show:(fun xs -> String.concat "," (List.map string_of_int xs))
     "checked slot 6" [ 6 ] slots1;
+  check_eq ~show:Fun.id "counters for shiny on attempt 1"
+    "attempt=1/3 phase=reset -> attempt=1/3 phase=summary -> attempt=1/3 \
+     phase=shiny"
+    c1;
 
-  let r2, slots2 = run_case ~claim_ok:true ~shiny_on:2 ~attempts:3 ~party:5 in
+  let r2, slots2, c2 =
+    run_case ~claim_ok:true ~shiny_on:2 ~attempts:3 ~party:5
+  in
   check_eq
     ~show:(Option.value ~default:"ok")
     "shiny on attempt 2" None
@@ -150,27 +169,39 @@ let test_run () =
   check_eq
     ~show:(fun xs -> String.concat "," (List.map string_of_int xs))
     "checked slot 6 twice" [ 6; 6 ] slots2;
+  check_eq ~show:Fun.id "counters for shiny on attempt 2"
+    "attempt=1/3 phase=reset -> attempt=1/3 phase=summary -> attempt=2/3 \
+     phase=reset -> attempt=2/3 phase=summary -> attempt=2/3 phase=shiny"
+    c2;
 
-  let r3, _ = run_case ~claim_ok:true ~shiny_on:99 ~attempts:2 ~party:5 in
+  let r3, _, c3 = run_case ~claim_ok:true ~shiny_on:99 ~attempts:2 ~party:5 in
   check_eq
     ~show:(Option.value ~default:"ok")
     "all misses" (Some "gift_rng_not_shiny")
     (Gift_rng.failure_code r3.end_);
   check_eq ~show:string_of_int "attempts=2 on miss" 2 r3.attempts;
+  check_eq ~show:Fun.id "counters for all misses"
+    "attempt=1/2 phase=reset -> attempt=1/2 phase=summary -> attempt=2/2 \
+     phase=reset -> attempt=2/2 phase=summary"
+    c3;
 
-  let r4, _ = run_case ~claim_ok:false ~shiny_on:1 ~attempts:2 ~party:5 in
+  let r4, _, c4 = run_case ~claim_ok:false ~shiny_on:1 ~attempts:2 ~party:5 in
   check_eq
     ~show:(Option.value ~default:"ok")
     "claim failed" (Some "gift_rng_claim_failed")
     (Gift_rng.failure_code r4.end_);
+  check_eq ~show:Fun.id "counters for claim failed" "attempt=1/2 phase=reset" c4;
 
-  let r5, slots5 = run_case ~claim_ok:true ~shiny_on:1 ~attempts:2 ~party:6 in
+  let r5, slots5, c5 =
+    run_case ~claim_ok:true ~shiny_on:1 ~attempts:2 ~party:6
+  in
   check_eq
     ~show:(Option.value ~default:"ok")
     "party full" (Some "gift_rng_party_full")
     (Gift_rng.failure_code r5.end_);
   check_eq ~show:string_of_int "party full checks 0 slots" 0
-    (List.length slots5)
+    (List.length slots5);
+  check_eq ~show:Fun.id "counters for party full" "" c5
 
 let test_surf_request () =
   match Action_requests.decode Mart_plan.empty "surf" (obj "{}") with

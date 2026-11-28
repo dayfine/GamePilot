@@ -95,11 +95,31 @@ let find_encounter ~log ?(encounter_method = Wild_rng_plan.Grass) t () =
     | Holds _ -> true
     | Timeout -> false
 
-let game_steps ~log ?encounter_method t plan =
+let game_steps ~log ?(show_counters = ignore) ?encounter_method t
+    (plan : Capture_plan.t) =
   let spot = ref (Pacing.on_patch None) in
+  let base = Capture_steps.make ~log ~spot plan in
+  let total = plan.max_encounters in
+  let attempt = ref 0 in
+  let report phase =
+    show_counters
+      (Wild_rng.watch_counters ~attempt:(max 1 !attempt) ~total ~phase)
+  in
   {
-    (Capture_steps.make ~log ~spot plan) with
-    find_encounter = find_encounter ~log ?encounter_method t;
+    base with
+    find_encounter =
+      (fun () ->
+        incr attempt;
+        report "reset";
+        find_encounter ~log ?encounter_method t ());
+    read_encounter =
+      (fun () ->
+        report "encounter";
+        base.read_encounter ());
+    throw_ball =
+      (fun () ->
+        report "catch";
+        base.throw_ball ());
     flee = (fun () -> true);
   }
 
