@@ -155,7 +155,7 @@ let run_policy_case ~verdicts ~catch_outcome ~shiny_on ~attempts ~party =
       finish_catch = (fun _ -> true);
     }
   in
-  let steps : Static_rng.game_steps =
+  let steps : Wild_rng.game_steps =
     {
       catch = (fun _ ~party:_ -> failwith "legacy catch should not run");
       policy_catch = Some pc;
@@ -258,7 +258,7 @@ let test_legacy_retry_loop () =
       caught = [ { species = Some "zapdos"; destination = Party } ];
     }
   in
-  let steps : Static_rng.game_steps =
+  let steps : Wild_rng.game_steps =
     {
       catch =
         (fun _ ~party:_ ->

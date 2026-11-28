@@ -95,17 +95,25 @@ let find_encounter ~log ?(encounter_method = Wild_rng_plan.Grass) t () =
     | Holds _ -> true
     | Timeout -> false
 
-let game_steps ~log ?encounter_method t plan =
+let capture_steps ~log ~find_encounter plan =
   let spot = ref (Pacing.on_patch None) in
   {
     (Capture_steps.make ~log ~spot plan) with
-    find_encounter = find_encounter ~log ?encounter_method t;
+    find_encounter;
     flee = (fun () -> true);
   }
 
-let policy_catch_steps ~log ?encounter_method ~timings
-    ?(visual_shiny_check = false) ?(on_miss = ignore) ~config ~policy () :
-    Wild_rng.policy_catch_steps =
+let game_steps ~log ?encounter_method t plan =
+  capture_steps ~log
+    ~find_encounter:(find_encounter ~log ?encounter_method t)
+    plan
+
+let legacy_catch ~log ~find_encounter capture ~party =
+  Effects.with_probes Frlg_battle.Battle_look.probes (fun () ->
+      Capture.run (capture_steps ~log ~find_encounter capture) capture ~party)
+
+let make_policy_catch ~log ~find_encounter ~visual_shiny_check ~on_miss ~config
+    ~policy : Wild_rng.policy_catch_steps =
   let detect_shiny =
     if visual_shiny_check then
       Some (fun () -> Frlg_readers.Shiny_encounter_detector.detect ())
@@ -117,12 +125,30 @@ let policy_catch_steps ~log ?encounter_method ~timings
       policy
   in
   {
-    find_encounter = find_encounter ~log ?encounter_method timings;
+    find_encounter;
     detect_shiny;
     on_miss;
     catch_battle;
     finish_catch = Capture_steps.finish_catch ~log;
   }
+
+let policy_catch_for ~log ~find_encounter ?(on_miss = ignore) ~catch_mode
+    ~visual_shiny_check capture =
+  let mk = make_policy_catch ~log ~find_encounter ~on_miss in
+  match (catch_mode, visual_shiny_check) with
+  | Wild_rng_plan.Throw_only, false -> None
+  | Wild_rng_plan.Throw_only, true ->
+      Some
+        (mk ~visual_shiny_check:true ~config:Wild_rng_plan.default_catch_config
+           ~policy:(Wild_rng_plan.throw_only_policy capture))
+  | Wild_rng_plan.Catch_policy { policy; config }, visual_shiny_check ->
+      Some (mk ~visual_shiny_check ~config ~policy)
+
+let policy_catch_steps ~log ?encounter_method ~timings
+    ?(visual_shiny_check = false) ?(on_miss = ignore) ~config ~policy () =
+  make_policy_catch ~log
+    ~find_encounter:(find_encounter ~log ?encounter_method timings)
+    ~visual_shiny_check ~on_miss ~config ~policy
 
 let read_star () =
   match

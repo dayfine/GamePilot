@@ -45,34 +45,8 @@ type plan = {
 }
 (** Decoded arguments for one ["static_rng"] action. *)
 
-type game_steps = {
-  catch : Capture_plan.t -> party:int -> Capture.result;
-      (** Legacy throw-only {!Capture.run} on the static blind steps (used when
-          [policy_catch] is [None]). *)
-  policy_catch : Wild_rng.policy_catch_steps option;
-      (** Optional visual shiny pre-check and {!Pokemon_catch.Catch_runner}
-          path. When [Some _], replaces [catch]. *)
-  shiny_at : int -> bool;
-      (** Checks party slot [slot] (1-based) for the Summary shiny star. *)
-  log : string -> unit;  (** Writes a line to the run log. *)
-}
-(** What {!run} reads and does in the game. *)
-
-(** How {!run} ended. *)
-type end_ =
-  | Shiny  (** Caught, and its Summary page 1 shows the shiny star. *)
-  | Not_shiny  (** Caught, but no shiny star on Summary after all attempts. *)
-  | Not_shiny_intro
-      (** Visual battle-intro detector classified every attempt as non-shiny;
-          catch turns and balls were skipped. *)
-  | Catch_paused of string
-      (** {!Pokemon_catch.Catch_runner} paused safely for user takeover. *)
-  | Capture_ended of Capture.end_  (** Capture ended without catching. *)
-  | Party_full
-      (** The party already has 6 members, leaving no slot for the catch. *)
-
 type outcome = {
-  end_ : end_;  (** Final outcome of the static RNG attempt loop. *)
+  end_ : Wild_rng.end_;  (** Final outcome of the static RNG attempt loop. *)
   attempts : int;  (** Number of reset attempts executed. *)
   capture : Capture.result option;
       (** Capture result when a catch completed, else [None]. *)
@@ -115,18 +89,19 @@ val live_game_steps :
   ?on_miss:(unit -> unit) ->
   timings:Frlg_rng.Rng_timings.t ->
   plan ->
-  game_steps
-(** Builds live {!game_steps} for [plan] and [timings], selecting either
-    {!Wild_rng.policy_catch_steps} or legacy {!Capture.run} according to
-    [plan.catch_mode] and [plan.visual_shiny_check]. *)
+  Wild_rng.game_steps
+(** Builds live {!Wild_rng.game_steps} for [plan] and [timings], pairing
+    {!find_encounter} with {!Wild_rng_steps.policy_catch_for} or
+    {!Wild_rng_steps.legacy_catch}. *)
 
-val run : game_steps -> attempts:int -> Capture_plan.t -> party:int -> outcome
+val run :
+  Wild_rng.game_steps -> attempts:int -> Capture_plan.t -> party:int -> outcome
 (** Runs up to [attempts] timed static encounter attempts from the overworld
-    with [party] members, resetting on visual misses or non-shiny catches until
-    a shiny is confirmed on Summary. *)
+    with [party] members via {!Wild_rng.run}, resetting on visual misses or
+    non-shiny catches until a shiny is confirmed on Summary. *)
 
-val failure_code : end_ -> string option
-(** [None] for {!Shiny}; a short machine code for every failure end. *)
+val failure_code : Wild_rng.end_ -> string option
+(** [None] for {!Wild_rng.Shiny}; a short machine code for every failure end. *)
 
 val message : outcome -> string
 (** One-line human-readable summary of [outcome]. *)

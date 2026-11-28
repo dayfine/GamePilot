@@ -2,8 +2,6 @@ module J = Json_field
 module M = Menu_input
 module R = Frlg_rng
 module T = Frlg_rng.Rng_timings
-module CR = Pokemon_catch.Catch_runner
-module Shiny = Frlg_readers.Shiny_encounter_reader
 
 type plan = {
   species : string;
@@ -22,22 +20,11 @@ type plan = {
   visual_shiny_check : bool;
 }
 
-type game_steps = {
-  catch : Capture_plan.t -> party:int -> Capture.result;
-  policy_catch : Wild_rng.policy_catch_steps option;
-  shiny_at : int -> bool;
-  log : string -> unit;
+type outcome = {
+  end_ : Wild_rng.end_;
+  attempts : int;
+  capture : Capture.result option;
 }
-
-type end_ =
-  | Shiny
-  | Not_shiny
-  | Not_shiny_intro
-  | Catch_paused of string
-  | Capture_ended of Capture.end_
-  | Party_full
-
-type outcome = { end_ : end_; attempts : int; capture : Capture.result option }
 
 let max_boot_offset_ms = 10000
 let static_menu_hold_ms = 200
@@ -151,130 +138,37 @@ let find_encounter ~log timings () =
   | Holds _ -> true
   | Timeout -> false
 
-let make_policy_catch ~log ~on_miss ~timings ~visual_shiny_check ~config ~policy
-    : Wild_rng.policy_catch_steps =
-  let detect_shiny =
-    if visual_shiny_check then
-      Some (fun () -> Frlg_readers.Shiny_encounter_detector.detect ())
-    else None
-  in
+let live_game_steps ~log ?(on_miss = ignore) ~timings (plan : plan) :
+    Wild_rng.game_steps =
+  let find_encounter = find_encounter ~log timings in
   {
-    find_encounter = find_encounter ~log timings;
-    detect_shiny;
-    on_miss;
-    catch_battle =
-      (fun () -> CR.run ~log (Battle_catch_steps.make ~log config) policy);
-    finish_catch = Capture_steps.finish_catch ~log;
-  }
-
-let policy_catch_of ~log ~on_miss ~timings (plan : plan) =
-  let mk = make_policy_catch ~log ~on_miss ~timings in
-  match (plan.catch_mode, plan.visual_shiny_check) with
-  | Wild_rng_plan.Throw_only, false -> None
-  | Wild_rng_plan.Throw_only, true ->
-      Some
-        (mk ~visual_shiny_check:true ~config:Wild_rng_plan.default_catch_config
-           ~policy:(Wild_rng_plan.throw_only_policy plan.capture))
-  | Wild_rng_plan.Catch_policy { policy; config }, visual_shiny_check ->
-      Some (mk ~visual_shiny_check ~config ~policy)
-
-let legacy_catch ~log timings capture ~party =
-  let spot = ref (Pacing.on_patch None) in
-  let steps =
-    {
-      (Capture_steps.make ~log ~spot capture) with
-      find_encounter = find_encounter ~log timings;
-      flee = (fun () -> true);
-    }
-  in
-  Effects.with_probes Frlg_battle.Battle_look.probes (fun () ->
-      Capture.run steps capture ~party)
-
-let live_game_steps ~log ?(on_miss = ignore) ~timings plan =
-  {
-    catch = legacy_catch ~log timings;
-    policy_catch = policy_catch_of ~log ~on_miss ~timings plan;
+    catch = Wild_rng_steps.legacy_catch ~log ~find_encounter;
+    policy_catch =
+      Wild_rng_steps.policy_catch_for ~log ~find_encounter ~on_miss
+        ~catch_mode:plan.catch_mode ~visual_shiny_check:plan.visual_shiny_check
+        plan.capture;
     shiny_at = (fun slot -> Wild_rng_steps.shiny_at ~log ~slot);
     log;
   }
 
-let synthetic_capture (plan : Capture_plan.t) (summary : CR.summary) :
-    Capture.result =
-  let species =
-    match plan.target with Species s -> Some s | Uncaught _ -> None
-  in
-  {
-    end_ = All_caught;
-    encounters = 1;
-    balls_thrown = summary.balls_thrown;
-    caught = [ { species; destination = Party } ];
-  }
-
-let check_intro ~log (pc : Wild_rng.policy_catch_steps) =
-  match pc.detect_shiny with
-  | None -> true
-  | Some detect ->
-      let reading = detect () in
-      log ("Static RNG: " ^ Shiny.format_reading reading);
-      if reading.verdict = Shiny.Not_shiny then (
-        pc.on_miss ();
-        false)
-      else true
-
-let make_outcome ~n ?capture end_ = { end_; attempts = n; capture }
-
-let finish_policy game_steps (pc : Wild_rng.policy_catch_steps) plan ~party ~n
-    summary =
-  if not (pc.finish_catch Party) then
-    make_outcome ~n (Capture_ended (Failed "post-catch dialog did not return"))
-  else
-    let cap = synthetic_capture plan summary in
-    let end_ = if game_steps.shiny_at (party + 1) then Shiny else Not_shiny in
-    make_outcome ~n ~capture:cap end_
-
-let of_catch_outcome game_steps pc plan ~party ~n = function
-  | CR.Caught summary -> finish_policy game_steps pc plan ~party ~n summary
-  | CR.Paused { reason; _ } -> make_outcome ~n (Catch_paused reason)
-  | CR.No_balls _ -> make_outcome ~n (Capture_ended (Out_of_balls None))
-  | CR.Foe_ended _ ->
-      make_outcome ~n (Capture_ended (Failed "foe ended battle"))
-  | CR.Failed { reason; _ } -> make_outcome ~n (Capture_ended (Failed reason))
-
-let one_policy_attempt game_steps (pc : Wild_rng.policy_catch_steps) plan ~party
-    ~n =
-  if not (pc.find_encounter ()) then
-    make_outcome ~n (Capture_ended No_encounter)
-  else if not (check_intro ~log:game_steps.log pc) then
-    make_outcome ~n Not_shiny_intro
-  else of_catch_outcome game_steps pc plan ~party ~n (pc.catch_battle ())
-
-let one_legacy_attempt game_steps plan ~party ~n =
-  let r = game_steps.catch { plan with max_encounters = 1 } ~party in
-  match r.end_ with
-  | All_caught ->
-      let end_ = if game_steps.shiny_at (party + 1) then Shiny else Not_shiny in
-      make_outcome ~n ~capture:r end_
-  | e -> make_outcome ~n ~capture:r (Capture_ended e)
-
-let is_retryable = function Not_shiny | Not_shiny_intro -> true | _ -> false
+let is_retryable = function
+  | Wild_rng.Not_shiny | Wild_rng.Not_shiny_intro -> true
+  | _ -> false
 
 let run game_steps ~attempts (plan : Capture_plan.t) ~party =
-  if party >= Capture.party_size then make_outcome ~n:0 Party_full
+  if party >= Capture.party_size then
+    { end_ = Wild_rng.Party_full; attempts = 0; capture = None }
   else
-    let attempt n =
-      match game_steps.policy_catch with
-      | Some pc -> one_policy_attempt game_steps pc plan ~party ~n
-      | None -> one_legacy_attempt game_steps plan ~party ~n
-    in
+    let single_plan = { plan with max_encounters = 1 } in
     let rec loop n =
-      let outcome = attempt n in
-      if n < attempts && is_retryable outcome.end_ then loop (n + 1)
-      else outcome
+      let r = Wild_rng.run ~label:"Static RNG" game_steps single_plan ~party in
+      if n < attempts && is_retryable r.end_ then loop (n + 1)
+      else { end_ = r.end_; attempts = n; capture = r.capture }
     in
     loop 1
 
 let failure_code = function
-  | Shiny -> None
+  | Wild_rng.Shiny -> None
   | Not_shiny -> Some "static_rng_not_shiny"
   | Not_shiny_intro -> Some "static_rng_not_shiny_intro"
   | Catch_paused _ -> Some "static_rng_catch_paused"
@@ -283,7 +177,7 @@ let failure_code = function
 
 let message r =
   match r.end_ with
-  | Shiny ->
+  | Wild_rng.Shiny ->
       Printf.sprintf "Static RNG: the catch is shiny (attempt %d)." r.attempts
   | Not_shiny ->
       Printf.sprintf "Static RNG: the catch is not shiny after %d attempt(s)."

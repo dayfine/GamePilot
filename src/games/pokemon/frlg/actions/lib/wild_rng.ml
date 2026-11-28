@@ -42,12 +42,12 @@ let confirm_summary game_steps ~party cap =
   let end_ = if game_steps.shiny_at (party + 1) then Shiny else Not_shiny in
   { end_; capture = Some cap }
 
-let check_intro ~log (pc : policy_catch_steps) =
+let check_intro ~label ~log (pc : policy_catch_steps) =
   match pc.detect_shiny with
   | None -> true
   | Some detect ->
       let reading = detect () in
-      log ("Wild RNG: " ^ Shiny.format_reading reading);
+      log (label ^ ": " ^ Shiny.format_reading reading);
       if reading.verdict = Shiny.Not_shiny then (
         pc.on_miss ();
         false)
@@ -63,10 +63,10 @@ let finish_policy_catch game_steps (pc : policy_catch_steps) plan ~party summary
       capture = None;
     }
 
-let run_policy_catch game_steps (pc : policy_catch_steps) plan ~party =
+let run_policy_catch ~label game_steps (pc : policy_catch_steps) plan ~party =
   if not (pc.find_encounter ()) then
     { end_ = Capture_ended No_encounter; capture = None }
-  else if not (check_intro ~log:game_steps.log pc) then
+  else if not (check_intro ~label ~log:game_steps.log pc) then
     { end_ = Not_shiny_intro; capture = None }
   else
     match pc.catch_battle () with
@@ -85,11 +85,11 @@ let run_legacy game_steps plan ~party =
   | All_caught -> confirm_summary game_steps ~party r
   | e -> { end_ = Capture_ended e; capture = Some r }
 
-let run game_steps (plan : Capture_plan.t) ~party =
+let run ?(label = "Wild RNG") game_steps (plan : Capture_plan.t) ~party =
   if party >= Capture.party_size then { end_ = Party_full; capture = None }
   else
     match game_steps.policy_catch with
-    | Some pc -> run_policy_catch game_steps pc plan ~party
+    | Some pc -> run_policy_catch ~label game_steps pc plan ~party
     | None -> run_legacy game_steps plan ~party
 
 let failure_code = function
