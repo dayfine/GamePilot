@@ -10,9 +10,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 00:05:00–00:10:00 | Reviewed |
 | 00:10:00–00:15:00 | Reviewed |
 | 00:15:00–00:20:00 | Reviewed |
-| 00:20:00–03:18:16 | Pending |
+| 00:20:00–00:25:00 | Reviewed |
+| 00:25:00–03:18:16 | Pending |
 
-Resume at **00:20:00** during Youngster Darius’s battle introduction in the Oreburgh Gym.
+Resume at **00:25:00** in Oreburgh Gate, heading back to Jubilife with Repel active.
 
 ## Review method
 
@@ -112,3 +113,23 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 - Oreburgh Gym, entering the battle with Youngster Darius. The first opposing Pokémon is pending.
 - **Machop** (female, **Lv. 7, 27/27 HP**) is first. **Chimchar** (male, **Lv. 9, 29/29 HP**) is second and knows **Scratch**, **Leer**, **Ember** and **Taunt**. The last Pokémon Center visit restored both.
 - **9 Potions** and **19 Poké Balls** remain. X Defense is in the Bag. The Escape Rope was used.
+
+## 20:00–25:00 | Coal Badge, Oreburgh shopping and Abra trade
+
+| Video time | Observed action and outcome |
+|---|---|
+| 20:00–20:44 | **Youngster Darius** leads with male **Geodude Lv. 8**. Machop uses **Focus Energy**, then **Low Kick** three times. Geodude’s three **Tackles** include two critical hits and leave Machop at **5/27 HP** before the knockout. Machop reaches **Lv. 8** and learns **Revenge**. Chimchar reaches **Lv. 10** from shared EXP. |
+| 20:45–21:12 | Darius sends in male **Onix Lv. 8**. It uses **Harden** before both of Machop’s **Low Kicks**. The second kick knocks it out. Machop earns enough EXP to reach **Lv. 9** by the end of the battle. |
+| 21:13–21:29 | At the stairs, use a **Potion** on Machop, restoring it from **11/33** to **31/33 HP**. Walk up to **Roark** and start the Gym Leader battle. |
+| 21:30–22:07 | Roark leads with male **Geodude Lv. 12**. Use **X Defense** on Machop as Geodude’s first **Rollout** misses. Machop uses **Revenge** after **Stealth Rock**, then uses Revenge again after a Rollout deals 2 HP. Geodude faints and Machop reaches **Lv. 10**. |
+| 22:08–22:34 | Roark sends in male **Onix Lv. 12**. Onix uses **Rock Throw** twice for 3 HP each. Two **Low Kicks** knock it out. Machop and Chimchar both reach **Lv. 11**. |
+| 22:35–23:16 | Roark sends in male **Cranidos Lv. 14**. **Mold Breaker** appears on entry. Cranidos uses **Headbutt** and Machop knocks it out with **Revenge**. Machop reaches **Lv. 12** and declines **Low Sweep**. Win **₽1,960** and receive the **Coal Badge**, **TM76s (Stealth Rock)** and Roark’s Stickers. |
+| 23:16–23:51 | Leave the Gym and go to the Poké Mart. Buy **6 Super Potions** for ₽4,200, **2 Antidotes** for ₽200, **2 Paralyze Heals** for ₽400, **15 Repels** for ₽5,250, and **2 Escape Ropes** for ₽1,100. Total **₽11,150** from the visible purchases. |
+| 23:52–24:35 | Enter the building immediately west of the Poké Mart. Accept **Hilary’s** trade, sending **Machop** and receiving her male **Abra**, nicknamed **Kazza**. Leave the building. |
+| 24:36–25:00 | Head west toward Oreburgh Gate and advance the rival’s dialogue about returning to Jubilife. In the gate, move **Chimchar** into the lead, transfer Kazza’s **Oran Berry** to Chimchar, and use a **Repel** before crossing the cave. |
+
+### State at 25:00
+
+- In **Oreburgh Gate**, returning west toward Jubilife. Repel was just used.
+- **Chimchar** leads at **Lv. 11, 33/33 HP** and holds the **Oran Berry**. **Kazza** is second at **Lv. 9, 26/26 HP**. Machop was traded away.
+- The Coal Badge is obtained. **8 Potions**, **6 Super Potions**, **2 Antidotes**, **2 Paralyze Heals**, **2 Escape Ropes**, **19 Poké Balls** and **14 Repels** remain by the observed counts and item uses. X Defense was used against Roark.
