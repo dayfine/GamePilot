@@ -117,10 +117,24 @@ let of_request stocks action acc : A.Action_requests.t -> acc = function
   | Redeem_prize_mon _ | Spin_for_encounter _ | Pc_withdraw | Read_caught _ ->
       acc
 
-(* The capture's ball budget (after --options overrides): the plan's [balls]
-   (default 5), or the [--options balls=N] override, in [plan.ball]. *)
-let of_capture action acc (plan : A.Capture_plan.t) =
-  let acc = use_items action acc plan.ball plan.max_balls in
+(* The capture's ball budget (after --options overrides): an explicit [balls]
+   in the plan or [--options balls=N] is respected verbatim; when [balls] is
+   omitted, computes the Gen 3 99% catch-probability budget from the species,
+   ball, and catch mode ({!Frlg_actions.Catch_ball_budget}), falling back to
+   [plan.max_balls] for unknown species or [Uncaught] targets. *)
+let capture_balls ~explicit_balls ~mode (plan : A.Capture_plan.t) =
+  if explicit_balls then plan.max_balls
+  else
+    match plan.target with
+    | Species s ->
+        Option.value
+          (A.Catch_ball_budget.required ~species:s ~ball:plan.ball ~mode)
+          ~default:plan.max_balls
+    | Uncaught _ -> plan.max_balls
+
+let of_capture ~explicit_balls ~mode action acc (plan : A.Capture_plan.t) =
+  let count = capture_balls ~explicit_balls ~mode plan in
+  let acc = use_items action acc plan.ball count in
   match plan.target with
   | Species s -> { acc with brought = s :: acc.brought }
   | Uncaught _ -> acc
@@ -146,6 +160,25 @@ let decode_duplicate ~options ~where args =
   ( A.Action_args.member ~options ~where args,
     A.Mail_glitch_use.duplication_plan ~options ~where args )
 
+let capture_mode action args =
+  if action <> "wild_rng" then A.Catch_ball_budget.Throw_only
+  else
+    let raw =
+      match Json_field.find "catch_mode" args with
+      | Some (`String s) -> Some s
+      | _ -> None
+    in
+    A.Catch_ball_budget.catch_mode_of_string raw
+
+let capture_action ~options action args acc plan =
+  let explicit_balls =
+    Json_field.has "balls" args
+    || Option.is_some (Run_options.int options "balls")
+  in
+  let mode = capture_mode action args in
+  of_capture ~explicit_balls ~mode action acc
+    (A.Capture_plan.apply_options options plan)
+
 let game_action ~options stocks ~where action args acc =
   let map f r = Result.map f (Result.map_error (decode_error ~where) r) in
   match action with
@@ -156,10 +189,7 @@ let game_action ~options stocks ~where action args acc =
   | _ when List.mem_assoc action field_move_users ->
       Ok (field_move action (use_badge action acc))
   | "capture" | "wild_rng" ->
-      map
-        (fun plan ->
-          of_capture action acc (A.Capture_plan.apply_options options plan))
-        (A.Capture_plan.decode args)
+      map (capture_action ~options action args acc) (A.Capture_plan.decode args)
   | "gift_rng" ->
       let decode ~where a = Json_field.string ~where "species" a in
       map
