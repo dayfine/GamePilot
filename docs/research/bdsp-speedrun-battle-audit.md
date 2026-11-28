@@ -32,7 +32,7 @@ Known HP overrides the calculated maximum. Where current HP is missing, R uses f
 
 Each rate uses 256 trials in each scenario. Displayed rates round to whole percentages. A displayed 0% or 100% reflects the sampled outcomes under these inputs. Values within half a percentage point of either endpoint are shown as <1% or >99% when both outcomes occurred. Machop’s one-ball capture range uses its green HP band, an ordinary Poké Ball, no status and Lv. 9 Chimchar versus Lv. 7 Machop. Palkia’s capture is guaranteed conditional on spending the Master Ball. The two Geodude entries have no modeled escape rate because foe Speed and the exact escape inputs are unavailable. [BDSP capture formula implementation](https://github.com/thames1000/pokemon-catch-rate-calculator/blob/master/desktop/catch_formula.py) · [Platinum Machop species data](https://github.com/pret/pokeplatinum/blob/485c400f9d7bad10d906d556ba23e5e46d5b3e5e/res/pokemon/machop/data.json)
 
-Run the [battle model](https://github.com/dayfine/PokemonSimulation/blob/7270b6b03f2f5e21b072b4bdbab28afceb693ed7/data/runs/bdsp-speedrun/bdsp-speedrun-model.cjs) from the PokemonSimulation root with Node and Pokémon Showdown **0.11.11** installed. Set **SHOWDOWN_MODULE** to the absolute package path when using PokemonSimulation’s copy under the FRLG engine. Optional trainer IDs select cases.
+Run the [battle model](https://github.com/dayfine/PokemonSimulation/blob/558f43b6e7699cabe97366435a6e165016a85d18/data/runs/bdsp-speedrun/bdsp-speedrun-model.cjs) from the PokemonSimulation root with Node and Pokémon Showdown **0.11.11** installed. Set **SHOWDOWN_MODULE** to the absolute package path when using PokemonSimulation’s copy under the FRLG engine. Optional trainer IDs select cases.
 
     node data/runs/bdsp-speedrun/bdsp-speedrun-model.cjs 256
     node data/runs/bdsp-speedrun/bdsp-speedrun-model.cjs 256 175 242 191
@@ -82,6 +82,28 @@ The low baseline reflects the recorded low-HP opening and fixed Potion timing. T
 Run the sensitivity check from the PokemonSimulation root.
 
     node data/runs/bdsp-speedrun/bdsp-speedrun-model.cjs --route-203 2048
+
+### Pre-battle healing for automation
+
+Seven additional rival and gym cases compare the recorded entry with full HP. The test keeps the same Pokémon, moves, held items, PP and battle policies. At Fantina it also tests whether reviving and fully healing the fainted backup helps. Each result uses 1,024 matched trials per opponent scenario. Candice and the League rival serve as controls because the party already enters at full HP. [Entry-healing results](https://github.com/dayfine/PokemonSimulation/blob/558f43b6e7699cabe97366435a6e165016a85d18/data/runs/bdsp-speedrun/bdsp-speedrun-entry-healing-results.json)
+
+| Fight | Entry change | Recorded R / D | Full HP R / D |
+|---|---|---|---|
+| Roark | Machop 31→33 HP | 58.9% / 83.4% | 61.0% / 85.8% |
+| Maylene | Monferno 40→72 HP | 91.6% / 30.9% | 91.6% / 31.6% |
+| Crasher Wake | Monferno 48→80 HP | 42.7% / 0.0% | 1.2% / 0.0% |
+| Fantina | Revive and heal Monferno from 0→80 HP | 87.9% / 30.6% | 87.9% / 30.6% |
+| Byron | Monferno 60→80 HP | 83.6% / 3.2% | 94.4% / 78.0% |
+| Candice | Kazza already at 107/107 HP | 44.8% / 47.9% | Same entry |
+| League rival | Palkia already at 166/166 HP | 90.0% / 0.9% | Same entry |
+
+- **Byron.** After reviving Monferno to 40 HP, use a Super Potion to fill it instead of taking it to 60 HP with a Potion. This gave the clearest gain among the gyms tested.
+- **Wake.** The recorded plan uses Monferno to Taunt Quagsire and faint, then applies X Speed to Kazza. At full HP Monferno can survive the first hit, so the fixed script can spend X Speed on Monferno. A full-HP plan needs to check which Pokémon is active before boosting.
+- **Maylene, Fantina, Candice and the League rival.** Extra backup HP gives little benefit in the tested Maylene and Fantina plans. Candice and the League rival remain sensitive to battle decisions even with the lead at full HP.
+
+Run the comparison from the PokemonSimulation root.
+
+    node data/runs/bdsp-speedrun/bdsp-speedrun-model.cjs --entry-healing 1024 175 242 241 243 179 244 362
 
 ## Encounter log
 
