@@ -1,0 +1,38 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "checkpoint": {
+    "id": "01-static-rng",
+    "title": "In front of a static overworld Pokemon: hard reset timed for a shiny Method 1 encounter, visual shiny check, catch, summary star check, saved",
+    "events": [
+      {
+        "id": "static_rng",
+        "kind": "game_action",
+        "action": "static_rng",
+        "args": {
+          "species": "zapdos",
+          "seeds": "rng_seeds_mgba_sevii_save.json",
+          "advances": [900, 4000],
+          "ball": "luxury-ball",
+          "balls": 99,
+          "attempts": 25,
+          "catch_mode": "phase1",
+          "visual_shiny_check": true
+        },
+        "why": "Hard-reset and time the title screen and Start-menu wait for the soonest shiny Method 1 static encounter matching the run's TID/SID (passed via --options, GAMEPILOT_FRLG_TID/SID, or trainer_ids.json), check battle-intro timing visually to reset on a miss, catch with Phase 1 policy, and confirm the shiny star on Summary."
+      },
+      {
+        "id": "save_catch",
+        "kind": "game_action",
+        "action": "save_game",
+        "args": {},
+        "why": "Keeps the shiny."
+      }
+    ]
+  },
+  "execution": {"menu": "full"},
+  "metadata": {
+    "phase": "testing",
+    "notes": "Save standing directly in front of the static overworld Pokemon (Zapdos, Articuno, Moltres, Mewtwo, Electrode, Snorlax, etc.) with at least one free party slot and sound set to Mono, button mode Help. On Switch, frame_model defaults to switch and persisted per-console calibration is applied automatically."
+  }
+}

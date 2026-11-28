@@ -18,6 +18,7 @@ Each page ends with "How it works", for developers: the ported files, the mechan
 | [Catcher Prep](frlg/catcher_prep.md) | `frlg.catcher_prep` | mGBA, the Switch | Catches Paras and levels it into a Spore Parasect for wild hunts. |
 | [Dex Collection](frlg/dex_collection.md) | `frlg.dex_collection` | mGBA | Catches Pokemon the Pokedex lacks, toward the National Pokedex. |
 | [Wild RNG](frlg/wild_rng.md) | `frlg.wild_rng` | mGBA | Catches a chosen shiny wild Pokemon by timing the game's random numbers. |
+| [Static RNG](frlg/static_rng.md) | `frlg.static_rng` | mGBA, the Switch | Catches a shiny static overworld Pokemon by timing the game's random numbers. |
 
 ### [Pokémon Legends: Z-A](plza/README.md)
 
