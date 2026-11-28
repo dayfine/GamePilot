@@ -34,9 +34,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 02:05:00–02:10:00 | Reviewed |
 | 02:10:00–02:15:00 | Reviewed |
 | 02:15:00–02:20:00 | Reviewed |
-| 02:20:00–03:18:16 | Pending |
+| 02:20:00–02:25:00 | Reviewed |
+| 02:25:00–03:18:16 | Pending |
 
-Resume at **02:20:00** entering the next interior passage on the way up Mt. Coronet.
+Resume at **02:25:00** at Spear Pillar during the entrance Grunts’ double battle.
 
 ## Review method
 
@@ -556,3 +557,16 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 | 2:19:41–2:20:00 | Follow the snowy ledge east, use Rock Climb again, and reapply Super Repel. Continue across the grass into the next opening. |
 
 **State at 2:20:00.** Kazza is Lv. 49 at 101/114 HP with Wise Glasses, and Monferno is Lv. 32 at 93/93 HP with Choice Specs. The Master Ball remains unused. Twelve Super Repels remain and one is active. The player is ascending Mt. Coronet.
+
+## 2:20:00–2:25:00 | Upper Mt. Coronet and the Spear Pillar Grunts
+
+| Video time | Observed action |
+| --- | --- |
+| 2:20:01–2:20:52 | Use Rock Climb in the cavern. Pass the patrolling Grunt and take the stairs to the snowy ledge. Use Rock Climb again and cross the snow and grass to the next cave. |
+| 2:20:53–2:21:40 | The first Grunt sends Bronzor and Glameow, both Lv. 38. Kazza KOs Bronzor with Shadow Ball and Glameow with Psyshock. |
+| 2:21:41–2:22:31 | Reapply Super Repel and battle the second Grunt. Kazza KOs Bronzor Lv. 37 with Shadow Ball and Golbat Lv. 37 with Psyshock. |
+| 2:22:32–2:23:48 | Take the stairs and battle the third Grunt. Kazza uses Psyshock on Golbat and Glameow and Shadow Ball on Bronzor, all Lv. 37. Monferno reaches Lv. 33. Kazza reaches Lv. 50 and declines Calm Mind. |
+| 2:23:49–2:24:32 | Go up the stairs to Spear Pillar and battle the two Grunts at the entrance. Against Stunky and Dustox, both Lv. 38, Kazza uses Dazzling Gleam to KO Stunky and Monferno uses Flamethrower to finish Dustox. |
+| 2:24:33–2:25:00 | The next pair is Glameow and Croagunk, both Lv. 38. Croagunk’s Sucker Punch drops Kazza from 103/116 to 55/116 HP. Dazzling Gleam KOs both opponents. |
+
+**State at 2:25:00.** At Spear Pillar during the entrance double battle. Kazza is Lv. 50 at 55/116 HP with Wise Glasses. Monferno is Lv. 33 at 95/95 HP with Choice Specs. Eleven Super Repels remain, with one active.
