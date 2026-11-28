@@ -179,11 +179,13 @@ let trainer_id_options : Run_options.declared list =
     };
   ]
 
+let catch_balls = [ "poke-ball"; "great-ball"; "ultra-ball"; "luxury-ball" ]
+
 let dex_collection_options : Run_options.declared list =
   ([
      {
        key = "ball";
-       value = One_of [ "poke-ball"; "great-ball"; "ultra-ball"; "luxury-ball" ];
+       value = One_of catch_balls;
        presence = Optional;
        doc = "the ball to throw (overrides each catch plan's default)";
      };
@@ -253,6 +255,31 @@ let wild_rng =
     options = trainer_id_options;
   }
 
+let static_rng_options : Run_options.declared list =
+  ([
+     {
+       key = "ball";
+       value = One_of catch_balls;
+       presence = Default "luxury-ball";
+       doc = "the ball to throw when catching the shiny static encounter";
+     };
+     {
+       key = "balls";
+       value = Int_range (1, bag_most);
+       presence = Default "99";
+       doc = "max balls to throw per catch attempt";
+     };
+   ]
+    : Run_options.declared list)
+  @ trainer_id_options
+
+let static_rng =
+  program ~id:"frlg.static_rng" ~name:"Static RNG" ~category:Shiny_hunting
+    ~description:
+      "Catches a shiny static overworld Pokemon by timing the game's random \
+       numbers."
+    ~dir:"static_rng" ~backends:[ Mgba; Switch ] ~options:static_rng_options ()
+
 (* Grouped by category so [gamepilot programs] prints each heading once. *)
 let all =
   [
@@ -265,4 +292,5 @@ let all =
     catcher_prep;
     dex_collection;
     wild_rng;
+    static_rng;
   ]

@@ -252,6 +252,24 @@ let () =
           options_for (Some "frlg.dex_collection") [ ("ball", "master-ball") ])
         "error: --options ball=master-ball: ball is poke-ball | great-ball | \
          ultra-ball | luxury-ball";
+      case "options: frlg.static_rng defaults to luxury-ball and 99 balls"
+        (fun () -> options_for (Some "frlg.static_rng") [])
+        "ok ball=luxury-ball balls=99";
+      case "options: frlg.static_rng overrides ball, balls, tid, sid"
+        (fun () ->
+          options_for (Some "frlg.static_rng")
+            [
+              ("ball", "ultra-ball");
+              ("balls", "50");
+              ("tid", "12345");
+              ("sid", "54321");
+            ])
+        "ok ball=ultra-ball balls=50 tid=12345 sid=54321";
+      case "options: frlg.static_rng refuses unknown option"
+        (fun () ->
+          options_for (Some "frlg.static_rng") [ ("ball", "master-ball") ])
+        "error: --options ball=master-ball: ball is poke-ball | great-ball | \
+         ultra-ball | luxury-ball";
       case "options: plza.autostory, none given: the plan's"
         (fun () -> options_for (Some "plza.autostory") [])
         "ok ";

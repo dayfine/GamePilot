@@ -15,6 +15,7 @@ Programs for Pokémon FireRed and LeafGreen on mGBA and the Switch (NSO GBA app)
 | [Catcher Prep](catcher_prep.md) | `frlg.catcher_prep` | mGBA, the Switch | Catches Paras and levels it into a Spore Parasect for wild hunts. |
 | [Dex Collection](dex_collection.md) | `frlg.dex_collection` | mGBA | Catches Pokemon the Pokedex lacks, toward the National Pokedex. |
 | [Wild RNG](wild_rng.md) | `frlg.wild_rng` | mGBA | Catches a chosen shiny wild Pokemon by timing the game's random numbers. |
+| [Static RNG](static_rng.md) | `frlg.static_rng` | mGBA, the Switch | Catches a shiny static overworld Pokemon by timing the game's random numbers. |
 <!-- /generated -->
 
 The Mail Glitch has a second page for its last checkpoint:
