@@ -72,6 +72,15 @@ function updateLogCount() {
   if (!badge.hidden) badge.textContent = logVisible + " / " + logEntries.length;
 }
 
+function hasLogSelection(log) {
+  const sel = window.getSelection && window.getSelection();
+  if (!sel || sel.isCollapsed || !sel.rangeCount) return false;
+  return Boolean(
+    (sel.anchorNode && log.contains(sel.anchorNode)) ||
+    (sel.focusNode && log.contains(sel.focusNode))
+  );
+}
+
 function applyLogFilter() {
   const log = $("log");
   const atBottom = log.scrollTop + log.clientHeight >= log.scrollHeight - 4;
@@ -84,7 +93,7 @@ function applyLogFilter() {
   }
   logVisible = visible;
   updateLogCount();
-  if (atBottom) log.scrollTop = log.scrollHeight;
+  if (atBottom && !hasLogSelection(log)) log.scrollTop = log.scrollHeight;
 }
 
 function setLogMode(next) {
@@ -187,6 +196,7 @@ function resetAttemptForCheckpoint(checkpoint) {
 function addLog(line) {
   const log = $("log");
   const atBottom = log.scrollTop + log.clientHeight >= log.scrollHeight - 4;
+  const selecting = hasLogSelection(log);
   const info = classifyLog(line);
   const row = el("div", "log-line log-" + info.level, line);
   const entry = {text: line, lower: line.toLowerCase(), level: info.level, isRng: info.isRng, el: row};
@@ -195,13 +205,15 @@ function addLog(line) {
   if (show) logVisible++;
   logEntries.push(entry);
   log.append(row);
-  while (logEntries.length > LOG_LINES) {
-    const dropped = logEntries.shift();
-    if (!dropped.el.hidden) logVisible--;
-    dropped.el.remove();
+  if (!selecting) {
+    while (logEntries.length > LOG_LINES) {
+      const dropped = logEntries.shift();
+      if (!dropped.el.hidden) logVisible--;
+      dropped.el.remove();
+    }
   }
   updateLogCount();
-  if (atBottom) log.scrollTop = log.scrollHeight;
+  if (atBottom && !selecting) log.scrollTop = log.scrollHeight;
   lastLogLine = line;
   grindLine(line);
   updateAttemptFromLog(line);
