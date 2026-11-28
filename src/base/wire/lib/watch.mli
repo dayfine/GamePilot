@@ -63,8 +63,19 @@ val line_of_json : json -> string
 val json_of_line : string -> json
 (** A [watch.log] notification's params for this line. *)
 
-type counter = { label : string; value : string }
-(** One live counter row in a [watch.counters] notification (v1.21). *)
+type counter = {
+  label : string;
+  value : string;
+  until_ms : int option;
+      (** Optional countdown target in Unix epoch milliseconds. When set, the
+          watch page ticks the remaining time live in the browser; omitted from
+          JSON when [None]. *)
+}
+(** One live counter row in a [watch.counters] notification (v1.22). *)
+
+val counter : ?until_ms:int -> string -> string -> counter
+(** [counter ?until_ms label value] builds a {!counter} row, defaulting
+    [until_ms] to [None]. *)
 
 val counters_of_json : json -> counter list
 (** A [watch.counters] notification's items. *)

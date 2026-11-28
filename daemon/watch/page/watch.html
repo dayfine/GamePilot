@@ -81,7 +81,10 @@
           <img id="screen" alt="" width="240" height="160">
           <canvas id="overlay"></canvas>
         </div>
-        <div id="frame-meta">waiting for a frame</div>
+        <div id="frame-meta">
+          <span id="frame-meta-text">waiting for a frame</span>
+          <span id="frame-countdown" class="countdown-pill" hidden></span>
+        </div>
       </div>
       <div id="probe-side">
         <input id="probe-filter" type="search" list="probe-prefixes"

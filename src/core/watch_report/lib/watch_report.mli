@@ -38,3 +38,6 @@ val log : (string -> unit) -> string -> unit
 val counters : Wire.Watch.counter list -> unit
 (** [counters items]: [watch.counters], updating the live Counters card on the
     watch page. *)
+
+val now_ms : unit -> int
+(** Current wall-clock time in Unix epoch milliseconds. *)

@@ -89,18 +89,42 @@ let log_planned_hit ~log (tcfg : Bdsp_blink_rng.Static_rng_trigger.config)
        wait_s
        (wait_s /. cfg.secs_per_min))
 
-let maybe_reanchor ~picture ~log ~reidentify_with_bounds tcfg
+type phase_cb =
+  phase:string ->
+  ?target:string ->
+  ?countdown:Static_rng_workflow.countdown ->
+  unit ->
+  unit
+
+let waiting_phase (p : Bdsp_blink_rng.Static_rng_trigger.plan) =
+  Printf.sprintf "Waiting (adv=%d)" p.hit.advances
+
+let make_countdown ~wall_now_ms ~open_t_ms ~now : Static_rng_workflow.countdown
+    =
+  let remaining_ms = int_of_float (Float.max 0.0 (open_t_ms -. now)) in
+  { remaining_ms; until_ms = wall_now_ms () + remaining_ms }
+
+let emit_waiting ~wall_now_ms ~(on_phase : phase_cb)
+    (p : Bdsp_blink_rng.Static_rng_trigger.plan) ~now =
+  let target = Static_rng_workflow.format_target p.hit in
+  let countdown = make_countdown ~wall_now_ms ~open_t_ms:p.open_t_ms ~now in
+  on_phase ~phase:(waiting_phase p) ~target ~countdown ()
+
+let maybe_reanchor ~picture ~log ~wall_now_ms ~(on_phase : phase_cb)
+    ~reidentify_with_bounds tcfg
     (anchor : Bdsp_blink_rng.In_chamber_reidentifier.anchor)
     (p : Bdsp_blink_rng.Static_rng_trigger.plan) =
   let gap_adv = p.hit.advances - anchor.advances_to_last_blink in
   if gap_adv <= cfg.reanchor_min_advances then Ok (anchor, p)
   else
     let reanchor_stop_ms = p.open_t_ms -. cfg.reanchor_lead_ms in
+    let target = Static_rng_workflow.format_target p.hit in
     log
       (Printf.sprintf
          "Target adv=%d is %d advances away — waiting for final zero-drift 1PK \
           re-anchor..."
          p.hit.advances gap_adv);
+    emit_waiting ~wall_now_ms ~on_phase p ~now:(Effects.now ());
     wait_on_probes ~picture ~log ~target_adv:p.hit.advances
       ~stop_ms:reanchor_stop_ms ~open_t_ms:p.open_t_ms;
     let est_adv =
@@ -108,6 +132,7 @@ let maybe_reanchor ~picture ~log ~reidentify_with_bounds tcfg
     in
     let search_min = max cfg.search_min_floor (est_adv - cfg.reanchor_window) in
     let search_max = p.hit.advances in
+    on_phase ~phase:"Final 1PK re-anchor" ~target ();
     log
       (Printf.sprintf "Running final 1PK re-anchor in [%d..%d]..." search_min
          search_max);
@@ -125,23 +150,30 @@ let maybe_reanchor ~picture ~log ~reidentify_with_bounds tcfg
     let* p2 = Bdsp_blink_rng.Static_rng_trigger.plan tcfg anchor2 in
     Ok (anchor2, p2)
 
-let run_final ~log ~prepare_for_trigger tcfg anchor
-    (p : Bdsp_blink_rng.Static_rng_trigger.plan) () =
+let run_final ~log ~wall_now_ms ~(on_phase : phase_cb) ~prepare_for_trigger tcfg
+    anchor (p : Bdsp_blink_rng.Static_rng_trigger.plan) () =
   let now = Effects.now () in
   log_planned_hit ~log tcfg p ~now;
+  emit_waiting ~wall_now_ms ~on_phase p ~now;
   let stop_ms = p.open_t_ms -. cfg.handoff_guard_ms in
   wait_loop ~log ~target_adv:p.hit.advances ~stop_ms ~open_t_ms:p.open_t_ms
     ~last_lease:now ~last_ka:now ~last_log:now;
+  on_phase ~phase:"Triggering"
+    ~target:(Static_rng_workflow.format_target p.hit)
+    ();
   prepare_for_trigger ();
   Bdsp_blink_rng.Static_rng_trigger.run tcfg anchor
 
-let run ~picture ~log ~prepare_for_trigger ~reidentify_with_bounds tcfg anchor =
+let run ~picture ~log ~wall_now_ms ~on_phase ~prepare_for_trigger
+    ~reidentify_with_bounds tcfg anchor =
   let ( let* ) = Result.bind in
   let* p0 = Bdsp_blink_rng.Static_rng_trigger.plan tcfg anchor in
   log_planned_hit ~log tcfg p0 ~now:(Effects.now ());
   let* anchor_final, p_final =
-    maybe_reanchor ~picture ~log ~reidentify_with_bounds tcfg anchor p0
+    maybe_reanchor ~picture ~log ~wall_now_ms ~on_phase ~reidentify_with_bounds
+      tcfg anchor p0
   in
   let probes = Bdsp_readers.Battle_detector.probes ~picture in
   Effects.with_probes probes
-    (run_final ~log ~prepare_for_trigger tcfg anchor_final p_final)
+    (run_final ~log ~wall_now_ms ~on_phase ~prepare_for_trigger tcfg
+       anchor_final p_final)

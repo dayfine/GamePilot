@@ -274,10 +274,14 @@ daemon keeps them out of the wire log; without a watch page it drops them.
   chain started, Unix time in milliseconds. The daemon keeps the latest, like the plan. Each run
   has its own daemon, so the program sends it again at every run's start.
 
-- `watch.counters`: `items`: list of {`label`, `value`} (`60-watch_counters.notification.json`).
-  Live key-value counters a program chooses to display on the watch page (e.g. cycles, digs,
-  encounters, collected items). Sent whole on each update; the daemon keeps the latest for new
-  viewers and writes it to `watch_counters.json` in the run folder.
+- `watch.counters`: `items`: list of {`label`, `value`, optional `until_ms`}
+  (`60-watch_counters.notification.json`). Live key-value counters a program
+  chooses to display on the watch page (e.g. cycles, digs, encounters,
+  collected items, countdowns). When `until_ms` (Unix time in milliseconds) is
+  present on an item, the live watch page ticks the remaining time down every
+  second while finished run records show the static `value`. Sent whole on each
+  update; the daemon keeps the latest for new viewers and writes it to
+  `watch_counters.json` in the run folder.
 
 ## Probe kinds
 

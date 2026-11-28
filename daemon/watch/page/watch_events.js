@@ -59,6 +59,44 @@ function connect() {
   on("status", (d) => { renderStatus(d); $("conn").textContent = "live"; $("conn").className = ""; });
 }
 
+const COUNTDOWN_SOON_MS = 60000;
+let countdownTimer = 0;
+
+function formatCountdown(remMs) {
+  const totalSec = Math.max(0, Math.ceil(remMs / 1000));
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  const pad = (n) => String(n).padStart(2, "0");
+  return h > 0 ? h + ":" + pad(m) + ":" + pad(s) : m + ":" + pad(s);
+}
+
+function tickCountdowns() {
+  const nodes = $("counters").querySelectorAll("dd[data-until-ms]");
+  const pill = $("frame-countdown");
+  if (nodes.length === 0) {
+    if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = 0; }
+    if (pill) { pill.hidden = true; pill.textContent = ""; pill.classList.remove("soon"); }
+    return;
+  }
+  const now = Date.now();
+  let first = null;
+  for (const dd of nodes) {
+    const until = Number(dd.dataset.untilMs);
+    const rem = Math.max(0, until - now);
+    const text = formatCountdown(rem);
+    const soon = rem <= COUNTDOWN_SOON_MS;
+    dd.textContent = text;
+    dd.classList.toggle("countdown-soon", soon);
+    if (!first) first = { label: dd.dataset.label || "Countdown", text, soon };
+  }
+  if (pill && first) {
+    pill.textContent = first.label + " " + first.text;
+    pill.classList.toggle("soon", first.soon);
+    pill.hidden = false;
+  }
+}
+
 // Live key-value counters from watch.counters; hidden when empty.
 function renderCounters(d) {
   const items = d && Array.isArray(d.items) ? d.items : [];
@@ -68,13 +106,24 @@ function renderCounters(d) {
   if (main) main.classList.toggle("has-counters", items.length > 0);
   const list = $("counters");
   list.replaceChildren();
+  let hasCountdown = false;
   for (const item of items) {
     const box = el("div", "counter");
-    box.append(el("dt", "", item.label), el("dd", "", item.value));
+    const dd = el("dd", "", item.value);
+    if (typeof item.until_ms === "number" && Number.isFinite(item.until_ms)) {
+      dd.dataset.untilMs = String(item.until_ms);
+      dd.dataset.label = item.label;
+      hasCountdown = true;
+    }
+    box.append(el("dt", "", item.label), dd);
     list.append(box);
     if (/^(?:attempts?|resets?)$/i.test(item.label)) {
       updateAttemptFromCounter(item.label, item.value);
     }
+  }
+  tickCountdowns();
+  if (hasCountdown && !countdownTimer) {
+    countdownTimer = setInterval(tickCountdowns, 1000);
   }
 }
 

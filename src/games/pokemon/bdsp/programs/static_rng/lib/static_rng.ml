@@ -48,17 +48,6 @@ let fallback_home_tile : Switch.Home_screen.tile_color =
   { min = (0, 0, 0); max = (rgb_max, rgb_max, rgb_max) }
 
 let log_line msg = Effects.show_log msg
-
-let publish_counters ~attempt ~max_attempts ~phase =
-  Effects.show_counters
-    [
-      {
-        Wire.Watch.label = "Attempt";
-        value = Printf.sprintf "%d/%d" attempt max_attempts;
-      };
-      { Wire.Watch.label = "Phase"; value = phase };
-    ]
-
 let submit_presses cmds = ignore (Effects.submit cmds : Wire.batch_done)
 
 let dismiss_dialog () =
@@ -170,9 +159,10 @@ let detect_shiny ~picture ~frame_dir () =
   capture_post_intro_frames ~picture ~frame_dir ();
   reading
 
-let trigger_encounter ~picture ~chamber_eye_target cfg
+let trigger_encounter ~picture ~chamber_eye_target ~on_phase cfg
     (anchor : Bdsp_blink_rng.In_chamber_reidentifier.anchor) =
-  Trigger_wait.run ~picture ~log:log_line ~prepare_for_trigger
+  Trigger_wait.run ~picture ~log:log_line ~wall_now_ms:Watch_report.now_ms
+    ~on_phase ~prepare_for_trigger
     ~reidentify_with_bounds:
       (reidentify_with_bounds ~picture ~target:chamber_eye_target
          ~base_state:anchor.base_state)
@@ -182,7 +172,7 @@ let live_game_steps ~picture ~frame_dir ~pedestal_eye_target ~chamber_eye_target
     : WF.game_steps =
   {
     log = log_line;
-    update_counters = publish_counters;
+    show_counters = Watch_report.counters;
     freeze_player;
     recover_pedestal_seed =
       recover_pedestal_seed ~picture ~target:pedestal_eye_target;

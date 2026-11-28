@@ -9,6 +9,13 @@
 val run :
   picture:Wire.box ->
   log:(string -> unit) ->
+  wall_now_ms:(unit -> int) ->
+  on_phase:
+    (phase:string ->
+    ?target:string ->
+    ?countdown:Static_rng_workflow.countdown ->
+    unit ->
+    unit) ->
   prepare_for_trigger:(unit -> unit) ->
   reidentify_with_bounds:
     (search_min:int ->
@@ -19,4 +26,6 @@ val run :
   (Bdsp_blink_rng.Static_rng_trigger.outcome, string) result
 (** Plans the next shiny advance, optionally waits and runs a final [1PK]
     re-anchor when far away, calls [prepare_for_trigger], and fires
-    {!Bdsp_blink_rng.Static_rng_trigger.run}. *)
+    {!Bdsp_blink_rng.Static_rng_trigger.run}. Publishes live wait, re-anchor,
+    and trigger phase updates through [on_phase] using [wall_now_ms] for
+    wall-clock countdown targets. *)
