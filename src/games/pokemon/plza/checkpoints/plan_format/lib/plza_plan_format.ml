@@ -2,14 +2,7 @@ open Engine_plan_format.Plan_fields
 module T = Plza_rules
 module F = Json_field
 
-let pose_of_plan ~where obj =
-  F.catch (fun () ->
-      known_fields_only ~where [ "place"; "spot" ] obj;
-      {
-        T.Pose.place = F.string ~where "place" obj;
-        spot = F.string_opt ~where "spot" obj;
-      })
-
+let pose_of_plan = Engine_plan_format.Zone_pose_decode.pose_of_plan
 let start_of_plan = pose_of_plan
 
 let walk ~where args =

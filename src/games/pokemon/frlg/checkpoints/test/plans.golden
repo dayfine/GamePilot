@@ -44,6 +44,29 @@ postconditions:
 item retro-mail used 1
 marks mail, mail, mail, mail, mail, none
 no repeat
+== catcher_prep/plans/01-catch-paras.plan.json
+frlg 01-catch-paras from anywhere outdoors: 3 game_action, 3 route, 1 heal
+fly_route4: [fly] game_action {"town":"Route4"} => Route4 (12, 6) south
+to_mt_moon_b1f_paras: [run] route to MtMoon_B1F (42, 22) east
+catch_paras: [capture] game_action {"species":"paras","catches":1,"encounters":20,"balls":10,"ball":"ultra-ball","pace":"east"} skip_if party_has_species:paras
+save_after_catch: [save_game] game_action {}
+heal_route4.walk: [run] route to Route4_PokemonCenter_1F (7, 4) north
+heal_route4: heal
+outside_route4: [run] route to Route4 (12, 6) south
+retries 0
+postconditions:
+party includes paras
+no repeat
+== catcher_prep/plans/02-train-catchers.plan.json
+frlg 02-train-catchers from Route4 (12, 6) south: 2 game_action
+level_paras_spore: [candy_level] game_action {"species":"paras","target_level":27,"evolve":true,"learn":[{"move":"spore","replacing":"scratch"}],"expect_species":"parasect","expect_moves":["spore"]}
+save_catchers: [save_game] game_action {}
+retries 0
+postconditions:
+party includes parasect
+parasect knows spore
+parasect at least Lv 27
+no repeat
 == dex_collection/plans/01-ultra-balls.plan.json
 frlg 01-ultra-balls from anywhere outdoors: 2 game_action, 3 route, 1 heal
 fly_indigo: [fly] game_action {"town":"IndigoPlateau"} => IndigoPlateau_Exterior (11, 7) south
@@ -104,6 +127,85 @@ deposit_catch: [pc_deposit] game_action {"species":["ekans"]}
 heal_route10.walk: [run] route to Route10_PokemonCenter_1F (7, 4) north
 heal_route10: heal
 out_of_center: [run] route to Route10 (13, 21) south
+retries 0
+postconditions:
+none
+no repeat
+== dex_collection/plans/05-shiny-growlithe.plan.json
+frlg 05-shiny-growlithe from anywhere outdoors: 5 game_action, 4 route, 1 heal
+growlithe.fly: [fly] game_action {"town":"CeladonCity"} => CeladonCity (48, 12) south
+growlithe.to_spot: [run] route to Route7 (11, 6) north
+growlithe.save_before: [save_game] game_action {}
+growlithe.catch: [wild_rng] game_action {"method":"grass","species":"growlithe","location":"route_7"}
+growlithe.save_catch: [save_game] game_action {}
+growlithe.to_pc: [run] route to CeladonCity_PokemonCenter_1F (11, 2) north
+growlithe.deposit: [pc_deposit] game_action {"species":["growlithe"]}
+growlithe.to_nurse: [run] route to CeladonCity_PokemonCenter_1F (7, 4) north
+growlithe.heal: heal
+growlithe.outside: [run] route to CeladonCity (48, 12) south
+retries 0
+postconditions:
+none
+no repeat
+== dex_collection/plans/06-shiny-oddish.plan.json
+frlg 06-shiny-oddish from anywhere outdoors: 5 game_action, 4 route, 1 heal
+oddish.fly: [fly] game_action {"town":"SaffronCity"} => SaffronCity (24, 39) south
+oddish.to_spot: [run] route to Route7 (11, 6) north
+oddish.save_before: [save_game] game_action {}
+oddish.catch: [wild_rng] game_action {"method":"grass","species":"oddish","location":"route_7"}
+oddish.save_catch: [save_game] game_action {}
+oddish.to_pc: [run] route to SaffronCity_PokemonCenter_1F (11, 2) north
+oddish.deposit: [pc_deposit] game_action {"species":["oddish"]}
+oddish.to_nurse: [run] route to SaffronCity_PokemonCenter_1F (7, 4) north
+oddish.heal: heal
+oddish.outside: [run] route to SaffronCity (24, 39) south
+retries 0
+postconditions:
+none
+no repeat
+== dex_collection/plans/07-shiny-psyduck.plan.json
+frlg 07-shiny-psyduck from anywhere outdoors: 6 game_action, 4 route, 1 heal
+psyduck.fly: [fly] game_action {"town":"ViridianCity"} => ViridianCity (26, 27) south
+psyduck.to_shore: [run] route to ViridianCity (17, 27) west
+psyduck.surf: [surf] game_action {}
+psyduck.save_before: [save_game] game_action {}
+psyduck.catch: [wild_rng] game_action {"method":"surf","species":"psyduck","location":"viridian_city"}
+psyduck.save_catch: [save_game] game_action {}
+psyduck.to_pc: [run] route to ViridianCity_PokemonCenter_1F (11, 2) north
+psyduck.deposit: [pc_deposit] game_action {"species":["psyduck"]}
+psyduck.to_nurse: [run] route to ViridianCity_PokemonCenter_1F (7, 4) north
+psyduck.heal: heal
+psyduck.outside: [run] route to ViridianCity (26, 27) south
+retries 0
+postconditions:
+none
+no repeat
+== dex_collection/plans/08-shiny-shellder.plan.json
+frlg 08-shiny-shellder from anywhere outdoors: 5 game_action, 4 route, 1 heal
+shellder.fly: [fly] game_action {"town":"VermilionCity"} => VermilionCity (15, 7) south
+shellder.to_shore: [run] route to VermilionCity (15, 11) south
+shellder.save_before: [save_game] game_action {}
+shellder.catch: [wild_rng] game_action {"method":"super_rod","species":"shellder","location":"vermilion_city"}
+shellder.save_catch: [save_game] game_action {}
+shellder.to_pc: [run] route to VermilionCity_PokemonCenter_1F (11, 2) north
+shellder.deposit: [pc_deposit] game_action {"species":["shellder"]}
+shellder.to_nurse: [run] route to VermilionCity_PokemonCenter_1F (7, 4) north
+shellder.heal: heal
+shellder.outside: [run] route to VermilionCity (15, 7) south
+retries 0
+postconditions:
+none
+no repeat
+== dex_collection/plans/09-shiny-scyther.plan.json
+frlg 09-shiny-scyther from anywhere outdoors: 5 game_action, 3 route
+scyther.fly: [fly] game_action {"town":"CeladonCity"} => CeladonCity (48, 12) south
+scyther.to_counter: [run] route to CeladonCity_GameCorner_PrizeRoom (4, 4) north
+scyther.save_before: [save_game] game_action {}
+scyther.claim: [gift_rng] game_action {"species":"scyther","prize_row":"3"}
+scyther.save_claim: [save_game] game_action {}
+scyther.to_pc: [run] route to CeladonCity_PokemonCenter_1F (11, 2) north
+scyther.deposit: [pc_deposit] game_action {"species":["scyther"]}
+scyther.outside: [run] route to CeladonCity (48, 12) south
 retries 0
 postconditions:
 none

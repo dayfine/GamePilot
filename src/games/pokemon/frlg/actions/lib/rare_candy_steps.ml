@@ -118,24 +118,33 @@ let next () =
       Level_up.Stats who
   | look -> look
 
+let rec open_list_until ~deadline ~quiet_since =
+  if Effects.now () > deadline then false
+  else
+    match
+      Effects.await ~timeout_ms:look_ms (fun m -> forget_list m || arrow m)
+    with
+    | Holds m when forget_list m -> true
+    | Holds _ ->
+        press_a ();
+        open_list_until ~deadline ~quiet_since:None
+    | Timeout -> open_list_quiet ~deadline ~quiet_since
+
+and open_list_quiet ~deadline ~quiet_since =
+  match Option.bind (Effects.read ()) (still_since ~quiet_since) with
+  | Some since when Effects.now () -. since > float_of_int still_ms ->
+      press_a ();
+      open_list_until ~deadline ~quiet_since:None
+  | since -> open_list_until ~deadline ~quiet_since:since
+
 (* YES (the box's cursor starts there); the party then prints "Which move
-   should be forgotten?" and waits for A, the evolution scene fades to the
-   list at once. *)
+   should be forgotten?" (with no advance arrow on the party menu!) and waits
+   for A, while the evolution scene fades to the list at once. *)
 let open_list () =
   M.press ~cooldown_ms:page_press_ms Wire.A;
-  let rec on_until deadline =
-    if Effects.now () > deadline then false
-    else
-      match
-        Effects.await ~timeout_ms:look_ms (fun m -> forget_list m || arrow m)
-      with
-      | Holds m when forget_list m -> true
-      | Holds _ ->
-          press_a ();
-          on_until deadline
-      | Timeout -> on_until deadline
-  in
-  on_until (Effects.now () +. float_of_int list_timeout_ms)
+  open_list_until
+    ~deadline:(Effects.now () +. float_of_int list_timeout_ms)
+    ~quiet_since:None
 
 let read_list () : Level_up.forget_list =
   {

@@ -1,4 +1,12 @@
-type town = { key : string; nurse : string; fly : string; mart : string option }
+type town = {
+  key : string;
+  nurse : string;
+  fly : string;
+  mart : string option;
+  pc : string option;
+  outside : string option;
+}
+
 type t = town list
 
 let ( let* ) = Result.bind
@@ -24,7 +32,9 @@ let town_of where ~places key fields =
   let* nurse = place_field where ~places "nurse" fields in
   let* fly = string where "fly" fields in
   let* mart = optional_place where ~places "mart" fields in
-  Ok { key; nurse; fly; mart }
+  let* pc = optional_place where ~places "pc" fields in
+  let* outside = optional_place where ~places "outside" fields in
+  Ok { key; nurse; fly; mart; pc; outside }
 
 let town where ~places (key, value) =
   let where = Printf.sprintf "%stowns.%s." where key in
@@ -55,5 +65,9 @@ let field t key ~field =
   | Some "nurse" -> Ok town.nurse
   | Some "fly" -> Ok town.fly
   | Some "mart" -> Option.to_result ~none:(key ^ " has no mart place") town.mart
+  | Some "pc" -> Option.to_result ~none:(key ^ " has no pc place") town.pc
+  | Some "outside" ->
+      Option.to_result ~none:(key ^ " has no outside place") town.outside
   | Some other ->
-      Error (Printf.sprintf "a town has no %s (nurse, fly, mart)" other)
+      Error
+        (Printf.sprintf "a town has no %s (nurse, fly, mart, pc, outside)" other)

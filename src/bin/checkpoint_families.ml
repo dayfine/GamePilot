@@ -79,36 +79,70 @@ let grid =
     ctl_readers = Frlg_ctl_readers.Ctl_readers.all;
   }
 
+let checkpoint_rows ~load_title ~plan_dir ids =
+  let* rev =
+    List.fold_left
+      (fun acc id ->
+        let* acc = acc in
+        let* cp_id, title = load_title ~plan_dir id in
+        let row = Printf.sprintf "| %s | %s |" cp_id (Guide_page.cell title) in
+        Ok (row :: acc))
+      (Ok []) ids
+  in
+  Ok (List.rev rev)
+
+let switch_testing_commands ~args =
+  String.concat "\n"
+    [
+      "# the Switch: each checkpoint once, from where the console is";
+      "cd src && opam exec -- dune exec -- gamepilot run " ^ args
+      ^ " --mode testing --backend switch --serial PORT --capture DEVICE \\";
+      "    --watch";
+    ]
+
+let no_stated game what ~plan_dir:_ _ =
+  Error (game ^ "'s plans state no " ^ what)
+
+let switch_only_guide ~game ~load_title ?(program_block = fun _ _ -> None) () :
+    Guide_blocks.rules_guide =
+  {
+    rows = checkpoint_rows ~load_title;
+    needs = no_stated game "needs";
+    preflight = no_stated game "pre-flight";
+    commands = (fun _ ~args -> switch_testing_commands ~args);
+    program_block;
+  }
+
+let switch_only_family ~game ~load_title ?(program_block = fun _ _ -> None)
+    ~run_series () =
+  {
+    run_series;
+    run_checkpoint =
+      (fun _ _ -> Error (game ^ " runs whole series only: gamepilot run"));
+    replay_checkpoint =
+      (fun _ _ _ -> Error (game ^ " has no checkpoint replay yet"));
+    guide = switch_only_guide ~game ~load_title ~program_block ();
+    chain_needs = (fun _ -> Error (game ^ "'s plans state no chain needs"));
+    ctl_readers = [];
+  }
+
+let plza_load_title ~plan_dir id =
+  Result.map
+    (fun (p : Plza_engine.Plan.t) ->
+      (p.checkpoint.checkpoint_id, p.checkpoint.title))
+    (Plza_checkpoint_series.Checkpoint_series.load_plan ~plan_dir id)
+
 let plza_series plan_dir args =
   let* f = Run_flags.parse_no_game_flags args in
   let* options = program_options plan_dir f in
   Plza.run_series ~program:(program_fields plan_dir) ~options
     ~viewport:(viewport plan_dir f) plan_dir args
 
-let no_stated what ~plan_dir:_ _ = Error ("PLZA's plans state no " ^ what)
-
-let plza_guide : Guide_blocks.rules_guide =
-  {
-    rows = Plza_checkpoint_series.Guide_tables.rows;
-    needs = no_stated "needs";
-    preflight = no_stated "pre-flight";
-    commands =
-      (fun _ ~args -> Plza_checkpoint_series.Guide_tables.commands ~args);
-    program_block = (fun _ _ -> None);
-  }
-
 (* PLZA's story rules' entry points: a series of whole checkpoints on the
    Switch; no plan runs alone, and the plans state no chain needs. *)
 let plza =
-  {
-    run_series = plza_series;
-    run_checkpoint =
-      (fun _ _ -> Error "PLZA runs whole series only: gamepilot run");
-    replay_checkpoint = (fun _ _ _ -> Error "PLZA has no checkpoint replay yet");
-    guide = plza_guide;
-    chain_needs = (fun _ -> Error "PLZA's plans state no chain needs");
-    ctl_readers = [];
-  }
+  switch_only_family ~game:"PLZA" ~load_title:plza_load_title
+    ~run_series:plza_series ()
 
 let plza_home_series plan_dir args =
   let* f = Run_flags.parse_no_game_flags args in
@@ -133,7 +167,6 @@ let plza_home =
     run_checkpoint =
       (fun _ _ ->
         Error "pokemon_home.bank-plza runs whole series only: gamepilot run");
-    ctl_readers = [];
   }
 
 let plza_gifts_series plan_dir args =
@@ -159,7 +192,7 @@ let plza_gifts =
     run_checkpoint =
       (fun _ _ ->
         Error "plza.claim-gifts runs whole series only: gamepilot run");
-    guide = { plza_guide with program_block = gifts_block };
+    guide = { plza.guide with program_block = gifts_block };
   }
 
 let run_bdsp_action ~log ~picture ~options = function
@@ -177,6 +210,12 @@ let run_bdsp_action ~log ~picture ~options = function
   | Bdsp_rules.Action.Static_rng ->
       Bdsp_static_rng.Static_rng.run_action ~log ~picture ~options
 
+let bdsp_load_title ~plan_dir id =
+  Result.map
+    (fun (p : Bdsp_engine.Plan.t) ->
+      (p.checkpoint.checkpoint_id, p.checkpoint.title))
+    (Bdsp_checkpoint_series.Checkpoint_series.load_plan ~plan_dir id)
+
 let bdsp_series plan_dir args =
   let* f = Run_flags.parse_no_game_flags args in
   let* options = program_options plan_dir f in
@@ -190,29 +229,10 @@ let bdsp_series plan_dir args =
     ~program_fields:(program_fields plan_dir) ~options
     ~viewport:(viewport plan_dir f) plan_dir args
 
-let no_bdsp_stated what ~plan_dir:_ _ = Error ("BDSP's plans state no " ^ what)
-
-let bdsp_guide : Guide_blocks.rules_guide =
-  {
-    rows = Bdsp_checkpoint_series.Guide_tables.rows;
-    needs = no_bdsp_stated "needs";
-    preflight = no_bdsp_stated "pre-flight";
-    commands =
-      (fun _ ~args -> Bdsp_checkpoint_series.Guide_tables.commands ~args);
-    program_block = (fun _ _ -> None);
-  }
-
 (* BDSP's rules' entry points: a series of whole checkpoints on the Switch. *)
 let bdsp =
-  {
-    run_series = bdsp_series;
-    run_checkpoint =
-      (fun _ _ -> Error "BDSP runs whole series only: gamepilot run");
-    replay_checkpoint = (fun _ _ _ -> Error "BDSP has no checkpoint replay yet");
-    guide = bdsp_guide;
-    chain_needs = (fun _ -> Error "BDSP's plans state no chain needs");
-    ctl_readers = [];
-  }
+  switch_only_family ~game:"BDSP" ~load_title:bdsp_load_title
+    ~run_series:bdsp_series ()
 
 let all = [ grid; plza; plza_home; plza_gifts; bdsp ]
 

@@ -79,6 +79,7 @@ let options flags : Frlg_checkpoints.Checkpoint_run.options =
     gait = (if flags.walk then Walking else Running);
     end_check_only = flags.end_check_only;
     program_options = Run_options.none;
+    default_frame_model = Frlg_actions.Wild_rng_plan.default_frame_model;
     log = logger flags.log_file;
   }
 
@@ -109,17 +110,27 @@ let outcome handle run =
 
 (* Runs the checkpoint under [handle], [after] its result in the session;
    the outcome's line (printed) and exit code. *)
+let with_backend_frame_model options = function
+  | None -> options
+  | Some kind ->
+      let default_frame_model =
+        Frlg_actions.Wild_rng_plan.frame_model_for_backend kind
+      in
+      { options with Frlg_checkpoints.Checkpoint_run.default_frame_model }
+
+let run_prepared ~after plan world options backend_kind =
+  let options = with_backend_frame_model options backend_kind in
+  let result =
+    Frlg_checkpoints.Plan_watch.run ~mode:"single" options world plan
+  in
+  after result;
+  result
+
 let run_with ?(after = ignore) handle plan_file flags =
   match prepare plan_file flags with
   | Error e -> ("checkpoint: " ^ e, 2)
   | Ok (plan, world, options) ->
-      let body () =
-        let result =
-          Frlg_checkpoints.Plan_watch.run ~mode:"single" options world plan
-        in
-        after result;
-        result
-      in
+      let body = run_prepared ~after plan world options in
       let line, code = outcome handle body in
       print_endline line;
       (line, code)
@@ -129,6 +140,12 @@ let label plan_file =
   Option.value
     (Filename.chop_suffix_opt ~suffix:".plan.json" base)
     ~default:(Filename.remove_extension base)
+
+let live_handle port f =
+  Live.run_with_backend ~port (fun (b : Wire.backend) -> f (Some b.kind))
+
+let replay_handle wirelog f =
+  Replay.run (Replay.log_of_file wirelog) (fun () -> f None)
 
 (* On the daemon at --port, in a run folder of its own (Attached_run): its
    story log unless --log names another. [program_fields]: run.json's program
@@ -153,15 +170,12 @@ let live ~program_fields plan_file args =
   in
   let line, code =
     Effects.with_run_folder run.record.dir (fun () ->
-        run_with ~after
-          (Live.run ~port:flags.port)
-          plan_file { flags with log_file })
+        run_with ~after (live_handle flags.port) plan_file
+          { flags with log_file })
   in
   Attached_run.finish ~runs_dir run ~line ~code;
   Ok code
 
 let replay wirelog plan_file args =
-  Result.map
-    (fun flags ->
-      snd (run_with (Replay.run (Replay.log_of_file wirelog)) plan_file flags))
-    (parse defaults args)
+  let* flags = parse defaults args in
+  Ok (snd (run_with (replay_handle wirelog) plan_file flags))

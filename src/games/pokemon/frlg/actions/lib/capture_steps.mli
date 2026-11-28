@@ -51,6 +51,11 @@ val mark_timeout_ms : int
 (** 2 s for the caught mark's probes to measure on the action menu; a mark not
     measured in time reads as not caught. *)
 
+val finish_catch : log:(string -> unit) -> Capture.destination -> bool
+(** From the catch's first message: answers NO to the nickname prompt and mashes
+    B through the post-catch messages and Pokédex entry until the overworld
+    settles. *)
+
 val make :
   log:(string -> unit) ->
   spot:Pacing.spot ref ->

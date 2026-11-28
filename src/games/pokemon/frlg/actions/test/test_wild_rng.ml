@@ -36,7 +36,8 @@ let options_of pairs =
       };
       {
         key = "ball";
-        value = One_of [ "poke-ball"; "great-ball"; "ultra-ball" ];
+        value =
+          One_of [ "poke-ball"; "great-ball"; "ultra-ball"; "luxury-ball" ];
         presence = Optional;
         doc = "";
       };
@@ -186,6 +187,7 @@ let decide ~capture_end ~shiny ~party () =
         (fun _ ~party ->
           steps := Printf.sprintf "catch (party %d)" party :: !steps;
           capture_result capture_end);
+      policy_catch = None;
       shiny_at =
         (fun slot ->
           steps := Printf.sprintf "summary %d" slot :: !steps;
@@ -203,6 +205,166 @@ let decide ~capture_end ~shiny ~party () =
   ^ ": "
   ^ Option.value (Wild_rng.failure_code r.end_) ~default:"passes"
 
+let reading_of verdict : Frlg_readers.Shiny_encounter_reader.reading =
+  { verdict; wild_intro_ms = Some 2750.; phase = Intro_complete }
+
+let decide_policy ?(found = true) ?intro_verdict ~catch_outcome
+    ?(finish_ok = true) ~shiny ~party () =
+  let steps = ref [] in
+  let add s = steps := s :: !steps in
+  let detect_shiny =
+    Option.map
+      (fun v () ->
+        add ("intro " ^ Frlg_readers.Shiny_encounter_reader.verdict_to_string v);
+        reading_of v)
+      intro_verdict
+  in
+  let pc : Wild_rng.policy_catch_steps =
+    {
+      find_encounter =
+        (fun () ->
+          add "find";
+          found);
+      detect_shiny;
+      on_miss = (fun () -> add "on_miss");
+      catch_battle =
+        (fun () ->
+          add "catch_battle";
+          catch_outcome);
+      finish_catch =
+        (fun _ ->
+          add "finish_catch";
+          finish_ok);
+    }
+  in
+  let game_steps : Wild_rng.game_steps =
+    {
+      catch = (fun _ ~party:_ -> failwith "legacy catch should not run");
+      policy_catch = Some pc;
+      shiny_at =
+        (fun slot ->
+          add (Printf.sprintf "summary %d" slot);
+          shiny);
+      log = ignore;
+    }
+  in
+  let plan =
+    match Wild_rng_plan.decode (obj plan_args) with
+    | Ok p -> p.capture
+    | Error _ -> failwith "plan"
+  in
+  let r = Wild_rng.run game_steps plan ~party in
+  let cap_balls =
+    match r.capture with
+    | None -> "none"
+    | Some c -> Printf.sprintf "%d" c.balls_thrown
+  in
+  Printf.sprintf "%s => %s (balls=%s)"
+    (String.concat ", " (List.rev !steps))
+    (Option.value (Wild_rng.failure_code r.end_) ~default:"passes")
+    cap_balls
+
+let caught_summary : Pokemon_catch.Catch_runner.summary =
+  { turns = 4; balls_thrown = 2; switches = 1; heals = 0 }
+
+let policy_decoding =
+  let decode_mode json () =
+    match Wild_rng_plan.decode (obj json) with
+    | Ok t ->
+        let mode =
+          match t.catch_mode with
+          | Throw_only -> "throw_only"
+          | Catch_policy { policy; _ } ->
+              Printf.sprintf "policy(ball=%s,wall=%b)" policy.ball_name
+                (Option.is_some policy.wall)
+        in
+        Printf.sprintf "%s visual=%b boot=%d shift=%d ingame=%d" mode
+          t.visual_shiny_check t.boot_offset_ms t.seed_shift t.ingame_offset
+    | Error c -> Pokemon_engine.Failure.cause_to_string c
+  in
+  let decode_calibrated () =
+    match
+      Wild_rng_plan.decode
+        (obj
+           {|{"species": "ekans", "location": "route_10", "tid": 1, "sid": 2,
+              "seeds": "x.json", "frame_model": "switch",
+              "catch_mode": "phase1", "visual_shiny_check": true,
+              "ball": "luxury-ball"}|})
+    with
+    | Ok t ->
+        let cal : Frlg_rng.Switch_rng_calibration.entry =
+          {
+            boot_offset_ms = -50;
+            seed_shift = 4;
+            ingame_offset = -2;
+            updated_at = "2026-11-27T00:00:00Z";
+          }
+        in
+        let t = Wild_rng_plan.apply_calibration cal t in
+        Printf.sprintf "visual=%b boot=%d shift=%d ingame=%d"
+          t.visual_shiny_check t.boot_offset_ms t.seed_shift t.ingame_offset
+    | Error c -> Pokemon_engine.Failure.cause_to_string c
+  in
+  [
+    case "phase1 catch_mode with visual shiny check"
+      (decode_mode
+         {|{"species": "ekans", "location": "route_10", "tid": 1, "sid": 2,
+            "seeds": "x.json", "frame_model": "switch",
+            "catch_mode": "phase1", "visual_shiny_check": true,
+            "ball": "luxury-ball"}|})
+      "policy(ball=luxury-ball,wall=true) visual=true boot=0 shift=0 ingame=0";
+    case "phase2 catch_mode has no wall"
+      (decode_mode
+         {|{"species": "ekans", "location": "route_10", "tid": 1, "sid": 2,
+            "seeds": "x.json", "frame_model": "switch",
+            "catch_mode": "phase2", "ball": "ultra-ball"}|})
+      "policy(ball=ultra-ball,wall=false) visual=false boot=0 shift=0 ingame=0";
+    case "invalid catch_mode rejected"
+      (decode_mode
+         {|{"species": "ekans", "location": "route_10", "tid": 1, "sid": 2,
+            "seeds": "x.json", "frame_model": "switch",
+            "catch_mode": "master_only"}|})
+      "bad_args: wild_rng: catch_mode is master_only, not throw_only, phase1, \
+       or phase2";
+    case "apply_calibration updates switch plan offsets" decode_calibrated
+      "visual=true boot=-50 shift=4 ingame=-2";
+  ]
+
+let policy_decisions =
+  [
+    case "visual shiny hit -> catch -> summary star confirmed"
+      (decide_policy ~intro_verdict:Shiny ~catch_outcome:(Caught caught_summary)
+         ~shiny:true ~party:5)
+      "find, intro shiny, catch_battle, finish_catch, summary 6 => passes \
+       (balls=2)";
+    case "visual non-shiny miss skips catch & throws 0 balls, runs on_miss"
+      (decide_policy ~intro_verdict:Not_shiny
+         ~catch_outcome:(Caught caught_summary) ~shiny:true ~party:5)
+      "find, intro not_shiny, on_miss => wild_rng_not_shiny_intro (balls=none)";
+    case "visual unknown still catches and checks summary star guard"
+      (decide_policy ~intro_verdict:Unknown
+         ~catch_outcome:(Caught caught_summary) ~shiny:false ~party:5)
+      "find, intro unknown, catch_battle, finish_catch, summary 6 => \
+       wild_rng_not_shiny (balls=2)";
+    case "policy catch without visual check catches and checks summary"
+      (decide_policy ~catch_outcome:(Caught caught_summary) ~shiny:true ~party:4)
+      "find, catch_battle, finish_catch, summary 5 => passes (balls=2)";
+    case "catch runner pause stops cleanly without summary"
+      (decide_policy ~intro_verdict:Shiny
+         ~catch_outcome:
+           (Paused { reason = "max turns reached"; summary = caught_summary })
+         ~shiny:true ~party:5)
+      "find, intro shiny, catch_battle => wild_rng_catch_paused (balls=none)";
+    case "catch runner no_balls maps to out_of_balls"
+      (decide_policy ~intro_verdict:Shiny
+         ~catch_outcome:(No_balls caught_summary) ~shiny:true ~party:5)
+      "find, intro shiny, catch_battle => wild_rng_out_of_balls (balls=none)";
+    case "no encounter fails before intro check"
+      (decide_policy ~found:false ~intro_verdict:Shiny
+         ~catch_outcome:(Caught caught_summary) ~shiny:true ~party:5)
+      "find => wild_rng_no_encounter (balls=none)";
+  ]
+
 let decisions =
   [
     case "a shiny catch passes"
@@ -219,4 +381,83 @@ let decisions =
       ": wild_rng_party_full";
   ]
 
-let () = Table_test.run "wild_rng" (decoding @ presses @ decisions)
+let method_decoding =
+  let decode_method json () =
+    match Wild_rng_plan.decode (obj json) with
+    | Ok t ->
+        Printf.sprintf "%s at %s (%s, %s, %s)" t.species t.location
+          (Wild_rng_plan.encounter_method_to_string t.encounter_method)
+          t.seeds t.frame_model
+    | Error c -> Pokemon_engine.Failure.cause_to_string c
+  in
+  let super_rod_blind () =
+    Wild_rng_steps.blind_presses_for Wild_rng_plan.Super_rod
+      {
+        seed_delay_ms = 33033;
+        csf_delay_ms = 3348;
+        teachy_delay_ms = 0;
+        ingame_delay_ms = 10129;
+      }
+    |> List.map command_text |> String.concat ", "
+  in
+  let check_surf_target () =
+    let args =
+      obj
+        {|{"method": "surf", "species": "psyduck", "location": "viridian_city",
+           "tid": 12345, "sid": 54321}|}
+    in
+    match
+      Result.bind (Wild_rng_plan.decode args) (fun p ->
+          Result.map_error
+            (Pokemon_engine.Failure.cause "target")
+            (Wild_rng_plan.target p))
+    with
+    | Ok t -> t.encounter.species
+    | Error c -> Pokemon_engine.Failure.cause_to_string c
+  in
+  let check_super_rod_target () =
+    let args =
+      obj
+        {|{"method": "super_rod", "species": "shellder",
+           "location": "vermilion_city", "tid": 12345, "sid": 54321}|}
+    in
+    match
+      Result.bind (Wild_rng_plan.decode args) (fun p ->
+          Result.map_error
+            (Pokemon_engine.Failure.cause "target")
+            (Wild_rng_plan.target p))
+    with
+    | Ok t -> t.encounter.species
+    | Error c -> Pokemon_engine.Failure.cause_to_string c
+  in
+  [
+    case "surf method with default seeds and frame_model"
+      (decode_method
+         {|{"method": "surf", "species": "psyduck",
+            "location": "viridian_city", "tid": 1, "sid": 2}|})
+      "psyduck at viridian_city (surf, rng_seeds_mgba_sevii_save.json, mgba)";
+    case "super_rod method with default seeds and frame_model"
+      (decode_method
+         {|{"method": "super_rod", "species": "shellder",
+            "location": "vermilion_city", "tid": 1, "sid": 2}|})
+      "shellder at vermilion_city (super_rod, rng_seeds_mgba_sevii_save.json, \
+       mgba)";
+    case "invalid method rejected"
+      (decode_method
+         {|{"method": "old_rod", "species": "magikarp",
+            "location": "vermilion_city", "tid": 1, "sid": 2}|})
+      "bad_args: wild_rng: method is old_rod, not grass, surf, or super_rod";
+    case "super_rod blind presses cast registered rod with Select"
+      super_rod_blind
+      "wait 33033, A 3000/0, wait 348, A 50/1450, B 50/2450, wait 9629, Select \
+       200/300";
+    case "surf target search finds shiny psyduck in viridian_city"
+      check_surf_target "psyduck";
+    case "super_rod target search finds shiny shellder in vermilion_city"
+      check_super_rod_target "shellder";
+  ]
+
+let () =
+  Table_test.run "wild_rng"
+    (decoding @ policy_decoding @ method_decoding @ presses @ decisions
+   @ policy_decisions)

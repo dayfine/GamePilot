@@ -42,6 +42,7 @@
   test_ace_actions
   test_pc_box
   test_wild_rng
+  test_gift_rng
   test_pokedex_entry
   test_skip_conditions
   test_naming_entry
@@ -50,7 +51,8 @@
   test_item_storage
   test_ace_presets
   test_ace_code
-  test_ace_item)
+  test_ace_item
+  test_battle_catch_steps)
  (modules
   test_pc_deposit_steps
   test_pc_withdraw_steps
@@ -78,6 +80,7 @@
   test_ace_actions
   test_pc_box
   test_wild_rng
+  test_gift_rng
   test_pokedex_entry
   test_skip_conditions
   test_naming_entry
@@ -86,7 +89,8 @@
   test_item_storage
   test_ace_presets
   test_ace_code
-  test_ace_item)
+  test_ace_item
+  test_battle_catch_steps)
  (deps
   mgba.probes.jsonl
   menus.mgba.probes.jsonl
@@ -98,14 +102,18 @@
   gamepilot.table_test
   gamepilot.strings
   gamepilot.wire
+  gamepilot.effects
   gamepilot.grid_geometry
   gamepilot.grid_maps
   gamepilot.json_field
   gamepilot.pokemon_engine
+  gamepilot.pokemon_catch
   gamepilot.room_policy
+  gamepilot.frlg_readers
   gamepilot.frlg_overworld
   gamepilot.frlg_actions
   gamepilot.frlg_battle
+  gamepilot.frlg_rng
   frlg_level_up_fake
   gamepilot.run_options
   frlg_overworld_fixtures))

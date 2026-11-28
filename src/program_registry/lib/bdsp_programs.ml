@@ -71,7 +71,7 @@ let underground =
     category = Farming;
     description =
       "Farms Mysterious Shards and treasures in the Grand Underground.";
-    doc = "docs/guide/bdsp.underground.md";
+    doc = "docs/guide/bdsp/underground.md";
     checkpoints = Some "src/games/pokemon/bdsp/programs/underground/plans";
     backends = [ Switch ];
     viewport = Native;
@@ -154,7 +154,7 @@ let static_rng =
       "Hunts shiny static legendaries using 0PK pedestal player-blink seed \
        recovery, in-chamber 1PK re-identification, and timed encounter \
        triggers.";
-    doc = "docs/guide/bdsp.static_rng.md";
+    doc = "docs/guide/bdsp/static_rng.md";
     checkpoints = Some "src/games/pokemon/bdsp/programs/static_rng/plans";
     backends = [ Switch ];
     viewport = Native;

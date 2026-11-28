@@ -62,6 +62,7 @@ let run ?(world = Frlg_world.pallet) ?(react = react) ?(checkpoint = checkpoint)
       center = None;
       reload = (fun () -> Ok ());
       program_options = Run_options.none;
+      default_frame_model = Wild_rng_plan.default_frame_model;
       log = ignore;
     }
   in

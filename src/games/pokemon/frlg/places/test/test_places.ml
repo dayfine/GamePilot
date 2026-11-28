@@ -70,15 +70,19 @@ let towns_fly () =
       String.concat ", "
         (List.map (fun (t : Towns.town) -> t.key ^ ": " ^ t.fly) l)
 
-(* Every town's nurse and mart places are named with its key: one spelling per
-   town. *)
+(* Every town's nurse, mart, pc and outside places are named with its key: one
+   spelling per town. *)
 let towns_prefix () =
   let towns = Towns.towns (Place_table.towns table) in
   let named (t : Towns.town) place =
     String.starts_with ~prefix:(t.key ^ "_") place
   in
   let wrong (t : Towns.town) =
-    List.filter (fun p -> not (named t p)) (t.nurse :: Option.to_list t.mart)
+    let places =
+      (t.nurse :: Option.to_list t.mart)
+      @ Option.to_list t.pc @ Option.to_list t.outside
+    in
+    List.filter (fun p -> not (named t p)) places
   in
   match List.concat_map wrong towns with
   | [] -> Printf.sprintf "%d towns, all pass" (List.length towns)
@@ -113,10 +117,10 @@ let () =
     [
       case "every place's object is in the maps, usable from its stand tile"
         (fun () -> failures resolves)
-        "36 places, all pass";
+        "50 places, all pass";
       case "every place's stand tile is walked to from a warp"
         (fun () -> failures reachable)
-        "36 places, all pass";
+        "50 places, all pass";
       case "every town's Fly name is one Fly knows" towns_fly
         "12 towns, all pass";
       case "every town's nurse and mart start with the town's key" towns_prefix
@@ -160,4 +164,44 @@ let () =
            (one_place
               {|{"map": "M", "object": {"npc": "s"}, "stand": [1], "facing": "south"}|}))
         "t.json: places.a.stand is not [x, y].";
-    ]
+    ];
+  let resolve = Place_table.resolve table in
+  let check_res name expected actual =
+    if expected <> actual then (
+      Printf.eprintf "FAIL %s\n%!" name;
+      exit 1)
+  in
+  check_res "town.pc resolves" (Ok "route10_center_pc")
+    (resolve ~kind:"town" "route10" ~field:(Some "pc"));
+  check_res "town.outside resolves" (Ok "route10_center_outside")
+    (resolve ~kind:"town" "route10" ~field:(Some "outside"));
+  check_res "celadon.pc resolves" (Ok "celadon_center_pc")
+    (resolve ~kind:"town" "celadon" ~field:(Some "pc"));
+  check_res "celadon.outside resolves" (Ok "celadon_center_outside")
+    (resolve ~kind:"town" "celadon" ~field:(Some "outside"));
+  check_res "saffron.pc resolves" (Ok "saffron_center_pc")
+    (resolve ~kind:"town" "saffron" ~field:(Some "pc"));
+  check_res "saffron.outside resolves" (Ok "saffron_center_outside")
+    (resolve ~kind:"town" "saffron" ~field:(Some "outside"));
+  check_res "lavender.pc resolves" (Ok "lavender_center_pc")
+    (resolve ~kind:"town" "lavender" ~field:(Some "pc"));
+  check_res "lavender.outside resolves" (Ok "lavender_center_outside")
+    (resolve ~kind:"town" "lavender" ~field:(Some "outside"));
+  check_res "viridian.pc resolves" (Ok "viridian_center_pc")
+    (resolve ~kind:"town" "viridian" ~field:(Some "pc"));
+  check_res "viridian.outside resolves" (Ok "viridian_center_outside")
+    (resolve ~kind:"town" "viridian" ~field:(Some "outside"));
+  check_res "town without pc errors" (Error "pewter has no pc place")
+    (resolve ~kind:"town" "pewter" ~field:(Some "pc"));
+  check_res "place resolves valid place" (Ok "route10_north_grass")
+    (resolve ~kind:"place" "route10_north_grass" ~field:None);
+  check_res "route4.outside resolves" (Ok "route4_center_outside")
+    (resolve ~kind:"town" "route4" ~field:(Some "outside"));
+  check_res "mt_moon_b1f_paras resolves" (Ok "mt_moon_b1f_paras")
+    (resolve ~kind:"place" "mt_moon_b1f_paras" ~field:None);
+  check_res "place rejects field" (Error "a place has no pc")
+    (resolve ~kind:"place" "route10_north_grass" ~field:(Some "pc"));
+  check_res "string passes through" (Ok "growlithe")
+    (resolve ~kind:"string" "growlithe" ~field:None);
+  check_res "string rejects field" (Error "a string has no fly")
+    (resolve ~kind:"string" "growlithe" ~field:(Some "fly"))

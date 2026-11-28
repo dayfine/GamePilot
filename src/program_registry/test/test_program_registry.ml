@@ -137,6 +137,18 @@ let () =
     [
       case "ids are unique" duplicates "";
       case "every doc exists" (missing (fun p -> Some p.doc)) "";
+      case "every doc is under docs/guide/<game>/<short_id>.md"
+        (fun () ->
+          List.filter_map
+            (fun (p : R.t) ->
+              let expected =
+                "docs/guide/" ^ p.game.game_id ^ "/" ^ R.short_id p ^ ".md"
+              in
+              if p.doc = expected then None
+              else Some (p.id ^ ": " ^ p.doc ^ " <> " ^ expected))
+            R.all
+          |> String.concat ", ")
+        "";
       case "every checkpoints folder exists"
         (missing (fun p -> p.checkpoints))
         "";
@@ -230,6 +242,15 @@ let () =
           options_for (Some "frlg.mail_glitch")
             [ ("sweeper", "charizard"); ("depleted-move", "fire-blast") ])
         "ok sweeper=charizard depleted-move=fire-blast";
+      case "options: frlg.dex_collection accepts luxury-ball"
+        (fun () ->
+          options_for (Some "frlg.dex_collection") [ ("ball", "luxury-ball") ])
+        "ok ball=luxury-ball target=everything";
+      case "options: frlg.dex_collection refuses master-ball"
+        (fun () ->
+          options_for (Some "frlg.dex_collection") [ ("ball", "master-ball") ])
+        "error: --options ball=master-ball: ball is poke-ball | great-ball | \
+         ultra-ball | luxury-ball";
       case "options: plza.autostory, none given: the plan's"
         (fun () -> options_for (Some "plza.autostory") [])
         "ok ";

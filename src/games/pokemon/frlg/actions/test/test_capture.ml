@@ -34,10 +34,13 @@ let decoding =
     case "a species and uncaught"
       (decode {|{"species": "ekans", "uncaught": []}|})
       "bad_args: capture: species and uncaught: name one";
-    case "a ball no Mart sells"
+    case "luxury ball accepted"
+      (decode {|{"species": "ekans", "ball": "luxury-ball", "balls": 10}|})
+      "1 ekans, 20 encounters, 10 luxury-ball, pace east";
+    case "a ball not supported for capture"
       (decode {|{"species": "ekans", "ball": "master-ball"}|})
       "bad_args: capture: ball is master-ball, not poke-ball, great-ball, \
-       ultra-ball";
+       ultra-ball, luxury-ball";
     case "no species"
       (decode {|{"catches": 2}|})
       "bad_args: capture: species is missing.";

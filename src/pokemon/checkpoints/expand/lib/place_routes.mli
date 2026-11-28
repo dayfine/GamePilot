@@ -12,7 +12,8 @@
 
     Where the player stands is reckoned along the plan: the checkpoint's
     [start], then each route's one-tile target, or else each event's one-tile
-    [declared_after]. A place route needs it known. *)
+    [declared_after] (which may itself be [{"place": NAME}]). A place route
+    needs it known. *)
 
 open Engine_expand
 

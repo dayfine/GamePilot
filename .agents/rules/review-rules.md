@@ -135,13 +135,13 @@ so as a checked precondition.
 
 ### R6 One doc page per program: its guide
 
-A program has one page, `docs/guide/<program id>.md`; the developer's reasoning goes in its "How it
+A program has one page, `docs/guide/<game>/<program>.md`; the developer's reasoning goes in its "How it
 works" section. There is no separate `docs/programs/<program>.md` page.
 
 - Why: "huh ok, so we have docs/guide/frlg.ace_setup.md and we have this?" (user, 2026-11-25:
   https://github.com/dayfine/GamePilot/pull/109#discussion_r4697827206).
-- Bad: `docs/programs/frlg-supplies.md` beside `docs/guide/frlg.supplies.md`.
-- Good: `docs/guide/frlg.supplies.md` with a "How it works" section; the descriptor's `doc` points
+- Bad: `docs/programs/frlg-supplies.md` beside `docs/guide/frlg/supplies.md`.
+- Good: `docs/guide/frlg/supplies.md` with a "How it works" section; the descriptor's `doc` points
   at it.
 - Find: recipe (every hit is a finding; the folder is gone, and adding a program is in
   `docs/guide/README.md`): `ls docs/programs/` and
@@ -501,7 +501,7 @@ Find the gate in pret pokefirered (the script or the C that checks it) and cite 
 ### R25 A program's description and guide intro say what it does, never how far it gets today
 
 A program's `description` in `src/program_registry`, and the hand-written intro of its guide
-(`docs/guide/<id>.md`, the prose before the generated blocks), say what the program does, not
+(`docs/guide/<game>/<program>.md`, the prose before the generated blocks), say what the program does, not
 which checkpoints, missions or steps it covers so far: coverage changes with every plan PR and is
 shown by the plans and the guide's generated checkpoints table.
 
@@ -517,7 +517,7 @@ shown by the plans and the guide's generated checkpoints table.
 - Find: recipe, then judgment on each hit:
   `grep -nA2 'description =' src/program_registry/lib/*.ml | grep -nE 'for now|so far|[0-9]{2}\.[0-9]{2}'`;
   for guide intros, the lines before each page's first generated block:
-  `for f in docs/guide/*.md; do awk '/<!-- generated:/{exit} {print FILENAME": "$0}' "$f"; done | grep -nE 'for now|so far|today|currently|up to|through|[0-9]{2}\.[0-9]{2}'`;
+  `for f in docs/guide/*/*.md; do awk '/<!-- generated:/{exit} {print FILENAME": "$0}' "$f"; done | grep -nE 'for now|so far|today|currently|up to|through|[0-9]{2}\.[0-9]{2}'`;
   and `git log -p -- src/program_registry/lib docs/guide` for a description or
   intro edited alongside a plan change.
 

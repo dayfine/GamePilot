@@ -43,7 +43,7 @@ let member_keys =
 let named_species ~where args =
   List.filter_map (fun key -> J.string_opt ~where key args) member_keys
 
-let field_move_users = [ ("cut_tree", "cut"); ("fly", "fly") ]
+let field_move_users = [ ("cut_tree", "cut"); ("fly", "fly"); ("surf", "surf") ]
 
 (* The badge each HM needs outside battle, by field move: pret pokefirered
    src/party_menu.c (FLAG_BADGE01_GET + the field move, from
