@@ -8,6 +8,7 @@
   test_wild_target
   test_switch_rng_calibration
   test_base_stats
+  test_rng_miss_search
   test_rolling_calibrator)
  (modules
   fixture_lines
@@ -20,6 +21,7 @@
   test_wild_target
   test_switch_rng_calibration
   test_base_stats
+  test_rng_miss_search
   test_rolling_calibrator)
  (deps
   (glob_files fixtures/*.txt)
