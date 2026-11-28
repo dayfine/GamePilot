@@ -30,9 +30,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 01:45:00–01:50:00 | Reviewed |
 | 01:50:00–01:55:00 | Reviewed |
 | 01:55:00–02:00:00 | Reviewed |
-| 02:00:00–03:18:16 | Pending |
+| 02:00:00–02:05:00 | Reviewed |
+| 02:05:00–03:18:16 | Pending |
 
-Resume at **02:00:00** on the shore of Lake Verity as the first Galactic double battle begins.
+Resume at **02:05:00** as Kazza enters against Candice’s Snover in Snowpoint Gym.
 
 ## Review method
 
@@ -493,3 +494,18 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 | 1:59:31–2:00:00 | Enter the player’s house for Mom to heal the party. Ride north through Route 201 and Verity Lakefront, pass Rowan at the lake, and reapply Super Repel just before two Galactic Grunts intercept the player. |
 
 **State at 2:00:00.** At Lake Verity with Kazza Lv. 42 holding Choice Specs and Monferno Lv. 28 holding Wise Glasses. Both are healed. Rock Climb is registered, three Rare Candies remain, and one Super Repel is active.
+
+## 2:00:00–2:05:00 | Lake Verity, Mars, and Snowpoint Gym
+
+| Video time | Observed action |
+| --- | --- |
+| 2:00:00–2:00:35 | The Grunts send Glameow Lv. 33 and Silcoon Lv. 32 against Kazza and Monferno. Queue Dazzling Gleam for Kazza and use an X Sp. Atk through Monferno’s turn on Kazza. Dazzling Gleam KOs both opponents. |
+| 2:00:36–2:01:05 | Stunky and a second Glameow, both Lv. 32, come out. Use another X Sp. Atk on Kazza. Stunky’s Sucker Punch damages Kazza, then Dazzling Gleam KOs both opponents. Monferno reaches Lv. 29 and declines Torment. |
+| 2:01:06–2:01:43 | The final pair is Golbat and a third Glameow, both Lv. 32. Use an Energy Root to return Kazza to 99/99 HP. A third Dazzling Gleam KOs both, and Kazza reaches Lv. 43. |
+| 2:01:44–2:02:14 | Use Surf to go around the shoreline Grunt and land north of him. Swap Wise Glasses onto Kazza, box Monferno with Choice Specs, use one Calcium on Kazza, and use all three Rare Candies to reach Lv. 46. Decline Future Sight. |
+| 2:02:15–2:03:02 | Approach Mars and Dawn. Mars leads with Golbat Lv. 37 and follows with Purugly Lv. 39. Kazza KOs both with Psychic. |
+| 2:03:03–2:03:39 | Bronzor Lv. 37 survives the first Shadow Ball and uses Payback, dropping Kazza from 107/107 to 73/107 HP. The second Shadow Ball KOs it. Mars leaves and Rowan directs the player to Lake Acuity. |
+| 2:03:40–2:04:16 | Use one Super Potion on Kazza, Fly to Snowpoint City, and ride back and forth in front of the Gym until the Pokétch counter reaches 8,702. Enter the Gym. |
+| 2:04:25–2:05:00 | Slide from the entrance toward the back of the Gym, then along the left wall and back onto the center stairs. Reapply Super Repel near the stairs. Challenge Candice, who leads with Snover. |
+
+**State at 2:05:00.** Kazza is the only party member, Lv. 46 at 107/107 HP with Wise Glasses. Monferno is boxed with Choice Specs. Fifteen Super Repels remain and one is active. Candice’s battle is underway.
