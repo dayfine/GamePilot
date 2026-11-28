@@ -535,6 +535,110 @@ let test_live_run20_final_reanchor_suffix_recovery () =
       assert_true "run 20 suffix recovery stayed within final re-anchor window"
         (anchor.advances_to_last_blink <= run20_reanchor_search_max)
 
+let anchor_phase_width (a : ICR.anchor) =
+  a.next_pokemon_blink_max_seconds -. a.next_pokemon_blink_min_seconds
+
+let test_pk_phase_width_tightening_and_fallbacks () =
+  let base_state : XS.state =
+    { s0 = 0x2468_ace0; s1 = 0x1357_9bdf; s2 = 0xfedc_ba98; s3 = 0x7654_3210 }
+  in
+  let start_advance = 3100 in
+  let origin_t_ms = 5000.0 in
+  let frames, player_blinks, _ =
+    synthesize_1pk_frames ~base_state ~start_advance ~true_period:1.0170
+      ~first_pk_s:10.5 ~origin_t_ms
+  in
+  let make_cfg ~max_blinks ~max_pk_phase_width_seconds ~timeout_seconds =
+    {
+      (ICR.default_config ~picture:full_pic ~target:player_target ~base_state) with
+      timeout_seconds;
+      bounds =
+        {
+          ICR.default_bounds with
+          search_min = 2700;
+          search_max = 3500;
+          min_blinks = 6;
+          max_blinks;
+          max_pk_phase_width_seconds;
+        };
+    }
+  in
+  let run_cfg ~frames cfg =
+    match
+      run_with_frames ~frames ~injected_gaps:[] ~start_t_ms:origin_t_ms
+        (fun () -> ICR.run cfg)
+    with
+    | Ok anchor, _ -> anchor
+    | Error msg, _ -> fail ("pk_phase test unexpectedly failed: " ^ msg)
+  in
+  let immediate =
+    run_cfg ~frames
+      (make_cfg ~max_blinks:24 ~max_pk_phase_width_seconds:None
+         ~timeout_seconds:300.0)
+  in
+  let immediate_width = anchor_phase_width immediate in
+  assert_true
+    (Printf.sprintf "immediate lock (None) has wide pk_phase > 1.0s (got %.3fs)"
+       immediate_width)
+    (immediate_width > 1.0);
+  let tightened =
+    run_cfg ~frames
+      (make_cfg ~max_blinks:24 ~max_pk_phase_width_seconds:(Some 1.0)
+         ~timeout_seconds:300.0)
+  in
+  let tightened_width = anchor_phase_width tightened in
+  assert_true
+    (Printf.sprintf
+       "max_pk_phase_width_seconds=Some 1.0 kept collecting past immediate lock")
+    (tightened.advances_to_last_blink > immediate.advances_to_last_blink);
+  assert_true
+    (Printf.sprintf "tightened lock has pk_phase <= 1.0s (got %.3fs)"
+       tightened_width)
+    (tightened_width <= 1.0);
+  assert_true "tightened lock preserves exact first advance"
+    (tightened.advances_to_first_blink = immediate.advances_to_first_blink);
+  (* Falling back at max_blinks when threshold is unreachable never fails. *)
+  let at_max =
+    run_cfg ~frames
+      (make_cfg ~max_blinks:11 ~max_pk_phase_width_seconds:(Some 0.001)
+         ~timeout_seconds:300.0)
+  in
+  assert_true "max_blinks fallback advances past immediate lock"
+    (at_max.advances_to_last_blink >= immediate.advances_to_last_blink);
+  assert_true "max_blinks fallback keeps phase width <= immediate lock"
+    (anchor_phase_width at_max <= immediate_width +. 1e-9);
+  (* Falling back on timeout after a unique match never turns a lock into Error. *)
+  let immediate_elapsed_s =
+    (immediate.anchor_time_ms -. origin_t_ms) /. 1000.0
+  in
+  let on_timeout =
+    run_cfg ~frames
+      (make_cfg ~max_blinks:24 ~max_pk_phase_width_seconds:(Some 0.001)
+         ~timeout_seconds:(immediate_elapsed_s +. 2.0))
+  in
+  assert_true "timeout fallback returns tightest unique anchor"
+    (on_timeout.advances_to_first_blink = immediate.advances_to_first_blink
+    && anchor_phase_width on_timeout <= immediate_width +. 1e-9);
+  (* Falling back on a later glitched blink (0 candidates) preserves best anchor. *)
+  let after_immediate_ev =
+    List.find
+      (fun (ev : STL.event) ->
+        start_advance + ev.advance > immediate.advances_to_last_blink)
+      player_blinks
+  in
+  let glitched_frames =
+    inject_spurious_dip frames ~origin_t_ms
+      ~at_seconds:(after_immediate_ev.time_seconds +. 0.5)
+  in
+  let on_glitch =
+    run_cfg ~frames:glitched_frames
+      (make_cfg ~max_blinks:24 ~max_pk_phase_width_seconds:(Some 0.001)
+         ~timeout_seconds:300.0)
+  in
+  assert_true "post-lock glitch fallback preserves unique anchor"
+    (on_glitch.advances_to_first_blink = immediate.advances_to_first_blink
+    && anchor_phase_width on_glitch <= immediate_width +. 1e-9)
+
 let () =
   test_end_to_end_legendary ~target_id:"kyogre"
     ~base_state:
@@ -548,4 +652,5 @@ let () =
   test_no_match_failure_includes_diagnostics ();
   test_live_console_a_groudon_seeds ();
   test_live_run20_final_reanchor_suffix_recovery ();
+  test_pk_phase_width_tightening_and_fallbacks ();
   print_endline "OK"
