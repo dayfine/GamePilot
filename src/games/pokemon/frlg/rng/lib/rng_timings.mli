@@ -56,8 +56,8 @@ val continue_screen_frames : int
 
 val recap_base_delay_ms : int
 (** 1450: the baseline cooldown in ms between pressing [A] on Continue and
-    pressing [B] to skip the "Previously on your quest..." Recap screen
-    (matching [load_game_after_delay] in [PokemonFRLG_BlindNavigation.cpp]). *)
+    pressing [B] to skip the "Previously on your quest..." Recap screen (from
+    [PokemonFRLG_BlindNavigation.cpp]). *)
 
 val sweet_scent_fixed_duration_ms : int
 (** 7400: the Sweet Scent presses' own share of the in-game wait, in ms. *)
