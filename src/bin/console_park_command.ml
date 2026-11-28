@@ -15,8 +15,12 @@ module P = Switch.Console_park
 let client = "gamepilot-console/0.1"
 
 let usage =
-  "  gamepilot console park|resume --daemon PATH [--serial PORT] (--capture \
-   DEVICE | --replay VIDEO) [--log-dir DIR]\n"
+  "  gamepilot console watch [--console ID] [--port N] [--watch-port N] \
+   [--listen ADDR] [--runs-dir DIR] [--daemon PATH] [--log-dir DIR] [--config \
+   FILE]\n\
+  \  gamepilot console park|resume [--console ID] [--daemon PATH] [--serial \
+   PORT] (--capture DEVICE | --replay VIDEO) [--runs-dir DIR] [--watch-port N] \
+   [--listen ADDR] [--log-dir DIR] [--config FILE]\n"
 
 let log line = print_endline line
 
@@ -123,47 +127,78 @@ let with_daemon ~daemon ~serial ~frames ~log_dir which =
         (fun () -> on_port ~port:d.port ~owner:(owner which) which)
 
 type flags = {
-  daemon : string;
+  console : string option;
   serial : string option;
   frames : Daemon_process.frames option;
-  log_dir : string;
+  session : Console_session.options;
 }
+
+let parse_int ~flag v =
+  match int_of_string_opt v with
+  | Some n when n >= 0 -> Ok n
+  | _ -> Error ("bad " ^ flag ^ " " ^ v)
 
 let rec parse f = function
   | [] -> Ok f
-  | "--daemon" :: v :: rest -> parse { f with daemon = v } rest
+  | "--console" :: v :: rest -> parse { f with console = Some v } rest
+  | "--daemon" :: v :: rest ->
+      parse { f with session = { f.session with daemon = v } } rest
   | "--serial" :: v :: rest -> parse { f with serial = Some v } rest
   | "--capture" :: v :: rest ->
       parse { f with frames = Some (Daemon_process.Capture v) } rest
   | "--replay" :: v :: rest ->
       parse { f with frames = Some (Daemon_process.Replay v) } rest
-  | "--log-dir" :: v :: rest -> parse { f with log_dir = v } rest
+  | "--log-dir" :: v :: rest ->
+      parse { f with session = { f.session with log_dir = v } } rest
+  | "--runs-dir" :: v :: rest ->
+      parse { f with session = { f.session with runs_dir = v } } rest
+  | "--config" :: v :: rest ->
+      parse { f with session = { f.session with config = Some v } } rest
+  | "--listen" :: v :: rest ->
+      parse { f with session = { f.session with listen = Some v } } rest
+  | "--port" :: v :: rest ->
+      Result.bind (parse_int ~flag:"--port" v) (fun port ->
+          parse { f with session = { f.session with port } } rest)
+  | "--watch-port" :: v :: rest ->
+      Result.bind (parse_int ~flag:"--watch-port" v) (fun p ->
+          parse { f with session = { f.session with watch_port = Some p } } rest)
   | a :: _ -> Error ("unknown argument " ^ a)
 
+let run_park_or_resume which f =
+  match (f.console, f.frames) with
+  | Some id, None ->
+      Console_session.with_console f.session ~console_id:(Some id)
+        ~checkpoint:(name which) (fun d ->
+          on_port ~port:d.port ~owner:(owner which) which)
+  | _, Some frames ->
+      Ok
+        (with_daemon ~daemon:f.session.daemon ~serial:f.serial ~frames
+           ~log_dir:f.session.log_dir which)
+  | None, None ->
+      Error "--console ID, --capture DEVICE, or --replay VIDEO is required"
+
 let main args =
-  let which, flags =
+  let which, default_port, flags =
     match args with
-    | "park" :: flags -> (Some `Park, flags)
-    | "resume" :: flags -> (Some `Resume, flags)
-    | flags -> (None, flags)
+    | "watch" :: flags -> (Some `Watch, Live.default_port, flags)
+    | "park" :: flags -> (Some `Park, 0, flags)
+    | "resume" :: flags -> (Some `Resume, 0, flags)
+    | flags -> (None, 0, flags)
   in
   let defaults =
     {
-      daemon = Repo_io.Repo_files.default_daemon ();
+      console = None;
       serial = None;
       frames = None;
-      log_dir = Filename.get_temp_dir_name ();
+      session = Console_session.defaults ~port:default_port ();
     }
   in
   match (which, parse defaults flags) with
-  | None, _ -> Error ("console: park or resume\n" ^ usage)
+  | None, _ -> Error ("console: watch, park or resume\n" ^ usage)
   | _, Error e -> Error e
-  | Some _, Ok { frames = None; _ } ->
-      Error "--capture DEVICE or --replay VIDEO is required"
-  | Some which, Ok ({ frames = Some frames; _ } as f) ->
-      Ok
-        (with_daemon ~daemon:f.daemon ~serial:f.serial ~frames
-           ~log_dir:f.log_dir which)
+  | Some `Watch, Ok f ->
+      Console_session.watch_console f.session ~console_id:f.console
+  | Some ((`Park | `Resume) as w), Ok f -> run_park_or_resume w f
 
 (* A step of another ctl command under the lease, as the ones above: in the
    effect context over the hello's game picture, its log lines printed and on

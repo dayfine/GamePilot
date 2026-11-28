@@ -53,7 +53,8 @@
   test_ace_presets
   test_ace_code
   test_ace_item
-  test_battle_catch_steps)
+  test_battle_catch_steps
+  test_catch_ball_budget)
  (modules
   test_pc_deposit_steps
   test_pc_withdraw_steps
@@ -92,7 +93,8 @@
   test_ace_presets
   test_ace_code
   test_ace_item
-  test_battle_catch_steps)
+  test_battle_catch_steps
+  test_catch_ball_budget)
  (deps
   mgba.probes.jsonl
   menus.mgba.probes.jsonl

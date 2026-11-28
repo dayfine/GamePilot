@@ -39,6 +39,17 @@ let arrow m = Dialog.advance_arrow m || Battle_text_arrow.advance_arrow m
 let watched m = classify m <> None || arrow m
 let press_a () = M.press ~cooldown_ms:page_press_ms Wire.A
 
+type party_choose_timing = { input_ms : int; press_ms : int; max_presses : int }
+
+let party_choose = { input_ms = 500; press_ms = 600; max_presses = 5 }
+
+(* On "Use on which POKéMON?" the blue CANCEL button covers the right edge of
+   Dialog.dialog_up; once A is taken, the full-width white dialog box (or the
+   stats/bag/evolution) appears. Waiting [party_choose.input_ms] and retrying A
+   avoids an A dropped during the fade-in from Bag to Party. *)
+let candy_taken m =
+  Dialog.dialog_up m || classify m <> None || not (Party_menu.party_menu m)
+
 (* The menu steps below fail by raising Menu_input.Action_failed (main's
    contract); each is run through Menu_step.result, which turns that into a
    Result, until main's steps are converted in their own PR. *)
@@ -46,23 +57,34 @@ let to_party ~slot () =
   ignore
     (M.await_screen ~code:"no_party" "the party to use it on"
        Party_menu.party_menu);
-  Party_actions.choose_slot slot
+  ignore (Effects.submit [ Wire.Wait { wait_ms = party_choose.input_ms } ]);
+  Menu_cursor.move_to ~code:"no_party" Menu_cursor.party slot;
+  M.press_until ~max_presses:party_choose.max_presses ~code:"no_party"
+    "the candy used on the member" Wire.A ~cooldown_ms:party_choose.press_ms
+    candy_taken
 
 let closed_without_candy ~log () =
   M.close_through_fades "the bag" Bag_screen.bag_open;
   M.settle_back ~label:"no rare candy" ~log
 
-let open_candy ~log ~slot :
-    (Rare_candy.opened, Pokemon_engine.Failure.cause) result =
-  match Menu_step.result (fun () -> Bag_items.item_action candy use_row) with
+let open_bag ~log () : (Rare_candy.opened, Pokemon_engine.Failure.cause) result
+    =
+  match Menu_step.result (fun () -> Bag_items.open_to_item candy) with
+  | Ok () -> Ok Rare_candy.Opened
+  | Error { Pokemon_engine.Failure.code = "not_in_bag"; _ } ->
+      Result.map
+        (fun () -> Rare_candy.No_candy)
+        (Menu_step.result (closed_without_candy ~log))
+  | Error c -> Ok (Not_opened (Pokemon_engine.Failure.cause_to_string c))
+
+let use_candy ~slot : (Rare_candy.opened, Pokemon_engine.Failure.cause) result =
+  match Menu_step.result (fun () -> Bag_items.use_selected candy use_row) with
   | Ok () ->
       Result.map
         (fun () -> Rare_candy.Opened)
         (Menu_step.result (to_party ~slot))
   | Error { Pokemon_engine.Failure.code = "not_in_bag"; _ } ->
-      Result.map
-        (fun () -> Rare_candy.No_candy)
-        (Menu_step.result (closed_without_candy ~log))
+      Ok Rare_candy.No_candy
   | Error c -> Ok (Not_opened (Pokemon_engine.Failure.cause_to_string c))
 
 (* A message with no arrow ("... was elevated to Lv. 51.", "... learned
@@ -217,7 +239,8 @@ let party_menu_game_steps ~log : Level_up.game_steps =
 
 let make ~log : Rare_candy.game_steps =
   {
-    open_candy = open_candy ~log;
+    open_bag = open_bag ~log;
+    use_candy;
     level_up = party_menu_game_steps ~log;
     close_bag = close_bag ~log;
     log;

@@ -92,7 +92,7 @@ let ace_options : Run_options.declared list =
   [
     {
       key = "item";
-      value = One_of [ "master-ball"; "luxury-ball" ];
+      value = One_of [ "master-ball"; "luxury-ball"; "rare-candy" ];
       presence = Required;
       doc = "the item the code makes, 999 of it in the PC's item storage";
     };

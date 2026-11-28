@@ -116,8 +116,12 @@ let maybe_reanchor ~picture ~log ~reidentify_with_bounds tcfg
       reidentify_with_bounds ~search_min ~search_max
     in
     log
-      (Printf.sprintf "Final 1PK anchor locked at adv=%d (tick=%.4fs)."
-         anchor2.advances_to_last_blink anchor2.fitted_tick_seconds);
+      (Printf.sprintf
+         "Final 1PK anchor locked at adv=%d (tick=%.4fs, \
+          pk_phase=[%.2f..%.2f]s)."
+         anchor2.advances_to_last_blink anchor2.fitted_tick_seconds
+         anchor2.next_pokemon_blink_min_seconds
+         anchor2.next_pokemon_blink_max_seconds);
     let* p2 = Bdsp_blink_rng.Static_rng_trigger.plan tcfg anchor2 in
     Ok (anchor2, p2)
 

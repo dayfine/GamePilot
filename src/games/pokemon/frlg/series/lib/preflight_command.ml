@@ -26,13 +26,14 @@ type setup = {
       (** The Switch daemon's --viewport: the program's
           (Program_registry.check_viewport). *)
   home_tile : Switch.Home_screen.tile_color option;
+  options : Run_options.t;
   info : Run_record.info;
   watch : Daemon_process.watch option;
 }
 
 let ( let* ) = Result.bind
 
-let needs ~plan_dir from_id =
+let needs ~options ~plan_dir from_id =
   let* plan = Plan_dir.load_plan ~plan_dir from_id in
   let* before = Plan_dir.promised_before ~plan_dir from_id in
   let* stocks = Frlg_actions.Mart_plan.load () in
@@ -46,7 +47,7 @@ let needs ~plan_dir from_id =
         Ok (acc @ [ p ]))
       (Ok []) chain
   in
-  let* needs = Pf.needs stocks ~before plan in
+  let* needs = Pf.needs ~options stocks ~before plan in
   let* room = Frlg_checkpoints.Party_room.chain_need plans in
   Ok (needs, room)
 
@@ -246,7 +247,7 @@ let in_daemon setup record id start needs world log (d : Daemon_process.t) =
   | exception Effects.Disconnected e -> Stopped ("disconnected: " ^ e)
 
 let run ~plan_dir ~from_id setup =
-  let* needs = needs ~plan_dir from_id in
+  let* needs = needs ~options:setup.options ~plan_dir from_id in
   let* plan = Plan_dir.load_plan ~plan_dir from_id in
   let start = plan.checkpoint.start in
   let* world = Frlg_checkpoints.Checkpoint_run.load_world () in

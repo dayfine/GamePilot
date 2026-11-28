@@ -187,10 +187,53 @@ let test_file_persistence () =
   Sys.rmdir (Filename.concat dir "nested");
   Sys.rmdir dir
 
+let test_refine_timing_and_record () =
+  let initial : C.entry =
+    {
+      boot_offset_ms = -50;
+      seed_shift = 4;
+      ingame_offset = -2;
+      updated_at = "2026-11-26T00:00:00Z";
+    }
+  in
+  let refined =
+    C.refine_timing ~updated_at:"2026-11-27T09:00:00Z" initial
+      ~boot_delta_ms:(-17) ~ingame_delta:3
+  in
+  assert_eq "refine_timing updates boot and ingame only" refined
+    {
+      boot_offset_ms = -67;
+      seed_shift = 4;
+      ingame_offset = 1;
+      updated_at = "2026-11-27T09:00:00Z";
+    };
+  let dir = Filename.temp_file "gp_switch_cal_timing_" "" in
+  Sys.remove dir;
+  let path = Filename.concat dir "cal.json" in
+  let expected : C.entry =
+    {
+      boot_offset_ms = -33;
+      seed_shift = 0;
+      ingame_offset = -5;
+      updated_at = "2026-11-27T09:05:00Z";
+    }
+  in
+  assert_eq "record_timing_miss persists"
+    (C.record_timing_miss ~path ~console_id:"switch-b"
+       ~updated_at:"2026-11-27T09:05:00Z" ~boot_delta_ms:(-33)
+       ~ingame_delta:(-5) ())
+    (Ok expected);
+  assert_eq "load_console reads back timing miss"
+    (C.load_console ~path ~console_id:"switch-b" ())
+    (Ok (Some expected));
+  Sys.remove path;
+  Sys.rmdir dir
+
 let () =
   test_json_roundtrip ();
   test_json_validation ();
   test_refine_offset ();
   test_to_calibrations ();
   test_file_persistence ();
+  test_refine_timing_and_record ();
   print_endline "OK"

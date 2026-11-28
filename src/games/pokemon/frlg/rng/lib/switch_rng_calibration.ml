@@ -127,6 +127,15 @@ let refine_offset ?updated_at entry obs =
   let updated_at = Option.value updated_at ~default:entry.updated_at in
   { entry with seed_shift; ingame_offset; updated_at }
 
+let refine_timing ?updated_at entry ~boot_delta_ms ~ingame_delta =
+  let updated_at = Option.value updated_at ~default:entry.updated_at in
+  {
+    entry with
+    boot_offset_ms = entry.boot_offset_ms + boot_delta_ms;
+    ingame_offset = entry.ingame_offset + ingame_delta;
+    updated_at;
+  }
+
 let to_calibrations entry =
   let seed_offset =
     if entry.boot_offset_ms = 0 then 0
@@ -172,5 +181,18 @@ let record_miss ?path ?console_id ?updated_at obs =
     Option.value (find store ~console_id:id) ~default:empty_entry
   in
   let updated = refine_offset ?updated_at existing obs in
+  let* () = save ?path (upsert store ~console_id:id updated) in
+  Ok updated
+
+let record_timing_miss ?path ?console_id ?updated_at ~boot_delta_ms
+    ~ingame_delta () =
+  let id = Option.value console_id ~default:(current_console_id ()) in
+  let* store = load ?path () in
+  let existing =
+    Option.value (find store ~console_id:id) ~default:empty_entry
+  in
+  let updated =
+    refine_timing ?updated_at existing ~boot_delta_ms ~ingame_delta
+  in
   let* () = save ?path (upsert store ~console_id:id updated) in
   Ok updated

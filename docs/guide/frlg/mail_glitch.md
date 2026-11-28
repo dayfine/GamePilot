@@ -50,7 +50,7 @@ What the plans need, as the pre-flight checks it (generated from the plans):
 - the thunder badge (fly)
 - the cascade badge (cut_tree)
 - money at least ¥10350 (all the purchases)
-- poke-ball at least x1 (capture)
+- poke-ball at least x10 (capture)
 - at the start, anywhere outdoors where Fly works
 <!-- /generated -->
 
@@ -172,7 +172,7 @@ checkpoint before it promised:
 | Resume from | The pre-flight checks |
 |---|---|
 | 01-celadon-setup | a member knows fly (fly); the thunder badge (fly); money at least ¥4100 (mart, buy_coins); at the start, anywhere outdoors where Fly works |
-| 02-trade-farfetchd | party includes blastoise, abra; a member knows cut (cut_tree); a member knows fly (fly); the cascade badge (cut_tree); the thunder badge (fly); poke-ball at least x1 (capture); at the start, CeladonCity |
+| 02-trade-farfetchd | party includes blastoise, abra; a member knows cut (cut_tree); a member knows fly (fly); the cascade badge (cut_tree); the thunder badge (fly); poke-ball at least x10 (capture); at the start, CeladonCity |
 | 03-trade-mr-mime | party includes blastoise, abra, farfetchd; abra in the party (ingame_trade); a member knows fly (fly); a member knows cut (cut_tree); the thunder badge (fly); the cascade badge (cut_tree); money at least ¥3550 (mart); at the start, VermilionCity |
 | 04-grind-farfetchd | party includes blastoise, mr-mime, farfetchd; farfetchd in the party (grind); blastoise in the party (grind); a member knows fly (fly); the thunder badge (fly); escape-rope at least x1 (use_item); at the start, LavenderTown_PokemonCenter_1F |
 | 05-grind-mr-mime | party includes blastoise, mr-mime, farfetchd; mr-mime in the party (grind); blastoise in the party (grind); at the start, IndigoPlateau_PokemonCenter_1F |
