@@ -49,6 +49,7 @@
   <h1>GamePilot watch</h1>
   <span id="conn">connecting…</span>
   <span id="source-state" hidden></span>
+  <span id="attempt-badge" hidden></span>
   <button id="stop" type="button" title="Release all buttons and end the program">Stop</button>
   <span id="readonly" hidden title="Open the URL with ?token=… (the runner prints it) to get Stop">read-only</span>
 </header>
@@ -111,8 +112,19 @@
     <ol id="plan" class="plan"><li class="empty">no plan yet: the program sends it when a checkpoint starts</li></ol>
   </section>
   <section id="log-panel">
-    <h2>Log</h2>
-    <pre id="log"></pre>
+    <div id="log-head">
+      <h2>Log</h2>
+      <span id="log-count" hidden></span>
+      <span id="log-modes" class="log-modes" role="group" aria-label="Log filter">
+        <button type="button" data-log-mode="all">All</button>
+        <button type="button" data-log-mode="important" title="Hide noisy low-level lines ([Park], [Settle], Detected, Action)">Important</button>
+        <button type="button" data-log-mode="rng" title="Only RNG, reset, attempt, calibration, shiny, and error lines">RNG</button>
+      </span>
+      <input id="log-filter" type="search" placeholder="filter log…" aria-label="Filter log text">
+    </div>
+    <div id="log-wrap">
+      <div id="log" role="log" aria-live="off"></div>
+    </div>
   </section>
   <section id="health-panel">
     <h2>Health</h2>

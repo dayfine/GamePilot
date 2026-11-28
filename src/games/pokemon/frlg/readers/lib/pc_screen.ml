@@ -28,7 +28,10 @@ let patches =
     ("pc.data_panel", gba { x = 3.; y = 100.; w = 4.; h = 40. });
     ("pc.mon_menu", gba { x = 205.; y = 72.; w = 25.; h = 14. });
     ("pc.yes_no", gba { x = 200.; y = 86.; w = 32.; h = 4. });
-    ("pc.chooser", gba { x = 160.; y = 68.; w = 30.; h = 18. });
+    (* Top yellow margin of the box chooser, above the box name's glyphs
+       (y 76..85): the fork's (160, 68, 30, 18) sits over long box names such as
+       8-character ACE names and blows stddev past 30. *)
+    ("pc.chooser", gba { x = 136.; y = 69.; w = 48.; h = 6. });
     ("pc.party_panel", gba { x = 122.; y = 96.; w = 12.; h = 36. });
     ("pc.message", gba { x = 10.; y = 148.; w = 160.; h = 4. });
     ( "pc.game",

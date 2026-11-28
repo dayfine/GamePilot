@@ -112,6 +112,21 @@ let test_real_underground_plan_decodes () =
           assert_eq ~name:"real plan action text" ~expected:"underground_farm"
             ~actual:(Bdsp_rules.Action.to_string Underground_farm))
 
+let test_real_static_rng_plan_decodes () =
+  match
+    Repo_io.Repo_files.locate
+      "src/games/pokemon/bdsp/programs/static_rng/plans/01-static-rng.plan.json"
+  with
+  | None -> fail "could not locate 01-static-rng.plan.json"
+  | Some path -> (
+      match Plan_decode.load path with
+      | Error e -> fail ("load real plan: " ^ e)
+      | Ok plan ->
+          assert_eq ~name:"real plan id" ~expected:"01-static-rng"
+            ~actual:plan.checkpoint.checkpoint_id;
+          assert_eq ~name:"real plan action text" ~expected:"static_rng"
+            ~actual:(Bdsp_rules.Action.to_string Static_rng))
+
 let () =
   test_decode_save_game ();
   test_reject_unknown_action ();
@@ -120,4 +135,5 @@ let () =
   test_runner_dispatches_save_game ();
   test_event_snapshot_roundtrip ();
   test_real_underground_plan_decodes ();
+  test_real_static_rng_plan_decodes ();
   print_endline "test_bdsp_engine: OK"

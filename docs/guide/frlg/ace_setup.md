@@ -2,7 +2,7 @@
 
 The first half of arbitrary code execution (ACE) in FireRed, after the Mail Glitch: it puts the
 glitch Pokémon the ACE payloads run through (species 0x0351, from pomeg-letterbombers' Post-E4
-route) in Box 3 slot 1. The second half, which runs code through it, is [ACE](frlg.ace.md).
+route) in Box 3 slot 1. The second half, which runs code through it, is [ACE](ace.md).
 
 **What you get.** A male Lv 100 Pokémon with a ? picture and a garbled name in Box 3 slot 1, a
 Magikarp seen in the Pokédex, and one party member moved to the PC for a Magikarp (bought) or, if

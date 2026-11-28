@@ -45,6 +45,8 @@ type game_steps = {
           When [Some _], replaces [catch]. *)
   shiny_at : int -> bool;  (** The party member in this slot shows the star. *)
   log : string -> unit;  (** Writes a line to the run log. *)
+  show_counters : Wire.Watch.counter list -> unit;
+      (** Publishes live [watch.counters] updates to the watch page. *)
 }
 (** Reads and inputs supplied to {!run}. *)
 
@@ -67,8 +69,23 @@ type result = {
 }
 (** The action's end and the capture's own result. *)
 
-val run : game_steps -> Capture_plan.t -> party:int -> result
-(** From the overworld with [party] members. *)
+val watch_counters :
+  attempt:int -> total:int -> phase:string -> Wire.Watch.counter list
+(** Builds the standard [attempt] ([current/total]) and [phase] counter items
+    for [watch.counters]. Shared with {!Wild_rng_steps} and {!Gift_rng}. *)
+
+val run :
+  ?label:string ->
+  ?attempt:int ->
+  ?total:int ->
+  game_steps ->
+  Capture_plan.t ->
+  party:int ->
+  result
+(** From the overworld with [party] members. [label] prefixes the visual shiny
+    detector's log line (defaults to ["Wild RNG"]). [attempt] and [total]
+    override the starting attempt number and total shown in [watch.counters]
+    (defaulting to [1] and [max 1 plan.max_encounters]). *)
 
 val failure_code : end_ -> string option
 (** [None] for [Shiny]; else ["wild_rng_not_shiny"],

@@ -30,12 +30,12 @@ type t = {
 type trainer_ids = { tid : int option; sid : int option }
 
 let max_id = 0xffff
-let seed_mask = 0xffff
+let seed_mask = max_id
 let default_min_advance = 900
 let default_max_advance = 4000
 let default_attempts = 1
 let max_attempts = 99
-let max_ingame_offset = 99
+let max_ingame_offset = max_attempts
 let max_cal_ball_row = 20
 let throw_only_max_turns = 80
 let no_trainer_ids = { tid = None; sid = None }
@@ -83,10 +83,11 @@ let env_id name =
   let var = env_var name in
   match Sys.getenv_opt var with
   | None | Some "" -> Ok None
-  | Some raw -> (
-      match int_of_string_opt (String.trim raw) with
-      | None -> Error (Printf.sprintf "%s is %S, not 0..%d" var raw max_id)
-      | Some n -> check_id ~label:var n)
+  | Some raw ->
+      Option.fold
+        (int_of_string_opt (String.trim raw))
+        ~none:(Error (Printf.sprintf "%s is %S, not 0..%d" var raw max_id))
+        ~some:(check_id ~label:var)
 
 let json_id ~path name fields =
   match List.assoc_opt name fields with
@@ -94,28 +95,25 @@ let json_id ~path name fields =
   | Some (`Int n) -> check_id ~label:(path ^ ": " ^ name) n
   | Some _ -> Error (Printf.sprintf "%s: %s is not an integer" path name)
 
-let file_trainer_ids () =
-  let path =
-    Filename.concat (Repo_io.Repo_files.data_dir config_env "frlg") config_file
-  in
-  if not (Sys.file_exists path) then Ok no_trainer_ids
-  else
-    let* json = Repo_io.Json_file.read path in
-    match json with
-    | `Assoc fields ->
-        let* tid = json_id ~path "tid" fields in
-        let* sid = json_id ~path "sid" fields in
-        Ok { tid; sid }
-    | _ -> Error (path ^ ": expected a JSON object")
-
 let pick a b = if Option.is_some a then a else b
 
 let load_trainer_ids () =
   let* tid = env_id "tid" in
   let* sid = env_id "sid" in
+  let path =
+    Filename.concat (Repo_io.Repo_files.data_dir config_env "frlg") config_file
+  in
   let* f =
-    if Option.is_some tid && Option.is_some sid then Ok no_trainer_ids
-    else file_trainer_ids ()
+    if (Option.is_some tid && Option.is_some sid) || not (Sys.file_exists path)
+    then Ok no_trainer_ids
+    else
+      let* json = Repo_io.Json_file.read path in
+      match json with
+      | `Assoc fields ->
+          let* tid = json_id ~path "tid" fields in
+          let* sid = json_id ~path "sid" fields in
+          Ok { tid; sid }
+      | _ -> Error (path ^ ": expected a JSON object")
   in
   Ok { tid = pick tid f.tid; sid = pick sid f.sid }
 
@@ -185,6 +183,10 @@ let resolved_attempts ~where ~options =
   resolved_opt_int ~where ~options ~default:default_attempts ~low:1
     ~high:max_attempts "attempts"
 
+let resolved_cal_ball_row ~where ~options =
+  resolved_opt_int ~where ~options ~default:0 ~low:0 ~high:max_cal_ball_row
+    "cal_ball_row"
+
 let resolved_id ~where ~options ~fallback name args =
   match (Run_options.int options name, J.find name args, fallback) with
   | Some n, _, _ -> n
@@ -196,15 +198,16 @@ let resolved_id ~where ~options ~fallback name args =
 
 let read ~options ~fallback ~default_frame_model ~where args =
   let min_advance, max_advance = advances ~where args in
-  let tid = resolved_id ~where ~options ~fallback:fallback.tid "tid" args in
-  let sid = resolved_id ~where ~options ~fallback:fallback.sid "sid" args in
-  let cap =
-    let max_encounters = resolved_attempts ~where ~options args in
+  let id_of = resolved_id ~where ~options in
+  let tid = id_of ~fallback:fallback.tid "tid" args in
+  let sid = id_of ~fallback:fallback.sid "sid" args in
+  let max_encounters = resolved_attempts ~where ~options args in
+  let capture =
     Capture_plan.apply_options options
       { (Capture_plan.read ~where args) with max_encounters; catches = 1 }
   in
   let frame_model = frame_model ~default:default_frame_model ~where args in
-  let catch_mode = catch_mode ~where ~options cap args in
+  let catch_mode = catch_mode ~where ~options capture args in
   let opt = opt_int ~where ~default:0 in
   {
     encounter_method = encounter_method ~where args;
@@ -223,23 +226,21 @@ let read ~options ~fallback ~default_frame_model ~where args =
     frame_model;
     min_advance;
     max_advance;
-    capture = cap;
+    capture;
     catch_mode;
     visual_shiny_check = visual_shiny_check ~where ~frame_model ~catch_mode args;
-    cal_ball_row =
-      resolved_opt_int ~where ~options ~default:0 ~low:0 ~high:max_cal_ball_row
-        "cal_ball_row" args;
+    cal_ball_row = resolved_cal_ball_row ~where ~options args;
   }
 
 let apply_timing_delta ~boot_delta_ms ~ingame_delta t =
-  let boot_offset_ms = t.boot_offset_ms + boot_delta_ms in
-  let ingame_offset = t.ingame_offset + ingame_delta in
+  let boot_offset_ms = t.boot_offset_ms + boot_delta_ms
+  and ingame_offset = t.ingame_offset + ingame_delta in
   { t with boot_offset_ms; ingame_offset }
 
 let apply_calibration (e : R.Switch_rng_calibration.entry) t =
-  let seed_shift = (t.seed_shift + e.seed_shift) land seed_mask in
   apply_timing_delta ~boot_delta_ms:e.boot_offset_ms
-    ~ingame_delta:e.ingame_offset { t with seed_shift }
+    ~ingame_delta:e.ingame_offset
+    { t with seed_shift = (t.seed_shift + e.seed_shift) land seed_mask }
 
 let decode ?(options = Run_options.none) ?(fallback = no_trainer_ids)
     ?(default_frame_model = default_frame_model) =
@@ -283,7 +284,7 @@ let target ?(exclude_targets = []) t =
     find_frame_model t.frame_model
     |> Option.to_result ~none:("unknown frame_model " ^ t.frame_model)
   in
-  let model, calibrations =
+  let m, calibrations =
     calibrated_model ~boot_offset_ms:t.boot_offset_ms
       ~ingame_offset:t.ingame_offset raw
   in
@@ -293,7 +294,6 @@ let target ?(exclude_targets = []) t =
   in
   R.Wild_target.find ~calibrations ~exclude_targets
     ~super_rod:(t.encounter_method = Super_rod)
-    model ~delays ~seeds slots ~species:t.species
-    ~tid_xor_sid:(t.tid lxor t.sid) ~min_advance:t.min_advance
-    ~max_advance:t.max_advance
+    m ~delays ~seeds slots ~species:t.species ~tid_xor_sid:(t.tid lxor t.sid)
+    ~min_advance:t.min_advance ~max_advance:t.max_advance
   |> Option.to_result ~none

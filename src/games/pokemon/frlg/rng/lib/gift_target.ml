@@ -15,9 +15,9 @@ let total_ms t =
 let is_shiny ~tid_xor_sid (p : Pokemon_generation.result) =
   Pokemon_generation.shiny_type_of_pid p.pid ~tid_xor_sid <> Normal
 
-let timed model calibrations ~table_delay_ms ~seed (state : Rng_state.t) pokemon
-    =
-  Rng_timings.gift model ~seed_delay_ms:table_delay_ms ~advances:state.advance
+let timed timing model calibrations ~table_delay_ms ~seed (state : Rng_state.t)
+    pokemon =
+  timing model ~seed_delay_ms:table_delay_ms ~advances:state.advance
     ~use_teachy_tv:false calibrations
   |> Result.to_option
   |> Option.map (fun timings ->
@@ -28,26 +28,32 @@ let sooner a b =
   | None, x | x, None -> x
   | Some x, Some y -> if total_ms y < total_ms x then b else a
 
-let first_hit model calibrations ~tid_xor_sid ~max_advance ~table_delay_ms ~seed
-    ~min_advance =
+let excluded ~exclude_targets ~seed ~advance =
+  List.exists (fun (s, a) -> s = seed && a = advance) exclude_targets
+
+let first_hit timing model calibrations ~exclude_targets ~tid_xor_sid
+    ~max_advance ~table_delay_ms ~seed ~min_advance =
   let rec walk (state : Rng_state.t) =
     if state.advance > max_advance then None
     else
       let pokemon = Pokemon_generation.pokemon_of_state state in
       let hit =
-        if is_shiny ~tid_xor_sid pokemon then
-          timed model calibrations ~table_delay_ms ~seed state pokemon
+        if
+          (not (excluded ~exclude_targets ~seed ~advance:state.advance))
+          && is_shiny ~tid_xor_sid pokemon
+        then timed timing model calibrations ~table_delay_ms ~seed state pokemon
         else None
       in
       if Option.is_some hit then hit else walk (Rng_state.next state)
   in
   walk (Rng_state.of_seed ~seed ~advance:min_advance Method1)
 
-let find ?(calibrations = Rng_timings.no_calibrations) model ~delays ~seeds
+let find ?(calibrations = Rng_timings.no_calibrations)
+    ?(timing = Rng_timings.gift) ?(exclude_targets = []) model ~delays ~seeds
     ~tid_xor_sid ~min_advance ~max_advance =
   let row i =
-    first_hit model calibrations ~tid_xor_sid ~max_advance
-      ~table_delay_ms:delays.(i) ~seed:seeds.(i) ~min_advance
+    first_hit timing model calibrations ~exclude_targets ~tid_xor_sid
+      ~max_advance ~table_delay_ms:delays.(i) ~seed:seeds.(i) ~min_advance
   in
   let rows = min (Array.length delays) (Array.length seeds) in
   List.fold_left

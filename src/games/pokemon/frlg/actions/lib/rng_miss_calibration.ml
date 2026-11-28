@@ -175,6 +175,25 @@ let finish_rolling_search ~log ~label ~target_seed ~target_delay_ms
       apply_rolling_hit ~log ~label ~persist ~calibrator ~used_boot_offset_ms
         ~used_ingame_offset ?calibration_path h
 
+let report_and_calibrate_method1_rolling ~log ~label ~species ~seeds ~seed_shift
+    ~target_seed ~target_delay_ms ~target_advance ~persist ~calibrator
+    ~used_boot_offset_ms ~used_ingame_offset ?calibration_path obs =
+  log
+    (Printf.sprintf "%s: observed %s (%s)." label species
+       (MS.format_observation obs));
+  match
+    load_search_inputs ~species ~seeds ~seed_shift ~target_seed ~target_delay_ms
+  with
+  | Error e ->
+      log (Printf.sprintf "%s miss search skipped: %s" label e);
+      None
+  | Ok (base_stats, delays, seed_col, target_seed_index) ->
+      MS.search_method1 ~base_stats ~delays ~seeds:seed_col ~target_seed_index
+        ~target_advance obs
+      |> finish_rolling_search ~log ~label ~target_seed ~target_delay_ms
+           ~target_advance ~persist ~calibrator ~used_boot_offset_ms
+           ~used_ingame_offset ?calibration_path
+
 let report_and_calibrate_wild_rolling ~log ~label ~species ~slots ~super_rod
     ~seeds ~seed_shift ~target_seed ~target_delay_ms ~target_advance ~persist
     ~calibrator ~used_boot_offset_ms ~used_ingame_offset ?calibration_path obs =

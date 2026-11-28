@@ -53,16 +53,23 @@ let player_bar : hp_bar_layout =
 let status_probe_id = "battle.hud.foe_status"
 let status_box = Game_pixels.box { x = 16.; y = 31.; w = 20.; h = 8. }
 
+(* Filled HP segments on Switch 1080p scaling clip 1px of the bar border,
+   giving stddev sums up to ~216 on the rightmost segment while chroma stays
+   55..150 (vs < 25 on empty grey segments). *)
 let hp_thresh : hp_thresholds =
-  { min_chroma = 35.; min_brightness = 115.; max_stddev_sum = 120. }
+  { min_chroma = 35.; min_brightness = 115.; max_stddev_sum = 250. }
 
+(* On Switch 1080p, the 20x8 status probe (x 16..36, y 31..39) includes the
+   grey SLP badge with white letters plus cream border (caught sum ~603.6,
+   ch ~36.2; uncaught sum ~628.5, ch ~29.1), while Healthy reads sum ~650.5
+   for caught species and ~746.5 for uncaught species. *)
 let status_thresh : status_thresholds =
   {
-    healthy_min_sum = 560.;
+    healthy_min_sum = 640.;
     healthy_max_chroma = 65.;
     sleep_min_sum = 260.;
-    sleep_max_sum = 550.;
-    sleep_max_chroma = 35.;
+    sleep_max_sum = 638.;
+    sleep_max_chroma = 42.;
     par_min_chroma = 40.;
     par_min_r_share = 0.38;
     par_min_g_share = 0.34;

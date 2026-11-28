@@ -30,25 +30,12 @@ type phase2_slots = {
   send_in_order : int list;
 }
 
-type policy_defaults = {
-  ball_name : string;
-  max_balls : int;
-  max_turns : int;
-  hp_floor : float;
-  foe_hp_target : float;
-  foe_hp_rechip : float;
-}
-
-let defaults : policy_defaults =
-  {
-    ball_name = "ultra-ball";
-    max_balls = 60;
-    max_turns = 80;
-    hp_floor = 0.35;
-    foe_hp_target = 0.15;
-    foe_hp_rechip = 0.25;
-  }
-
+let default_ball_name = "ultra-ball"
+let default_max_balls = 60
+let default_max_turns = 80
+let default_hp_floor = 0.35
+let default_foe_hp_target = 0.15
+let default_foe_hp_rechip = 0.25
 let default_event_timeout_ms = 30_000
 
 let default_config : config =
@@ -79,11 +66,22 @@ let default_phase2_slots : phase2_slots =
 type tracker = {
   mutable subscribed : bool;
   mutable active_slot : int;
+  (* Live 0-based battle party order: switching swaps index 0 (active) with the
+     chosen bench index, so logical slot numbers move as switches happen. *)
+  party_order : int array;
   mutable turns : int;
   mutable balls_thrown : int;
   mutable last_action_was_throw : bool;
   mutable pending_event : CR.event option;
 }
+
+let find_battle_index tr logical_slot =
+  Array.find_index (( = ) logical_slot) tr.party_order
+
+let swap_into_lead tr idx =
+  let cur = tr.party_order.(0) in
+  tr.party_order.(0) <- tr.party_order.(idx);
+  tr.party_order.(idx) <- cur
 
 let ensure_probes tr =
   if not tr.subscribed then (
@@ -107,21 +105,20 @@ let state_of_frame tr m : CS.t =
     fainted = [];
   }
 
-let read_action_state tr = state_of_frame tr (Effects.read ())
-
 let rec next_live_event ~log (battle : B.game_steps) cfg tr =
   ensure_probes tr;
   match battle.next_event ~timeout_ms:cfg.event_timeout_ms with
   | B.Action_menu ->
       tr.last_action_was_throw <- false;
-      Ok (CR.Action_menu (read_action_state tr))
+      Ok (CR.Action_menu (state_of_frame tr (Effects.read ())))
   | B.Use_next ->
       log "FRLG catch: answering YES to 'Use next POKéMON?'";
       battle.answer_use_next true;
       next_live_event ~log battle cfg tr
   | B.Switch_in -> Ok (CR.Forced_switch { fainted_slot = tr.active_slot })
   | B.Battle_over ->
-      if tr.last_action_was_throw then Ok CR.Caught else Ok CR.Foe_ended
+      Ok (if tr.last_action_was_throw then CR.Caught else CR.Foe_ended)
+  | B.Move_learn when tr.last_action_was_throw -> Ok CR.Caught
   | B.Timed_out -> Ok (CR.Unexpected "timed out waiting for FRLG battle event")
   | (B.Level_up | B.Move_learn | B.Evolution | B.Switch_offer) as ev ->
       Ok (CR.Unexpected ("unexpected battle prompt: " ^ B.event_name ev))
@@ -133,10 +130,6 @@ let next_event ~log battle cfg tr () =
       Ok ev
   | None -> next_live_event ~log battle cfg tr
 
-let refused_move_event move_slot =
-  CR.Unexpected
-    (Printf.sprintf "move slot %d refused (0 PP or disabled)" move_slot)
-
 let execute_move ~log (battle : B.game_steps) tr move_slot =
   log (Printf.sprintf "FRLG catch: Fight -> move %d" move_slot);
   tr.last_action_was_throw <- false;
@@ -147,19 +140,34 @@ let execute_move ~log (battle : B.game_steps) tr move_slot =
       tr.turns <- tr.turns + 1;
       Ok ()
   | B.Refused ->
-      tr.pending_event <- Some (refused_move_event move_slot);
+      let msg =
+        Printf.sprintf "move slot %d refused (0 PP or disabled)" move_slot
+      in
+      tr.pending_event <- Some (CR.Unexpected msg);
       Ok ()
   | B.Other_move name -> Error ("unexpected move in slot: " ^ name)
   | B.Not_done reason -> Error reason
 
+let finish_switch ~inc_turn tr slot idx =
+  swap_into_lead tr idx;
+  tr.active_slot <- slot;
+  if inc_turn then tr.turns <- tr.turns + 1;
+  Ok ()
+
+let switch_slot ~log ~action ~err_verb ~inc_turn ~do_switch tr slot =
+  match find_battle_index tr slot with
+  | None -> Error (Printf.sprintf "unknown party slot %d" slot)
+  | Some idx ->
+      log
+        (Printf.sprintf "FRLG catch: %s -> slot %d (pos %d)" action slot
+           (idx + 1));
+      tr.last_action_was_throw <- false;
+      if do_switch ~slot:idx then finish_switch ~inc_turn tr slot idx
+      else Error (Printf.sprintf "could not %s party slot %d" err_verb slot)
+
 let execute_switch ~log (battle : B.game_steps) tr slot =
-  log (Printf.sprintf "FRLG catch: Pokémon -> slot %d" slot);
-  tr.last_action_was_throw <- false;
-  if battle.switch_to ~slot:(slot - 1) then (
-    tr.active_slot <- slot;
-    tr.turns <- tr.turns + 1;
-    Ok ())
-  else Error (Printf.sprintf "could not switch to party slot %d" slot)
+  switch_slot ~log ~action:"Pokémon" ~err_verb:"switch to" ~inc_turn:true
+    ~do_switch:battle.switch_to tr slot
 
 let execute_throw ~log (battle : B.game_steps) cfg tr name =
   log ("FRLG catch: Bag -> throw " ^ name);
@@ -180,19 +188,12 @@ let execute_heal ~log (battle : B.game_steps) cfg tr =
   log (Printf.sprintf "FRLG catch: Bag -> heal slot %d" tr.active_slot);
   tr.last_action_was_throw <- false;
   let item : B.item =
-    {
-      pocket = Bag.Items;
-      row = cfg.bag.heal_row;
-      on_slot = Some (tr.active_slot - 1);
-    }
+    { pocket = Bag.Items; row = cfg.bag.heal_row; on_slot = Some 0 }
   in
   if battle.use_item item then (
     tr.turns <- tr.turns + 1;
     Ok ())
-  else
-    Error
-      (Printf.sprintf "could not use healing item on party slot %d"
-         tr.active_slot)
+  else Error (Printf.sprintf "could not heal party slot %d" tr.active_slot)
 
 let execute_command ~log battle cfg tr = function
   | CS.Use_move move_slot -> execute_move ~log battle tr move_slot
@@ -202,25 +203,25 @@ let execute_command ~log battle cfg tr = function
   | CS.Pause_for_user _ -> Ok ()
 
 let send_in ~log (battle : B.game_steps) tr slot =
-  log (Printf.sprintf "FRLG catch: forced switch -> slot %d" slot);
-  tr.last_action_was_throw <- false;
-  if battle.send_in ~slot:(slot - 1) then (
-    tr.active_slot <- slot;
-    Ok ())
-  else Error (Printf.sprintf "could not send in party slot %d" slot)
+  switch_slot ~log ~action:"forced switch" ~err_verb:"send in" ~inc_turn:false
+    ~do_switch:battle.send_in tr slot
 
 let make ?battle ?(log = ignore) cfg : CR.game_steps =
-  let battle = match battle with Some b -> b | None -> BS.make ~log () in
+  let battle = Option.value ~default:(BS.make ~log ()) battle in
   let tr =
     {
       subscribed = false;
       active_slot = cfg.initial_active_slot;
+      party_order = [| 1; 2; 3; 4; 5; 6 |];
       turns = 0;
       balls_thrown = 0;
       last_action_was_throw = false;
       pending_event = None;
     }
   in
+  Option.iter
+    (fun idx -> if idx > 0 then swap_into_lead tr idx)
+    (find_battle_index tr cfg.initial_active_slot);
   {
     next_event = next_event ~log battle cfg tr;
     execute = execute_command ~log battle cfg tr;
@@ -229,7 +230,7 @@ let make ?battle ?(log = ignore) cfg : CR.game_steps =
 
 let build_policy ~ball_name ~max_balls ~max_turns ~sleeper_slot ~spore_move
     ~swiper_slot ~false_swipe_move ~wall ~send_in_order : CS.policy =
-  let hp_floor = defaults.hp_floor in
+  let hp_floor = default_hp_floor in
   {
     status_setter =
       Some { slot = sleeper_slot; move_slot = spore_move; hp_floor };
@@ -244,45 +245,44 @@ let build_policy ~ball_name ~max_balls ~max_turns ~sleeper_slot ~spore_move
     wall;
     ball_name;
     max_balls;
-    foe_hp_target = defaults.foe_hp_target;
-    foe_hp_rechip = defaults.foe_hp_rechip;
+    foe_hp_target = default_foe_hp_target;
+    foe_hp_rechip = default_foe_hp_rechip;
     reapply_status = true;
     max_turns;
     send_in_order;
   }
 
-let phase1_policy ?(ball_name = defaults.ball_name)
-    ?(max_balls = defaults.max_balls) ?(max_turns = defaults.max_turns)
-    (slots : phase1_slots) : CS.policy =
+let phase1_policy ?(ball_name = default_ball_name)
+    ?(max_balls = default_max_balls) ?(max_turns = default_max_turns)
+    (s : phase1_slots) : CS.policy =
   let wall : CS.wall_config option =
-    if slots.use_sleeper_as_wall then
+    if s.use_sleeper_as_wall then
       Some
         {
-          slot = slots.sleeper_slot;
+          slot = s.sleeper_slot;
           heal_move_slot = None;
-          hp_floor = defaults.hp_floor;
+          hp_floor = default_hp_floor;
         }
     else None
   in
-  build_policy ~ball_name ~max_balls ~max_turns ~sleeper_slot:slots.sleeper_slot
-    ~spore_move:slots.spore_move ~swiper_slot:slots.swiper_slot
-    ~false_swipe_move:slots.false_swipe_move ~wall
-    ~send_in_order:slots.send_in_order
+  build_policy ~ball_name ~max_balls ~max_turns ~sleeper_slot:s.sleeper_slot
+    ~spore_move:s.spore_move ~swiper_slot:s.swiper_slot
+    ~false_swipe_move:s.false_swipe_move ~wall ~send_in_order:s.send_in_order
 
-let phase2_policy ?(ball_name = defaults.ball_name)
-    ?(max_balls = defaults.max_balls) ?(max_turns = defaults.max_turns)
-    (slots : phase2_slots) : CS.policy =
-  build_policy ~ball_name ~max_balls ~max_turns ~sleeper_slot:slots.catcher_slot
-    ~spore_move:slots.spore_move ~swiper_slot:slots.catcher_slot
-    ~false_swipe_move:slots.false_swipe_move ~wall:None
-    ~send_in_order:slots.send_in_order
+let phase2_policy ?(ball_name = default_ball_name)
+    ?(max_balls = default_max_balls) ?(max_turns = default_max_turns)
+    (s : phase2_slots) : CS.policy =
+  build_policy ~ball_name ~max_balls ~max_turns ~sleeper_slot:s.catcher_slot
+    ~spore_move:s.spore_move ~swiper_slot:s.catcher_slot
+    ~false_swipe_move:s.false_swipe_move ~wall:None
+    ~send_in_order:s.send_in_order
 
-let spore_ball_policy ?(ball_name = defaults.ball_name)
-    ?(max_balls = defaults.max_balls) ?(max_turns = defaults.max_turns) () :
+let spore_ball_policy ?(ball_name = default_ball_name)
+    ?(max_balls = default_max_balls) ?(max_turns = default_max_turns) () :
     CS.policy =
   {
     status_setter =
-      Some { slot = 1; move_slot = 1; hp_floor = defaults.hp_floor };
+      Some { slot = 1; move_slot = 1; hp_floor = default_hp_floor };
     false_swiper = None;
     wall = None;
     ball_name;

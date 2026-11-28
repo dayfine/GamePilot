@@ -3,7 +3,7 @@
 Reads the glitched mail to prove the Mail Glitch is on, then copies one item with it.
 
 This is the second half of checkpoint 08-activate-and-verify. The first half, Lea & Jed's battle,
-is on [Mail Glitch: activation](frlg.mail_glitch.md). The game is saved only after the copy, never
+is on [Mail Glitch: activation](mail_glitch.md). The game is saved only after the copy, never
 between the battle and the copy.
 
 **What you get:**

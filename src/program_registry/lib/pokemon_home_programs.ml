@@ -17,7 +17,7 @@ let plza_bank_home =
     description =
       "Moves the claimed gifts from the game's box into their Pokémon HOME \
        boxes and saves HOME.";
-    doc = "docs/guide/pokemon_home.bank-plza.md";
+    doc = "docs/guide/pokemon_home/bank-plza.md";
     checkpoints = Some "src/games/pokemon/plza/programs/bank_home/plans";
     backends = [ Switch ];
     viewport = Native;

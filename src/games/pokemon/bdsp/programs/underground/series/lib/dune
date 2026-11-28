@@ -1,0 +1,9 @@
+(library
+ (name bdsp_underground_series)
+ (public_name gamepilot.bdsp_underground_series)
+ (libraries
+  gamepilot.engine_run
+  gamepilot.run_options
+  gamepilot.bdsp_rules
+  gamepilot.bdsp_checkpoint_series
+  gamepilot.bdsp_underground_program))
