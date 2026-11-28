@@ -42,9 +42,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 02:45:00–02:50:00 | Reviewed |
 | 02:50:00–02:55:00 | Reviewed |
 | 02:55:00–03:00:00 | Reviewed |
-| 03:00:00–03:18:16 | Pending |
+| 03:00:00–03:05:00 | Reviewed |
+| 03:05:00–03:18:16 | Pending |
 
-Resume at **03:00:00** at the Pokémon League entrance as the lobby loads.
+Resume at **03:05:00** during Aaron’s fight after Palkia has knocked out Dustox and Heracross.
 
 ## Review method
 
@@ -678,3 +679,17 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 | 2:59:26–3:00:00 | Exit Victory Road and Surf to the base of the waterfall. Use Waterfall, land at the top, and enter the Pokémon League building. |
 
 **State at 3:00:00.** The Pokémon League lobby is loading. Kazza is Lv. 59 at 137/137 HP with Choice Specs, and Palkia is Lv. 50 at 166/166 HP with Metronome. Monferno remains fainted with Wise Glasses.
+
+## 3:00:00–3:05:00 | League rival and the start of Aaron
+
+| Video time | Observed action |
+| --- | --- |
+| 3:00:01–3:00:25 | Take Choice Specs off Kazza and box Kazza and Monferno. Leave Palkia as the sole party member with Metronome. Buy 43 Full Restores for ₽129,000, bringing the total to 44. |
+| 3:00:26–3:01:17 | The rival challenges the player at the League gate and leads with Staraptor Lv. 49. Use X Speed while Staraptor sets Rain Dance. Use X Sp. Atk as Staraptor uses U-turn into Rapidash Lv. 49. Use a second X Sp. Atk as Rapidash misses Megahorn. |
+| 3:01:18–3:02:14 | Palkia KOs Rapidash with Surf and reaches Lv. 51. Staraptor returns, survives Surf, and uses U-turn again. The rain stops after Snorlax Lv. 52 enters. Palkia KOs Snorlax and the returning Staraptor with Surf. |
+| 3:02:15–3:03:08 | Surf KOs Roserade Lv. 49, Heracross Lv. 51, and Empoleon Lv. 55. Palkia reaches Lv. 52 and wins the rival battle. |
+| 3:03:09–3:03:39 | The guard checks all eight badges. Take the elevator, use an Energy Root for 67 HP and a Max Ether for Surf, and give Palkia Choice Specs in place of Metronome. |
+| 3:03:42–3:04:27 | Challenge Aaron. Against Dustox Lv. 53, use X Speed while it sets Light Screen, then use two X Sp. Atk while Dustox uses Bug Buzz and Toxic. |
+| 3:04:28–3:05:00 | Use a Full Restore to cure bad poison and heal Palkia. Dustox uses Bug Buzz again, leaving Palkia at 141/172 HP. Surf KOs Dustox. Light Screen expires, and the next Surf KOs Heracross Lv. 54. |
+
+**State at 3:05:00.** Aaron has lost Dustox and Heracross. Palkia is the only party member at Lv. 52 and 141/172 HP with Choice Specs, one X Speed boost, and two X Sp. Atk boosts. There are 43 Full Restores in the Bag.
