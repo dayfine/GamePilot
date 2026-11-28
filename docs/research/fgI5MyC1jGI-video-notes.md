@@ -46,7 +46,6 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 03:05:00–03:10:00 | Reviewed |
 | 03:10:00–03:15:00 | Reviewed |
 | 03:15:00–03:18:16 | Reviewed |
-| 03:18:16–03:18:16 | Pending |
 
 Review complete through **03:18:16**, the end of the recording.
 
