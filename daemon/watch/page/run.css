@@ -91,7 +91,8 @@
   @media (max-width: 600px) {
     .probe { grid-template-columns: minmax(6em, 9em) minmax(0, 1fr) 4em; }
   }
-  #log { font: 12px/1.45 ui-monospace, Menlo, monospace; max-height: 480px; overflow: auto;
+  #log { font: 12px/1.45 ui-monospace, Menlo, monospace; height: 480px; min-height: 160px;
+         max-height: none; resize: vertical; overflow: auto;
          margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
   #log div { padding: 0 4px; border-radius: 3px; }
   #log div.timed { cursor: pointer; }
