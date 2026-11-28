@@ -20,9 +20,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 00:55:00–01:00:00 | Reviewed |
 | 01:00:00–01:05:00 | Reviewed |
 | 01:05:00–01:10:00 | Reviewed |
-| 01:10:00–03:18:16 | Pending |
+| 01:10:00–01:15:00 | Reviewed |
+| 01:15:00–03:18:16 | Pending |
 
-Resume at **01:10:00** inside Veilstone Gym after Black Belt Rafael, partway through the sliding-wall puzzle.
+Resume at **01:15:00** in Veilstone City after obtaining Fly from the Galactic Warehouse.
 
 ## Review method
 
@@ -319,3 +320,21 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 - Inside **Veilstone Gym**, with Rafael defeated and the sliding-wall puzzle still in progress.
 - **Kazza Lv. 25, 62/62 HP** leads and holds **Metronome**. Moves are **Psychic**, **Confusion**, **Grass Knot** and **Shock Wave**. **Monferno Lv. 24**, last visible **40/72 HP**, knows **Flamethrower**, **Mach Punch**, **Stealth Rock** and **Taunt**.
 - Battle-item stock is **11 X Speeds**, **11 X Defenses**, **1 X Accuracy**, **4 X Sp. Defs** and **28 X Sp. Atks**. **4 Super Repels** and **TM21 Dazzling Gleam** are in the Bag.
+
+## 1:10:00–1:15:00 | Cobble Badge and recovery of Dawn’s Pokédex
+
+| Video time | Observed action and outcome |
+|---|---|
+| 1:10:00–1:10:39 | Work through the left and central lanes of the sliding-wall puzzle, then head up the cleared center aisle. Approach **Maylene**. Rafael is the only gym trainer battled on this route. |
+| 1:10:40–1:11:23 | Maylene leads with female **Meditite Lv. 27**. **Kazza Lv. 26, 64/64 HP** uses **X Defense**, **X Sp. Atk** twice, **X Accuracy**, then **X Speed**. Meditite’s responses are **Flash**, **Light Screen**, **Bulk Up**, then two **Drain Punches**, leaving Kazza at **7/64 HP**. |
+| 1:11:24–1:12:19 | One **Confusion** knocks out Meditite. One **Psychic** each knocks out male **Machoke Lv. 27** and male **Lucario Lv. 30**. Kazza reaches **Lv. 27**, Monferno reaches **Lv. 25**, and Maylene awards **₽3,840**, the **Cobble Badge**, her Stickers, and **TM60s (Drain Punch)**. The Badge permits field use of Fly once obtained. |
+| 1:12:20–1:12:54 | Exit the Gym. Dawn asks for help recovering her Pokédex. Transfer **Metronome** from Kazza to Monferno, then put Kazza in a **Box**, leaving **Monferno** as the only party member. Ride to Dawn near the warehouse. |
+| 1:12:55–1:13:35 | Join Dawn’s double battle against two grunts. Her **Clefairy Lv. 25** joins Monferno against **Dustox** and **Beautifly**. **Flamethrower** knocks out Beautifly first. Monferno reaches **Lv. 26** and declines **Feint**. Dustox uses **Gust** on Clefairy, which uses **Disarming Voice**. |
+| 1:13:36–1:14:29 | Target the incoming **Stunky** with Flamethrower. Stunky uses **Fury Swipes** and Dustox uses **Venoshock** on Clefairy. Clefairy’s **Disarming Voice** finishes Stunky. Use Flamethrower to knock out **Dustox**, then another Flamethrower against **Croagunk** to win. |
+| 1:14:30–1:15:00 | The grunts return Dawn’s Pokédex and depart. Enter the **Galactic Warehouse**, take **TM94 (Fly)** from the item ball between the blue crates, and leave. Ride away through Veilstone. |
+
+### State at 1:15:00
+
+- Back in **Veilstone City** with the Cobble Badge and **Fly** unlocked.
+- **Monferno Lv. 26**, last visible **45/77 HP**, is the only party member and holds **Metronome**. Kazza is in the Box.
+- Remaining battle items from the Veilstone purchase are **10 X Defenses**, **10 X Speeds**, **26 X Sp. Atks** and **4 X Sp. Defs**. The only X Accuracy was used.
