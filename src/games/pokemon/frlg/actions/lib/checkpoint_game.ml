@@ -12,6 +12,7 @@ type config = {
   reload : unit -> (unit, Failure.cause) result;
   program_options : Run_options.t;
   default_frame_model : string;
+  rng_reset_mode : Rng_reset.mode;
   log : string -> unit;
 }
 
@@ -231,25 +232,9 @@ let run_wild_rng t (plan : Wild_rng_plan.t) () =
     | Ok target -> target
     | Error e -> Menu_input.fail "wild_rng_no_target" e
   in
-  log ("Wild RNG: " ^ Frlg_rng.Wild_target.describe target ^ ".");
-  let show_counters = Watch_report.counters in
-  let find_encounter =
-    Wild_rng_steps.find_encounter ~log ~encounter_method:plan.encounter_method
-      target.timings
-  in
-  let policy_catch =
-    Wild_rng_steps.policy_catch_for ~log ~find_encounter
-      ~catch_mode:plan.catch_mode ~visual_shiny_check:plan.visual_shiny_check
-      plan.capture
-  in
-  let game_steps : Wild_rng.game_steps =
-    {
-      catch = Wild_rng_steps.legacy_catch ~log ~show_counters ~find_encounter;
-      policy_catch;
-      shiny_at = (fun slot -> Wild_rng_steps.shiny_at ~log ~slot);
-      log;
-      show_counters;
-    }
+  let game_steps =
+    Wild_rng_steps.live_calibrated_game_steps ~log
+      ~reset_mode:t.config.rng_reset_mode plan target
   in
   let r =
     Wild_rng.run game_steps plan.capture ~party:(Party_roster.size !(t.party))
@@ -295,9 +280,9 @@ let run_gift_rng t (plan : Gift_rng.plan) () =
     | Ok target -> target
     | Error e -> Menu_input.fail "gift_rng_no_target" e
   in
-  log ("Gift RNG: " ^ Frlg_rng.Gift_target.describe target ^ ".");
   let steps =
-    Gift_rng.live_game_steps ~log ~prize_row:plan.prize_row target.timings
+    Gift_rng.live_calibrated_game_steps ~log ~reset_mode:t.config.rng_reset_mode
+      plan target
   in
   let r =
     Gift_rng.run steps ~attempts:plan.attempts

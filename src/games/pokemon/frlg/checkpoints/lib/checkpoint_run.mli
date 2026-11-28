@@ -29,6 +29,8 @@ type options = {
   default_frame_model : string;
       (** Default RNG frame model (["mgba"] or ["switch"]) when a plan omits
           ["frame_model"]. *)
+  rng_reset_mode : Frlg_actions.Rng_reset.mode;
+      (** How ["wild_rng"] and ["gift_rng"] hard-reset between attempts. *)
   log : string -> unit;
 }
 

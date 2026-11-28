@@ -159,66 +159,58 @@ let catcher_prep =
       "Catches Paras and levels it into a Spore Parasect for wild hunts."
     ~dir:"catcher_prep" ~backends:[ Mgba; Switch ] ()
 
-(* 16-bit trainer and secret IDs (0..65535). *)
+(* 16-bit trainer and secret IDs (0..65535), max RNG attempts (99), max ball row (20). *)
 let max_trainer_id = 0xffff
+let max_rng_attempts = 99
+let max_cal_ball_row = 20
+
+let opt ?(presence = Run_options.Optional) key value doc : Run_options.declared
+    =
+  { key; value; presence; doc }
 
 let trainer_id_options : Run_options.declared list =
   [
-    {
-      key = "tid";
-      value = Int_range (0, max_trainer_id);
-      presence = Optional;
-      doc =
-        "your trainer ID (overrides GAMEPILOT_FRLG_TID and trainer_ids.json)";
-    };
-    {
-      key = "sid";
-      value = Int_range (0, max_trainer_id);
-      presence = Optional;
-      doc = "your secret ID (overrides GAMEPILOT_FRLG_SID and trainer_ids.json)";
-    };
+    opt "tid"
+      (Int_range (0, max_trainer_id))
+      "your trainer ID (overrides GAMEPILOT_FRLG_TID and trainer_ids.json)";
+    opt "sid"
+      (Int_range (0, max_trainer_id))
+      "your secret ID (overrides GAMEPILOT_FRLG_SID and trainer_ids.json)";
   ]
 
 let dex_collection_options : Run_options.declared list =
-  ([
-     {
-       key = "ball";
-       value = One_of [ "poke-ball"; "great-ball"; "ultra-ball"; "luxury-ball" ];
-       presence = Optional;
-       doc = "the ball to throw (overrides each catch plan's default)";
-     };
-     {
-       key = "balls";
-       value = Int_range (1, bag_most);
-       presence = Optional;
-       doc = "max balls to throw per catch attempt (overrides plan default)";
-     };
-     {
-       key = "target";
-       value =
-         One_of
-           [
-             "everything";
-             "missing-on-dex";
-             "version-exclusive";
-             "version-exclusive-uncaught";
-             "specific-list";
-           ];
-       presence = Default "everything";
-       doc =
-         "which species to catch (everything and missing-on-dex skip species \
-          recorded in local dex_progress.json)";
-     };
-     {
-       key = "species";
-       value = Text;
-       presence = Optional;
-       doc =
-         "comma-separated species slugs for target=specific-list (e.g. \
-          ekans,voltorb)";
-     };
-   ]
-    : Run_options.declared list)
+  [
+    opt "ball"
+      (One_of [ "poke-ball"; "great-ball"; "ultra-ball"; "luxury-ball" ])
+      "the ball to throw (overrides each catch plan's default)";
+    opt "balls"
+      (Int_range (1, bag_most))
+      "max balls to throw per catch attempt (overrides plan default)";
+    opt "catch_mode"
+      (One_of [ "throw_only"; "phase1"; "phase2"; "spore_ball" ])
+      "wild catch strategy (overrides each plan's catch_mode)";
+    opt "cal_ball_row"
+      (Int_range (0, max_cal_ball_row))
+      "0-based Poké Balls pocket row for non-shiny calibration catches \
+       (default 0; e.g. 1 for Master Ball)";
+    opt "attempts"
+      (Int_range (1, max_rng_attempts))
+      "max RNG reset attempts per checkpoint (overrides plan default)";
+    opt ~presence:(Default "everything") "target"
+      (One_of
+         [
+           "everything";
+           "missing-on-dex";
+           "version-exclusive";
+           "version-exclusive-uncaught";
+           "specific-list";
+         ])
+      "which species to catch (everything and missing-on-dex skip species \
+       recorded in local dex_progress.json)";
+    opt "species" Text
+      "comma-separated species slugs for target=specific-list (e.g. \
+       ekans,voltorb)";
+  ]
   @ trainer_id_options
 
 let dex_collection =

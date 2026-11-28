@@ -40,6 +40,9 @@ type frame_model = {
   sweet_scent_advances_offset : int;
       (** Advances Sweet Scent's encounter lands before the target's formula
           says (-352 on the Switch). *)
+  gift_advances_offset : int;
+      (** Advances a Method 1 gift lands relative to the target's formula
+          ([DEFAULT_ADVANCES_OFFSET = 160] on the Switch, 0 on mGBA). *)
   static_advances_offset : int;
       (** Advances a static overworld encounter lands relative to the target's
           formula (160 on the Switch, 0 on mGBA). *)
@@ -66,8 +69,8 @@ val sweet_scent_fixed_duration_ms : int
 (** 7400: the Sweet Scent presses' own share of the in-game wait, in ms. *)
 
 val gift_fixed_duration_ms : int
-(** 5000: the Game Corner prize-claim presses' own share of the in-game wait, in
-    ms. *)
+(** 8200: the Game Corner prize-claim presses' own share of the in-game wait, in
+    ms ([GAMECORNER_FIXED_DURATION] in [PokemonFRLG_BlindNavigation.cpp]). *)
 
 val static_fixed_duration_ms : int
 (** 5000: the static encounter's own share of the in-game wait, in ms (4000 ms

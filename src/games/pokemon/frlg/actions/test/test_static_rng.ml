@@ -84,7 +84,7 @@ let test_decode () =
   | Error c ->
       check_eq ~show:Fun.id "invalid catch_mode"
         "bad_args: static_rng: catch_mode is invalid, not throw_only, phase1, \
-         or phase2"
+         phase2, or spore_ball"
         (Pokemon_engine.Failure.cause_to_string c));
   match
     Static_rng.decode ~fallback
@@ -148,7 +148,7 @@ let run_policy_case ~verdicts ~catch_outcome ~shiny_on ~attempts ~party =
           (fun () ->
             let idx = min (!find_n - 1) (Array.length verdicts - 1) in
             reading_of verdicts.(idx));
-      on_miss = (fun () -> incr miss_n);
+      on_miss = (fun ~party:_ -> incr miss_n);
       catch_battle =
         (fun () ->
           incr catch_n;

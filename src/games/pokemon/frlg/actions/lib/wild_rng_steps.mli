@@ -32,13 +32,15 @@ val blind_presses_for :
 
 val find_encounter :
   log:(string -> unit) ->
+  ?reset_mode:Rng_reset.mode ->
   ?encounter_method:Wild_rng_plan.encounter_method ->
   Frlg_rng.Rng_timings.t ->
   unit ->
   bool
-(** The reset, {!blind_presses_for} [encounter_method] (default [Grass]),
-    optional bite confirmation for [Super_rod], and the wild battle's screen
-    within {!battle_timeout_ms}. *)
+(** The reset ({!Rng_reset.reset_and_submit}, default {!Rng_reset.Mgba}),
+    {!blind_presses_for} [encounter_method] (default [Grass]), optional bite
+    confirmation for [Super_rod], and the wild battle's screen within
+    {!battle_timeout_ms}. *)
 
 val battle_timeout_ms : int
 (** 20 s: how long after the last press the wild battle's screen may take to
@@ -46,6 +48,7 @@ val battle_timeout_ms : int
 
 val game_steps :
   log:(string -> unit) ->
+  ?reset_mode:Rng_reset.mode ->
   ?show_counters:(Wire.Watch.counter list -> unit) ->
   ?encounter_method:Wild_rng_plan.encounter_method ->
   Frlg_rng.Rng_timings.t ->
@@ -79,10 +82,11 @@ val policy_catch_for :
 
 val policy_catch_steps :
   log:(string -> unit) ->
+  ?reset_mode:Rng_reset.mode ->
   ?encounter_method:Wild_rng_plan.encounter_method ->
   timings:Frlg_rng.Rng_timings.t ->
   ?visual_shiny_check:bool ->
-  ?on_miss:(unit -> unit) ->
+  ?on_miss:(party:int -> unit) ->
   config:Battle_catch_steps.config ->
   policy:Pokemon_catch.Catch_state.policy ->
   unit ->
@@ -92,6 +96,31 @@ val policy_catch_steps :
     with {!Pokemon_catch.Catch_runner.run}, and {!Capture_steps.finish_catch}.
 *)
 
+val check_summary :
+  log:(string -> unit) ->
+  slot:int ->
+  read_miss:bool ->
+  [ `Shiny | `Not_shiny of Rng_miss_calibration.summary_miss option ]
+(** From the overworld: opens [slot]'s Summary Page 1 and checks the shiny star.
+    When not shiny and [read_miss] is [true], reads Page 1 (level, species,
+    nature, gender), turns to Page 2 to read the 6 stats
+    ({!Frlg_text.Summary_stats}), and closes back to the overworld. *)
+
 val shiny_at : log:(string -> unit) -> slot:int -> bool
 (** From the overworld: the member's summary, its first page's star read, back
     to the overworld. Fails as [no_party], [no_member_menu] or [no_summary]. *)
+
+val live_calibrated_game_steps :
+  log:(string -> unit) ->
+  ?reset_mode:Rng_reset.mode ->
+  Wild_rng_plan.t ->
+  Frlg_rng.Wild_target.t ->
+  Wild_rng.game_steps
+(** Live {!Wild_rng.game_steps} that recompute {!Wild_rng_plan.target} before
+    each subsequent attempt and, on Switch ([plan.frame_model = "switch"]), read
+    Summary Page 1 & Page 2 on misses, report the miss distance via
+    {!Rng_miss_calibration}, update the in-memory plan offsets for the next
+    attempt (with a 10-attempt rolling average via
+    {!Frlg_rng.Rolling_calibrator}), persist the timing delta, and skip any
+    parity-locked [(seed, advance)] target while resetting the rolling advance
+    history. *)

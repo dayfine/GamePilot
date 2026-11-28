@@ -14,6 +14,7 @@ type options = {
   end_check_only : bool;
   program_options : Run_options.t;
   default_frame_model : string;
+  rng_reset_mode : A.Rng_reset.mode;
   log : string -> unit;
 }
 
@@ -164,6 +165,7 @@ let config options ~center world : A.Checkpoint_game.config =
     reload = reload options.state;
     program_options = options.program_options;
     default_frame_model = options.default_frame_model;
+    rng_reset_mode = options.rng_reset_mode;
     log = options.log;
   }
 

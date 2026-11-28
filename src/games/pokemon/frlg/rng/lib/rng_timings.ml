@@ -6,6 +6,7 @@ type frame_model = {
   ingame_advances_per_frame : float;
   fixed_seed_offset_ms : int;
   sweet_scent_advances_offset : int;
+  gift_advances_offset : int;
   static_advances_offset : int;
 }
 
@@ -19,6 +20,7 @@ let switch =
     ingame_advances_per_frame = 2.0;
     fixed_seed_offset_ms = -845;
     sweet_scent_advances_offset = -352;
+    gift_advances_offset = 160;
     static_advances_offset = 160;
   }
 
@@ -28,13 +30,14 @@ let mgba =
     ingame_advances_per_frame = 1.0;
     fixed_seed_offset_ms = 0;
     sweet_scent_advances_offset = -183;
+    gift_advances_offset = 0;
     static_advances_offset = 0;
   }
 
 let continue_screen_frames = 200
 let recap_base_delay_ms = 1450
 let sweet_scent_fixed_duration_ms = 7400
-let gift_fixed_duration_ms = 5000
+let gift_fixed_duration_ms = 8200
 let static_fixed_duration_ms = 5000
 
 type calibrations = { seed_offset : int; csf_offset : int; ingame_offset : int }
@@ -136,9 +139,9 @@ let sweet_scent m ~seed_delay_ms ~advances ~use_teachy_tv c =
     ~advances ~use_teachy_tv c
 
 let gift m ~seed_delay_ms ~advances ~use_teachy_tv c =
-  compute ~advances_offset:0 ~fixed_duration_ms:gift_fixed_duration_ms
-    ~min_wait_ms:min_press_gap_ms ~label:"gift" m ~seed_delay_ms ~advances
-    ~use_teachy_tv c
+  compute ~advances_offset:m.gift_advances_offset
+    ~fixed_duration_ms:gift_fixed_duration_ms ~min_wait_ms:min_press_gap_ms
+    ~label:"gift" m ~seed_delay_ms ~advances ~use_teachy_tv c
 
 let static m ~seed_delay_ms ~advances ~use_teachy_tv c =
   compute ~advances_offset:m.static_advances_offset

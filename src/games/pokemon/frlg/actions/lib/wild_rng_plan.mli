@@ -68,10 +68,17 @@ type t = {
       (** The species, the ball, the balls; its encounters are the attempts. *)
   catch_mode : catch_mode;
       (** Catch strategy: [Throw_only] by default, or [Catch_policy] for
-          {!Battle_catch_steps} Phase 1 / Phase 2 catching. *)
+          {!Battle_catch_steps} Phase 1, Phase 2, or Spore-then-throw catching.
+      *)
   visual_shiny_check : bool;
       (** When [true], run {!Frlg_readers.Shiny_encounter_detector} during the
-          wild battle intro to skip catch turns and balls on visual misses. *)
+          wild battle intro to skip catch turns and balls on visual misses.
+          Defaults to [true] when [frame_model = "switch"] and
+          [catch_mode <> Throw_only], [false] otherwise. *)
+  cal_ball_row : int;
+      (** 0-based row in the Poké Balls pocket thrown during fast non-shiny
+          calibration catches (default [0]; e.g. [1] for Master Ball on row 1).
+      *)
 }
 (** Decoded arguments for one ["wild_rng"] action. *)
 
@@ -91,7 +98,12 @@ val encounter_method_to_string : encounter_method -> string
 (** ["grass"], ["surf"], or ["super_rod"]. *)
 
 val default_seeds : string
-(** Default seed table filename when ["seeds"] is omitted from a plan. *)
+(** Default mGBA seed table filename when ["seeds"] is omitted from a plan. *)
+
+val default_seeds_for_model : string -> string
+(** Default seed table filename for a frame model:
+    ["rng_seeds_switch_fr_eng.json"] for ["switch"], {!default_seeds} otherwise.
+*)
 
 val default_frame_model : string
 (** Default frame model (["mgba"]) when ["frame_model"] is omitted. *)
@@ -138,6 +150,12 @@ val resolved_id :
     [fallback], failing via {!Json_field.fail} if missing or outside
     [0..max_id]. *)
 
+val resolved_attempts :
+  where:string -> options:Run_options.t -> Json_field.obj -> int
+(** Resolves the reset attempt count from [--options attempts=N], then
+    ["attempts"] in [args], defaulting to {!default_attempts}
+    ([1..max_attempts]). *)
+
 val advances : where:string -> Json_field.obj -> int * int
 (** Reads optional ["advances"] as [[min, max]] with [0 <= min <= max],
     defaulting to [(900, 4000)]. *)
@@ -154,6 +172,16 @@ val seed_column_of :
 (** Reads the ["Mono / Help / A"] column from [seeds] under
     [src/games/pokemon/frlg/assets/], shifting every seed by [seed_shift]
     (wrapping 16-bit). *)
+
+val calibrated_model :
+  boot_offset_ms:int ->
+  ingame_offset:int ->
+  Frlg_rng.Rng_timings.frame_model ->
+  Frlg_rng.Rng_timings.frame_model * Frlg_rng.Rng_timings.calibrations
+(** Applies [boot_offset_ms] directly to [model.fixed_seed_offset_ms] for
+    millisecond-accurate seed stepping and builds
+    {!Frlg_rng.Rng_timings.calibrations} with [ingame_offset] (splitting odd
+    Switch parity into [csf_offset]). *)
 
 val calibrations_of_offsets :
   boot_offset_ms:int ->
@@ -172,12 +200,24 @@ val throw_only_policy : Capture_plan.t -> Pokemon_catch.Catch_state.policy
     Swiper, or wall: throws [capture.ball] directly up to [capture.max_balls].
 *)
 
-val catch_mode : where:string -> Capture_plan.t -> Json_field.obj -> catch_mode
-(** Reads optional ["catch_mode"] (["throw_only"] | ["phase1"] | ["phase2"],
-    default ["throw_only"]). *)
+val catch_mode :
+  where:string ->
+  ?options:Run_options.t ->
+  Capture_plan.t ->
+  Json_field.obj ->
+  catch_mode
+(** Reads optional ["catch_mode"] (["throw_only"] | ["phase1"] | ["phase2"] |
+    ["spore_ball"], default ["throw_only"]), overridable via [--options]. *)
 
-val visual_shiny_check : where:string -> Json_field.obj -> bool
-(** Reads optional boolean ["visual_shiny_check"] (default [false]). *)
+val visual_shiny_check :
+  where:string ->
+  ?frame_model:string ->
+  ?catch_mode:catch_mode ->
+  Json_field.obj ->
+  bool
+(** Reads optional boolean ["visual_shiny_check"] (defaults to [true] when
+    [frame_model = "switch"] and [catch_mode <> Throw_only], [false] otherwise).
+*)
 
 val load_trainer_ids : unit -> (trainer_ids, string) result
 (** Reads fallback trainer IDs from [GAMEPILOT_FRLG_TID] / [GAMEPILOT_FRLG_SID],
@@ -188,6 +228,10 @@ val load_trainer_ids : unit -> (trainer_ids, string) result
 val apply_calibration : Frlg_rng.Switch_rng_calibration.entry -> t -> t
 (** Applies a persisted per-console Switch calibration entry to [t], combining
     [boot_offset_ms], [seed_shift] (wrapping 16-bit), and [ingame_offset]. *)
+
+val apply_timing_delta : boot_delta_ms:int -> ingame_delta:int -> t -> t
+(** Adds [boot_delta_ms] to [t.boot_offset_ms] and [ingame_delta] to
+    [t.ingame_offset]. *)
 
 val decode :
   ?options:Run_options.t ->
@@ -202,8 +246,10 @@ val decode :
     ["frame_model"] (defaults to [default_frame_model], itself ["mgba"]),
     ["advances"] ([[min, max]], default [[900, 4000]]), ["ball"]
     (["poke-ball"]), ["balls"] (5), ["attempts"] (1), ["catch_mode"]
-    (["throw_only"] | ["phase1"] | ["phase2"], default ["throw_only"]),
-    ["visual_shiny_check"] ([false]). *)
+    (["throw_only"] | ["phase1"] | ["phase2"] | ["spore_ball"], default
+    ["throw_only"]), ["visual_shiny_check"] (defaults to [true] on ["switch"]
+    with a policy [catch_mode], [false] otherwise), ["cal_ball_row"] (0..20,
+    default [0], overridable via [--options cal_ball_row=N]). *)
 
 val encounter_slots : string
 (** The file the encounter slots are read from, FireRed's:
@@ -211,6 +257,14 @@ val encounter_slots : string
     [src/games/pokemon/frlg/assets/extract/extract_frlg_encounter_slots.py]
     writes from Packages' [EncounterSlotsFR.json] (LeafGreen's beside it). *)
 
-val target : t -> (Frlg_rng.Wild_target.t, string) result
+val slots : t -> (Frlg_rng.Wild_encounter.slot array, string) result
+(** Loads the encounter slots for [t.location] and [t.encounter_method] from
+    {!encounter_slots}. *)
+
+val target :
+  ?exclude_targets:(int * int) list ->
+  t ->
+  (Frlg_rng.Wild_target.t, string) result
 (** Reads the seed table and the slots, and searches them: the soonest shiny
-    [species] in the advance range, timed for the frame model. *)
+    [species] in the advance range, timed for the frame model. Any
+    [(seed, advance)] pair in [exclude_targets] (default [[]]) is skipped. *)

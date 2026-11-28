@@ -13,7 +13,17 @@ open Pokemon_engine
 open Checkpoints_series
 include Live_checkpoint
 
-let options setup cp log : Frlg_checkpoints.Checkpoint_run.options =
+let no_tile : Switch.Home_screen.tile_color =
+  { min = (0, 0, 0); max = (0, 0, 0) }
+
+let options setup ?picture cp log : Frlg_checkpoints.Checkpoint_run.options =
+  let rng_reset_mode =
+    match (setup.backend, picture) with
+    | Switch _, Some picture ->
+        let tile = Option.value ~default:no_tile setup.home_tile in
+        Frlg_actions.Rng_reset.Switch { picture; tile }
+    | Mgba _, _ | Switch _, None -> Frlg_actions.Rng_reset.Mgba
+  in
   {
     (Plan_command.options { setup.common with log_file = None }) with
     (* Each checkpoint of the series reads its party: --party is only the
@@ -22,6 +32,7 @@ let options setup cp log : Frlg_checkpoints.Checkpoint_run.options =
     program_options = setup.program_options;
     default_frame_model =
       (match setup.backend with Switch _ -> "switch" | Mgba _ -> "mgba");
+    rng_reset_mode;
     state =
       (match setup.backend with
       | Mgba _ -> Some cp.start_state
@@ -43,13 +54,14 @@ let keep_event_state setup cp log =
       Some (Event_state_files.keep ~states:setup.states ~checkpoint:cp.id ~log)
   | Switch _ -> None
 
-let run_checkpoint setup cp watch log () =
+let run_checkpoint setup ?picture cp watch log () =
   match
     Frlg_checkpoints.Checkpoint_run.run ?end_at:cp.end_at
       ~on_event:(Frlg_checkpoints.Plan_watch.on_event watch)
       ?from_event:cp.partial
       ?keep_event_state:(keep_event_state setup cp log)
-      (options setup cp log) setup.world cp.plan
+      (options setup ?picture cp log)
+      setup.world cp.plan
     |> Result.map (fun () -> goal_after cp log)
   with
   | Ok goal -> (Passed { goal }, Console_runs.Passed)
@@ -67,10 +79,10 @@ let on_raised e =
 
 (* The checkpoint, shown on the watch page as it runs; a Stop there ends it
    at the event it was in. With how it ended, for the console's steps. *)
-let checkpoint_outcome setup cp log =
+let checkpoint_outcome setup ?picture cp log =
   let watch = Frlg_checkpoints.Plan_watch.create cp.plan.checkpoint in
   Daemon_run.guard_session ~on_stop:(on_stop watch log) ~on_raised
-    (run_checkpoint setup cp watch log)
+    (run_checkpoint setup ?picture cp watch log)
 
 let frame_path setup id =
   Frlg_checkpoints.Start_check.frame_file ~states:setup.states id
@@ -101,7 +113,7 @@ let console_run setup ~picture cp ~already_at_start log =
   | Error reason ->
       log ("[Console] " ^ reason);
       (Failed { at = "start"; reason; repeats = true }, Console_runs.Stopped)
-  | Ok () -> checkpoint_outcome setup cp log
+  | Ok () -> checkpoint_outcome setup ~picture cp log
 
 (* On the Switch, once the failure frame is saved: the steps after the run. *)
 let console_after setup cp log (outcome, kind) =

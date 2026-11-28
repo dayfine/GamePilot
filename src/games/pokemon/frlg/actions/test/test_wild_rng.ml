@@ -47,6 +47,24 @@ let options_of pairs =
         presence = Optional;
         doc = "";
       };
+      {
+        key = "catch_mode";
+        value = One_of [ "throw_only"; "phase1"; "phase2"; "spore_ball" ];
+        presence = Optional;
+        doc = "";
+      };
+      {
+        key = "cal_ball_row";
+        value = Int_range (0, 20);
+        presence = Optional;
+        doc = "";
+      };
+      {
+        key = "attempts";
+        value = Int_range (1, 99);
+        presence = Optional;
+        doc = "";
+      };
     ]
   in
   Result.get_ok (Run_options.check decl pairs)
@@ -264,7 +282,7 @@ let decide_policy ?(found = true) ?intro_verdict ~catch_outcome
           add "find";
           found);
       detect_shiny;
-      on_miss = (fun () -> add "on_miss");
+      on_miss = (fun ~party -> add (Printf.sprintf "on_miss(party=%d)" party));
       catch_battle =
         (fun () ->
           add "catch_battle";
@@ -352,21 +370,115 @@ let policy_decoding =
             "catch_mode": "phase1", "visual_shiny_check": true,
             "ball": "luxury-ball"}|})
       "policy(ball=luxury-ball,wall=true) visual=true boot=0 shift=0 ingame=0";
-    case "phase2 catch_mode has no wall"
+    case "phase2 catch_mode on switch defaults visual_shiny_check to true"
       (decode_mode
          {|{"species": "ekans", "location": "route_10", "tid": 1, "sid": 2,
             "seeds": "x.json", "frame_model": "switch",
             "catch_mode": "phase2", "ball": "ultra-ball"}|})
+      "policy(ball=ultra-ball,wall=false) visual=true boot=0 shift=0 ingame=0";
+    case "visual_shiny_check=false overrides switch policy default"
+      (decode_mode
+         {|{"species": "ekans", "location": "route_10", "tid": 1, "sid": 2,
+            "seeds": "x.json", "frame_model": "switch",
+            "catch_mode": "phase2", "visual_shiny_check": false,
+            "ball": "ultra-ball"}|})
       "policy(ball=ultra-ball,wall=false) visual=false boot=0 shift=0 ingame=0";
+    case "mgba policy catch_mode defaults visual_shiny_check to false"
+      (decode_mode
+         {|{"species": "ekans", "location": "route_10", "tid": 1, "sid": 2,
+            "seeds": "x.json", "frame_model": "mgba",
+            "catch_mode": "phase2", "ball": "ultra-ball"}|})
+      "policy(ball=ultra-ball,wall=false) visual=false boot=0 shift=0 ingame=0";
+    case "switch throw_only defaults visual_shiny_check to false"
+      (decode_mode
+         {|{"species": "ekans", "location": "route_10", "tid": 1, "sid": 2,
+            "seeds": "x.json", "frame_model": "switch",
+            "catch_mode": "throw_only"}|})
+      "throw_only visual=false boot=0 shift=0 ingame=0";
+    case "spore_ball catch_mode spores without false swipe or wall"
+      (fun () ->
+        let options =
+          options_of
+            [
+              ("tid", "1");
+              ("sid", "2");
+              ("ball", "luxury-ball");
+              ("catch_mode", "spore_ball");
+              ("cal_ball_row", "1");
+            ]
+        in
+        let json =
+          {|{"species": "ekans", "location": "route_10",
+             "frame_model": "switch"}|}
+        in
+        match Wild_rng_plan.decode ~options (obj json) with
+        | Ok t -> (
+            match t.catch_mode with
+            | Throw_only -> "throw_only"
+            | Catch_policy { policy; _ } ->
+                Printf.sprintf
+                  "status=%b swiper=%b wall=%b reapply=%b hp=%.1f/%.1f \
+                   visual=%b cal_row=%d"
+                  (Option.is_some policy.status_setter)
+                  (Option.is_some policy.false_swiper)
+                  (Option.is_some policy.wall)
+                  policy.reapply_status policy.foe_hp_target
+                  policy.foe_hp_rechip t.visual_shiny_check t.cal_ball_row)
+        | Error c -> Pokemon_engine.Failure.cause_to_string c)
+      "status=true swiper=false wall=false reapply=true hp=1.0/1.0 visual=true \
+       cal_row=1";
     case "invalid catch_mode rejected"
       (decode_mode
          {|{"species": "ekans", "location": "route_10", "tid": 1, "sid": 2,
             "seeds": "x.json", "frame_model": "switch",
             "catch_mode": "master_only"}|})
       "bad_args: wild_rng: catch_mode is master_only, not throw_only, phase1, \
-       or phase2";
+       phase2, or spore_ball";
     case "apply_calibration updates switch plan offsets" decode_calibrated
       "visual=true boot=-50 shift=4 ingame=-2";
+    case "--options overrides catch_mode, attempts, ball, and balls"
+      (fun () ->
+        let options =
+          options_of
+            [
+              ("tid", "1");
+              ("sid", "2");
+              ("ball", "luxury-ball");
+              ("balls", "30");
+              ("catch_mode", "phase1");
+              ("attempts", "10");
+            ]
+        in
+        match Wild_rng_plan.decode ~options (obj plan_args_no_ids) with
+        | Ok t ->
+            let mode =
+              match t.catch_mode with
+              | Throw_only -> "throw_only"
+              | Catch_policy { policy; _ } ->
+                  Printf.sprintf "policy(ball=%s,max_balls=%d)" policy.ball_name
+                    policy.max_balls
+            in
+            Printf.sprintf "%s attempts=%d" mode t.capture.max_encounters
+        | Error c -> Pokemon_engine.Failure.cause_to_string c)
+      "policy(ball=luxury-ball,max_balls=30) attempts=10";
+    case "apply_timing_delta shifts seed_delay_ms by exact ms"
+      (fun () ->
+        let base =
+          Result.get_ok
+            (Wild_rng_plan.decode
+               (obj
+                  {|{"species": "ekans", "location": "route_10", "tid": 12345,
+                     "sid": 54321, "frame_model": "switch"}|}))
+        in
+        let t0 = Result.get_ok (Wild_rng_plan.target base) in
+        let shifted =
+          Wild_rng_plan.apply_timing_delta ~boot_delta_ms:(-8) ~ingame_delta:0
+            base
+        in
+        let t1 = Result.get_ok (Wild_rng_plan.target shifted) in
+        Printf.sprintf "delta_ms=%d"
+          (t1.timings.seed_delay_ms - t0.timings.seed_delay_ms))
+      "delta_ms=-8";
   ]
 
 let policy_decisions =
@@ -379,7 +491,8 @@ let policy_decisions =
     case "visual non-shiny miss skips catch & throws 0 balls, runs on_miss"
       (decide_policy ~intro_verdict:Not_shiny
          ~catch_outcome:(Caught caught_summary) ~shiny:true ~party:5)
-      "find, intro not_shiny, on_miss => wild_rng_not_shiny_intro (balls=none)";
+      "find, intro not_shiny, on_miss(party=5) => wild_rng_not_shiny_intro \
+       (balls=none)";
     case "visual unknown still catches and checks summary star guard"
       (decide_policy ~intro_verdict:Unknown
          ~catch_outcome:(Caught caught_summary) ~shiny:false ~party:5)
@@ -402,6 +515,284 @@ let policy_decisions =
       (decide_policy ~found:false ~intro_verdict:Shiny
          ~catch_outcome:(Caught caught_summary) ~shiny:true ~party:5)
       "find => wild_rng_no_encounter (balls=none)";
+    case "multi-attempt retries after non-shiny miss and succeeds on attempt 2"
+      (fun () ->
+        let attempt = ref 0 in
+        let steps = ref [] in
+        let add s = steps := s :: !steps in
+        let pc : Wild_rng.policy_catch_steps =
+          {
+            find_encounter =
+              (fun () ->
+                incr attempt;
+                add (Printf.sprintf "find#%d" !attempt);
+                true);
+            detect_shiny = None;
+            on_miss = (fun ~party:_ -> ());
+            catch_battle =
+              (fun () ->
+                add (Printf.sprintf "catch#%d" !attempt);
+                Caught caught_summary);
+            finish_catch = (fun _ -> true);
+          }
+        in
+        let game_steps : Wild_rng.game_steps =
+          {
+            catch = (fun _ ~party:_ -> failwith "unused");
+            policy_catch = Some pc;
+            shiny_at =
+              (fun _ ->
+                let ok = !attempt = 2 in
+                add (Printf.sprintf "summary#%d=%b" !attempt ok);
+                ok);
+            log = ignore;
+            show_counters = ignore;
+          }
+        in
+        let base = Result.get_ok (Wild_rng_plan.decode (obj plan_args)) in
+        let plan = { base.capture with max_encounters = 3 } in
+        let r = Wild_rng.run game_steps plan ~party:5 in
+        Printf.sprintf "%s => %s"
+          (String.concat ", " (List.rev !steps))
+          (Option.value (Wild_rng.failure_code r.end_) ~default:"passes"))
+      "find#1, catch#1, summary#1=false, find#2, catch#2, summary#2=true => \
+       passes";
+    case "visual miss runs on_miss (skipping phase1/2) then retries to shiny"
+      (fun () ->
+        let attempt = ref 0 in
+        let steps = ref [] in
+        let add s = steps := s :: !steps in
+        let pc : Wild_rng.policy_catch_steps =
+          {
+            find_encounter =
+              (fun () ->
+                incr attempt;
+                add (Printf.sprintf "find#%d" !attempt);
+                true);
+            detect_shiny =
+              Some
+                (fun () ->
+                  let v =
+                    if !attempt = 1 then
+                      Frlg_readers.Shiny_encounter_reader.Not_shiny
+                    else Shiny
+                  in
+                  add
+                    (Printf.sprintf "intro#%d=%s" !attempt
+                       (Frlg_readers.Shiny_encounter_reader.verdict_to_string v));
+                  reading_of v);
+            on_miss =
+              (fun ~party ->
+                add (Printf.sprintf "fast_cal#%d(party=%d)" !attempt party));
+            catch_battle =
+              (fun () ->
+                add (Printf.sprintf "policy_catch#%d" !attempt);
+                Caught caught_summary);
+            finish_catch = (fun _ -> true);
+          }
+        in
+        let game_steps : Wild_rng.game_steps =
+          {
+            catch = (fun _ ~party:_ -> failwith "unused");
+            policy_catch = Some pc;
+            shiny_at =
+              (fun slot ->
+                add (Printf.sprintf "summary#%d(slot=%d)" !attempt slot);
+                true);
+            log = ignore;
+            show_counters = ignore;
+          }
+        in
+        let base = Result.get_ok (Wild_rng_plan.decode (obj plan_args)) in
+        let plan = { base.capture with max_encounters = 3 } in
+        let r = Wild_rng.run game_steps plan ~party:5 in
+        Printf.sprintf "%s => %s"
+          (String.concat ", " (List.rev !steps))
+          (Option.value (Wild_rng.failure_code r.end_) ~default:"passes"))
+      "find#1, intro#1=not_shiny, fast_cal#1(party=5), find#2, intro#2=shiny, \
+       policy_catch#2, summary#2(slot=6) => passes";
+    case "wild miss calibration recovers exact delta for non-target species"
+      (fun () ->
+        let plan =
+          Result.get_ok
+            (Wild_rng_plan.decode
+               (obj
+                  {|{"species": "ekans", "location": "route_10", "tid": 12345,
+                     "sid": 54321, "frame_model": "switch"}|}))
+        in
+        let tgt = Result.get_ok (Wild_rng_plan.target plan) in
+        let slots = Result.get_ok (Wild_rng_plan.slots plan) in
+        let delays, seeds =
+          Result.get_ok
+            (Wild_rng_plan.seed_column_of ~seeds:plan.seeds
+               ~seed_shift:plan.seed_shift)
+        in
+        let idx =
+          Option.get
+            (Frlg_rng.Rng_miss_search.find_seed_index ~delays ~seeds
+               ~seed:tgt.seed ~table_delay_ms:tgt.table_delay_ms)
+        in
+        let miss_idx = idx + 1 in
+        let rec find_non_target adv =
+          let st =
+            Frlg_rng.Rng_state.of_seed ~seed:seeds.(miss_idx) ~advance:adv
+              Method1
+          in
+          let e =
+            Frlg_rng.Wild_encounter.pokemon_of_state st slots ~super_rod:false
+          in
+          if e.species <> plan.species then (adv, e)
+          else find_non_target (adv + 1)
+        in
+        let miss_adv, enc = find_non_target (tgt.advance + 15) in
+        let db = Result.get_ok (Frlg_rng.Base_stats.load ()) in
+        let bs = Option.get (Frlg_rng.Base_stats.find db enc.species) in
+        let stats =
+          Frlg_rng.Base_stats.compute_stats ~base:bs.base
+            ~nature:enc.pokemon.nature ~ivs:enc.pokemon.ivs ~level:enc.level
+        in
+        let obs : Frlg_rng.Rng_miss_search.observation =
+          {
+            nature = Some enc.pokemon.nature;
+            gender = Unknown;
+            level = enc.level;
+            stats = Some stats;
+          }
+        in
+        match
+          Rng_miss_calibration.report_and_calibrate_wild ~log:ignore
+            ~label:"Wild RNG" ~species:enc.species ~slots ~super_rod:false
+            ~seeds:plan.seeds ~seed_shift:plan.seed_shift ~target_seed:tgt.seed
+            ~target_delay_ms:tgt.table_delay_ms ~target_advance:tgt.advance
+            ~persist:false obs
+        with
+        | None -> "none"
+        | Some d ->
+            let expected_boot = -(delays.(miss_idx) - tgt.table_delay_ms) in
+            let expected_adv = -(miss_adv - tgt.advance) in
+            Printf.sprintf "non_target=%b boot_ok=%b adv_ok=%b"
+              (enc.species <> plan.species)
+              (d.boot_delta_ms = expected_boot)
+              (d.ingame_delta = expected_adv))
+      "non_target=true boot_ok=true adv_ok=true";
+    case "rolling wild calibration logs history count and splits odd csf_offset"
+      (fun () ->
+        let plan =
+          Result.get_ok
+            (Wild_rng_plan.decode
+               (obj
+                  {|{"species": "ekans", "location": "route_10", "tid": 12345,
+                     "sid": 54321, "frame_model": "switch"}|}))
+        in
+        let tgt = Result.get_ok (Wild_rng_plan.target plan) in
+        let slots = Result.get_ok (Wild_rng_plan.slots plan) in
+        let delays, seeds =
+          Result.get_ok
+            (Wild_rng_plan.seed_column_of ~seeds:plan.seeds
+               ~seed_shift:plan.seed_shift)
+        in
+        let idx =
+          Option.get
+            (Frlg_rng.Rng_miss_search.find_seed_index ~delays ~seeds
+               ~seed:tgt.seed ~table_delay_ms:tgt.table_delay_ms)
+        in
+        let miss_idx = idx + 1 in
+        let miss_adv = tgt.advance + 15 in
+        let st =
+          Frlg_rng.Rng_state.of_seed ~seed:seeds.(miss_idx) ~advance:miss_adv
+            Method1
+        in
+        let enc =
+          Frlg_rng.Wild_encounter.pokemon_of_state st slots ~super_rod:false
+        in
+        let db = Result.get_ok (Frlg_rng.Base_stats.load ()) in
+        let bs = Option.get (Frlg_rng.Base_stats.find db enc.species) in
+        let stats =
+          Frlg_rng.Base_stats.compute_stats ~base:bs.base
+            ~nature:enc.pokemon.nature ~ivs:enc.pokemon.ivs ~level:enc.level
+        in
+        let obs : Frlg_rng.Rng_miss_search.observation =
+          {
+            nature = Some enc.pokemon.nature;
+            gender = Unknown;
+            level = enc.level;
+            stats = Some stats;
+          }
+        in
+        let logs = ref [] in
+        match
+          Rng_miss_calibration.report_and_calibrate_wild_rolling
+            ~log:(fun s -> logs := s :: !logs)
+            ~label:"Wild RNG" ~species:enc.species ~slots ~super_rod:false
+            ~seeds:plan.seeds ~seed_shift:plan.seed_shift ~target_seed:tgt.seed
+            ~target_delay_ms:tgt.table_delay_ms ~target_advance:tgt.advance
+            ~persist:false ~calibrator:Frlg_rng.Rolling_calibrator.empty
+            ~used_boot_offset_ms:0 ~used_ingame_offset:0 obs
+        with
+        | None -> "none"
+        | Some (_cal, est) ->
+            let _, cals =
+              Wild_rng_plan.calibrated_model ~boot_offset_ms:est.boot_offset_ms
+                ~ingame_offset:est.ingame_offset Frlg_rng.Rng_timings.switch
+            in
+            let has_history_log =
+              List.exists
+                (fun s ->
+                  String.starts_with ~prefix:"Wild RNG calibration (history=1):"
+                    s)
+                !logs
+            in
+            Printf.sprintf "n=%d boot=%d ingame=%d csf=%d adj=%d logged=%b"
+              est.sample_count est.boot_offset_ms est.ingame_offset
+              cals.csf_offset cals.ingame_offset has_history_log)
+      "n=1 boot=-17 ingame=-15 csf=1 adj=-16 logged=true";
+    case "live_calibrated_game_steps logs 1-based attempt/total on each reset"
+      (fun () ->
+        let plan =
+          Result.get_ok
+            (Wild_rng_plan.decode
+               (obj
+                  {|{"species": "ekans", "location": "route_10", "tid": 12345,
+                     "sid": 54321, "frame_model": "mgba",
+                     "catch_mode": "phase2", "attempts": 3}|}))
+        in
+        let tgt = Result.get_ok (Wild_rng_plan.target plan) in
+        let logs = ref [] in
+        let steps =
+          Wild_rng_steps.live_calibrated_game_steps
+            ~log:(fun s -> logs := s :: !logs)
+            plan tgt
+        in
+        let pc = Option.get steps.policy_catch in
+        let exception Stop_at_reset in
+        let run_until_reset () =
+          try
+            Effect.Deep.try_with pc.find_encounter ()
+              {
+                effc =
+                  (fun (type a) (eff : a Effect.t) ->
+                    match eff with
+                    | Effects.Reset -> Some (fun _k -> raise Stop_at_reset)
+                    | _ -> None);
+              }
+            |> ignore
+          with Stop_at_reset -> ()
+        in
+        run_until_reset ();
+        run_until_reset ();
+        let attempt_lines =
+          List.rev !logs
+          |> List.filter (fun s ->
+                 String.starts_with ~prefix:"Wild RNG (attempt " s)
+        in
+        let desc = Frlg_rng.Wild_target.describe tgt in
+        let expected1 = Printf.sprintf "Wild RNG (attempt 1/3): %s." desc in
+        let expected2 = Printf.sprintf "Wild RNG (attempt 2/3): %s." desc in
+        Printf.sprintf "count=%d first=%b second=%b"
+          (List.length attempt_lines)
+          (List.nth_opt attempt_lines 0 = Some expected1)
+          (List.nth_opt attempt_lines 1 = Some expected2))
+      "count=2 first=true second=true";
   ]
 
 let decisions =
@@ -495,6 +886,27 @@ let method_decoding =
       check_surf_target "psyduck";
     case "super_rod target search finds shiny shellder in vermilion_city"
       check_super_rod_target "shellder";
+    case "exclude_targets skips parity-locked electabuzz 4ADF/1732"
+      (fun () ->
+        let plan =
+          Result.get_ok
+            (Wild_rng_plan.decode
+               (obj
+                  {|{"species": "electabuzz", "location": "power_plant",
+                     "tid": 15287, "sid": 51290, "frame_model": "switch"}|}))
+        in
+        let first = Result.get_ok (Wild_rng_plan.target plan) in
+        let next =
+          Result.get_ok
+            (Wild_rng_plan.target
+               ~exclude_targets:[ (first.seed, first.advance) ]
+               plan)
+        in
+        Printf.sprintf "first=%04X/%d switched=%b species=%s" first.seed
+          first.advance
+          (next.seed <> first.seed || next.advance <> first.advance)
+          next.encounter.species)
+      "first=4ADF/1732 switched=true species=electabuzz";
   ]
 
 let format_counters_log history =
@@ -513,7 +925,7 @@ let wild_counters_policy ?(found = true) ?intro_verdict ~catch_outcome ~shiny
     {
       find_encounter = (fun () -> found);
       detect_shiny = Option.map (fun v () -> reading_of v) intro_verdict;
-      on_miss = ignore;
+      on_miss = (fun ~party:_ -> ());
       catch_battle = (fun () -> catch_outcome);
       finish_catch = (fun _ -> true);
     }
@@ -567,22 +979,22 @@ let watch_counters_cases =
       "attempt=1/25 phase=reset -> attempt=1/25 phase=encounter -> \
        attempt=1/25 phase=catch -> attempt=1/25 phase=summary -> attempt=1/25 \
        phase=shiny";
-    case "policy visual non-shiny miss stops after encounter phase"
+    case "policy visual non-shiny miss retries across attempts"
       (wild_counters_policy ~intro_verdict:Not_shiny
-         ~catch_outcome:(Caught caught_summary) ~shiny:true ~attempts:10
-         ~party:5)
-      "attempt=1/10 phase=reset -> attempt=1/10 phase=encounter";
+         ~catch_outcome:(Caught caught_summary) ~shiny:true ~attempts:2 ~party:5)
+      "attempt=1/2 phase=reset -> attempt=1/2 phase=encounter -> attempt=2/2 \
+       phase=reset -> attempt=2/2 phase=encounter";
     case "policy without visual check emits reset -> catch -> summary -> shiny"
       (wild_counters_policy ~catch_outcome:(Caught caught_summary) ~shiny:true
          ~attempts:5 ~party:4)
       "attempt=1/5 phase=reset -> attempt=1/5 phase=catch -> attempt=1/5 \
        phase=summary -> attempt=1/5 phase=shiny";
-    case "policy non-shiny summary stops at summary phase"
+    case "policy non-shiny summary stops at summary phase on single attempt"
       (wild_counters_policy ~intro_verdict:Unknown
-         ~catch_outcome:(Caught caught_summary) ~shiny:false ~attempts:3
+         ~catch_outcome:(Caught caught_summary) ~shiny:false ~attempts:1
          ~party:5)
-      "attempt=1/3 phase=reset -> attempt=1/3 phase=encounter -> attempt=1/3 \
-       phase=catch -> attempt=1/3 phase=summary";
+      "attempt=1/1 phase=reset -> attempt=1/1 phase=encounter -> attempt=1/1 \
+       phase=catch -> attempt=1/1 phase=summary";
     case "policy no encounter emits only reset phase"
       (wild_counters_policy ~found:false ~intro_verdict:Shiny
          ~catch_outcome:(Caught caught_summary) ~shiny:true ~attempts:5 ~party:5)
@@ -592,10 +1004,10 @@ let watch_counters_cases =
          ~attempts:25 ~party:5)
       "attempt=1/25 phase=reset -> attempt=3/25 phase=summary -> attempt=3/25 \
        phase=shiny";
-    case "legacy non-shiny catch stops at summary"
-      (wild_counters_legacy ~encounters:2 ~capture_end:All_caught ~shiny:false
-         ~attempts:5 ~party:5)
-      "attempt=1/5 phase=reset -> attempt=2/5 phase=summary";
+    case "legacy non-shiny catch stops at summary on single attempt"
+      (wild_counters_legacy ~encounters:1 ~capture_end:All_caught ~shiny:false
+         ~attempts:1 ~party:5)
+      "attempt=1/1 phase=reset -> attempt=1/1 phase=summary";
     case "full party emits no counters"
       (wild_counters_legacy ~encounters:1 ~capture_end:All_caught ~shiny:true
          ~attempts:5 ~party:6)
