@@ -232,6 +232,7 @@ let run_wild_rng t (plan : Wild_rng_plan.t) () =
     | Error e -> Menu_input.fail "wild_rng_no_target" e
   in
   log ("Wild RNG: " ^ Frlg_rng.Wild_target.describe target ^ ".");
+  let show_counters = Watch_report.counters in
   let find_encounter =
     Wild_rng_steps.find_encounter ~log ~encounter_method:plan.encounter_method
       target.timings
@@ -243,10 +244,11 @@ let run_wild_rng t (plan : Wild_rng_plan.t) () =
   in
   let game_steps : Wild_rng.game_steps =
     {
-      catch = Wild_rng_steps.legacy_catch ~log ~find_encounter;
+      catch = Wild_rng_steps.legacy_catch ~log ~show_counters ~find_encounter;
       policy_catch;
       shiny_at = (fun slot -> Wild_rng_steps.shiny_at ~log ~slot);
       log;
+      show_counters;
     }
   in
   let r =

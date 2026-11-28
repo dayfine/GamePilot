@@ -44,6 +44,12 @@ let bank_home moves : Series.program =
     attempt = attempt moves;
   }
 
-let run_series ~moves ~program ~options ~viewport plan_dir args =
+let run_series ~program ~options ~viewport plan_dir args =
+  let* catalog = Plza_checkpoint_series.Gift_inputs.catalog () in
+  let* moves =
+    Plza_bank_home.Catalog_moves.of_catalog
+      ~today:(Plza_checkpoint_series.Gift_inputs.today ())
+      catalog
+  in
   Series.run_series (bank_home moves) ~program_fields:program ~options ~viewport
     plan_dir args

@@ -14,5 +14,7 @@
   gamepilot.run_flags
   gamepilot.run_options
   gamepilot.repo_io
+  gamepilot.plza_gift_catalog
   gamepilot.plza_readers
-  gamepilot.plza_engine))
+  gamepilot.plza_engine
+  unix))

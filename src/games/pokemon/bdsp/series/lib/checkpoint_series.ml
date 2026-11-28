@@ -34,6 +34,24 @@ type setup = {
 let load_plan ~plan_dir id =
   B.Plan_decode.load (Plan_folder.plan_file ~plan_dir id)
 
+let load_title ~plan_dir id =
+  Result.map
+    (fun (p : B.Plan.t) -> (p.checkpoint.checkpoint_id, p.checkpoint.title))
+    (load_plan ~plan_dir id)
+
+let run_save_game ~log ~picture () =
+  match Bdsp_actions.Save_game.save_game ~log ~picture () with
+  | Ok () -> Ok ()
+  | Error msg -> Error (Failure.cause ~repeats:true "save_game_failed" msg)
+
+let default_program ~run_action =
+  {
+    check_plans = (fun _ -> Ok ());
+    daemon_flags = [];
+    initial_screen = (fun _ -> Switch.Initial_screen.In_game_or_resume None);
+    run_action;
+  }
+
 let failed ~repeats ~at ~reason = Failed { at; reason; repeats }
 
 let result_of = function

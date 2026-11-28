@@ -95,22 +95,44 @@ let find_encounter ~log ?(encounter_method = Wild_rng_plan.Grass) t () =
     | Holds _ -> true
     | Timeout -> false
 
-let capture_steps ~log ~find_encounter plan =
+let capture_steps ~log ?(show_counters = ignore) ~find_encounter
+    (plan : Capture_plan.t) =
   let spot = ref (Pacing.on_patch None) in
+  let base = Capture_steps.make ~log ~spot plan in
+  let total = plan.max_encounters in
+  let attempt = ref 0 in
+  let report phase =
+    show_counters
+      (Wild_rng.watch_counters ~attempt:(max 1 !attempt) ~total ~phase)
+  in
   {
-    (Capture_steps.make ~log ~spot plan) with
-    find_encounter;
+    base with
+    find_encounter =
+      (fun () ->
+        incr attempt;
+        report "reset";
+        find_encounter ());
+    read_encounter =
+      (fun () ->
+        report "encounter";
+        base.read_encounter ());
+    throw_ball =
+      (fun () ->
+        report "catch";
+        base.throw_ball ());
     flee = (fun () -> true);
   }
 
-let game_steps ~log ?encounter_method t plan =
-  capture_steps ~log
+let game_steps ~log ?show_counters ?encounter_method t plan =
+  capture_steps ~log ?show_counters
     ~find_encounter:(find_encounter ~log ?encounter_method t)
     plan
 
-let legacy_catch ~log ~find_encounter capture ~party =
+let legacy_catch ~log ?show_counters ~find_encounter capture ~party =
   Effects.with_probes Frlg_battle.Battle_look.probes (fun () ->
-      Capture.run (capture_steps ~log ~find_encounter capture) capture ~party)
+      Capture.run
+        (capture_steps ~log ?show_counters ~find_encounter capture)
+        capture ~party)
 
 let make_policy_catch ~log ~find_encounter ~visual_shiny_check ~on_miss ~config
     ~policy : Wild_rng.policy_catch_steps =

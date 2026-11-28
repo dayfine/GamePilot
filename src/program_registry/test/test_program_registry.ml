@@ -60,7 +60,7 @@ let bad_plans () =
           let plan_error =
             match p.rules with
             | Plza_story | Pokemon_home | Plza_gifts -> plza_plan_error
-            | Bdsp -> bdsp_plan_error
+            | Bdsp_underground | Bdsp_static_rng -> bdsp_plan_error
             | Pokemon_grid -> frlg_plan_error
           in
           List.filter_map plan_error (plans_in dir))
@@ -137,6 +137,18 @@ let () =
     [
       case "ids are unique" duplicates "";
       case "every doc exists" (missing (fun p -> Some p.doc)) "";
+      case "every doc is under docs/guide/<game>/<short_id>.md"
+        (fun () ->
+          List.filter_map
+            (fun (p : R.t) ->
+              let expected =
+                "docs/guide/" ^ p.game.game_id ^ "/" ^ R.short_id p ^ ".md"
+              in
+              if p.doc = expected then None
+              else Some (p.id ^ ": " ^ p.doc ^ " <> " ^ expected))
+            R.all
+          |> String.concat ", ")
+        "";
       case "every checkpoints folder exists"
         (missing (fun p -> p.checkpoints))
         "";

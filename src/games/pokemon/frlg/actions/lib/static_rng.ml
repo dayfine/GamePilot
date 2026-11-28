@@ -140,15 +140,17 @@ let find_encounter ~log timings () =
 
 let live_game_steps ~log ?(on_miss = ignore) ~timings (plan : plan) :
     Wild_rng.game_steps =
+  let show_counters = Watch_report.counters in
   let find_encounter = find_encounter ~log timings in
   {
-    catch = Wild_rng_steps.legacy_catch ~log ~find_encounter;
+    catch = Wild_rng_steps.legacy_catch ~log ~show_counters ~find_encounter;
     policy_catch =
       Wild_rng_steps.policy_catch_for ~log ~find_encounter ~on_miss
         ~catch_mode:plan.catch_mode ~visual_shiny_check:plan.visual_shiny_check
         plan.capture;
     shiny_at = (fun slot -> Wild_rng_steps.shiny_at ~log ~slot);
     log;
+    show_counters;
   }
 
 let is_retryable = function

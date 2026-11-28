@@ -11,5 +11,7 @@
   gamepilot.engine_series
   gamepilot.run_flags
   gamepilot.run_options
+  gamepilot.repo_io
   gamepilot.bdsp_rules
-  gamepilot.bdsp_engine))
+  gamepilot.bdsp_engine
+  gamepilot.bdsp_actions))

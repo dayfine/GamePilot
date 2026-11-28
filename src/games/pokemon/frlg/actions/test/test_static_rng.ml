@@ -164,6 +164,7 @@ let run_policy_case ~verdicts ~catch_outcome ~shiny_on ~attempts ~party =
           summary_slots := slot :: !summary_slots;
           !find_n = shiny_on);
       log = ignore;
+      show_counters = ignore;
     }
   in
   let r = Static_rng.run steps ~attempts zapdos_capture ~party in
@@ -267,6 +268,7 @@ let test_legacy_retry_loop () =
       policy_catch = None;
       shiny_at = (fun _ -> !n = 2);
       log = ignore;
+      show_counters = ignore;
     }
   in
   let r = Static_rng.run steps ~attempts:3 zapdos_capture ~party:5 in

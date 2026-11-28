@@ -9,6 +9,18 @@
     shiny-locked gifts (Mew, Jirachi), uncatchable Origin Giratina, Shaymin
     (Flower Paradise petal noise), and roamers (Mesprit, Cresselia). *)
 
+(** How the player reaches the encounter from the saved soft-reset position. *)
+type entry_mode =
+  | Ramanas_slate_chamber
+      (** Saved in front of an empty Ramanas Park pedestal ([0PK] room): insert
+          the slate, warp into the Mystery Space, walk up to the legendary, and
+          re-identify under [1PK] before triggering. *)
+  | Standing_at_encounter
+      (** Saved directly in front of the encounter (e.g. Spear Pillar, Lake
+          caverns, Turnback Cave, Stark Mountain, Newmoon Island, Hall of
+          Origin, Old Chateau): recover the seed in place and proceed straight
+          to the encounter trigger without inserting a slate or warping. *)
+
 (** How the final encounter input is scheduled for a static target. *)
 type trigger_kind =
   | Direct_no_pokemon_model
@@ -23,6 +35,9 @@ type t = {
   template : Static_encounter.template;  (** RNG generation template. *)
   base_stats : Static_encounter.base_stats;
       (** Species base stats for summary stat calibration. *)
+  entry_mode : entry_mode;
+      (** Whether the encounter requires a Ramanas Park slate-chamber warp or is
+          triggered directly from the saved standing position. *)
   default_trigger : trigger_kind;  (** Default trigger archetype. *)
   advances_after_accept : int;
       (** Starting blind delay after the final confirm input. *)
