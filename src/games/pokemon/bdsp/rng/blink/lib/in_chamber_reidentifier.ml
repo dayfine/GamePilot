@@ -1,9 +1,8 @@
 module EBR = Bdsp_readers.Eye_blink_reader
 module BE = Bdsp_rng.Blink_extraction
-module BM = Bdsp_rng.Blink_model
 module MR = Bdsp_rng.Mixed_reidentifier
-module SR = Bdsp_rng.State_reidentifier
 module XS = Bdsp_rng.Xorshift128
+module Win = In_chamber_window
 
 type search_bounds = {
   search_min : int;
@@ -38,8 +37,8 @@ type anchor = {
 let ms_per_s = 1000.0
 let poll_timeout_ms = 1000
 let check_period_s = 1.0
-let double_blink_window_s = 0.55
-let tick_gap_margin_s = 0.25
+let trim_extra_blinks = 4
+let max_window_resets = 2
 
 let default_bounds =
   {
@@ -68,6 +67,7 @@ type watch_state = {
   mutable last_lease_s : float;
   mutable last_check_s : float;
   mutable last_event_count : int;
+  mutable resets : int;
   mutable samples_rev : BE.match_sample list;
   mutable raw_gaps_rev : Wire.gap list;
 }
@@ -79,6 +79,7 @@ let make_watch start_s =
     last_lease_s = start_s;
     last_check_s = start_s;
     last_event_count = 0;
+    resets = 0;
     samples_rev = [];
     raw_gaps_rev = [];
   }
@@ -116,69 +117,6 @@ let wire_gaps_of ~origin raw_gaps_rev =
 let all_gaps ~origin samples raw_gaps_rev =
   BE.find_frame_gaps ~origin samples @ wire_gaps_of ~origin raw_gaps_rev
 
-let gap_overlaps ~lo ~hi (g : BE.frame_gap) =
-  g.stop_seconds >= lo && g.start_seconds <= hi
-
-let has_gap_in gaps ~lo ~hi = List.exists (gap_overlaps ~lo ~hi) gaps
-
-let estimate_period config events =
-  match config.bounds.tick_seconds with
-  | Some p -> p
-  | None -> (
-      match BE.fit_tick_period events with
-      | Some fit -> fit.period_seconds
-      | None -> BM.npc_tick_seconds)
-
-let classify_event gaps ~first_s ~period (ev : BE.blink_event) =
-  let rel_s = ev.seconds -. first_s in
-  let tick = int_of_float (Float.round (rel_s /. period)) in
-  let pre_gap =
-    tick > 0
-    && has_gap_in gaps ~lo:(ev.seconds -. double_blink_window_s) ~hi:ev.seconds
-  in
-  if pre_gap then `Drop tick
-  else
-    let post_gap =
-      ev.blink_type = BM.Single
-      && has_gap_in gaps ~lo:ev.seconds ~hi:(ev.seconds +. double_blink_window_s)
-    in
-    let blink_type = if post_gap then None else Some ev.blink_type in
-    `Keep ({ MR.seconds = rel_s; blink_type }, ev.seconds)
-
-let gap_unknown_ticks gaps ~first_s ~period ~last_tick =
-  let rec collect tick acc =
-    if tick >= last_tick then List.rev acc
-    else
-      let t_k = first_s +. (float_of_int tick *. period) in
-      let hit =
-        has_gap_in gaps ~lo:(t_k -. tick_gap_margin_s)
-          ~hi:(t_k +. tick_gap_margin_s)
-      in
-      let acc = if hit then tick :: acc else acc in
-      collect (tick + 1) acc
-  in
-  collect 1 []
-
-let build_reid_inputs config ~gaps events =
-  let first_s = (List.hd events).BE.seconds in
-  let period = estimate_period config events in
-  let kept, dropped =
-    List.fold_left
-      (fun (kept, dropped) ev ->
-        match classify_event gaps ~first_s ~period ev with
-        | `Keep pair -> (pair :: kept, dropped)
-        | `Drop tick -> (kept, tick :: dropped))
-      ([], []) events
-  in
-  let kept = List.rev kept in
-  let blinks = List.map fst kept in
-  let last_ev_s = match List.rev kept with (_, s) :: _ -> s | [] -> first_s in
-  let last_tick =
-    int_of_float (Float.round ((last_ev_s -. first_s) /. period))
-  in
-  let unknown = dropped @ gap_unknown_ticks gaps ~first_s ~period ~last_tick in
-  (blinks, unknown, last_ev_s)
-
 let anchor_of (config : config) ~origin ~last_ev_s ~gaps (res : MR.result) =
   {
     base_state = config.base_state;
@@ -191,33 +129,59 @@ let anchor_of (config : config) ~origin ~last_ev_s ~gaps (res : MR.result) =
     gaps;
   }
 
-let reid_failure_error count (res : MR.result) =
+let reid_failure_error ~gaps (attempt : Win.reid_attempt) =
+  let diag =
+    Win.format_diagnostics ~blinks:attempt.blinks
+      ~unknown_ticks:attempt.unknown_ticks ~gaps
+  in
   let msg =
-    Printf.sprintf "In_chamber_reidentifier: %s (after %d blinks)"
-      res.failure_reason count
+    Printf.sprintf "In_chamber_reidentifier: %s (%s)"
+      attempt.result.failure_reason diag
   in
   `Done (Error msg)
 
-let run_reid config ~origin ~gaps events =
-  let blinks, unknown_ticks, last_ev_s =
-    build_reid_inputs config ~gaps events
+let trim_watch watch ~cutoff_s =
+  watch.samples_rev <-
+    List.filter
+      (fun (s : BE.match_sample) -> s.timestamp >= cutoff_s)
+      watch.samples_rev;
+  watch.raw_gaps_rev <-
+    List.filter
+      (fun (g : Wire.gap) -> g.to_t_ms /. ms_per_s >= cutoff_s)
+      watch.raw_gaps_rev;
+  watch.last_event_count <- 0;
+  watch.resets <- watch.resets + 1
+
+let handle_no_match config watch ~origin ~gaps ~events ~count attempt =
+  let trim_at =
+    min config.bounds.max_blinks (config.bounds.min_blinks + trim_extra_blinks)
   in
-  let req : MR.request =
-    {
-      base_state = config.base_state;
-      search_min = config.bounds.search_min;
-      search_max = config.bounds.search_max;
-      blinks;
-      unknown_ticks;
-      tick_seconds = config.bounds.tick_seconds;
-      order_swap_tolerance = config.bounds.order_swap_tolerance;
-    }
-  in
-  let res = SR.reidentify_with_pokemon_models req in
-  let count = List.length events in
-  if res.success then `Done (Ok (anchor_of config ~origin ~last_ev_s ~gaps res))
-  else if count >= config.bounds.max_blinks then reid_failure_error count res
+  if count >= trim_at && watch.resets < max_window_resets then
+    match Win.trim_cutoff_seconds ~origin events with
+    | Some cutoff_s ->
+        trim_watch watch ~cutoff_s;
+        `Continue
+    | None -> reid_failure_error ~gaps attempt
+  else if count >= config.bounds.max_blinks then
+    reid_failure_error ~gaps attempt
   else `Continue
+
+let evaluate_events (config : config) watch ~origin ~gaps ~events ~count =
+  let eval =
+    Win.evaluate ~base_state:config.base_state
+      ~search_min:config.bounds.search_min ~search_max:config.bounds.search_max
+      ~min_blinks:config.bounds.min_blinks
+      ~tick_seconds:config.bounds.tick_seconds
+      ~order_swap_tolerance:config.bounds.order_swap_tolerance ~gaps events
+  in
+  match eval with
+  | Win.Matched { result; last_ev_s } ->
+      `Done (Ok (anchor_of config ~origin ~last_ev_s ~gaps result))
+  | Win.Ambiguous attempt ->
+      if count >= config.bounds.max_blinks then reid_failure_error ~gaps attempt
+      else `Continue
+  | Win.No_match attempt ->
+      handle_no_match config watch ~origin ~gaps ~events ~count attempt
 
 let check_samples config watch =
   match List.rev watch.samples_rev with
@@ -232,7 +196,29 @@ let check_samples config watch =
       else (
         watch.last_event_count <- count;
         let gaps = all_gaps ~origin samples watch.raw_gaps_rev in
-        run_reid config ~origin ~gaps events)
+        evaluate_events config watch ~origin ~gaps ~events ~count)
+
+let samples_diagnostics config watch ~origin samples =
+  let raw = BE.extract_blinks ~origin samples ~threshold:config.threshold in
+  let events = BE.group_blinks raw in
+  let gaps = all_gaps ~origin samples watch.raw_gaps_rev in
+  let blinks, unknown_ticks, _ =
+    Win.build_reid_inputs ~tick_seconds:config.bounds.tick_seconds ~gaps events
+  in
+  Win.format_diagnostics ~blinks ~unknown_ticks ~gaps
+
+let timeout_error config watch =
+  let diag =
+    match List.rev watch.samples_rev with
+    | [] ->
+        Win.format_diagnostics ~blinks:[] ~unknown_ticks:[]
+          ~gaps:(wire_gaps_of ~origin:watch.start_s watch.raw_gaps_rev)
+    | first :: _ as samples ->
+        samples_diagnostics config watch ~origin:first.timestamp samples
+  in
+  Error
+    (Printf.sprintf "In_chamber_reidentifier: timed out after %.1f s (%s)"
+       config.timeout_seconds diag)
 
 let await_next_frame config watch =
   let pred (m : Effects.measurements) = m.seq > watch.last_seq in
@@ -256,9 +242,7 @@ and loop config watch =
   maybe_renew_lease config watch now_s;
   drain_gaps watch;
   if now_s -. watch.start_s >= config.timeout_seconds then
-    Error
-      (Printf.sprintf "In_chamber_reidentifier: timed out after %.1f s"
-         config.timeout_seconds)
+    timeout_error config watch
   else (
     await_next_frame config watch;
     step_after_frame config watch)

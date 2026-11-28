@@ -119,4 +119,4 @@ the checkpoint (`wild_rng_not_shiny`) before the save, and the runner retries fr
 
 **Next.** A seed calibration from a miss, as the C++ calibrates, so a save needs no measured
 offset, and the Switch's frame model on console. More species, toward the National Pokédex, are
-[Dex Collection](frlg.dex_collection.md)'s.
+[Dex Collection](dex_collection.md)'s.

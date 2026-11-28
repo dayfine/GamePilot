@@ -44,6 +44,8 @@ type game_steps = {
           When [Some _], replaces [catch]. *)
   shiny_at : int -> bool;  (** The party member in this slot shows the star. *)
   log : string -> unit;  (** Writes a line to the run log. *)
+  show_counters : Wire.Watch.counter list -> unit;
+      (** Publishes live [watch.counters] updates to the watch page. *)
 }
 (** Reads and inputs supplied to {!run}. *)
 
@@ -65,6 +67,11 @@ type result = {
       (** [None] when the capture never ran or ended before catching. *)
 }
 (** The action's end and the capture's own result. *)
+
+val watch_counters :
+  attempt:int -> total:int -> phase:string -> Wire.Watch.counter list
+(** Builds the standard [attempt] ([current/total]) and [phase] counter items
+    for [watch.counters]. Shared with {!Wild_rng_steps} and {!Gift_rng}. *)
 
 val run : game_steps -> Capture_plan.t -> party:int -> result
 (** From the overworld with [party] members. *)

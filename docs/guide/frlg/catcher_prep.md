@@ -1,6 +1,6 @@
 # Catcher Prep
 
-Prepares a Spore Parasect sleeper for wild shiny hunts and [Dex Collection](frlg.dex_collection.md).
+Prepares a Spore Parasect sleeper for wild shiny hunts and [Dex Collection](dex_collection.md).
 The False Swipe partner comes from Celadon Game Corner's Scyther (`09-shiny-scyther`), which
 arrives at Lv 25 already knowing False Swipe (learned at Lv 16 in Gen 3 FireRed).
 
@@ -10,7 +10,7 @@ Runs on: mGBA, the Switch (in its GBA app).
 
 ## Before you start
 
-- Stock enough Rare Candies in the bag with [Team Training](frlg.team_training.md) before running
+- Stock enough Rare Candies in the bag with [Team Training](team_training.md) before running
   the leveling checkpoint (roughly 20 to 25 candies cover a freshly caught Lv 5 to 10 Paras to
   Lv 27; more if you also want to level Parasect and Scyther higher afterward).
 - Bring Ultra Balls for the wild catch and keep at least one free party slot.
@@ -60,7 +60,7 @@ sh run/run_checkpoints_on_switch.sh frlg.catcher_prep --from 01-catch-paras --to
 ## Known limits
 
 - `02-train-catchers` stops at Lv 27 (Parasect's Gen 3 Spore level). Feed extra Rare Candies from
-  [Team Training](frlg.team_training.md) if you want Parasect and Scyther at Lv 70 to 100 to
+  [Team Training](team_training.md) if you want Parasect and Scyther at Lv 70 to 100 to
   outspeed and tank higher-level wild encounters.
 - `02-train-catchers` teaches Spore over `scratch` on Parasect. If Paras no longer knows `scratch`,
   `candy_level` declines the new move and fails its `expect_moves` check.
@@ -80,7 +80,7 @@ Implements Phase 1 catcher preparation from `docs/design/FRLG-Dex-Collection.md`
 
 ### Party order for `frlg.dex_collection`
 
-Arrange your party in this order before starting [Dex Collection](frlg.dex_collection.md) with the
+Arrange your party in this order before starting [Dex Collection](dex_collection.md) with the
 Phase 1 catching pair:
 
 1. **Slot 1 — Sleeper**: Spore Parasect.

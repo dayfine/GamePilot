@@ -1,0 +1,1 @@
+{"image": "switch_lab/summary-20261102/sm3_s1.png", "probes": {"summary.gender.female": {"fraction": 0.152221, "kind": "core.color_count@1", "mean": [243.21, 34.75, 3.37]}, "summary.gender.male": {"fraction": 0.0, "kind": "core.color_count@1", "mean": null}}}

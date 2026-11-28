@@ -96,13 +96,16 @@ let () =
     [
       case "the table's items"
         (fun () -> String.concat ", " (Ace_presets.slugs table))
-        "master-ball, luxury-ball";
+        "master-ball, luxury-ball, rare-candy";
       case "Master Ball: 999, then item 1"
         (fun () -> show_code (item "master-ball"))
         "+0xC6 <- 999, +0xC4 <- 1; exits";
       case "Luxury Ball: 999, then item 11"
         (fun () -> show_code (item "luxury-ball"))
         "+0xC6 <- 999, +0xC4 <- 11; exits";
+      case "Rare Candy: 999, then item 68"
+        (fun () -> show_code (item "rare-candy"))
+        "+0xC6 <- 999, +0xC4 <- 68; exits";
       case "every item stores its own id"
         (fun () ->
           List.filter
@@ -114,7 +117,7 @@ let () =
         "";
       case "names Box 5 to 8 by item"
         (fun () -> String.concat " | " (Ace_presets.known_names table 5))
-        "BOX5 | G……o | Q……o";
+        "BOX5 | G……o | J……o | Q……o";
       case "boxes 12 to 14 named A"
         (fun () -> Ace_presets.box_name (item "luxury-ball") 13)
         "A";

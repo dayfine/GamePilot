@@ -44,6 +44,7 @@ val battle_timeout_ms : int
 
 val game_steps :
   log:(string -> unit) ->
+  ?show_counters:(Wire.Watch.counter list -> unit) ->
   ?encounter_method:Wild_rng_plan.encounter_method ->
   Frlg_rng.Rng_timings.t ->
   Capture_plan.t ->

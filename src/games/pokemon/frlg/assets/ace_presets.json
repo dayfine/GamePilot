@@ -40,6 +40,16 @@
         "7": "EEIB!n",
         "8": "EI/!n"
       }
+    },
+    "rare-candy": {
+      "code": "get_item_999",
+      "id": 68,
+      "boxes": {
+        "5": "J……o",
+        "6": "EEEND!n",
+        "7": "EEIB!n",
+        "8": "EI/!n"
+      }
     }
   }
 }
