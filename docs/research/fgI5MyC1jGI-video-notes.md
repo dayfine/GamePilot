@@ -8,9 +8,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 |---|---|
 | 00:00:00–00:05:00 | Reviewed |
 | 00:05:00–00:10:00 | Reviewed |
-| 00:10:00–03:18:16 | Pending |
+| 00:10:00–00:15:00 | Reviewed |
+| 00:15:00–03:18:16 | Pending |
 
-Resume at **00:10:00** during Youngster Tristan’s battle introduction on Route 202.
+Resume at **00:15:00** during the first rival battle on Route 203, after the first Ember against Piplup.
 
 ## Review method
 
@@ -67,3 +68,24 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 - Route 202, in Youngster Tristan’s battle introduction. His first Pokémon and Chimchar’s current battle stats are pending the next block.
 - Chimchar remains the player’s only observed party member. Its last observed level, HP and moves came from the Lake Verity battle. Dawn’s Turtwig and Bidoof belong to the tutorial.
 - Pokédex and Guidebook obtained. Parcel is still awaiting delivery. The player received Potions and Poké Balls, with quantities unverified.
+
+## 10:00–15:00 | Route 202 trainers, Jubilife and the first rival battle
+
+| Video time | Observed action and outcome |
+|---|---|
+| 10:00–10:16 | **Youngster Tristan** sends out male **Starly Lv. 5**. Chimchar starts at **Lv. 5, 20/20 HP**, with **Scratch 35/35** and **Leer 30/30**, confirming recovery since Lake Verity. Starly uses **Quick Attack** before Chimchar uses **Leer**. |
+| 10:17–10:45 | Use **Scratch** three times after Leer. Starly’s remaining attacks are **Tackle**, **Quick Attack**, then **Tackle**, bringing Chimchar from 16 to 12, 8 and finally **4/20 HP**. The third Scratch knocks out Starly. Chimchar gains **50 EXP**, reaches **Lv. 6** and learns **Ember**. |
+| 10:46–11:24 | Follow the path to **Lass Natalie**. Chimchar starts at **7/23 HP** against her first female **Bidoof Lv. 3**. **Ember** burns it. Its **Tackle** drops Chimchar to **6/23 HP**, then burn damage and **Scratch** finish Bidoof. |
+| 11:25–11:53 | Natalie sends out a second female **Bidoof Lv. 3**. Repeat **Ember** (burn), then **Scratch** after Bidoof’s **Tackle** and the burn damage. Chimchar falls to **5/23 HP** before leveling to **Lv. 7**. |
+| 11:54–12:39 | Cross the grass to **Youngster Logan**. His male **Shinx Lv. 5** triggers **Intimidate**. Chimchar starts at **7/25 HP** and uses **Ember** twice. Shinx uses **Leer** between the two attacks. Continue past Logan and through the last patch. |
+| 12:40–13:11 | Enter **Jubilife City**. Dawn points out the **Trainers’ School**. Enter, talk to the rival by the chalkboard, deliver the **Parcel**, and receive the **Town Map**. Leave after the rival departs. |
+| 13:12–13:50 | Start the **Pokétch** campaign by speaking with its organizer near the Pokémon Center. Collect **Coupon 1** outside the Poké Mart, **Coupon 3** outside the TV station, then **Coupon 2** from the clown west of the station. Return to the organizer and receive the **Pokétch**. |
+| 13:51–14:17 | Leave Jubilife east to **Route 203** and trigger the rival battle. The rival leads with male **Starly Lv. 7**. Chimchar begins at **Lv. 7, 7/25 HP**, with **Scratch 30/35**, **Leer 29/30** and **Ember 21/25**. |
+| 14:18–14:44 | The first **Ember** burns Starly. Starly’s **Tackle** reduces Chimchar to **4/25 HP**. On the next turn, **Quick Attack** leaves Chimchar at **1/25 HP**. The second Ember and another tick of burn damage finish Starly. Chimchar reaches **Lv. 8**. |
+| 14:45–15:00 | Against male **Piplup Lv. 9**, open the Bag at **3/27 HP** with **10 Potions** visible. Use one Potion to reach **23/27 HP**. Piplup uses **Growl**. Choose **Ember**, which lands just before the boundary. |
+
+### State at 15:00
+
+- Route 203 rival battle. Starly has fainted. Piplup remains active with green HP after the first Ember. Its response is pending at the boundary.
+- Chimchar is **Lv. 8, 23/27 HP**, with one Growl applied. Last visible PP before the attack was **Scratch 30/35**, **Leer 29/30**, and **Ember 19/25**. Ember should have **18/25** after the attack.
+- Parcel delivered. Town Map and Pokétch obtained. **9 Potions** remain by count after the observed use.
