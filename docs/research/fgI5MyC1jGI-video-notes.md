@@ -28,9 +28,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 01:35:00–01:40:00 | Reviewed |
 | 01:40:00–01:45:00 | Reviewed |
 | 01:45:00–01:50:00 | Reviewed |
-| 01:50:00–03:18:16 | Pending |
+| 01:50:00–01:55:00 | Reviewed |
+| 01:55:00–03:18:16 | Pending |
 
-Resume at **01:50:00** at Byron’s platform just after the Mine Badge is awarded.
+Resume at **01:55:00** riding north on Route 217 after Ace Trainer Dalton.
 
 ## Review method
 
@@ -460,3 +461,19 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 | 1:49:52–1:50:00 | Byron awards the Mine Badge. |
 
 **State at 1:50:00.** Six badges. Kazza is Lv. 40 at 32/95 HP and holds Choice Specs. Lead Monferno is Lv. 28, fainted, and holds Wise Glasses. The player is still on Byron’s platform.
+
+## 1:50:00–1:55:00 | Canalave Library, Mt. Coronet, and Route 217
+
+| Video time | Observed action |
+| --- | --- |
+| 1:50:00–1:50:30 | Receive TM91 Flash Cannon from Byron. Exit the Gym via the lifts and set the Pokétch to its step counter. The rival meets the player outside and heads to the library. |
+| 1:50:31–1:51:18 | Enter Canalave Library and go upstairs. Rowan, Dawn, and the rival discuss investigating the three lakes. A tremor interrupts the briefing. |
+| 1:51:19–1:52:04 | Go downstairs and outside, where a sailor reports the explosion. Rowan sends the player to Lake Valor. Open the Town Map and Fly to Celestic Town, then ride toward the western exit. |
+| 1:52:05–1:52:24 | Use a Super Potion to heal Kazza from 32/95 to 92/95 HP and activate a Super Repel. Teach Kazza TM21 Dazzling Gleam in place of Grass Knot. Move Kazza back to the lead. |
+| 1:52:25–1:52:56 | Go west through Route 211 into Mt. Coronet. Use Strength to move the boulder and Rock Smash to reach the first Rare Candy. |
+| 1:52:57–1:53:21 | Enter the foggy lower passage, collect a second Rare Candy, and backtrack out of that passage. Reapply Super Repel at the expiration prompt and exit onto Route 216. |
+| 1:53:22–1:53:49 | Ride west along the lower snow path, past the rest house, then north onto Route 217. Ace Trainer Dalton intercepts the player. |
+| 1:53:52–1:54:54 | Kazza KOs Raichu Lv. 34, Hippopotas Lv. 38, and Pelipper Lv. 36 with Psychic. Kazza takes hail damage after Raichu. Hippopotas changes the weather with Sand Stream, and Kazza takes sandstorm damage after Hippopotas. Kazza reaches Lv. 41. |
+| 1:54:55–1:55:00 | Resume riding north in the Route 217 blizzard. |
+
+**State at 1:55:00.** Kazza leads at Lv. 41 and 83/97 HP with Choice Specs. Monferno remains fainted at Lv. 28 with Wise Glasses. Three Rare Candies and 20 Super Repels remain. One repel is active.
