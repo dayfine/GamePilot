@@ -14,9 +14,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 00:25:00–00:30:00 | Reviewed |
 | 00:30:00–00:35:00 | Reviewed |
 | 00:35:00–00:40:00 | Reviewed |
-| 00:40:00–03:18:16 | Pending |
+| 00:40:00–00:45:00 | Reviewed |
+| 00:45:00–03:18:16 | Pending |
 
-Resume at **00:40:00** inside Eterna Gym as the first trainer battle starts.
+Resume at **00:45:00** during Gardenia’s first battle, after Cherubi’s first Dazzling Gleam.
 
 ## Review method
 
@@ -194,3 +195,22 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 - Inside **Eterna Gym**. Gardenia’s entry dialogue is complete and the first trainer battle is about to begin.
 - **Monferno Lv. 17** leads with a **Cheri Berry**. Its last visible HP was **53/53**, and it took no damage in the Psychic double battle. **Kazza** is now **Kadabra Lv. 16** with **Confusion** and the **Pecha Berry**.
 - Cheryl has left. **9 Repels** remain by the observed uses, and the last one expired in Eterna City.
+
+## 40:00–45:00 | Eterna Gym’s four trainers and Gardenia’s opening turn
+
+| Video time | Observed action and outcome |
+|---|---|
+| 40:00–40:32 | **Lass Caroline** leads with female **Cherubi Lv. 15**. Use **Ember** twice, with **Growth** between the hits. |
+| 40:33–41:00 | Caroline sends out female **Roselia Lv. 15**. Use two more Embers. Roselia’s **Leech Seed** misses. **Monferno** reaches **Lv. 18** and **Kazza** reaches **Lv. 17**. Caroline directs the player past the two boulders. |
+| 41:01–41:42 | Follow the left-side maze path to **Aroma Lady Jenna**. Use two Embers on her first **Budew**. It lands **Stun Spore** between them, and Monferno’s **Cheri Berry** immediately cures the paralysis. The second Ember is a critical hit. |
+| 41:43–42:29 | One Ember knocks out Jenna’s second Budew. Start with **Taunt** against her third Budew, blocking **Stun Spore**, then use two Embers. Budew uses **Absorb** between the Embers. |
+| 42:30–43:25 | Follow the maze around to **Aroma Lady Angela**. Her male **Turtwig Lv. 17** uses **Tackle** between two Embers. Monferno reaches **Lv. 19** and replaces **Ember** in slot 3 with **Flame Wheel**. |
+| 43:26–44:10 | Head through the right-side paths to **Beauty Lindsay**. One **Flame Wheel** knocks out female **Roselia Lv. 17**, whose **Poison Point** poisons Monferno on contact. **Kazza** reaches **Lv. 18**. |
+| 44:11–44:42 | Return toward the northern platform. Use an **Antidote** on Monferno before approaching **Gardenia**. Start the Gym Leader battle. |
+| 44:43–45:00 | Gardenia leads with female **Cherubi Lv. 19**. Monferno starts at **50/59 HP** and uses **Power-Up Punch** to raise Attack. Cherubi’s **Dazzling Gleam** drops Monferno to **35/59 HP**. |
+
+### State at 45:00
+
+- Gardenia battle, turn two selection about to begin. **Cherubi** is still active.
+- **Monferno Lv. 19, 35/59 HP**, with one Attack boost. Moves are **Power-Up Punch**, **Mach Punch**, **Flame Wheel** and **Taunt**. Cheri Berry was consumed against Jenna, and poison from Lindsay’s Roselia was cured.
+- **Kazza Lv. 18** is second. **1 Antidote** remains after the observed use.
