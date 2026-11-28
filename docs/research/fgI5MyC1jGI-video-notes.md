@@ -4,50 +4,19 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 
 ## Coverage
 
-| Video interval | Status |
-|---|---|
-| 00:00:00–00:05:00 | Reviewed |
-| 00:05:00–00:10:00 | Reviewed |
-| 00:10:00–00:15:00 | Reviewed |
-| 00:15:00–00:20:00 | Reviewed |
-| 00:20:00–00:25:00 | Reviewed |
-| 00:25:00–00:30:00 | Reviewed |
-| 00:30:00–00:35:00 | Reviewed |
-| 00:35:00–00:40:00 | Reviewed |
-| 00:40:00–00:45:00 | Reviewed |
-| 00:45:00–00:50:00 | Reviewed |
-| 00:50:00–00:55:00 | Reviewed |
-| 00:55:00–01:00:00 | Reviewed |
-| 01:00:00–01:05:00 | Reviewed |
-| 01:05:00–01:10:00 | Reviewed |
-| 01:10:00–01:15:00 | Reviewed |
-| 01:15:00–01:20:00 | Reviewed |
-| 01:20:00–01:25:00 | Reviewed |
-| 01:25:00–01:30:00 | Reviewed |
-| 01:30:00–01:35:00 | Reviewed |
-| 01:35:00–01:40:00 | Reviewed |
-| 01:40:00–01:45:00 | Reviewed |
-| 01:45:00–01:50:00 | Reviewed |
-| 01:50:00–01:55:00 | Reviewed |
-| 01:55:00–02:00:00 | Reviewed |
-| 02:00:00–02:05:00 | Reviewed |
-| 02:05:00–02:10:00 | Reviewed |
-| 02:10:00–02:15:00 | Reviewed |
-| 02:15:00–02:20:00 | Reviewed |
-| 02:20:00–02:25:00 | Reviewed |
-| 02:25:00–02:30:00 | Reviewed |
-| 02:30:00–02:35:00 | Reviewed |
-| 02:35:00–02:40:00 | Reviewed |
-| 02:40:00–02:45:00 | Reviewed |
-| 02:45:00–02:50:00 | Reviewed |
-| 02:50:00–02:55:00 | Reviewed |
-| 02:55:00–03:00:00 | Reviewed |
-| 03:00:00–03:05:00 | Reviewed |
-| 03:05:00–03:10:00 | Reviewed |
-| 03:10:00–03:15:00 | Reviewed |
-| 03:15:00–03:18:16 | Reviewed |
+The sampled visual review covers **00:00–3:18:16** in **40 consecutive blocks**. The intervals below use playback time. Each link opens the first block of that phase.
 
-Review complete through **03:18:16**, the end of the recording.
+| Playback interval | Blocks | Route phase |
+|---|---:|---|
+| 00:00–25:00 | 5 | [Twinleaf through Roark](#00000500--switch-setup-twinleaf-town-and-first-starly-battle) |
+| 25:00–50:00 | 5 | [Jubilife, Floaroma and Eterna](#25003000--jubilife-galactic-double-battle-and-floaroma-meadow) |
+| 50:00–1:20:00 | 6 | [Hearthome rival, Maylene and Pastoria Gym](#50005500--jupiter-the-explorer-kit-and-cycling-road) |
+| 1:20:00–1:55:00 | 7 | [Wake, Celestic, Fantina and Byron](#1200012500--crasher-wake-and-the-galactic-grunt-chase) |
+| 1:55:00–2:25:00 | 6 | [Lakes, Candice and Galactic HQ](#1550020000--rock-climb-lake-valor-and-lake-verity) |
+| 2:25:00–2:55:00 | 6 | [Spear Pillar, Palkia and Volkner](#2250023000--spear-pillar-and-mars-and-jupiter) |
+| 2:55:00–3:18:16 | 5 | [Victory Road, League and Hall of Fame](#2550030000--victory-road-exit-and-pokémon-league-arrival) |
+
+The [battle audit](fgI5MyC1jGI-battle-audit.md) indexes trainer, wild and tutorial encounters separately from this route transcript. It records entry states, battle actions and modeled outcomes. The final battle ends at about **3:16:38**. The Hall of Fame and the start of the credits occupy the remainder of the review.
 
 ## Review method
 
