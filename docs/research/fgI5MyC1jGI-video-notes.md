@@ -33,9 +33,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 02:00:00–02:05:00 | Reviewed |
 | 02:05:00–02:10:00 | Reviewed |
 | 02:10:00–02:15:00 | Reviewed |
-| 02:15:00–03:18:16 | Pending |
+| 02:15:00–02:20:00 | Reviewed |
+| 02:20:00–03:18:16 | Pending |
 
-Resume at **02:15:00** during the first Cyrus fight, just after Kazza’s Dazzling Gleam hits Murkrow.
+Resume at **02:20:00** entering the next interior passage on the way up Mt. Coronet.
 
 ## Review method
 
@@ -541,3 +542,17 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 | 2:14:47–2:15:00 | Cyrus leads with Murkrow Lv. 40. Kazza uses Dazzling Gleam. |
 
 **State at 2:15:00.** In the first Cyrus battle at Galactic HQ. Kazza is Lv. 48 at 112/112 HP with Wise Glasses, and Monferno is Lv. 30 at 88/88 HP with Choice Specs. The Galactic Key and the Full Restore are in the Bag.
+
+## 2:15:00–2:20:00 | Galactic HQ bosses and Mt. Coronet ascent
+
+| Video time | Observed action |
+| --- | --- |
+| 2:15:00–2:15:42 | Cyrus’s Murkrow faints to the opening Dazzling Gleam. Kazza KOs Golbat Lv. 40 with Psyshock. Sneasel Lv. 43 moves first with Icy Wind and lowers Kazza’s Speed, then falls to Dazzling Gleam. Monferno reaches Lv. 31 during the fight. |
+| 2:15:48–2:16:26 | Cyrus gives the Master Ball and leaves. Take the yellow warp pad to the east, cross the lab with green tanks, and enter the room with the captured lake Pokémon to challenge Saturn. |
+| 2:16:30–2:17:19 | Kazza KOs Kadabra Lv. 38 with Shadow Ball, Toxicroak Lv. 40 with Psyshock, and Bronzor Lv. 38 with Shadow Ball. Kazza reaches Lv. 49 and Monferno reaches Lv. 32. |
+| 2:17:25–2:18:07 | Press the machine button to free Uxie, Mesprit, and Azelf. Saturn mentions the Red Chain and Mt. Coronet. Return through the lab and take the green warp pad to the room with crates, then exit HQ. |
+| 2:18:08–2:18:47 | Use Super Repel, Fly to Oreburgh City, and ride north and east via Route 207 to Mt. Coronet. |
+| 2:18:48–2:19:39 | Surf across the first interior pool, use Rock Climb on the far wall, and take the stairs. Reapply Super Repel, cross the wooden walkways, and pass the Grunts to reach the snowy exterior. |
+| 2:19:41–2:20:00 | Follow the snowy ledge east, use Rock Climb again, and reapply Super Repel. Continue across the grass into the next opening. |
+
+**State at 2:20:00.** Kazza is Lv. 49 at 101/114 HP with Wise Glasses, and Monferno is Lv. 32 at 93/93 HP with Choice Specs. The Master Ball remains unused. Twelve Super Repels remain and one is active. The player is ascending Mt. Coronet.
