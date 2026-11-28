@@ -19,9 +19,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 00:50:00–00:55:00 | Reviewed |
 | 00:55:00–01:00:00 | Reviewed |
 | 01:00:00–01:05:00 | Reviewed |
-| 01:05:00–03:18:16 | Pending |
+| 01:05:00–01:10:00 | Reviewed |
+| 01:10:00–03:18:16 | Pending |
 
-Resume at **01:05:00** on Route 215 immediately after defeating Ace Trainer Maya.
+Resume at **01:10:00** inside Veilstone Gym after Black Belt Rafael, partway through the sliding-wall puzzle.
 
 ## Review method
 
@@ -299,3 +300,22 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 - On **Route 215** after Maya’s defeat, before the remaining approach to Veilstone.
 - **Kazza Lv. 24** leads and knows **Teleport**, **Confusion**, **Grass Knot** and **Shock Wave**. It was restored to full HP before Maya and took no HP damage in that battle. **Monferno Lv. 24** is second with **Power-Up Punch**, **Mach Punch**, **Stealth Rock** and **Taunt**, with **37/69 HP** last shown before leveling.
 - Strength unlocked. The normal Revive was used and **12 Energy Roots** remain. The route added a Zinc and a second Ether.
+
+## 1:05:00–1:10:00 | Veilstone shopping and the gym approach
+
+| Video time | Observed action and outcome |
+|---|---|
+| 1:05:00–1:05:30 | Trigger **Ace Trainer Dennis** immediately after Maya. One **Confusion** knocks out his male **Monferno Lv. 23**. Kazza reaches **Lv. 25** and declines **Recover**. |
+| 1:05:31–1:06:13 | Dennis sends out male **Gyarados Lv. 23**, which triggers **Intimidate** and is knocked out by one **Shock Wave**. Ride east through the gatehouse to **Veilstone City**, where Repel expires, and enter the **Department Store**. |
+| 1:06:14–1:06:43 | At the ground-floor counter, sell **19 Poké Balls**, **1 Zinc** and the remaining copies of **TM98**, **TM76**, **TM86**, **TM93**, **TM96** and **TM66**. Honey is quoted but still appears in the Bag later. Buy **4 Super Repels** for **₽2,000**. |
+| 1:06:44–1:07:20 | Take the escalators to the TM counter and buy **one each of TM35 Flamethrower, TM29 Psychic and TM21 Dazzling Gleam**, **₽3,000** each. Return to the vitamin counter and buy **one Calcium** for **₽9,800**. |
+| 1:07:21–1:07:49 | Buy **11 X Speeds (₽3,850)**, **11 X Defenses (₽6,050)**, **1 X Accuracy (₽950)**, **4 X Sp. Defs (₽1,400)** and **28 X Sp. Atks (₽9,800)**. Return downstairs and leave. |
+| 1:07:50–1:08:20 | Speak to the NPC at the meteorites for the held item **Metronome**. Use the purchased **Calcium** on Kazza and give it the **Metronome**. Teach Kazza **Psychic** over **Teleport**, and Monferno **Flamethrower** over **Power-Up Punch**. Keep the purchased Dazzling Gleam TM in the Bag. |
+| 1:08:21–1:09:10 | Ride to the gym, advance **Dawn’s** dialogue and enter. Move sliding walls while working around the central and right-hand enclosures, then approach the lower-right trainer. |
+| 1:09:11–1:10:00 | **Black Belt Rafael** sends out male **Meditite Lv. 28**. **Kazza Lv. 25, 62/62 HP** knocks it out with one **Psychic**. Resume the sliding-wall puzzle in the right and central lanes. |
+
+### State at 1:10:00
+
+- Inside **Veilstone Gym**, with Rafael defeated and the sliding-wall puzzle still in progress.
+- **Kazza Lv. 25, 62/62 HP** leads and holds **Metronome**. Moves are **Psychic**, **Confusion**, **Grass Knot** and **Shock Wave**. **Monferno Lv. 24**, last visible **40/72 HP**, knows **Flamethrower**, **Mach Punch**, **Stealth Rock** and **Taunt**.
+- Battle-item stock is **11 X Speeds**, **11 X Defenses**, **1 X Accuracy**, **4 X Sp. Defs** and **28 X Sp. Atks**. **4 Super Repels** and **TM21 Dazzling Gleam** are in the Bag.
