@@ -165,14 +165,26 @@ let test_precheck_skips_chamber_when_no_early_shiny () =
   | WF.Exhausted { attempts = 1; _ } -> ()
   | _ -> fail "expected pre-chamber rejection to exhaust after 1 attempt"
 
+let string_contains ~sub s =
+  let sub_len = String.length sub in
+  let s_len = String.length s in
+  let rec loop i =
+    if i + sub_len > s_len then false
+    else if String.sub s i sub_len = sub then true
+    else loop (i + 1)
+  in
+  loop 0
+
 let test_shiny_hit_attempt_one () =
   let resets = ref 0 in
   let delay = ref None in
+  let logs = ref [] in
   let opts = { (default_opts ()) with delay_ms = 250 } in
-  let steps =
+  let base =
     make_fake_steps ~readings:[ shiny_reading ] ~resets ~captured_delay_ms:delay
       ()
   in
+  let steps = { base with log = (fun line -> logs := line :: !logs) } in
   let outcome = WF.run ~steps opts in
   let expected =
     WF.Shiny_found
@@ -180,7 +192,14 @@ let test_shiny_hit_attempt_one () =
   in
   check_eq "shiny found on attempt 1" ~expected ~actual:outcome;
   check_eq "no soft reset after shiny hit" ~expected:0 ~actual:!resets;
-  check_eq "delay_ms forwarded" ~expected:(Some 250.0) ~actual:!delay
+  check_eq "delay_ms forwarded" ~expected:(Some 250.0) ~actual:!delay;
+  let all_logs = String.concat "\n" (List.rev !logs) in
+  check_eq "logs pk_phase on anchor lock" ~expected:true
+    ~actual:(string_contains ~sub:"pk_phase=[0.00..0.42]s" all_logs);
+  check_eq "logs margin on trigger" ~expected:true
+    ~actual:(string_contains ~sub:"margin=0.50s" all_logs);
+  check_eq "logs jitter on trigger" ~expected:true
+    ~actual:(string_contains ~sub:"jitter=+50ms" all_logs)
 
 let test_standing_at_encounter_skips_chamber () =
   let resets = ref 0 in

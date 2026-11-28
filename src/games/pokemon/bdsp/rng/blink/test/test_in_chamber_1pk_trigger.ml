@@ -290,6 +290,127 @@ let test_end_to_end_legendary ~target_id ~base_state ~start_advance ~true_period
       | _ -> fail (target_id ^ " expected [Submit A; Submit_at confirm_t_ms A]")
       )
 
+let string_contains ~sub s =
+  let sub_len = String.length sub in
+  let s_len = String.length s in
+  let rec loop i =
+    if i + sub_len > s_len then false
+    else if String.sub s i sub_len = sub then true
+    else loop (i + 1)
+  in
+  loop 0
+
+let inject_spurious_dip frames ~origin_t_ms ~at_seconds =
+  Array.map
+    (fun (frame : Wire.frame) ->
+      let t_s = (frame.t_ms -. origin_t_ms) /. 1000.0 in
+      if Float.abs (t_s -. at_seconds) <= 0.045 then
+        {
+          frame with
+          probes =
+            [
+              ( player_probe_id,
+                Wire.Template_ncc { score = 0.30; x = 0.46; y = 0.41 } );
+            ];
+        }
+      else frame)
+    frames
+
+let rec find_wide_gap = function
+  | (a : STL.event) :: ((b : STL.event) :: _ as rest) ->
+      if b.time_seconds -. a.time_seconds >= 1.8 then (a, b)
+      else find_wide_gap rest
+  | _ -> fail "no wide gap between early blinks"
+
+let test_suffix_recovery_after_corrupted_early_blink () =
+  let base_state : XS.state =
+    { s0 = 0x1122_3344; s1 = 0x5566_7788; s2 = 0x99aa_bbcc; s3 = 0xddee_ff01 }
+  in
+  let start_advance = 2400 in
+  let origin_t_ms = 5000.0 in
+  let frames, player_blinks, _ =
+    synthesize_1pk_frames ~base_state ~start_advance ~true_period:1.0197
+      ~first_pk_s:4.3 ~origin_t_ms
+  in
+  let prev_ev, clean_start_ev = find_wide_gap player_blinks in
+  (* Inject a spurious extra blink midway between [prev_ev] and [clean_start_ev]
+     so every prefix containing the glitch has 0 candidates, while the suffix
+     starting at [clean_start_ev] is clean and must lock via suffix sliding. *)
+  let glitch_s = (prev_ev.time_seconds +. clean_start_ev.time_seconds) /. 2.0 in
+  let corrupted_frames =
+    inject_spurious_dip frames ~origin_t_ms ~at_seconds:glitch_s
+  in
+  let reid_cfg =
+    {
+      (ICR.default_config ~picture:full_pic ~target:player_target ~base_state) with
+      bounds =
+        {
+          ICR.default_bounds with
+          search_min = 0;
+          search_max = 10_000;
+          min_blinks = 10;
+          max_blinks = 18;
+        };
+    }
+  in
+  let anchor_res, _ =
+    run_with_frames ~frames:corrupted_frames ~injected_gaps:[]
+      ~start_t_ms:origin_t_ms (fun () -> ICR.run reid_cfg)
+  in
+  match anchor_res with
+  | Error msg -> fail ("suffix recovery failed: " ^ msg)
+  | Ok anchor ->
+      let expected_first = start_advance + clean_start_ev.advance in
+      assert_true "suffix recovery locked exact clean suffix first blink"
+        (anchor.advances_to_first_blink = expected_first);
+      assert_true "suffix recovery locked last advance > first"
+        (anchor.advances_to_last_blink > anchor.advances_to_first_blink)
+
+let test_no_match_failure_includes_diagnostics () =
+  let true_state : XS.state =
+    { s0 = 0x1122_3344; s1 = 0x5566_7788; s2 = 0x99aa_bbcc; s3 = 0xddee_ff01 }
+  in
+  let wrong_state : XS.state =
+    { s0 = 0xdead_beef; s1 = 0x0123_4567; s2 = 0x89ab_cdef; s3 = 0xfeed_face }
+  in
+  let origin_t_ms = 5000.0 in
+  let frames, _, injected_gap =
+    synthesize_1pk_frames ~base_state:true_state ~start_advance:2400
+      ~true_period:1.0197 ~first_pk_s:4.3 ~origin_t_ms
+  in
+  let reid_cfg =
+    {
+      (ICR.default_config ~picture:full_pic ~target:player_target
+         ~base_state:wrong_state)
+      with
+      bounds =
+        {
+          ICR.default_bounds with
+          search_min = 0;
+          search_max = 500;
+          min_blinks = 8;
+          max_blinks = 10;
+        };
+    }
+  in
+  let res, _ =
+    run_with_frames ~frames ~injected_gaps:[ injected_gap ]
+      ~start_t_ms:origin_t_ms (fun () -> ICR.run reid_cfg)
+  in
+  match res with
+  | Ok _ -> fail "expected genuine no-match to return Error"
+  | Error msg ->
+      assert_true "diagnostic includes blink count"
+        (string_contains ~sub:"blinks;" msg);
+      assert_true "diagnostic includes types"
+        (string_contains ~sub:"types=" msg);
+      assert_true "diagnostic includes intervals"
+        (string_contains ~sub:"dt=[" msg && string_contains ~sub:"]s" msg);
+      assert_true "diagnostic includes unknown ticks"
+        (string_contains ~sub:"unknown=[" msg);
+      assert_true "diagnostic includes gap count"
+        (string_contains ~sub:"gaps=" msg)
+
 let () =
   test_end_to_end_legendary ~target_id:"kyogre"
     ~base_state:
@@ -299,4 +420,6 @@ let () =
     ~base_state:
       { s0 = 0x2468_ace0; s1 = 0x1357_9bdf; s2 = 0xfedc_ba98; s3 = 0x7654_3210 }
     ~start_advance:3100 ~true_period:1.0170 ~first_pk_s:6.1;
+  test_suffix_recovery_after_corrupted_early_blink ();
+  test_no_match_failure_includes_diagnostics ();
   print_endline "OK"
