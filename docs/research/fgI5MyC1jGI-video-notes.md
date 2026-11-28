@@ -32,9 +32,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 01:55:00–02:00:00 | Reviewed |
 | 02:00:00–02:05:00 | Reviewed |
 | 02:05:00–02:10:00 | Reviewed |
-| 02:10:00–03:18:16 | Pending |
+| 02:10:00–02:15:00 | Reviewed |
+| 02:15:00–03:18:16 | Pending |
 
-Resume at **02:10:00** in the Galactic Warehouse during Scientist Fredrick’s opening send-out.
+Resume at **02:15:00** during the first Cyrus fight, just after Kazza’s Dazzling Gleam hits Murkrow.
 
 ## Review method
 
@@ -524,3 +525,19 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 | 2:09:10–2:10:00 | Take the stairways up, use the yellow warp pads, and take the stairs into the room with a yellow table. Scientist Fredrick challenges the player and starts with Kadabra. |
 
 **State at 2:10:00.** Seven badges. Kazza is Lv. 47 at 34/110 HP and remains the only party member, holding Wise Glasses. Monferno is boxed with Choice Specs. The Storage Key was used, and Fredrick’s battle is beginning.
+
+## 2:10:00–2:15:00 | Galactic Key and headquarters battles
+
+| Video time | Observed action |
+| --- | --- |
+| 2:10:00–2:10:32 | Kazza KOs both of Scientist Fredrick’s Kadabra Lv. 35 with Dazzling Gleam. |
+| 2:10:33–2:10:55 | Take the other stairs down to the basement, pass the crates, and pick up the Galactic Key. Use it on the locked door and return to the warehouse exit. |
+| 2:10:56–2:11:27 | Cross Veilstone to Galactic HQ and use the center entrance. Open the locked door with the Galactic Key, take the stairs, and pass the first Grunt in the upper hallway. Battle the next Grunt. |
+| 2:11:30–2:12:09 | Kazza KOs Golbat Lv. 36 and Silcoon Lv. 34 with Psychic. Golbat uses Quick Guard before fainting, and Kazza reaches Lv. 48. |
+| 2:12:10–2:12:43 | Wait beside the defeated Grunt, pass the other patrol, and take the warp pad to the room with beds. Rest to heal Kazza and restore PP, then withdraw Monferno from the Boxes. Go upstairs and collect the Full Restore in the east corner. |
+| 2:12:44–2:13:22 | Fight the two Grunts together. Kazza’s Dazzling Gleam KOs Stunky Lv. 36 and Croagunk Lv. 33. Monferno reaches Lv. 30. Its queued Flamethrower fails after both targets faint. |
+| 2:13:23–2:14:09 | Dazzling Gleam KOs Glameow Lv. 33 and Croagunk Lv. 36, then the final Stunky Lv. 33. |
+| 2:14:11–2:14:44 | Go west and around the corner, take the lower-left warp pad, and use the stairs. Unlock Cyrus’s door with the Galactic Key and enter the battle. |
+| 2:14:47–2:15:00 | Cyrus leads with Murkrow Lv. 40. Kazza uses Dazzling Gleam. |
+
+**State at 2:15:00.** In the first Cyrus battle at Galactic HQ. Kazza is Lv. 48 at 112/112 HP with Wise Glasses, and Monferno is Lv. 30 at 88/88 HP with Choice Specs. The Galactic Key and the Full Restore are in the Bag.
