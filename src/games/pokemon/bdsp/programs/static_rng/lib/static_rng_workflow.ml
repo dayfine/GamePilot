@@ -117,17 +117,23 @@ let run_attempt ~steps ~attempt ~(opts : Opts.t) =
   let res =
     let* anchor = acquire_anchor ~steps ~attempt ~opts in
     log_phase ~steps ~attempt ~opts "trigger"
-      (Printf.sprintf "Anchor locked at adv=%d. Scheduling %s encounter..."
-         anchor.advances_to_last_blink opts.target.template.species);
+      (Printf.sprintf
+         "Anchor locked at adv=%d (tick=%.4fs, pk_phase=[%.2f..%.2f]s). \
+          Scheduling %s encounter..."
+         anchor.advances_to_last_blink anchor.fitted_tick_seconds
+         anchor.next_pokemon_blink_min_seconds
+         anchor.next_pokemon_blink_max_seconds opts.target.template.species);
     let* trig =
       steps.trigger_encounter (trigger_config_of_options opts) anchor
     in
+    let jitter_ms = trig.batch_done.t_ms -. trig.plan.confirm_t_ms in
     log_phase ~steps ~attempt ~opts "detect_shiny"
       (Printf.sprintf
-         "Triggered adv=%d (start=%d confirm=%.3fs span=%d ev=%d, %s, %s, IVs \
-          %s). Watching battle intro..."
+         "Triggered adv=%d (start=%d confirm=%.3fs margin=%.2fs jitter=%+.0fms \
+          span=%d ev=%d, %s, %s, IVs %s). Watching battle intro..."
          trig.plan.hit.advances trig.plan.timeline_start_advance
-         trig.plan.schedule.confirm_seconds trig.plan.schedule.span
+         trig.plan.schedule.confirm_seconds
+         trig.plan.schedule.gap_margin_seconds jitter_ms trig.plan.schedule.span
          trig.plan.schedule.events_before_confirm
          (E.shiny_name trig.plan.hit.pokemon.shiny)
          (E.nature_name trig.plan.hit.pokemon.nature)

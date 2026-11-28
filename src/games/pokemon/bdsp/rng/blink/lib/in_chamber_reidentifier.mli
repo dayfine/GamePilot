@@ -81,5 +81,6 @@ type anchor = {
 
 val run : config -> (anchor, string) result
 (** Watches player blinks in the chamber until a unique [1PK] {!anchor} is
-    locked, or returns [Error] on timeout, [max_blinks] exhaustion, or missing
-    probe. *)
+    locked, retrying suffixes and trimming poisoned prefixes on zero-candidate
+    failures. Returns [Error] with a compact blink diagnostic summary on
+    timeout, [max_blinks] exhaustion, or missing probe. *)
