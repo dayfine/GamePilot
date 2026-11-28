@@ -24,9 +24,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 01:15:00–01:20:00 | Reviewed |
 | 01:20:00–01:25:00 | Reviewed |
 | 01:25:00–01:30:00 | Reviewed |
-| 01:30:00–03:18:16 | Pending |
+| 01:30:00–01:35:00 | Reviewed |
+| 01:35:00–03:18:16 | Pending |
 
-Resume at **01:30:00** just after Ace Trainer Alyssa’s battle in the fog on Route 210.
+Resume at **01:35:00** outside the Celestic ruins with the Super Potion action open for Kazza.
 
 ## Review method
 
@@ -373,10 +374,10 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 | 1:23:00–1:23:29 | Monferno uses Taunt at 48/80 HP and faints to Mud Shot. Send Kazza back in and use one X Speed. Quagsire uses Mud Shot again, leaving Kazza at 54/73 HP and dropping its Speed. Grass Knot KOs Quagsire. |
 | 1:23:38–1:24:08 | Kazza moves first and KOs Floatzel Lv. 30 with Grass Knot, then reaches Lv. 31. Wake awards the Fen Badge and TM55 Brine. The badge enables Defog outside battle. |
 | 1:24:09–1:24:35 | Exit via the perimeter walkways. Speak to the Galactic Grunt outside the Great Marsh gate and follow him east. |
-| 1:24:36–1:24:54 | Restore Battle Style to Set. Use one Super Repel, give Kazza a Rawst Berry, use one Ether on Kazza, then use one Energy Root to restore Kazza from 56/75 to 75/75 HP. |
+| 1:24:36–1:24:54 | Restore Battle Style to Set. Use one Super Repel, give the fainted Monferno a Rawst Berry, use one Ether on Kazza, then use one Energy Root to restore Kazza from 56/75 to 75/75 HP. |
 | 1:24:55–1:25:00 | Speak to the Grunt beside the east-side building. He runs off again. |
 
-**State at 1:25:00.** Four badges. Kazza is Lv. 31 at 75/75 HP with a Rawst Berry. Monferno is Lv. 27 and fainted. One Super Repel remains and one is active. Battle Style is Set.
+**State at 1:25:00.** Four badges. Kazza is Lv. 31 at 75/75 HP with Metronome. Monferno is Lv. 27 and fainted, holding a Rawst Berry. One Super Repel remains and one is active. Battle Style is Set.
 
 ## 1:25:00–1:30:00 | Pastoria rival, Secret Medicine, and Route 210
 
@@ -386,8 +387,25 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 | 1:25:37–1:26:22 | Kazza KOs Prinplup Lv. 31 with Psyshock, reaches Lv. 32, beats Roselia Lv. 26 with Psyshock, and finishes Ponyta Lv. 27 with Shock Wave. |
 | 1:26:28–1:27:24 | Continue east through the gate to Route 213. Speak to the Galactic Grunt on the beach, follow through the hotel to Valor Lakefront, speak to him again on the paved walk, then follow him north to the grass where he battles. |
 | 1:27:29–1:27:57 | Kazza one-shots the Grunt’s Glameow Lv. 25 with Shock Wave. The Grunt runs off. |
-| 1:28:03–1:28:22 | The repel expires near the lake entrance. Speak to Cynthia for the Secret Medicine, then use the Town Map to Fly to Solaceon Town. |
+| 1:28:03–1:28:22 | The repel expires near the lake entrance. Use the last Super Repel at the prompt, then speak to Cynthia for the Secret Medicine, then use the Town Map to Fly to Solaceon Town. |
 | 1:28:29–1:29:04 | Ride north to Route 210 and use the Secret Medicine on the Psyduck. They leave. Cynthia gives the Old Charm for the Celestic Town elder. |
 | 1:29:05–1:30:00 | Ride into the grass and continue into the fog. Ace Trainer Alyssa challenges the player. Kazza lands Psychic against each of Ponyta Lv. 27 and Grotle Lv. 27 for two one-hit KOs in the fog. |
 
 **State at 1:30:00.** Kazza is Lv. 32 at 49/77 HP. Monferno remains fainted. The Route 210 roadblock is cleared, the Old Charm is in the Bag, and the party is in the fog just after Alyssa’s battle.
+
+## 1:30:00–1:35:00 | Fog route, Celestic Town, and Surf
+
+| Video time | Observed action |
+| --- | --- |
+| 1:30:02–1:30:32 | Navigate in dense fog without using Defog. The last Super Repel wears off. Use Rock Smash and pick up TM30 Shadow Ball. |
+| 1:30:36–1:31:07 | Kazza KOs Black Belt Adam’s Machoke Lv. 29 with Psyshock and reaches Lv. 33. |
+| 1:31:09–1:31:57 | Kazza uses Psyshock on each of Bird Keeper Brianna’s Hoothoot and Noctowl, both Lv. 27, and reaches Lv. 34. |
+| 1:31:58–1:32:25 | Ride west through the fog into Celestic Town. Enter the shop in the northwest and receive Wise Glasses from the man inside. |
+| 1:32:26–1:32:40 | Buy 11 Super Potions for ₽7,700, three Revives for ₽4,500, and 23 Super Repels for ₽11,500. |
+| 1:32:41–1:32:59 | Open the Switch system settings and change the clock from 8:07 p.m. to 8:07 a.m. Return to the game, reenter the same shop, and speak to the same man for Choice Specs. |
+| 1:33:00–1:33:18 | Speak to the elder in town, then challenge the Galactic Grunt at the entrance to the ruins. |
+| 1:33:20–1:33:54 | Kazza KOs Beautifly Lv. 25 and Croagunk Lv. 27 with Shock Wave. |
+| 1:34:00–1:34:29 | Give the Old Charm to the elder, enter the ruins, and inspect the mural. The elder gives TM95 Surf and adds Surf to the Pokétch’s Hidden Moves. |
+| 1:34:34–1:35:00 | Exit the ruins and speak with Cyrus. Swap held items so Kazza has the Rawst Berry and Monferno has Metronome. Open Kazza’s Restore menu and select Super Potion. |
+
+**State at 1:35:00.** Outside the Celestic ruins. Kazza is Lv. 34 at 54/82 HP and holds the Rawst Berry. Monferno is Lv. 27 at 0/80 HP and holds Metronome. Wise Glasses, Choice Specs, 13 Super Potions, three Revives, and 23 Super Repels are in the Bag. The objective is Fantina at Hearthome Gym.
