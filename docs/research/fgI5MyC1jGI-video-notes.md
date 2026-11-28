@@ -13,9 +13,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 00:20:00–00:25:00 | Reviewed |
 | 00:25:00–00:30:00 | Reviewed |
 | 00:30:00–00:35:00 | Reviewed |
-| 00:35:00–03:18:16 | Pending |
+| 00:35:00–00:40:00 | Reviewed |
+| 00:40:00–03:18:16 | Pending |
 
-Resume at **00:35:00** on Route 205 just north of the bridge, after clearing Valley Windworks.
+Resume at **00:40:00** inside Eterna Gym as the first trainer battle starts.
 
 ## Review method
 
@@ -174,3 +175,22 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 - On **Route 205** immediately north of the bridge, beside the southern grass and an NPC. Valley Windworks is cleared and a fresh Repel is active.
 - **Monferno Lv. 15, 12/48 HP** leads and holds a **Cheri Berry**. Moves are **Power-Up Punch**, **Mach Punch**, **Ember** and **Taunt**. **Kazza Lv. 14, 34/34 HP** is second and holds a **Pecha Berry**.
 - **7 Potions** and **11 Repels** remain by the observed counts and uses. One Pecha and one Cheri Berry remain in the Bag. The Works Key and one jar of Honey were obtained.
+
+## 35:00–40:00 | Eterna Forest, Kazza’s evolution and Eterna Gym entrance
+
+| Video time | Observed action and outcome |
+|---|---|
+| 35:00–35:26 | Close the menu, go through the grass and up the steps on **Route 205**. Pause near the first hiker, then continue uphill past the remaining trainers, using the long wooden staircase and upper grass to reach **Eterna Forest**. |
+| 35:27–35:42 | Agree to travel with **Cheryl**. Go east then north through the first grass, renewing **Repel** when it expires. Trigger the first trainer encounter from a position that produces two singles in sequence. |
+| 35:43–36:41 | **Bug Catcher Jack** sends out male **Wurmple Lv. 9**, **Beautifly Lv. 13**, and **Silcoon Lv. 11**. **Monferno** knocks each out with one **Ember**. Monferno starts the fight at **12/48 HP**. After Beautifly, Monferno reaches **Lv. 16** and declines **Fury Swipes**. **Kazza** reaches **Lv. 15**. |
+| 36:42–37:30 | **Lass Briana** sends out female **Pachirisu Lv. 14**. Monferno begins at **51/51 HP** with restored PP. Pachirisu’s **Quick Attack** does 4 HP. Use **Power-Up Punch**, then **Mach Punch**. Pachirisu uses **Charm** after Mach Punch and again after **Ember**, which burns it. Burn damage finishes Pachirisu. Monferno reaches **Lv. 17**. |
+| 37:31–38:16 | Continue through the forest to **Psychics Elijah and Lindsey**. Their two **Abra Lv. 15** face full-health **Monferno Lv. 17** and Cheryl’s **Chansey Lv. 15**. Use **Power-Up Punch** twice on the left Abra, knocking it out and building Attack. The Abras use **Energy Ball** on Chansey, and Chansey’s first **Sweet Kiss** misses. |
+| 38:17–39:03 | Kazza reaches **Lv. 16** after the first Abra faints. The remaining Abra hits Chansey with Energy Ball and is confused by **Sweet Kiss**. Monferno knocks it out with another **Power-Up Punch**. Win **₽1,560**. Kazza evolves into **Kadabra** and learns **Confusion**. |
+| 39:04–39:33 | Continue through the grass and renew **Repel**. Cheryl parts ways at the exit. Follow upper Route 205 east across the wooden bridges into **Eterna City**. |
+| 39:33–40:00 | Decline another Repel in town. Head south to **Eterna Gym**, speak to **Gardenia** in the lobby and enter the wooded maze. Approach the first trainer as the screen begins to fade. |
+
+### State at 40:00
+
+- Inside **Eterna Gym**. Gardenia’s entry dialogue is complete and the first trainer battle is about to begin.
+- **Monferno Lv. 17** leads with a **Cheri Berry**. Its last visible HP was **53/53**, and it took no damage in the Psychic double battle. **Kazza** is now **Kadabra Lv. 16** with **Confusion** and the **Pecha Berry**.
+- Cheryl has left. **9 Repels** remain by the observed uses, and the last one expired in Eterna City.
