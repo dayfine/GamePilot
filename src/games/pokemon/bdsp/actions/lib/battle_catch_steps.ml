@@ -49,6 +49,7 @@ let default_foe_target = 0.15
 let kyogre_rechip = 0.35
 let groudon_rechip = 0.40
 let poll_slice_ms = 500
+let forced_switch_party_open_ms = 2000
 
 let default_timing : timing =
   {
@@ -216,10 +217,8 @@ let execute_command ~log cfg tr ~fallback_ball_steps = function
       finish_turn t tr
   | CS.Throw_ball name -> throw_ball ~log cfg tr ~fallback_ball_steps name
   | CS.Heal_active ->
-      let t = cfg.timing in
-      log
-        (Printf.sprintf "BDSP: Bag -> heal slot %d"
-           (Cursor.active_slot tr.cursor));
+      let t = cfg.timing and slot = Cursor.active_slot tr.cursor in
+      log (Printf.sprintf "BDSP: Bag -> heal slot %d" slot);
       open_submenu t 2;
       move_pockets t cfg.bag.heal_pocket_steps;
       nav_repeat t Wire.Down cfg.bag.heal_row;
@@ -231,6 +230,8 @@ let send_in ~log cfg tr slot =
   let t = cfg.timing and row = Cursor.swap_to tr.cursor slot in
   log (Printf.sprintf "BDSP: forced switch -> slot %d (row %d)" slot row);
   P.wait t.menu_settle_ms;
+  tap t Wire.A;
+  P.wait forced_switch_party_open_ms;
   select_party_row t row;
   settle_after_action t;
   Ok ()
