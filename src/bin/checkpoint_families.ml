@@ -207,6 +207,8 @@ let run_bdsp_action ~log ~picture ~options = function
       if passed then Ok ()
       else
         Error (Engine_run.Failure.cause ~repeats:true "underground_failed" line)
+  | Bdsp_rules.Action.Static_rng ->
+      Bdsp_static_rng.Static_rng.run_action ~log ~picture ~options
 
 let bdsp_load_title ~plan_dir id =
   Result.map
