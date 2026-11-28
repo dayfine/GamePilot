@@ -333,6 +333,39 @@ let test_parity_lock_unit () =
     "off-seed 0 hit does not prevent parity lock on target seed" true
     (Rolling_calibrator.parity_locked off_seed_zero_then_straddle)
 
+(* Observed Console B Static Electrode #1 successful 2-attempt Luxury Ball catch
+   on EVEN target A91A/1040 (paired positive trace alongside the failed ODD
+   5217/1015 parity-locked trace above):
+   - Attempt 1 (boot=747, ingame=4): hit 5FD4 (-1 frame), advance 1042 (+2 adv)
+     -> calibrates to boot_offset_ms=764, ingame_offset=2; not parity locked.
+   - Attempt 2 (boot=764, ingame=2): lands exact A91A/1040 (0 frames, 0 adv)
+     -> converges cleanly at boot_offset_ms=764, ingame_offset=2; parity_locked
+        remains false. *)
+let test_console_b_electrode_success () =
+  let cal1, est1 =
+    Rolling_calibrator.record Rolling_calibrator.empty ~used_boot_offset_ms:747
+      ~used_ingame_offset:4 ~seed_delta_frames:(-1) ~advance_delta:2
+    |> expect_accepted "electrode A91A/1040 attempt 1"
+  in
+  check_eq ~show:string_of_int "attempt 1 boot_offset_ms" 764
+    est1.boot_offset_ms;
+  check_eq ~show:string_of_int "attempt 1 ingame_offset" 2 est1.ingame_offset;
+  check_eq ~show:string_of_int "attempt 1 sample_count" 1 est1.sample_count;
+  check_eq ~show:string_of_bool "attempt 1 not parity locked" false
+    (Rolling_calibrator.parity_locked cal1);
+  let cal2, est2 =
+    Rolling_calibrator.record cal1 ~used_boot_offset_ms:est1.boot_offset_ms
+      ~used_ingame_offset:est1.ingame_offset ~seed_delta_frames:0
+      ~advance_delta:0
+    |> expect_accepted "electrode A91A/1040 attempt 2"
+  in
+  check_eq ~show:string_of_int "attempt 2 boot_offset_ms" 764
+    est2.boot_offset_ms;
+  check_eq ~show:string_of_int "attempt 2 ingame_offset" 2 est2.ingame_offset;
+  check_eq ~show:string_of_int "attempt 2 sample_count" 2 est2.sample_count;
+  check_eq ~show:string_of_bool "attempt 2 not parity locked" false
+    (Rolling_calibrator.parity_locked cal2)
+
 (* Slice 2: mGBA (1 advance/frame) never triggers parity-lock target switching
    and converges cleanly on both odd and even advances. *)
 let test_mgba_non_regression () =
@@ -384,6 +417,7 @@ let () =
   test_advance_convergence ();
   test_outlier_rejection ();
   test_parity_lock_unit ();
+  test_console_b_electrode_success ();
   test_console_b_five_targets ();
   test_mgba_non_regression ();
   print_endline "rolling_calibrator: all passed"
