@@ -105,6 +105,24 @@ Run the comparison from the PokemonSimulation root.
 
     node data/runs/bdsp-speedrun/bdsp-speedrun-model.cjs --entry-healing 1024 175 242 241 243 179 244 362
 
+## Fights below 60% in every tested scenario
+
+Three fights stayed below 60% across all available baseline, policy and entry-healing runs. The table uses the highest **unrounded** estimate for each fight. It ranks the tested policies and entry states. The remaining work is to test the controller changes described below.
+
+| Fight | Best tested rate | Main failure point |
+|---|---:|---|
+| Youngster Tristan | 45.3% | Leer gives Starly a free attack. Quick Attack and a modeled Speed tie leave little room for a critical hit. |
+| Crasher Wake | 46.9% | Quagsire can disrupt Kazza’s Speed or setup. The switch and X Speed sequence depends on when Monferno faints. |
+| Candice | 48.4% | Snover’s Avalanche and hail drain the solo lead’s HP before faster Sneasel can attack. |
+
+**Youngster Tristan.** Chimchar enters at 20/20 HP with Scratch and Leer. The modeled Speed is 12 for both leads, and Starly’s Quick Attack moves first. The recorded Leer followed by three Scratches allowed four enemy hits and left Chimchar at 4/20 HP. The baseline tests that opening. Compare immediate Scratch with a Potion rule using the Potions picked up on Route 201. [Entry stats](https://github.com/dayfine/PokemonSimulation/blob/7270b6b03f2f5e21b072b4bdbab28afceb693ed7/data/runs/bdsp-speedrun/bdsp-speedrun-entry-stats.md#battle-3) · [Recorded turns](https://www.youtube.com/watch?v=fgI5MyC1jGI&t=598s)
+
+**Crasher Wake.** Gyarados takes 4× from Shock Wave. Quagsire’s Ground type blocks Shock Wave and its typing takes 4× from Grass Knot. Quagsire can lower Kazza’s Speed with Mud Shot, remove boosts with Haze, or set rain for Floatzel’s Swift Swim. Floatzel takes 2× from Grass Knot and has 85 modeled Speed to Kazza’s 70 before boosts. Aqua Jet can act first even after X Speed. The recording uses Switch mode to send Monferno in as Quagsire enters. Monferno uses Taunt and faints at 48/80 HP to Mud Shot, allowing Kazza to return for free and use X Speed. At 80/80 HP, Monferno can survive that hit and receive the scripted X Speed itself. A revised policy should verify that Kazza is active before boosting and account for any turn spent switching back. [Entry stats](https://github.com/dayfine/PokemonSimulation/blob/7270b6b03f2f5e21b072b4bdbab28afceb693ed7/data/runs/bdsp-speedrun/bdsp-speedrun-entry-stats.md#battle-42) · [Recorded turns](https://www.youtube.com/watch?v=fgI5MyC1jGI&t=4942s)
+
+**Candice.** Kazza already enters at 107/107 HP. In the recording, it uses X Sp. Atk while Snover’s Avalanche and hail take it to 49/107. Snover’s Icy Rock extends the hail, and Sneasel has 124 modeled Speed to Kazza’s 108. If the first exchange leaves Kazza too low, it may fall before it can land the super-effective Dazzling Gleam on Sneasel. Medicham’s Pure Power and Abomasnow’s ability to restart hail and set Aurora Veil add pressure if the sweep slips. Test recovery or Speed setup against Snover with enough HP left to take the next attack and hail tick. [Entry stats](https://github.com/dayfine/PokemonSimulation/blob/7270b6b03f2f5e21b072b4bdbab28afceb693ed7/data/runs/bdsp-speedrun/bdsp-speedrun-entry-stats.md#battle-62) · [Recorded turns](https://www.youtube.com/watch?v=fgI5MyC1jGI&t=7465s)
+
+The Route 203 rival’s reactive Potion tests won every sampled trial. Flint was just outside the cutoff at 60.9% in one matched-policy scenario.
+
 ## Encounter log
 
 Entries list the player’s party order and held items. The [entry stat sheet](https://github.com/dayfine/PokemonSimulation/blob/7270b6b03f2f5e21b072b4bdbab28afceb693ed7/data/runs/bdsp-speedrun/bdsp-speedrun-entry-stats.md) expands each numbered case.
