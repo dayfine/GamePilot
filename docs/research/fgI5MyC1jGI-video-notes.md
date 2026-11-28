@@ -21,9 +21,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 01:00:00–01:05:00 | Reviewed |
 | 01:05:00–01:10:00 | Reviewed |
 | 01:10:00–01:15:00 | Reviewed |
-| 01:15:00–03:18:16 | Pending |
+| 01:15:00–01:20:00 | Reviewed |
+| 01:20:00–03:18:16 | Pending |
 
-Resume at **01:15:00** in Veilstone City after obtaining Fly from the Galactic Warehouse.
+Resume at **01:20:00** inside Pastoria Gym after Tuber Caitlyn’s first Pokémon faints.
 
 ## Review method
 
@@ -338,3 +339,22 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 - Back in **Veilstone City** with the Cobble Badge and **Fly** unlocked.
 - **Monferno Lv. 26**, last visible **45/77 HP**, is the only party member and holds **Metronome**. Kazza is in the Box.
 - Remaining battle items from the Veilstone purchase are **10 X Defenses**, **10 X Speeds**, **26 X Sp. Atks** and **4 X Sp. Defs**. The only X Accuracy was used.
+
+## 1:15:00–1:20:00 | Route 214, Valor Lakefront and Pastoria Gym
+
+| Video time | Observed action and outcome |
+|---|---|
+| 1:15:00–1:15:28 | Leave Veilstone through the southern gatehouse to **Route 214**. Withdraw **Kazza** from the Box, put it back in front and transfer **Metronome** from Monferno to Kazza. A **Super Potion** restores Kazza by **57 HP**. Use a **Super Repel**. |
+| 1:15:29–1:16:31 | **Psychic Abigail** challenges the player near the first pond. Kazza knocks out **Gastly**, **Misdreavus** and **Kadabra** with one **Psychic** each. Kazza reaches **Lv. 28**, Monferno reaches **Lv. 27**, and the win pays **₽1,056**. |
+| 1:16:32–1:17:07 | Ride south through Route 214’s fenced lanes into **Valor Lakefront**. Pick up a **Max Ether** in the first grass near the west tree line. Renew **Super Repel** by the resort buildings, then pass through the lobby to Route 213. |
+| 1:17:08–1:17:39 | Pick up the hidden **Calcium** at the edge of the Route 213 beach. Ride west along the shore, turn north through the rocks and pick **2 Rawst Berries** near the gatehouse. Enter **Pastoria City** and decline another Super Repel. |
+| 1:17:40–1:18:16 | Enter **Pastoria Gym**. Cross the first walkways to the lower-left **yellow switch** and lower the water. Cross the exposed paths to the upper **green switch**. Follow the changed path to the platform beside the blue switch. |
+| 1:18:17–1:18:59 | **Sailor Damian** sends out two **Wingull Lv. 24**. Use one **Confusion** per Wingull. Kazza reaches **Lv. 29**. Press the **blue switch** on Damian’s platform after the fight. |
+| 1:19:00–1:19:37 | Head south and east along the lower walkways. **Tuber Jacky** sends out **Buizel Lv. 26**, which Kazza knocks out with one **Confusion**. |
+| 1:19:38–1:20:00 | Continue east to **Tuber Caitlyn**. Kazza’s first **Confusion** knocks out her **Azurill Lv. 24**. The battle continues across the block boundary. |
+
+### State at 1:20:00
+
+- **Pastoria Gym**, on the right-hand lower platform in Tuber Caitlyn’s battle. Azurill has fainted and her next Pokémon has yet to enter.
+- **Kazza Lv. 29, 70/70 HP** leads with **Metronome**. **Monferno Lv. 27** is second.
+- **2 Super Potions** and **2 Super Repels** remain by the observed uses. The Bag gained a Max Ether, a Calcium and two Rawst Berries.
