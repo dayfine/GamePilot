@@ -8,10 +8,10 @@ let run_action ~log ~picture ~options = function
       if passed then Ok ()
       else
         Error (Engine_run.Failure.cause ~repeats:true "underground_failed" line)
-  | Bdsp_rules.Action.Static_rng ->
+  | _ ->
       Error
         (Engine_run.Failure.cause ~repeats:true "unexpected_action"
-           "bdsp.underground does not handle static_rng actions")
+           "bdsp.underground does not handle this action")
 
 let run_series ~program ~options ~viewport plan_dir args =
   Series.run_series
