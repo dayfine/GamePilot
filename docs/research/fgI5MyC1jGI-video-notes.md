@@ -18,9 +18,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 00:45:00–00:50:00 | Reviewed |
 | 00:50:00–00:55:00 | Reviewed |
 | 00:55:00–01:00:00 | Reviewed |
-| 01:00:00–03:18:16 | Pending |
+| 01:00:00–01:05:00 | Reviewed |
+| 01:05:00–03:18:16 | Pending |
 
-Resume at **01:00:00** on Route 209, heading toward Solaceon Town with Repel active.
+Resume at **01:05:00** on Route 215 immediately after defeating Ace Trainer Maya.
 
 ## Review method
 
@@ -278,3 +279,23 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 - **Route 209**, northbound toward Solaceon Town. Repel is active.
 - **Kazza Lv. 23** remains in party slot 1 and is fainted at **0/58 HP**. **Monferno Lv. 23** is the usable party member. It was healed before the rival battle and took Stealth Rock damage when sent out.
 - Picked up the hidden **Ether** and obtained the **Ethereal Sticker C** and **tuxedo**. **3 Super Potions** remain by count after the observed use in Mt. Coronet.
+
+## 1:00:00–1:05:00 | Lost Tower, Route 215 and new moves
+
+| Video time | Observed action and outcome |
+|---|---|
+| 1:00:00–1:00:11 | Renew **Repel** on Route 209, then take the side path among the trees for a **Calcium**. Head back to the main path and enter the **Lost Tower**. |
+| 1:00:12–1:01:14 | Climb the tower between the gravestones, renewing Repel on the way. Speak to the woman on the left at the top to receive **TM96s (Strength)** and unlock it in the Hidden Moves app. Use an **Escape Rope** to return outside. |
+| 1:01:15–1:01:38 | Renew Repel and ride through **Solaceon Town** without stopping. Continue onto **Route 210**, turn east onto **Route 215**, and renew Repel at the route entrance. **Ruin Maniac Calvin** challenges the player near the first long staircase. |
+| 1:01:39–1:02:15 | Calvin leads with **Bronzor Lv. 21**. Monferno uses **Power-Up Punch** twice, taking **Confusion** and **Gyro Ball** in return. At **37/69 HP**, finish Bronzor with **Mach Punch**. |
+| 1:02:16–1:02:42 | Calvin sends out male **Shieldon Lv. 23**. **Mach Punch** brings it to its **Sturdy** survival threshold. Shieldon uses **Metal Sound**. **Flame Wheel** finishes it. |
+| 1:02:43–1:03:18 | Pick up the hidden **Ether** near the staircase and receive **TM66s (Payback)** from the nearby Black Belt. Cross the bridges and grass, renewing Repel twice. Pick up a **Zinc**, then use **Cut** to reach the item on the enclosed ledge. |
+| 1:03:19–1:03:45 | Use **Calcium** on **Kazza**. Teach **Stealth Rock (TM76)** to Monferno over **Flame Wheel**. Teach **Shock Wave (TM34)** to Kazza in its empty slot, then teach **Grass Knot (TM86)** over **Psycho Cut**. |
+| 1:03:46–1:04:02 | Use **Revive** on Kazza and an **Energy Root** to restore its remaining **29 HP**. Continue east and trigger **Ace Trainer Maya**. |
+| 1:04:03–1:05:00 | Kazza knocks out female **Glameow Lv. 23** with a critical **Confusion**. Against male **Kadabra Lv. 23**, the first **Grass Knot** misses, the second hits critically, and **Shock Wave** finishes it. Kadabra uses **Kinesis** during the fight. Kazza and Monferno both reach **Lv. 24**. |
+
+### State at 1:05:00
+
+- On **Route 215** after Maya’s defeat, before the remaining approach to Veilstone.
+- **Kazza Lv. 24** leads and knows **Teleport**, **Confusion**, **Grass Knot** and **Shock Wave**. It was restored to full HP before Maya and took no HP damage in that battle. **Monferno Lv. 24** is second with **Power-Up Punch**, **Mach Punch**, **Stealth Rock** and **Taunt**, with **37/69 HP** last shown before leveling.
+- Strength unlocked. The normal Revive was used and **12 Energy Roots** remain. The route added a Zinc and a second Ether.
