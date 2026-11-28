@@ -65,7 +65,7 @@ let log msg = Watch_report.log print_endline ("[bdsp.underground] " ^ msg)
 let publish_counters ctx counters =
   Mining_counters.watch_items ~goal:ctx.goal ~total_cycles:ctx.total_cycles
     counters
-  |> List.map (fun (label, value) -> { Wire.Watch.label; value })
+  |> List.map (fun (label, value) -> Wire.Watch.counter label value)
   |> Watch_report.counters
 
 let opt_unit b = if b then Some () else None

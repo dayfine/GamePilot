@@ -109,13 +109,13 @@ let make_fake_steps ~readings ~resets ~captured_delay_ms () : WF.game_steps =
   let queue = ref readings in
   {
     log = (fun _ -> ());
-    update_counters = (fun ~attempt:_ ~max_attempts:_ ~phase:_ -> ());
+    show_counters = (fun _ -> ());
     freeze_player = (fun () -> ());
     recover_pedestal_seed = (fun ~timeout_s:_ -> Ok dummy_seed);
     enter_chamber = (fun () -> Ok ());
     reidentify_in_chamber = (fun ~base_state:_ -> Ok dummy_anchor);
     trigger_encounter =
-      (fun cfg _anchor ->
+      (fun ~on_phase:_ cfg _anchor ->
         captured_delay_ms := Some cfg.aim_offset_ms;
         Ok (dummy_trigger_outcome ~shiny:E.Star));
     detect_shiny =
@@ -310,6 +310,71 @@ let test_invalid_options_rejected () =
             ~expected:Opts.Include_non_shiny ~actual:cfg.shiny
       | Error e -> fail ("expected include_non_shiny to succeed: " ^ e))
 
+let test_watch_counters_and_countdown () =
+  check_eq "countdown 0ms" ~expected:"0:00" ~actual:(WF.format_countdown_ms 0);
+  check_eq "countdown negative clamped" ~expected:"0:00"
+    ~actual:(WF.format_countdown_ms (-500));
+  check_eq "countdown rounds up partial second" ~expected:"0:01"
+    ~actual:(WF.format_countdown_ms 500);
+  check_eq "countdown minutes" ~expected:"24:15"
+    ~actual:(WF.format_countdown_ms 1_455_000);
+  check_eq "countdown hours" ~expected:"1:01:05"
+    ~actual:(WF.format_countdown_ms 3_665_000);
+  let target = WF.format_target (dummy_hit ~shiny:E.Star) in
+  check_eq "format_target" ~expected:"Star Shiny Modest" ~actual:target;
+  let resets = ref 0 in
+  let delay = ref None in
+  let history = ref [] in
+  let opts = { (default_opts ()) with max_attempts = 5 } in
+  let base =
+    make_fake_steps ~readings:[ shiny_reading ] ~resets ~captured_delay_ms:delay
+      ()
+  in
+  let until_ms = 1_800_000_060_000 in
+  let steps =
+    {
+      base with
+      show_counters = (fun items -> history := items :: !history);
+      trigger_encounter =
+        (fun ~on_phase cfg anchor ->
+          on_phase ~phase:"Waiting (adv=780)" ~target
+            ~countdown:{ remaining_ms = 60_000; until_ms }
+            ();
+          on_phase ~phase:"Final 1PK re-anchor" ~target ();
+          on_phase ~phase:"Triggering" ~target ();
+          base.trigger_encounter ~on_phase cfg anchor);
+    }
+  in
+  ignore (WF.run ~steps opts : WF.outcome);
+  let updates = List.rev !history in
+  let phase_of items =
+    items
+    |> List.find_opt (fun (c : Wire.Watch.counter) -> c.label = "Phase")
+    |> Option.map (fun (c : Wire.Watch.counter) -> c.value)
+  in
+  let countdown_of items =
+    items
+    |> List.find_opt (fun (c : Wire.Watch.counter) -> c.label = "Countdown")
+    |> Option.map (fun (c : Wire.Watch.counter) -> (c.value, c.until_ms))
+  in
+  check_eq "emitted phases in order"
+    ~expected:
+      [
+        Some "0PK seed";
+        Some "Enter chamber";
+        Some "1PK anchor";
+        Some "Waiting (adv=780)";
+        Some "Final 1PK re-anchor";
+        Some "Triggering";
+        Some "Triggering";
+        Some "Shiny found";
+      ]
+    ~actual:(List.map phase_of updates);
+  check_eq "countdown set during Waiting and cleared on re-anchor/trigger"
+    ~expected:
+      [ None; None; None; Some ("1:00", Some until_ms); None; None; None; None ]
+    ~actual:(List.map countdown_of updates)
+
 let () =
   test_shiny_hit_attempt_one ();
   test_standing_at_encounter_skips_chamber ();
@@ -317,4 +382,5 @@ let () =
   test_exhausted_max_attempts ();
   test_precheck_skips_chamber_when_no_early_shiny ();
   test_invalid_options_rejected ();
+  test_watch_counters_and_countdown ();
   print_endline "OK"

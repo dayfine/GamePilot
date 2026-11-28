@@ -5,6 +5,7 @@
   gamepilot.wire
   gamepilot.run_options
   gamepilot.effects
+  gamepilot.watch_report
   gamepilot.engine_run
   gamepilot.switch
   gamepilot.bdsp_checkpoint_series

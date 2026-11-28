@@ -30,11 +30,38 @@ type outcome =
       (** Stopped without confirming a shiny encounter after [attempts] tries,
           carrying the last failure or miss reason. *)
 
+type countdown = {
+  remaining_ms : int;  (** Remaining wait time in milliseconds. *)
+  until_ms : int;
+      (** Target wall-clock time in Unix epoch milliseconds, for live watch-page
+          ticking. *)
+}
+(** Live countdown metadata attached to a watch counter update. *)
+
+val format_countdown_ms : int -> string
+(** Formats a non-negative duration in milliseconds as [M:SS] or [H:MM:SS],
+    rounding up partial seconds and clamping at [0:00]. *)
+
+val format_target : Bdsp_rng.Static_encounter.hit -> string
+(** Formats a planned hit's shiny type and nature (e.g. ["Star Shiny Modest"])
+    for the watch page's [Target] counter. *)
+
+val watch_counters :
+  attempt:int ->
+  max_attempts:int ->
+  phase:string ->
+  ?target:string ->
+  ?countdown:countdown ->
+  unit ->
+  Wire.Watch.counter list
+(** Builds the [watch.counters] items for the current attempt, phase, optional
+    target description, and optional live countdown. *)
+
 type game_steps = {
   log : string -> unit;
       (** Writes a progress line to the watch page / run log. *)
-  update_counters : attempt:int -> max_attempts:int -> phase:string -> unit;
-      (** Publishes live attempt and phase counters to the watch page. *)
+  show_counters : Wire.Watch.counter list -> unit;
+      (** Publishes live [watch.counters] updates to the watch page. *)
   freeze_player : unit -> unit;
       (** Opens the Bike key-item dialog ([+ -> Right]) so the player stands
           frozen facing South with no idle head fidgets. *)
@@ -51,12 +78,15 @@ type game_steps = {
     (Bdsp_blink_rng.In_chamber_reidentifier.anchor, string) result;
       (** Locks the current [1PK] advance anchor inside the Mystery Space. *)
   trigger_encounter :
+    on_phase:
+      (phase:string -> ?target:string -> ?countdown:countdown -> unit -> unit) ->
     Bdsp_blink_rng.Static_rng_trigger.config ->
     Bdsp_blink_rng.In_chamber_reidentifier.anchor ->
     (Bdsp_blink_rng.Static_rng_trigger.outcome, string) result;
       (** Plans the next matching shiny advance, optionally re-anchors when far
           away, dismisses the freeze dialog, faces North, and fires the timed
-          confirm press. *)
+          confirm press, reporting wait/re-anchor/trigger phases via [on_phase].
+      *)
   detect_shiny : unit -> Bdsp_readers.Shiny_encounter_reader.reading;
       (** Watches the battle opening and classifies wild shininess. *)
   soft_reset_to_pedestal : unit -> (unit, string) result;

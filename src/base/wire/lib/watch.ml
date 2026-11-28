@@ -99,14 +99,24 @@ let plan_ms ~now_ms plan =
   | [], _ | _, None -> None
   | _, Some stop -> Some (stop - List.fold_left min max_int starts)
 
-type counter = { label : string; value : string }
+type counter = { label : string; value : string; until_ms : int option }
+
+let counter ?until_ms label value = { label; value; until_ms }
 
 let counter_of_json j =
   let what = "watch.counters.params.items" in
-  { label = string_field what "label" j; value = string_field what "value" j }
+  {
+    label = string_field what "label" j;
+    value = string_field what "value" j;
+    until_ms = int_opt what "until_ms" j;
+  }
 
-let json_of_counter { label; value } =
-  `Assoc [ ("label", `String label); ("value", `String value) ]
+let json_of_counter { label; value; until_ms } =
+  let fields = [ ("label", `String label); ("value", `String value) ] in
+  let extra =
+    match until_ms with None -> [] | Some ms -> [ ("until_ms", `Int ms) ]
+  in
+  `Assoc (fields @ extra)
 
 let counters_of_json j =
   List.map counter_of_json (list_field "watch.counters.params" "items" j)

@@ -41,8 +41,8 @@ let synthetic_capture (plan : Capture_plan.t) (summary : CR.summary) :
 
 let watch_counters ~attempt ~total ~phase : Wire.Watch.counter list =
   [
-    { label = "attempt"; value = Printf.sprintf "%d/%d" attempt total };
-    { label = "phase"; value = phase };
+    Wire.Watch.counter "attempt" (Printf.sprintf "%d/%d" attempt total);
+    Wire.Watch.counter "phase" phase;
   ]
 
 let report game_steps ~attempt ~total phase =

@@ -368,4 +368,34 @@ let () =
       } ->
       ()
   | _ -> failwith "FAILED submit start_at_t_ms decoded wrong");
-  print_endline "ok v1.21 template_ncc, gap, start_at_t_ms"
+  print_endline "ok v1.21 template_ncc, gap, start_at_t_ms";
+  (* watch.counters with and without optional until_ms. *)
+  let plain_counters =
+    [
+      Wire.Watch.counter "Attempt" "1/5";
+      Wire.Watch.counter ~until_ms:1_800_000_000_000 "Countdown" "24:15";
+    ]
+  in
+  let json = Wire.Watch.json_of_counters plain_counters in
+  (match json with
+  | `Assoc
+      [
+        ( "items",
+          `List
+            [
+              `Assoc [ ("label", `String "Attempt"); ("value", `String "1/5") ];
+              `Assoc
+                [
+                  ("label", `String "Countdown");
+                  ("value", `String "24:15");
+                  ("until_ms", `Int 1_800_000_000_000);
+                ];
+            ] );
+      ] ->
+      ()
+  | _ ->
+      failwith
+        ("FAILED watch.counters json shape: " ^ Yojson.Safe.to_string json));
+  if Wire.Watch.counters_of_json json <> plain_counters then
+    failwith "FAILED watch.counters round-trip with until_ms";
+  print_endline "ok watch.counters until_ms"

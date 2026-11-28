@@ -227,7 +227,7 @@ document.addEventListener("visibilitychange", () => {
 function showFrameMeta() {
   const how = source === "stream" ? "live (MJPEG)" :
               source === "poll" ? "polled (stream failed, retrying)" : "paused";
-  $("frame-meta").textContent = frameW + "×" + frameH + " " + how + " · shown at " +
+  $("frame-meta-text").textContent = frameW + "×" + frameH + " " + how + " · shown at " +
     (Number.isInteger(scale) ? scale + "×" : scale.toFixed(2) + "×") +
     (info ? " · " + info.backend.kind : "") + " · " + probes.length + " probes";
 }
