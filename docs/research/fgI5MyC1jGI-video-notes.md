@@ -23,9 +23,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 01:10:00–01:15:00 | Reviewed |
 | 01:15:00–01:20:00 | Reviewed |
 | 01:20:00–01:25:00 | Reviewed |
-| 01:25:00–03:18:16 | Pending |
+| 01:25:00–01:30:00 | Reviewed |
+| 01:30:00–03:18:16 | Pending |
 
-Resume at **01:25:00** during the Galactic Grunt chase at the east end of Pastoria, with Kazza healed and Monferno fainted.
+Resume at **01:30:00** just after Ace Trainer Alyssa’s battle in the fog on Route 210.
 
 ## Review method
 
@@ -376,3 +377,17 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 | 1:24:55–1:25:00 | Speak to the Grunt beside the east-side building. He runs off again. |
 
 **State at 1:25:00.** Four badges. Kazza is Lv. 31 at 75/75 HP with a Rawst Berry. Monferno is Lv. 27 and fainted. One Super Repel remains and one is active. Battle Style is Set.
+
+## 1:25:00–1:30:00 | Pastoria rival, Secret Medicine, and Route 210
+
+| Video time | Observed action |
+| --- | --- |
+| 1:25:00–1:25:31 | The rival intercepts the chase at Pastoria’s east gate. He leads with Starly Lv. 26. Starly’s Quick Claw activates. Use one X Sp. Atk, take Pluck for 28 HP, then KO Starly with Shock Wave. |
+| 1:25:37–1:26:22 | Kazza KOs Prinplup Lv. 31 with Psyshock, reaches Lv. 32, beats Roselia Lv. 26 with Psyshock, and finishes Ponyta Lv. 27 with Shock Wave. |
+| 1:26:28–1:27:24 | Continue east through the gate to Route 213. Speak to the Galactic Grunt on the beach, follow through the hotel to Valor Lakefront, speak to him again on the paved walk, then follow him north to the grass where he battles. |
+| 1:27:29–1:27:57 | Kazza one-shots the Grunt’s Glameow Lv. 25 with Shock Wave. The Grunt runs off. |
+| 1:28:03–1:28:22 | The repel expires near the lake entrance. Speak to Cynthia for the Secret Medicine, then use the Town Map to Fly to Solaceon Town. |
+| 1:28:29–1:29:04 | Ride north to Route 210 and use the Secret Medicine on the Psyduck. They leave. Cynthia gives the Old Charm for the Celestic Town elder. |
+| 1:29:05–1:30:00 | Ride into the grass and continue into the fog. Ace Trainer Alyssa challenges the player. Kazza lands Psychic against each of Ponyta Lv. 27 and Grotle Lv. 27 for two one-hit KOs in the fog. |
+
+**State at 1:30:00.** Kazza is Lv. 32 at 49/77 HP. Monferno remains fainted. The Route 210 roadblock is cleared, the Old Charm is in the Bag, and the party is in the fog just after Alyssa’s battle.
