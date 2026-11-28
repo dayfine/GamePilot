@@ -233,6 +233,10 @@ val slots : t -> (Frlg_rng.Wild_encounter.slot array, string) result
 (** Loads the encounter slots for [t.location] and [t.encounter_method] from
     {!encounter_slots}. *)
 
-val target : t -> (Frlg_rng.Wild_target.t, string) result
+val target :
+  ?exclude_targets:(int * int) list ->
+  t ->
+  (Frlg_rng.Wild_target.t, string) result
 (** Reads the seed table and the slots, and searches them: the soonest shiny
-    [species] in the advance range, timed for the frame model. *)
+    [species] in the advance range, timed for the frame model. Any
+    [(seed, advance)] pair in [exclude_targets] (default [[]]) is skipped. *)

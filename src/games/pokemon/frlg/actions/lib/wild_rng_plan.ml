@@ -276,7 +276,7 @@ let calibrated_model ~boot_offset_ms ~ingame_offset
   ( { m with fixed_seed_offset_ms = m.fixed_seed_offset_ms + boot_offset_ms },
     { R.Rng_timings.no_calibrations with csf_offset; ingame_offset } )
 
-let target t =
+let target ?(exclude_targets = []) t =
   let* delays, seeds = seed_column_of ~seeds:t.seeds ~seed_shift:t.seed_shift in
   let* slots = slots t in
   let* raw =
@@ -291,7 +291,7 @@ let target t =
     Printf.sprintf "no shiny %s in %s at advances %d..%d" t.species t.seeds
       t.min_advance t.max_advance
   in
-  R.Wild_target.find ~calibrations
+  R.Wild_target.find ~calibrations ~exclude_targets
     ~super_rod:(t.encounter_method = Super_rod)
     model ~delays ~seeds slots ~species:t.species
     ~tid_xor_sid:(t.tid lxor t.sid) ~min_advance:t.min_advance

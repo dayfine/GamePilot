@@ -844,6 +844,27 @@ let method_decoding =
       check_surf_target "psyduck";
     case "super_rod target search finds shiny shellder in vermilion_city"
       check_super_rod_target "shellder";
+    case "exclude_targets skips parity-locked electabuzz 4ADF/1732"
+      (fun () ->
+        let plan =
+          Result.get_ok
+            (Wild_rng_plan.decode
+               (obj
+                  {|{"species": "electabuzz", "location": "power_plant",
+                     "tid": 15287, "sid": 51290, "frame_model": "switch"}|}))
+        in
+        let first = Result.get_ok (Wild_rng_plan.target plan) in
+        let next =
+          Result.get_ok
+            (Wild_rng_plan.target
+               ~exclude_targets:[ (first.seed, first.advance) ]
+               plan)
+        in
+        Printf.sprintf "first=%04X/%d switched=%b species=%s" first.seed
+          first.advance
+          (next.seed <> first.seed || next.advance <> first.advance)
+          next.encounter.species)
+      "first=4ADF/1732 switched=true species=electabuzz";
   ]
 
 let () =
