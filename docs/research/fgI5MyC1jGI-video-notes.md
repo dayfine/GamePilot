@@ -41,9 +41,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 02:40:00–02:45:00 | Reviewed |
 | 02:45:00–02:50:00 | Reviewed |
 | 02:50:00–02:55:00 | Reviewed |
-| 02:55:00–03:18:16 | Pending |
+| 02:55:00–03:00:00 | Reviewed |
+| 03:00:00–03:18:16 | Pending |
 
-Resume at **02:55:00** in the flooded Victory Road chamber just after Psychic Valencia’s Chimecho faints.
+Resume at **03:00:00** at the Pokémon League entrance as the lobby loads.
 
 ## Review method
 
@@ -662,3 +663,18 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 | 2:54:09–2:55:00 | Use Surf and land on the narrow path at Psychic Valencia. Kazza KOs Chingling Lv. 44 and Chimecho Lv. 48 with Shadow Ball. |
 
 **State at 2:55:00.** Kazza is Lv. 58 at 133/133 HP with Choice Specs. Palkia is Lv. 50 with Metronome and Monferno remains fainted with Wise Glasses. Six Super Repels remain with one active. Valencia’s final Pokémon has just fainted.
+
+## 2:55:00–3:00:00 | Victory Road exit and Pokémon League arrival
+
+| Video time | Observed action |
+| --- | --- |
+| 2:55:01–2:55:38 | Finish Valencia’s battle. Surf north and climb the first waterfall, then descend the next waterfall to pick up TM59 Dragon Pulse. Surf and climb back up. |
+| 2:55:39–2:56:12 | Dragon Tamer Andre sends Gabite Lv. 49. Kazza KOs it with Shadow Ball and reaches Lv. 59. |
+| 2:56:13–2:56:32 | Surf across the last channel, reapply Super Repel, and take the stairs back into the main cave. Veteran Edgar challenges the player. |
+| 2:56:34–2:57:12 | Kazza KOs Tentacruel Lv. 45 with Psychic. Golem Lv. 45 survives Psychic with Sturdy and uses Smack Down. A second Psychic KOs Golem. |
+| 2:57:13–2:58:03 | Empoleon Lv. 48 survives Psychic and KOs Kazza with Brine. Send out Palkia, which uses Surf twice to win and takes a critical Brine between attacks. |
+| 2:58:04–2:58:24 | Use a Revive and an Energy Root on Kazza to restore it to 137/137 HP. Use a second Energy Root on Palkia to restore it from 74/166 to 166/166. Follow the path east and use Rock Climb. |
+| 2:58:25–2:59:25 | Dragon Tamer Clinton sends Gible, Gyarados, and another Gible. Kazza KOs all three with Psyshock, including Gyarados after Intimidate. |
+| 2:59:26–3:00:00 | Exit Victory Road and Surf to the base of the waterfall. Use Waterfall, land at the top, and enter the Pokémon League building. |
+
+**State at 3:00:00.** The Pokémon League lobby is loading. Kazza is Lv. 59 at 137/137 HP with Choice Specs, and Palkia is Lv. 50 at 166/166 HP with Metronome. Monferno remains fainted with Wise Glasses.
