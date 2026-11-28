@@ -35,7 +35,7 @@ Runs on: mGBA.
 - the thunder badge (fly)
 - the soul badge (surf)
 - money at least ¥24000 (all the purchases)
-- poke-ball at least x20 (wild_rng)
+- poke-ball at least x63 (wild_rng)
 - at the start, anywhere outdoors where Fly works
 <!-- /generated -->
 
@@ -89,10 +89,10 @@ sh run/run_checkpoints_on_mgba.sh frlg.dex_collection --from 01-ultra-balls --to
 | 02-shiny-voltorb | a member holds no Mail (pc_deposit); a member knows fly (fly); the thunder badge (fly); ultra-ball at least x5 (wild_rng); at the start, anywhere outdoors where Fly works |
 | 03-shiny-drowzee | a member knows fly (fly); the thunder badge (fly); ultra-ball at least x5 (wild_rng); at the start, anywhere outdoors where Fly works |
 | 04-shiny-ekans | a member knows fly (fly); the thunder badge (fly); ultra-ball at least x5 (wild_rng); at the start, anywhere outdoors where Fly works |
-| 05-shiny-growlithe | a member knows fly (fly); the thunder badge (fly); poke-ball at least x5 (wild_rng); at the start, anywhere outdoors where Fly works |
-| 06-shiny-oddish | a member knows fly (fly); the thunder badge (fly); poke-ball at least x5 (wild_rng); at the start, anywhere outdoors where Fly works |
-| 07-shiny-psyduck | a member knows fly (fly); a member knows surf (surf); the thunder badge (fly); the soul badge (surf); poke-ball at least x5 (wild_rng); at the start, anywhere outdoors where Fly works |
-| 08-shiny-shellder | a member knows fly (fly); the thunder badge (fly); poke-ball at least x5 (wild_rng); at the start, anywhere outdoors where Fly works |
+| 05-shiny-growlithe | a member knows fly (fly); the thunder badge (fly); poke-ball at least x17 (wild_rng); at the start, anywhere outdoors where Fly works |
+| 06-shiny-oddish | a member knows fly (fly); the thunder badge (fly); poke-ball at least x12 (wild_rng); at the start, anywhere outdoors where Fly works |
+| 07-shiny-psyduck | a member knows fly (fly); a member knows surf (surf); the thunder badge (fly); the soul badge (surf); poke-ball at least x17 (wild_rng); at the start, anywhere outdoors where Fly works |
+| 08-shiny-shellder | a member knows fly (fly); the thunder badge (fly); poke-ball at least x17 (wild_rng); at the start, anywhere outdoors where Fly works |
 | 09-shiny-scyther | a member knows fly (fly); the thunder badge (fly); at the start, anywhere outdoors where Fly works |
 <!-- /generated -->
 
@@ -115,7 +115,8 @@ sh run/run_checkpoints_on_mgba.sh frlg.dex_collection --from 01-ultra-balls --to
   progress.
 - Ball choice (`--options ball=...` and `--options balls=...`) overrides the ball thrown during
   catches; `01-ultra-balls` still buys Ultra Balls at Indigo Plateau (start from `02-shiny-voltorb`
-  if you bring your own Poké Balls or Great Balls).
+  if you bring your own Poké Balls or Great Balls). When a plan omits `balls`, pre-flight computes
+  the required ball count from Gen 3 catch-rate math (see [Capture Ball Budget](../frlg/ball-count.md)).
 - It never weakens a Pokemon before throwing: Ultra Balls catch these three often enough at full HP.
 
 ## How it works
