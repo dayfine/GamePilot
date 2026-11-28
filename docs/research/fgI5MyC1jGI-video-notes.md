@@ -11,9 +11,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 00:10:00–00:15:00 | Reviewed |
 | 00:15:00–00:20:00 | Reviewed |
 | 00:20:00–00:25:00 | Reviewed |
-| 00:25:00–03:18:16 | Pending |
+| 00:25:00–00:30:00 | Reviewed |
+| 00:30:00–03:18:16 | Pending |
 
-Resume at **00:25:00** in Oreburgh Gate, heading back to Jubilife with Repel active.
+Resume at **00:30:00** at the end of the second Galactic Grunt battle in Floaroma Meadow.
 
 ## Review method
 
@@ -133,3 +134,23 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 - In **Oreburgh Gate**, returning west toward Jubilife. Repel was just used.
 - **Chimchar** leads at **Lv. 11, 33/33 HP** and holds the **Oran Berry**. **Kazza** is second at **Lv. 9, 26/26 HP**. Machop was traded away.
 - The Coal Badge is obtained. **8 Potions**, **6 Super Potions**, **2 Antidotes**, **2 Paralyze Heals**, **2 Escape Ropes**, **19 Poké Balls** and **14 Repels** remain by the observed counts and item uses. X Defense was used against Roark.
+
+## 25:00–30:00 | Jubilife Galactic double battle and Floaroma Meadow
+
+| Video time | Observed action and outcome |
+|---|---|
+| 25:00–25:23 | Cross **Oreburgh Gate** west under Repel and follow **Route 203** back past the pond to Jubilife. Dismiss the expired-Repel prompt on the city approach and head north. |
+| 25:24–25:48 | Meet Rowan and Dawn confronting two **Team Galactic Grunts** at Jubilife’s northern exit. Join Dawn in a double battle. Chimchar starts at **Lv. 11, 33/33 HP**, with Dawn’s **Turtwig Lv. 13, 41/41 HP**. The grunts send out **Wurmple Lv. 9** and **Zubat Lv. 9**. |
+| 25:49–26:12 | Target **Wurmple** with **Ember**. Zubat uses **Astonish** on Turtwig and Turtwig uses **Tackle** on Zubat. Wurmple Tackles Chimchar. On turn two, Ember hits **Zubat**, which uses Astonish on Chimchar. Turtwig’s Tackle finishes Wurmple. Chimchar has **27/33 HP** before leveling. |
+| 26:13–26:39 | Chimchar reaches **Lv. 12**. Replace **Scratch** in slot 1 with **Power-Up Punch**, leaving **Leer**, **Ember** and **Taunt** in their existing slots. Use another **Ember** against Zubat to win. **Kazza** reaches **Lv. 10** from shared EXP. |
+| 26:40–27:13 | Clear Rowan and Dawn’s post-battle dialogue, then Bebe’s **Capsule Decoration** introduction. Head north into **Route 204**, follow the path and grass along the ponds, and enter **Ravaged Path**. |
+| 27:14–27:45 | Use the **Rock Smash** prompt on the rock by the stairs. Bidoof appears in the field-move animation. Head east past the visible item ball and emerge on the north stretch of Route 204. Use another **Repel** at the expiry prompt and take the stairs and grass north. |
+| 27:46–28:12 | Cross **Floaroma Town** east to **Route 205** and advance the girl’s dialogue about her father at **Valley Windworks**. Turn back west. Pick **2 Pecha Berries** from the patch by the river, then **2 Cheri Berries** by the flower shop. Head northwest through the flowers and enter **Floaroma Meadow**. |
+| 28:13–29:11 | Approach the two grunts in the Meadow. The first leads with male **Wurmple Lv. 9**. Use **Taunt**, take **Tackle** for 3 HP, then knock it out with **Ember**. Knock out male **Silcoon Lv. 9** with another Ember. Chimchar reaches **Lv. 13**. |
+| 29:12–30:00 | The second grunt sends out male **Zubat Lv. 11**. The first **Ember** burns it and Zubat uses **Mean Look**. It uses **Absorb** after the second Ember, leaving Chimchar at **28/38 HP**. A third Ember finishes Zubat. **Kazza** reaches **Lv. 11**. The game is still finishing the battle at the boundary. |
+
+### State at 30:00
+
+- Floaroma Meadow. Both grunts’ Pokémon have fainted. The second grunt’s exit and the meadow reward are pending.
+- **Chimchar Lv. 13**, last visible **28/38 HP**, leads with the **Oran Berry**. Its moves are **Power-Up Punch**, **Leer**, **Ember** and **Taunt**. Last visible Ember was **18/25** before the final use. **Kazza Lv. 11** is second.
+- Picked two Pecha and two Cheri Berries. The route shows one confirmed Repel renewal after Oreburgh and one further expiry prompt on Route 205. The Bag count has not been rechecked.
