@@ -5,9 +5,10 @@ it types a short program as the names of the 14 PC boxes, then makes the game ru
 the glitch Pokémon 0x0351 in the PC. The program is Sleipnir17's "Get any item" code: it puts 999
 of one item in the PC's item storage. Each run makes one item; run it again for another.
 
-**What you get.** 999 of the chosen item in the PC (Master Balls or Luxury Balls today), of which
-`withdraw` go to the bag, and the box names left holding that item's code. The game is saved twice:
-once with the code typed (the "code save"), and again once the items are in the bag.
+**What you get.** 999 of the chosen item in the PC (Master Balls, Luxury Balls, or Rare Candies
+today), of which `withdraw` go to the bag, and the box names left holding that item's code. The
+game is saved twice: once with the code typed (the "code save"), and again once the items are in
+the bag.
 
 <!-- generated:backends -->
 Runs on: mGBA.
@@ -46,7 +47,7 @@ Give each as `--options KEY=VALUE`:
 
 | Key | Values | When not given | What it chooses |
 |---|---|---|---|
-| `item` | master-ball \| luxury-ball | required | the item the code makes, 999 of it in the PC's item storage |
+| `item` | master-ball \| luxury-ball \| rare-candy | required | the item the code makes, 999 of it in the PC's item storage |
 | `withdraw` | 1 to 999 | required | how many of them go from the PC to the bag |
 <!-- /generated -->
 
@@ -99,8 +100,8 @@ nothing the game runs until 02, so 01 retries.
 
 ## Known limits
 
-- Two items so far: Master Ball and Luxury Ball. Another item joins `ace_presets.json` (and the
-  program's `item` choices) once its code is checked on mGBA; Rare Candy, Repel and Escape Rope
+- Three items so far: Master Ball, Luxury Ball, and Rare Candy. Another item joins `ace_presets.json`
+  (and the program's `item` choices) once its code is checked on mGBA; Repel and Escape Rope
   are (docs/design/FRLG-ACE-Execution.md).
 - The bag's pocket is not checked for a free slot: the Poké Balls pocket holds every kind of ball.
 - mGBA only. The Switch release's ROM differs, and the code's exit has not been tried there.
