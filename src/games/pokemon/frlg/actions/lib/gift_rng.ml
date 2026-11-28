@@ -22,6 +22,7 @@ type game_steps = {
   claim_prize : unit -> bool;
   shiny_at : int -> bool;
   log : string -> unit;
+  show_counters : Wire.Watch.counter list -> unit;
 }
 
 type end_ = Shiny | Not_shiny | Claim_failed | Party_full
@@ -148,18 +149,34 @@ let live_game_steps ~log ~prize_row timings =
     claim_prize;
     shiny_at = (fun slot -> Wild_rng_steps.shiny_at ~log ~slot);
     log;
+    show_counters = Watch_report.counters;
   }
+
+let report game_steps ~attempt ~total phase =
+  game_steps.show_counters (Wild_rng.watch_counters ~attempt ~total ~phase)
+
+let check_shiny game_steps ~attempt ~total ~slot =
+  report game_steps ~attempt ~total "summary";
+  if game_steps.shiny_at slot then (
+    report game_steps ~attempt ~total "shiny";
+    Shiny)
+  else Not_shiny
+
+let run_attempt game_steps ~attempt ~total ~slot =
+  report game_steps ~attempt ~total "reset";
+  if game_steps.claim_prize () then check_shiny game_steps ~attempt ~total ~slot
+  else Claim_failed
 
 let run game_steps ~attempts ~party =
   if party >= Capture.party_size then { end_ = Party_full; attempts = 0 }
   else
+    let slot = party + 1 in
     let rec loop n =
       if n > attempts then { end_ = Not_shiny; attempts = n - 1 }
-      else if not (game_steps.claim_prize ()) then
-        { end_ = Claim_failed; attempts = n }
-      else if game_steps.shiny_at (party + 1) then
-        { end_ = Shiny; attempts = n }
-      else loop (n + 1)
+      else
+        match run_attempt game_steps ~attempt:n ~total:attempts ~slot with
+        | Not_shiny -> loop (n + 1)
+        | end_ -> { end_; attempts = n }
     in
     loop 1
 
