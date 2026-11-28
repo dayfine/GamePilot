@@ -7,9 +7,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | Video interval | Status |
 |---|---|
 | 00:00:00–00:05:00 | Reviewed |
-| 00:05:00–03:18:16 | Pending |
+| 00:05:00–00:10:00 | Reviewed |
+| 00:10:00–03:18:16 | Pending |
 
-Resume at **00:05:00** in the Lake Verity post-battle scene.
+Resume at **00:10:00** during Youngster Tristan’s battle introduction on Route 202.
 
 ## Review method
 
@@ -42,3 +43,27 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 - Lake Verity. The first Starly battle is over and Dawn is walking away. The player and rival remain at the grass patch.
 - Party contains Chimchar, male, **Lv. 5**, last visible **17/20 HP**. Moves are **Scratch** (33/35 PP inferred from two uses) and **Leer** (last visible 30/30 PP).
 - The settings save is confirmed. No item pickup or use was observed in this block.
+
+## 05:00–10:00 | Sandgem lab, Parcel and catching tutorial
+
+| Video time | Observed action and outcome |
+|---|---|
+| 05:00–05:20 | Finish the rival’s Lake Verity dialogue. Leave the grass to the south, emerge at Verity Lakefront and head east to Route 201. |
+| 05:21–05:39 | Meet Rowan and Dawn on the west leg of Route 201. They leave after the brief conversation. Advance the rival’s dialogue and the scene transitions directly to the player’s home. |
+| 05:39–06:00 | Mom directs the player to Rowan in Sandgem Town and explains how to dash with the left stick. Leave the house and head north out of Twinleaf. |
+| 06:01–06:13 | Head east on Route 201 through the first grass patch. In the larger patch, go up to the Poké Mart employee and collect the free **Potions**. The receipt gives no count. Follow the upper edge of the grass east to Sandgem. |
+| 06:14–06:36 | Dawn approaches at the Sandgem entrance and leads the player to the lab. The rival bumps into the group on the way out. Enter the lab after he leaves. |
+| 06:37–07:03 | Rowan lets the player keep **Chimchar**. The scripted nickname line appears, then dialogue continues without a keyboard. Confirm **Yes** to Rowan’s request and receive the **Pokédex** at 06:49–06:50. Finish Dawn’s introduction and leave the lab. |
+| 07:04–07:25 | Follow Dawn’s tour past the Pokémon Center and Poké Mart. Dawn leaves north after the tour. |
+| 07:25–07:46 | Go west out of Sandgem and use the Route 201 paths and southbound ledge to return to Twinleaf. Enter the player’s house. |
+| 07:47–08:09 | Speak to Mom. A brief fade occurs during her greeting, and Chimchar’s HP and PP are not shown in this scene. Receive the **Guidebook**, then take the **Parcel** from the rival’s mother. Leave the house. |
+| 08:11–08:39 | The player appears outside wearing the red hat and advances Mom’s farewell. Run north through Twinleaf and east through Route 201 and Sandgem. Turn north between the Center and Mart for Route 202. |
+| 08:39–09:15 | Trigger Dawn’s catching tutorial at the first Route 202 grass patch. Her male **Turtwig Lv. 5, 22/22 HP** uses **Tackle** once against a female **Bidoof Lv. 2**, reducing its HP to yellow. Bidoof uses **Growl**, lowering Turtwig’s Attack. |
+| 09:16–09:46 | Dawn opens her Bag and uses a **Poké Ball** to catch Bidoof. The tutorial shows Dawn’s inventory. Back in the overworld, receive **Poké Balls** from Dawn at 09:42. The player’s ball count is unverified. |
+| 09:47–10:00 | Cross the first grass patch west, then pass north through the larger patch. Walk into the blue-capped trainer’s line of sight. **Youngster Tristan** challenges the player at 09:58. The battle introduction is still in progress at the boundary. |
+
+### State at 10:00
+
+- Route 202, in Youngster Tristan’s battle introduction. His first Pokémon and Chimchar’s current battle stats are pending the next block.
+- Chimchar remains the player’s only observed party member. Its last observed level, HP and moves came from the Lake Verity battle. Dawn’s Turtwig and Bidoof belong to the tutorial.
+- Pokédex and Guidebook obtained. Parcel is still awaiting delivery. The player received Potions and Poké Balls, with quantities unverified.
