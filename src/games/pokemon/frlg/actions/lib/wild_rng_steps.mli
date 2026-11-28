@@ -12,7 +12,9 @@
 
 val title_presses : Frlg_rng.Rng_timings.t -> Wire.command list
 (** From the reset: the title screen's wait, A held 3 s (the seed), the continue
-    screen's rest, A (continue) and B (the recap). Shared with {!Gift_rng}. *)
+    screen's rest, A (continue, cooled down for [t.recap_delay_ms], where the
+    1-advance/frame [csf_offset] parity shift applies) and B (the recap). Shared
+    with {!Gift_rng}. *)
 
 val blind_presses : Frlg_rng.Rng_timings.t -> Wire.command list
 (** From the reset: {!title_presses}, then Start, the party, the last member's

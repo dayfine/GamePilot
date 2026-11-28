@@ -4,7 +4,6 @@ module T = Frlg_rng.Rng_timings
 (* The fork's press lengths (ms). *)
 let seed_hold_ms = 3000
 let tap_ms = 50
-let continue_release_ms = 1450
 let recap_release_ms = 2450
 let menu_hold_ms = 200
 let menu_release_ms = 300
@@ -22,7 +21,7 @@ let title_presses (t : T.t) =
     Wire.Wait { wait_ms = t.seed_delay_ms };
     hold ~hold_ms:seed_hold_ms ~cooldown_ms:0 Wire.A;
     Wire.Wait { wait_ms = t.csf_delay_ms - seed_hold_ms };
-    hold ~hold_ms:tap_ms ~cooldown_ms:continue_release_ms Wire.A;
+    hold ~hold_ms:tap_ms ~cooldown_ms:t.recap_delay_ms Wire.A;
     hold ~hold_ms:tap_ms ~cooldown_ms:recap_release_ms Wire.B;
   ]
 

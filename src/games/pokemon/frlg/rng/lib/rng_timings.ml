@@ -32,6 +32,7 @@ let mgba =
   }
 
 let continue_screen_frames = 200
+let recap_base_delay_ms = 1450
 let sweet_scent_fixed_duration_ms = 7400
 let gift_fixed_duration_ms = 5000
 let static_fixed_duration_ms = 5000
@@ -43,9 +44,15 @@ let no_calibrations = { seed_offset = 0; csf_offset = 0; ingame_offset = 0 }
 type t = {
   seed_delay_ms : int;
   csf_delay_ms : int;
+  recap_delay_ms : int;
   teachy_delay_ms : int;
   ingame_delay_ms : int;
 }
+
+let total_delay_ms t =
+  t.seed_delay_ms + t.csf_delay_ms
+  + (t.recap_delay_ms - recap_base_delay_ms)
+  + t.teachy_delay_ms + t.ingame_delay_ms
 
 (* Teachy TV: 313 advances a frame while it plays, kept for a margin of 12000
    advances, and 14067 ms of opening and closing it. *)
@@ -72,6 +79,10 @@ let checked ~fixed_duration_ms ~min_wait_ms ~label t =
     Error
       "The Continue Screen delay cannot be less than 3200ms (192 advances). \
        Check your Continue Screen calibration."
+  else if t.recap_delay_ms < min_press_gap_ms then
+    Error
+      "The Recap delay cannot be less than 300ms. Check your Continue Screen \
+       calibration."
   else if t.seed_delay_ms < min_seed_delay_ms then
     Error
       "The title screen delay cannot be less than 30s. Check your seed delay \
@@ -93,7 +104,10 @@ let compute ~advances_offset ~fixed_duration_ms ~min_wait_ms ~label m
     +. (float_of_int c.seed_offset *. dur)
     +. float_of_int m.fixed_seed_offset_ms
   in
-  let csf = float_of_int (continue_screen_frames + c.csf_offset) *. dur in
+  let csf = float_of_int continue_screen_frames *. dur in
+  let recap =
+    float_of_int recap_base_delay_ms +. (float_of_int c.csf_offset *. dur)
+  in
   let ingame =
     ((modified -. teachy) *. dur /. m.ingame_advances_per_frame)
     -. if teachy > 0.0 then teachy_tv_overhead_ms else 0.0
@@ -102,13 +116,14 @@ let compute ~advances_offset ~fixed_duration_ms ~min_wait_ms ~label m
     Error
       "In-game advances cannot be negative. Check your in-game advances and \
        calibration."
-  else if seed < 0.0 || csf < 0.0 || ingame < 0.0 then
+  else if seed < 0.0 || csf < 0.0 || recap < 0.0 || ingame < 0.0 then
     Error "A delay cannot be negative. Check your calibration values."
   else
     checked ~fixed_duration_ms ~min_wait_ms ~label
       {
         seed_delay_ms = int_of_float seed;
         csf_delay_ms = int_of_float csf;
+        recap_delay_ms = int_of_float (Float.round recap);
         teachy_delay_ms =
           int_of_float (teachy *. dur /. teachy_advances_per_frame);
         ingame_delay_ms = int_of_float ingame;
