@@ -24,5 +24,7 @@
  (deps
   (glob_files fixtures/*.txt)
   ../../assets/rng_seeds_mgba_sevii_save.json
+  ../../assets/rng_seeds_switch_fr_eng.json
+  ../../assets/encounter_slots_firered.json
   ../../assets/base_stats.json)
  (libraries yojson gamepilot.table_test gamepilot.frlg_rng))

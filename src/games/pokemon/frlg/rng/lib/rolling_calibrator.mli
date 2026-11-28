@@ -63,6 +63,9 @@ val max_advance_delta : int
 (** Maximum accepted [abs advance_delta] ([50]); larger misses are rejected as
     outliers. *)
 
+val min_parity_lock_samples : int
+(** Minimum number of recent samples ([3]) required to declare a parity lock. *)
+
 val default_frame_duration_ms : float
 (** Frame duration in ms used to convert [seed_delta_frames] to milliseconds
     ({!Rng_timings.switch}[.frame_duration_ms], [≈ 16.6667 ms]). *)
@@ -86,6 +89,17 @@ val count : t -> int
 
 val samples : t -> sample list
 (** Accepted samples in the rolling window, newest first. *)
+
+val parity_locked : t -> bool
+(** [true] when the target advance appears unreachable on a 2-advance-per-frame
+    console: no sample in the window has hit [advance_delta = 0], at least
+    {!min_parity_lock_samples} recent samples all missed by [±1] advance, and
+    the used [ingame_offset] values strictly bracket both sides (every [-1]
+    observation used a smaller [ingame_offset] than every [+1] observation). *)
+
+val reset : t -> t
+(** Clears all retained samples and advance observations while keeping the
+    calibrator's configuration. *)
 
 val record :
   t ->

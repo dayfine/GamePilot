@@ -96,4 +96,6 @@ val live_calibrated_game_steps :
     Summary Page 1 & Page 2 on misses, report the miss distance via
     {!Rng_miss_calibration}, update the in-memory plan offsets for the next
     attempt (with a 10-attempt rolling average via
-    {!Frlg_rng.Rolling_calibrator}), and persist the timing delta. *)
+    {!Frlg_rng.Rolling_calibrator}), persist the timing delta, and skip any
+    parity-locked [(seed, advance)] target while resetting the rolling advance
+    history. *)
