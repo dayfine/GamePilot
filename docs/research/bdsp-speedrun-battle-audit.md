@@ -32,7 +32,7 @@ Known HP overrides the calculated maximum. Where current HP is missing, R uses f
 
 Each rate uses 256 trials in each scenario. Displayed rates round to whole percentages. A displayed 0% or 100% reflects the sampled outcomes under these inputs. Values within half a percentage point of either endpoint are shown as <1% or >99% when both outcomes occurred. Machop’s one-ball capture range uses its green HP band, an ordinary Poké Ball, no status and Lv. 9 Chimchar versus Lv. 7 Machop. Palkia’s capture is guaranteed conditional on spending the Master Ball. The two Geodude entries have no modeled escape rate because foe Speed and the exact escape inputs are unavailable. [BDSP capture formula implementation](https://github.com/thames1000/pokemon-catch-rate-calculator/blob/master/desktop/catch_formula.py) · [Platinum Machop species data](https://github.com/pret/pokeplatinum/blob/485c400f9d7bad10d906d556ba23e5e46d5b3e5e/res/pokemon/machop/data.json)
 
-Run the [battle model](https://github.com/dayfine/PokemonSimulation/blob/558f43b6e7699cabe97366435a6e165016a85d18/data/runs/bdsp-speedrun/bdsp-speedrun-model.cjs) from the PokemonSimulation root with Node and Pokémon Showdown **0.11.11** installed. Set **SHOWDOWN_MODULE** to the absolute package path when using PokemonSimulation’s copy under the FRLG engine. Optional trainer IDs select cases.
+Run the [battle model](https://github.com/dayfine/PokemonSimulation/blob/b7c97a016d78a92d6a44b3913088acdaefdf1855/data/runs/bdsp-speedrun/bdsp-speedrun-model.cjs) from the PokemonSimulation root with Node and Pokémon Showdown **0.11.11** installed. Set **SHOWDOWN_MODULE** to the absolute package path when using PokemonSimulation’s copy under the FRLG engine. Optional trainer IDs select cases.
 
     node data/runs/bdsp-speedrun/bdsp-speedrun-model.cjs 256
     node data/runs/bdsp-speedrun/bdsp-speedrun-model.cjs 256 175 242 191
@@ -105,17 +105,29 @@ Run the comparison from the PokemonSimulation root.
 
     node data/runs/bdsp-speedrun/bdsp-speedrun-model.cjs --entry-healing 1024 175 242 241 243 179 244 362
 
+### Youngster Tristan and one Potion
+
+Chimchar already enters at 20/20 HP. The recorded Leer followed by three Scratches allowed four enemy hits and left Chimchar at 4/20 HP. The modeled Speed is 12 for both leads, and Starly’s Quick Attack can move first. The recovery variant uses up to one of the Potions picked up on Route 201 when Chimchar reaches **8 HP or below**. All four cases use 2,048 matched trials per opponent model. [Entry stats](https://github.com/dayfine/PokemonSimulation/blob/7270b6b03f2f5e21b072b4bdbab28afceb693ed7/data/runs/bdsp-speedrun/bdsp-speedrun-entry-stats.md#battle-3) · [Recorded turns](https://www.youtube.com/watch?v=fgI5MyC1jGI&t=598s) · [Raw Tristan results](https://github.com/dayfine/PokemonSimulation/blob/b7c97a016d78a92d6a44b3913088acdaefdf1855/data/runs/bdsp-speedrun/bdsp-speedrun-tristan-results.json)
+
+| Opening and recovery | Win rate R / D |
+|---|---|
+| Leer, then Scratch | 46.6% / 27.0% |
+| Leer, then Scratch and up to one Potion | 94.7% / 92.3% |
+| Scratch from turn one | 44.9% / 21.8% |
+| Scratch from turn one and up to one Potion | 93.5% / 92.4% |
+
+A single reactive Potion produced the large reliability gain. The tested openings gave similar rates once healing was available. The one-Potion policy still lost some trials.
+
+    node data/runs/bdsp-speedrun/bdsp-speedrun-model.cjs --tristan 2048
+
 ## Fights below 60% in every tested scenario
 
-Three fights stayed below 60% across all available baseline, policy and entry-healing runs. The table uses the highest **unrounded** estimate for each fight. It ranks the tested policies and entry states. The remaining work is to test the controller changes described below.
+Two fights stayed below 60% across all available baseline and follow-up runs. The table uses the highest **unrounded** estimate for each fight. It ranks the tested policies and entry states. The remaining work is to test the controller changes described below.
 
 | Fight | Best tested rate | Main failure point |
 |---|---:|---|
-| Youngster Tristan | 45.3% | Leer gives Starly a free attack. Quick Attack and a modeled Speed tie leave little room for a critical hit. |
 | Crasher Wake | 46.9% | Quagsire can disrupt Kazza’s Speed or setup. The switch and X Speed sequence depends on when Monferno faints. |
 | Candice | 48.4% | Snover’s Avalanche and hail drain the solo lead’s HP before faster Sneasel can attack. |
-
-**Youngster Tristan.** Chimchar enters at 20/20 HP with Scratch and Leer. The modeled Speed is 12 for both leads, and Starly’s Quick Attack moves first. The recorded Leer followed by three Scratches allowed four enemy hits and left Chimchar at 4/20 HP. The baseline tests that opening. Compare immediate Scratch with a Potion rule using the Potions picked up on Route 201. [Entry stats](https://github.com/dayfine/PokemonSimulation/blob/7270b6b03f2f5e21b072b4bdbab28afceb693ed7/data/runs/bdsp-speedrun/bdsp-speedrun-entry-stats.md#battle-3) · [Recorded turns](https://www.youtube.com/watch?v=fgI5MyC1jGI&t=598s)
 
 **Crasher Wake.** Gyarados takes 4× from Shock Wave. Quagsire’s Ground type blocks Shock Wave and its typing takes 4× from Grass Knot. Quagsire can lower Kazza’s Speed with Mud Shot, remove boosts with Haze, or set rain for Floatzel’s Swift Swim. Floatzel takes 2× from Grass Knot and has 85 modeled Speed to Kazza’s 70 before boosts. Aqua Jet can act first even after X Speed. The recording uses Switch mode to send Monferno in as Quagsire enters. Monferno uses Taunt and faints at 48/80 HP to Mud Shot, allowing Kazza to return for free and use X Speed. At 80/80 HP, Monferno can survive that hit and receive the scripted X Speed itself. A revised policy should verify that Kazza is active before boosting and account for any turn spent switching back. [Entry stats](https://github.com/dayfine/PokemonSimulation/blob/7270b6b03f2f5e21b072b4bdbab28afceb693ed7/data/runs/bdsp-speedrun/bdsp-speedrun-entry-stats.md#battle-42) · [Recorded turns](https://www.youtube.com/watch?v=fgI5MyC1jGI&t=4942s)
 
