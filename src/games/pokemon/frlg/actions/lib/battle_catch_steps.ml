@@ -109,6 +109,9 @@ let state_of_frame tr m : CS.t =
     foe_status = Option.map map_foe_status (Option.bind m Hud.foe_status);
     balls_thrown = tr.balls_thrown;
     fainted = [];
+    setup_uses_done = 0;
+    wall_move_heals_done = 0;
+    status_uses_done = 0;
   }
 
 let read_action_state tr = state_of_frame tr (Effects.read ())
@@ -159,19 +162,22 @@ let execute_move ~log (battle : B.game_steps) tr move_slot =
   | B.Other_move name -> Error ("unexpected move in slot: " ^ name)
   | B.Not_done reason -> Error reason
 
-let execute_switch ~log (battle : B.game_steps) tr slot =
+let switch_party ~log ~label ~count_turn act tr slot =
   match find_battle_index tr slot with
   | None -> Error (Printf.sprintf "unknown party slot %d" slot)
   | Some idx ->
       log
-        (Printf.sprintf "FRLG catch: Pokémon -> slot %d (pos %d)" slot (idx + 1));
+        (Printf.sprintf "FRLG catch: %s -> slot %d (pos %d)" label slot (idx + 1));
       tr.last_action_was_throw <- false;
-      if battle.switch_to ~slot:idx then (
+      if act ~slot:idx then (
         swap_into_lead tr idx;
         tr.active_slot <- slot;
-        tr.turns <- tr.turns + 1;
+        if count_turn then tr.turns <- tr.turns + 1;
         Ok ())
-      else Error (Printf.sprintf "could not switch to party slot %d" slot)
+      else Error (Printf.sprintf "could not %s party slot %d" label slot)
+
+let execute_switch ~log (battle : B.game_steps) tr slot =
+  switch_party ~log ~label:"Pokémon" ~count_turn:true battle.switch_to tr slot
 
 let execute_throw ~log (battle : B.game_steps) cfg tr name =
   log ("FRLG catch: Bag -> throw " ^ name);
@@ -210,18 +216,8 @@ let execute_command ~log battle cfg tr = function
   | CS.Pause_for_user _ -> Ok ()
 
 let send_in ~log (battle : B.game_steps) tr slot =
-  match find_battle_index tr slot with
-  | None -> Error (Printf.sprintf "unknown party slot %d" slot)
-  | Some idx ->
-      log
-        (Printf.sprintf "FRLG catch: forced switch -> slot %d (pos %d)" slot
-           (idx + 1));
-      tr.last_action_was_throw <- false;
-      if battle.send_in ~slot:idx then (
-        swap_into_lead tr idx;
-        tr.active_slot <- slot;
-        Ok ())
-      else Error (Printf.sprintf "could not send in party slot %d" slot)
+  switch_party ~log ~label:"forced switch" ~count_turn:false battle.send_in tr
+    slot
 
 let make ?battle ?(log = ignore) cfg : CR.game_steps =
   let battle = match battle with Some b -> b | None -> BS.make ~log () in
@@ -252,6 +248,8 @@ let build_policy ~ball_name ~max_balls ~max_turns ~sleeper_slot ~spore_move
   {
     status_setter =
       Some { slot = sleeper_slot; move_slot = spore_move; hp_floor };
+    setup = None;
+    heavy_chipper = None;
     false_swiper =
       Some
         {
@@ -262,6 +260,7 @@ let build_policy ~ball_name ~max_balls ~max_turns ~sleeper_slot ~spore_move
         };
     wall;
     ball_name;
+    fallback_ball = None;
     max_balls;
     foe_hp_target = defaults.foe_hp_target;
     foe_hp_rechip = defaults.foe_hp_rechip;

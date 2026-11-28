@@ -8,6 +8,7 @@ type rules =
   | Plza_gifts
   | Bdsp_underground
   | Bdsp_static_rng
+  | Bdsp_battle_catch
 
 type category =
   | Testing

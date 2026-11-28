@@ -30,6 +30,9 @@ type rules =
   | Bdsp_static_rng
       (** BDSP's static legendary RNG checkpoint series (Bdsp_engine,
           Bdsp_static_rng_series). *)
+  | Bdsp_battle_catch
+      (** BDSP's standalone wild-battle catcher checkpoint series (Bdsp_engine,
+          Bdsp_battle_catch_series). *)
 
 (** Shared program grouping across games, shown by [gamepilot programs] and
     recorded in [run.json]. *)

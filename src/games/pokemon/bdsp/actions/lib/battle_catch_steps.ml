@@ -4,6 +4,7 @@ module P = Switch.Switch_presses
 module Hud = Bdsp_readers.Battle_hud
 module CS = Pokemon_catch.Catch_state
 module CR = Pokemon_catch.Catch_runner
+module Cursor = Battle_party_cursor
 
 type bag_layout = {
   ball_pocket_steps : int;
@@ -20,6 +21,7 @@ type timing = {
   event_timeout_ms : int;
   dialog_advance_ms : int;
   black_hold_ms : float;
+  status_cycle_ms : int;
 }
 
 type config = {
@@ -39,32 +41,15 @@ type party_slots = {
   send_in_order : int list;
 }
 
-type policy_defaults = {
-  ball_name : string;
-  max_balls : int;
-  max_turns : int;
-  status_floor : float;
-  swiper_floor : float;
-  wall_floor : float;
-  foe_target : float;
-  kyogre_rechip : float;
-}
-
-type groudon_extra = { groudon_rechip : float; poll_slice_ms : int }
-
-let defaults : policy_defaults =
-  {
-    ball_name = "Luxury Ball";
-    max_balls = 60;
-    max_turns = 80;
-    status_floor = 0.35;
-    swiper_floor = 0.40;
-    wall_floor = 0.45;
-    foe_target = 0.15;
-    kyogre_rechip = 0.35;
-  }
-
-let extra : groudon_extra = { groudon_rechip = 0.40; poll_slice_ms = 500 }
+let default_ball_name = "Luxury Ball"
+let default_max_balls = 60
+let default_max_turns = 80
+let default_hp_floor = 0.40
+let default_foe_target = 0.15
+let kyogre_rechip = 0.35
+let groudon_rechip = 0.40
+let poll_slice_ms = 500
+let forced_switch_party_open_ms = 2000
 
 let default_timing : timing =
   {
@@ -75,6 +60,7 @@ let default_timing : timing =
     event_timeout_ms = 30_000;
     dialog_advance_ms = 350;
     black_hold_ms = 200.;
+    status_cycle_ms = 2200;
   }
 
 let tap t btn =
@@ -89,16 +75,17 @@ let move_pockets t steps =
   if steps > 0 then nav_repeat t Wire.Right steps
   else if steps < 0 then nav_repeat t Wire.Left (-steps)
 
-let select_party_slot t slot =
-  nav_repeat t Wire.Down (slot - 1);
+let select_party_row t row =
+  nav_repeat t Wire.Down row;
   tap t Wire.A;
   tap t Wire.A
 
 type tracker = {
   mutable subscribed : bool;
-  mutable active_slot : int;
   mutable turns : int;
   mutable balls_thrown : int;
+  mutable last_ball : string option;
+  cursor : Cursor.t;
 }
 
 let ensure_probes cfg tr =
@@ -108,53 +95,67 @@ let ensure_probes cfg tr =
         : string list);
     tr.subscribed <- true)
 
-let read_foe_status m =
-  Option.map
-    (fun asleep -> if asleep then CS.Asleep else CS.Healthy)
-    (Hud.foe_asleep m)
+let saw_sleep m = Hud.foe_asleep m = Some true
 
-let read_action_state tr m : CS.t =
+let sample_foe_asleep cfg first_m =
+  match Hud.foe_asleep first_m with
+  | Some true -> Some CS.Asleep
+  | None -> None
+  | Some false when cfg.timing.status_cycle_ms <= 0 -> Some CS.Healthy
+  | Some false -> (
+      match Effects.await ~timeout_ms:cfg.timing.status_cycle_ms saw_sleep with
+      | Effects.Holds _ -> Some CS.Asleep
+      | Effects.Timeout -> Some CS.Healthy)
+
+let read_action_state cfg tr m : CS.t =
   {
     turn = tr.turns;
-    active_slot = tr.active_slot;
+    active_slot = Cursor.active_slot tr.cursor;
     active_hp_ratio = Hud.player_hp_ratio m;
     foe_hp_ratio = Hud.foe_hp_ratio m;
-    foe_status = read_foe_status m;
+    foe_status = sample_foe_asleep cfg m;
     balls_thrown = tr.balls_thrown;
     fainted = [];
+    setup_uses_done = 0;
+    wall_move_heals_done = 0;
+    status_uses_done = 0;
   }
 
 let is_not_black m = if not (B.shown m) then Some () else None
 
 let wait_battle_end ~log cfg tr =
   let t = cfg.timing in
-  if tr.balls_thrown > 0 then (
+  if tr.balls_thrown <= 0 then
+    Ok (CR.Unexpected "black screen before any ball was thrown")
+  else (
     log "Battle faded to black after ball throw; waiting for fade clear...";
     ignore
       (H.wait_for ~timeout_ms:t.event_timeout_ms
          (H.held t.black_hold_ms is_not_black));
     Ok (CR.Caught : CR.event))
-  else Ok (CR.Unexpected "black screen before any ball was thrown")
 
 let inspect_frame ~log cfg tr m =
   let t = cfg.timing in
   match Hud.classify_screen m with
-  | Hud.Action_menu -> Some (Ok (CR.Action_menu (read_action_state tr m)))
+  | Hud.Action_menu -> Some (Ok (CR.Action_menu (read_action_state cfg tr m)))
   | Hud.Forced_switch ->
-      Some (Ok (CR.Forced_switch { fainted_slot = tr.active_slot }))
+      Some
+        (Ok (CR.Forced_switch { fainted_slot = Cursor.active_slot tr.cursor }))
   | Hud.Dialog ->
       P.press ~hold_ms:t.press_hold_ms ~cooldown_ms:t.dialog_advance_ms Wire.A;
       None
   | Hud.Black -> Some (wait_battle_end ~log cfg tr)
   | Hud.Other -> None
 
+let is_event_screen m = Hud.classify_screen m <> Hud.Other
+
 let rec poll_event ~log cfg tr deadline =
   let remaining = int_of_float (deadline -. Effects.now ()) in
   if remaining <= 0 then
     Ok (CR.Unexpected "timed out waiting for BDSP battle event")
   else
-    let slice = min remaining extra.poll_slice_ms in
-    match Effects.await ~timeout_ms:slice (fun _ -> true) with
+    let slice = min remaining poll_slice_ms in
+    match Effects.await ~timeout_ms:slice is_event_screen with
     | Effects.Timeout -> poll_event ~log cfg tr deadline
     | Effects.Holds m -> (
         match inspect_frame ~log cfg tr m with
@@ -166,121 +167,132 @@ let next_event ~log cfg tr () =
   let deadline = Effects.now () +. float_of_int cfg.timing.event_timeout_ms in
   poll_event ~log cfg tr deadline
 
-let execute_command ~log cfg tr = function
-  | CS.Use_move move_slot ->
-      let t = cfg.timing in
-      log (Printf.sprintf "BDSP: Fight -> move %d" move_slot);
-      tap t Wire.A;
-      P.wait t.menu_settle_ms;
-      nav_repeat t Wire.Down (move_slot - 1);
-      tap t Wire.A;
-      tr.turns <- tr.turns + 1;
-      Ok ()
+let move_cursor_delta t ~from_slot ~to_slot =
+  let diff = to_slot - from_slot in
+  if diff > 0 then nav_repeat t Wire.Down diff
+  else if diff < 0 then nav_repeat t Wire.Up (-diff)
+
+let settle_after_action t = P.wait (t.menu_settle_ms * 3)
+
+let finish_turn t tr =
+  tr.turns <- tr.turns + 1;
+  settle_after_action t;
+  Ok ()
+
+let open_submenu t down_rows =
+  nav_repeat t Wire.Down down_rows;
+  tap t Wire.A;
+  P.wait t.menu_settle_ms
+
+let use_move ~log cfg tr move_slot =
+  let t = cfg.timing and prev = Cursor.last_move tr.cursor in
+  log (Printf.sprintf "BDSP: Fight -> move %d (from %d)" move_slot prev);
+  open_submenu t 0;
+  move_cursor_delta t ~from_slot:prev ~to_slot:move_slot;
+  tap t Wire.A;
+  Cursor.record_move tr.cursor move_slot;
+  finish_turn t tr
+
+let throw_ball ~log cfg tr ~fallback_ball_steps name =
+  let t = cfg.timing in
+  log ("BDSP: X-shortcut -> throw " ^ name);
+  tap t Wire.X;
+  P.wait t.menu_settle_ms;
+  (match tr.last_ball with
+  | None -> move_pockets t cfg.bag.ball_row
+  | Some prev when prev <> name -> move_pockets t fallback_ball_steps
+  | Some _ -> ());
+  tap t Wire.A;
+  tr.last_ball <- Some name;
+  tr.balls_thrown <- tr.balls_thrown + 1;
+  finish_turn t tr
+
+let execute_command ~log cfg tr ~fallback_ball_steps = function
+  | CS.Use_move move_slot -> use_move ~log cfg tr move_slot
   | CS.Switch_to slot ->
-      let t = cfg.timing in
-      log (Printf.sprintf "BDSP: Pokémon -> slot %d" slot);
-      nav_repeat t Wire.Down 1;
-      tap t Wire.A;
-      P.wait t.menu_settle_ms;
-      select_party_slot t slot;
-      tr.active_slot <- slot;
-      tr.turns <- tr.turns + 1;
-      Ok ()
-  | CS.Throw_ball name ->
-      let t = cfg.timing in
-      log ("BDSP: Bag -> throw " ^ name);
-      nav_repeat t Wire.Down 2;
-      tap t Wire.A;
-      P.wait t.menu_settle_ms;
-      move_pockets t cfg.bag.ball_pocket_steps;
-      nav_repeat t Wire.Down cfg.bag.ball_row;
-      tap t Wire.A;
-      tap t Wire.A;
-      tr.balls_thrown <- tr.balls_thrown + 1;
-      tr.turns <- tr.turns + 1;
-      Ok ()
+      let t = cfg.timing and row = Cursor.swap_to tr.cursor slot in
+      log (Printf.sprintf "BDSP: Pokémon -> slot %d (row %d)" slot row);
+      open_submenu t 1;
+      select_party_row t row;
+      finish_turn t tr
+  | CS.Throw_ball name -> throw_ball ~log cfg tr ~fallback_ball_steps name
   | CS.Heal_active ->
-      let t = cfg.timing in
-      log (Printf.sprintf "BDSP: Bag -> heal slot %d" tr.active_slot);
-      nav_repeat t Wire.Down 2;
-      tap t Wire.A;
-      P.wait t.menu_settle_ms;
+      let t = cfg.timing and slot = Cursor.active_slot tr.cursor in
+      log (Printf.sprintf "BDSP: Bag -> heal slot %d" slot);
+      open_submenu t 2;
       move_pockets t cfg.bag.heal_pocket_steps;
       nav_repeat t Wire.Down cfg.bag.heal_row;
-      tap t Wire.A;
-      tap t Wire.A;
-      nav_repeat t Wire.Down (tr.active_slot - 1);
-      tap t Wire.A;
-      tr.turns <- tr.turns + 1;
-      Ok ()
+      nav_repeat t Wire.A 3;
+      finish_turn t tr
   | CS.Pause_for_user _ -> Ok ()
 
 let send_in ~log cfg tr slot =
-  let t = cfg.timing in
-  log (Printf.sprintf "BDSP: forced switch -> slot %d" slot);
+  let t = cfg.timing and row = Cursor.swap_to tr.cursor slot in
+  log (Printf.sprintf "BDSP: forced switch -> slot %d (row %d)" slot row);
   P.wait t.menu_settle_ms;
-  select_party_slot t slot;
-  tr.active_slot <- slot;
+  tap t Wire.A;
+  P.wait forced_switch_party_open_ms;
+  select_party_row t row;
+  settle_after_action t;
   Ok ()
 
-let make ?(log = ignore) cfg : CR.game_steps =
+let make ?(log = ignore) ?(initial_move_slot = 1) ?(fallback_ball_steps = 0) cfg
+    : CR.game_steps =
+  let cursor =
+    Cursor.create ~party_size:6 ~initial_active_slot:cfg.initial_active_slot
+  in
+  if initial_move_slot <> 1 then Cursor.record_move cursor initial_move_slot;
   let tr =
     {
       subscribed = false;
-      active_slot = cfg.initial_active_slot;
       turns = 0;
       balls_thrown = 0;
+      last_ball = None;
+      cursor;
     }
   in
   {
     next_event = next_event ~log cfg tr;
-    execute = execute_command ~log cfg tr;
+    execute = execute_command ~log cfg tr ~fallback_ball_steps;
     send_in = send_in ~log cfg tr;
   }
 
-let build_policy ~ball_name ~max_balls ~max_turns ~foe_hp_rechip
-    (slots : party_slots) : CS.policy =
-  let status_setter : CS.role_config =
-    {
-      slot = slots.status_setter;
-      move_slot = slots.status_move;
-      hp_floor = defaults.status_floor;
-    }
-  in
-  let false_swiper : CS.false_swipe_config =
-    {
-      slot = slots.false_swiper;
-      move_slot = slots.false_swipe_move;
-      require_status = true;
-      hp_floor = defaults.swiper_floor;
-    }
-  in
-  let wall : CS.wall_config =
-    {
-      slot = slots.wall;
-      heal_move_slot = slots.wall_heal_move;
-      hp_floor = defaults.wall_floor;
-    }
-  in
+let build_policy ~ball_name ~max_balls ~max_turns ~foe_hp_rechip ~heavy_chipper
+    (s : party_slots) : CS.policy =
+  let f = default_hp_floor in
   {
-    status_setter = Some status_setter;
-    false_swiper = Some false_swiper;
-    wall = Some wall;
+    status_setter =
+      Some { slot = s.status_setter; move_slot = s.status_move; hp_floor = f };
+    setup = None;
+    heavy_chipper;
+    false_swiper =
+      Some
+        {
+          slot = s.false_swiper;
+          move_slot = s.false_swipe_move;
+          require_status = true;
+          hp_floor = f;
+        };
+    wall =
+      Some { slot = s.wall; heal_move_slot = s.wall_heal_move; hp_floor = f };
     ball_name;
+    fallback_ball = None;
     max_balls;
-    foe_hp_target = defaults.foe_target;
+    foe_hp_target = default_foe_target;
     foe_hp_rechip;
     reapply_status = true;
     max_turns;
-    send_in_order = slots.send_in_order;
+    send_in_order = s.send_in_order;
   }
 
-let kyogre_policy ?(ball_name = defaults.ball_name)
-    ?(max_balls = defaults.max_balls) ?(max_turns = defaults.max_turns) slots =
-  build_policy ~ball_name ~max_balls ~max_turns
-    ~foe_hp_rechip:defaults.kyogre_rechip slots
+let kyogre_policy ?(ball_name = default_ball_name)
+    ?(max_balls = default_max_balls) ?(max_turns = default_max_turns)
+    ?heavy_chipper slots =
+  build_policy ~ball_name ~max_balls ~max_turns ~foe_hp_rechip:kyogre_rechip
+    ~heavy_chipper slots
 
-let groudon_policy ?(ball_name = defaults.ball_name)
-    ?(max_balls = defaults.max_balls) ?(max_turns = defaults.max_turns) slots =
-  build_policy ~ball_name ~max_balls ~max_turns
-    ~foe_hp_rechip:extra.groudon_rechip slots
+let groudon_policy ?(ball_name = default_ball_name)
+    ?(max_balls = default_max_balls) ?(max_turns = default_max_turns)
+    ?heavy_chipper slots =
+  build_policy ~ball_name ~max_balls ~max_turns ~foe_hp_rechip:groudon_rechip
+    ~heavy_chipper slots

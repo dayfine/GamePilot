@@ -13,7 +13,9 @@
 (** High-level battle screen classification from the subscribed HUD probes. *)
 type screen =
   | Action_menu  (** Main wild-battle Fight/Pokémon/Bag/Run menu is visible. *)
-  | Forced_switch  (** Party switch-in screen is open after a faint. *)
+  | Forced_switch
+      (** Wild-battle post-faint Yes/No prompt ("Use next Pokémon" / "Run") is
+          visible. *)
   | Dialog  (** Short white battle dialog box is showing. *)
   | Black  (** Solid black transition screen. *)
   | Other  (** Animation, transition, or unrecognized screen. *)
@@ -41,8 +43,8 @@ val foe_asleep : Effects.measurements -> bool option
     [None] when the probe is absent from the frame. *)
 
 val forced_switch_shown : Effects.measurements -> bool
-(** [true] when the forced-switch party screen's cyan-teal header bar is
-    visible. *)
+(** [true] when the wild-battle post-faint Yes/No prompt box ("Use next Pokémon"
+    / "Run") is visible. *)
 
 val classify_screen : Effects.measurements -> screen
 (** Classify the current frame into a {!screen} using {!Battle_detector},

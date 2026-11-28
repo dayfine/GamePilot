@@ -1,0 +1,21 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "bdsp",
+  "execution": {},
+  "metadata": {
+    "phase": "testing",
+    "source": "ours: standalone BDSP wild-battle catcher (sleep, optional tank heavy-chipper, False Swipe, and Poké Ball loop)",
+    "postconditions": {}
+  },
+  "checkpoint": {
+    "id": "01-battle-catch",
+    "title": "Catch the active BDSP wild encounter",
+    "events": [
+      {
+        "id": "battle_catch",
+        "kind": "battle_catch",
+        "why": "sleep, optionally heavy-chip to 20-30%, False Swipe to 1 HP, and throw Poké Balls until caught without ever fleeing"
+      }
+    ]
+  }
+}

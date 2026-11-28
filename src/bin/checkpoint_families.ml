@@ -154,8 +154,20 @@ let bdsp_static_rng =
   switch_only_family ~game:"BDSP" ~load_title:bdsp_load_title
     ~run_series:Bdsp_static_rng_series.Static_rng_runs.run_series ()
 
+let bdsp_battle_catch =
+  switch_only_family ~game:"BDSP" ~load_title:bdsp_load_title
+    ~run_series:Bdsp_battle_catch_series.Battle_catch_runs.run_series ()
+
 let all =
-  [ grid; plza; plza_home; plza_gifts; bdsp_underground; bdsp_static_rng ]
+  [
+    grid;
+    plza;
+    plza_home;
+    plza_gifts;
+    bdsp_underground;
+    bdsp_static_rng;
+    bdsp_battle_catch;
+  ]
 
 let of_rules = function
   | R.Pokemon_grid -> grid
@@ -164,6 +176,7 @@ let of_rules = function
   | R.Plza_gifts -> plza_gifts
   | R.Bdsp_underground -> bdsp_underground
   | R.Bdsp_static_rng -> bdsp_static_rng
+  | R.Bdsp_battle_catch -> bdsp_battle_catch
 
 let of_program (p : R.t option) =
   of_rules (match p with Some p -> p.rules | None -> R.Pokemon_grid)

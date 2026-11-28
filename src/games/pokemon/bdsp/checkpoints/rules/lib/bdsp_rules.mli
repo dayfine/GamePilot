@@ -20,6 +20,8 @@ module Action : sig
         (** Hunt a shiny static legendary using 0PK pedestal player-blink seed
             recovery, in-chamber 1PK re-identification, and timed encounter
             triggers. *)
+    | Battle_catch
+        (** Catch an active wild encounter without ever selecting Run. *)
 
   include Engine_rules.ACTION with type t := t
 end

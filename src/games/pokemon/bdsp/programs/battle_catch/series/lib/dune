@@ -1,0 +1,9 @@
+(library
+ (name bdsp_battle_catch_series)
+ (public_name gamepilot.bdsp_battle_catch_series)
+ (libraries
+  gamepilot.engine_run
+  gamepilot.run_options
+  gamepilot.bdsp_rules
+  gamepilot.bdsp_checkpoint_series
+  gamepilot.bdsp_battle_catch))

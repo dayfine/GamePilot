@@ -14,6 +14,7 @@ let action_of_plan = function
   | "save_game" -> Some (no_args_action T.Action.Save_game)
   | "underground_farm" -> Some (no_args_action T.Action.Underground_farm)
   | "static_rng" -> Some (no_args_action T.Action.Static_rng)
+  | "battle_catch" -> Some (no_args_action T.Action.Battle_catch)
   | _ -> None
 
 let postconditions_of_plan ~where obj =

@@ -32,20 +32,20 @@ type color_target = {
 let foe_bar : hp_bar_layout =
   {
     prefix = "bdsp_foe_hp_";
-    x = 0.068;
-    y = 0.112;
-    w = 0.180;
-    h = 0.012;
+    x = 0.767;
+    y = 0.115;
+    w = 0.199;
+    h = 0.013;
     segments = 10;
   }
 
 let player_bar : hp_bar_layout =
   {
     prefix = "bdsp_ply_hp_";
-    x = 0.720;
-    y = 0.735;
-    w = 0.180;
-    h = 0.012;
+    x = 0.046;
+    y = 0.882;
+    w = 0.199;
+    h = 0.013;
     segments = 10;
   }
 
@@ -55,26 +55,31 @@ let hp_thresh : hp_thresholds =
 let sleep_badge : color_target =
   {
     id = "bdsp_foe_slp";
-    box = { x = 0.042; y = 0.132; w = 0.048; h = 0.026 };
-    r_share = 0.34;
-    g_share = 0.33;
-    b_share = 0.33;
+    box = { x = 0.889; y = 0.063; w = 0.090; h = 0.043 };
+    r_share = 0.232;
+    g_share = 0.334;
+    b_share = 0.433;
     max_dist = 0.09;
-    min_rgb_sum = 260.;
-    max_rgb_sum = 460.;
-  }
-
-let switch_header : color_target =
-  {
-    id = "bdsp_switch_hdr";
-    box = { x = 0.050; y = 0.030; w = 0.250; h = 0.040 };
-    r_share = 0.14;
-    g_share = 0.44;
-    b_share = 0.42;
-    max_dist = 0.14;
-    min_rgb_sum = 220.;
+    min_rgb_sum = 380.;
     max_rgb_sum = 620.;
   }
+
+let fswitch_top_id = "bdsp_fswitch_top"
+let fswitch_bot_id = "bdsp_fswitch_bot"
+let fswitch_left_id = "bdsp_fswitch_l"
+let fswitch_top_border_id = "bdsp_fswitch_tb"
+let fswitch_border_min_stddev_sum = 30.
+
+(* Wild-battle post-faint Yes/No prompt ("Use next Pokémon" / "Run"):
+   white interior margins plus left and top border contrast. Uses left/top
+   anchors so box width differences across game languages do not break it. *)
+let fswitch_boxes : (string * Wire.box) list =
+  [
+    (fswitch_top_id, { x = 0.300; y = 0.728; w = 0.160; h = 0.015 });
+    (fswitch_bot_id, { x = 0.300; y = 0.855; w = 0.160; h = 0.014 });
+    (fswitch_left_id, { x = 0.272; y = 0.740; w = 0.018; h = 0.110 });
+    (fswitch_top_border_id, { x = 0.300; y = 0.714; w = 0.160; h = 0.016 });
+  ]
 
 let seg_id bar idx = Printf.sprintf "%s%d" bar.prefix idx
 
@@ -100,14 +105,17 @@ let bar_probes ~picture bar =
   |> List.filter_map Fun.id
 
 let probes ~picture =
-  let badges =
-    List.filter_map Fun.id
-      [
-        color_probe ~picture ~id:sleep_badge.id sleep_badge.box;
-        color_probe ~picture ~id:switch_header.id switch_header.box;
-      ]
+  let fswitch_probes =
+    List.filter_map
+      (fun (id, box) -> color_probe ~picture ~id box)
+      fswitch_boxes
   in
-  bar_probes ~picture foe_bar @ bar_probes ~picture player_bar @ badges
+  let sleep =
+    Option.to_list (color_probe ~picture ~id:sleep_badge.id sleep_badge.box)
+  in
+  bar_probes ~picture foe_bar
+  @ bar_probes ~picture player_bar
+  @ sleep @ fswitch_probes
 
 let all_battle_probes ~picture =
   probes ~picture
@@ -154,8 +162,18 @@ let matches_target_opt m (t : color_target) =
 
 let foe_asleep m = matches_target_opt m sleep_badge
 
+let is_white m id =
+  match SC.stats m id with Some s -> SC.is_white s | None -> false
+
+let border_ok m id =
+  match SC.stats m id with
+  | Some s -> SC.sum s.stddev >= fswitch_border_min_stddev_sum
+  | None -> false
+
 let forced_switch_shown m =
-  Option.value ~default:false (matches_target_opt m switch_header)
+  is_white m fswitch_top_id && is_white m fswitch_bot_id
+  && border_ok m fswitch_left_id
+  && border_ok m fswitch_top_border_id
 
 let classify_screen m =
   if Battle_detector.shown m then Action_menu

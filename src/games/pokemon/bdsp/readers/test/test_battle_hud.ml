@@ -43,7 +43,7 @@ let test_hp_ratios () =
 
 let test_sleep_badge () =
   let asleep =
-    frame [ ("bdsp_foe_slp", cs (128., 122., 125.) (12., 12., 12.)) ]
+    frame [ ("bdsp_foe_slp", cs (121., 174., 225.) (12., 12., 12.)) ]
   in
   assert_eq "foe asleep pill" (Battle_hud.foe_asleep asleep) (Some true);
   let white_hud =
@@ -62,11 +62,29 @@ let test_sleep_badge () =
 
 let test_screen_classification () =
   let switch_frame =
-    frame [ ("bdsp_switch_hdr", cs (60., 190., 180.) (10., 10., 10.)) ]
+    frame
+      [
+        ("bdsp_fswitch_top", cs (253., 253., 253.) (1., 1., 1.));
+        ("bdsp_fswitch_bot", cs (253., 253., 253.) (1., 1., 1.));
+        ("bdsp_fswitch_l", cs (186., 155., 150.) (64., 83., 87.));
+        ("bdsp_fswitch_tb", cs (156., 139., 136.) (66., 73., 76.));
+      ]
   in
   assert_eq "forced switch"
     (Battle_hud.classify_screen switch_frame)
     Battle_hud.Forced_switch;
+  let white_flash =
+    frame
+      [
+        ("bdsp_fswitch_top", cs (253., 253., 253.) (1., 1., 1.));
+        ("bdsp_fswitch_bot", cs (253., 253., 253.) (1., 1., 1.));
+        ("bdsp_fswitch_l", cs (253., 253., 253.) (1., 1., 1.));
+        ("bdsp_fswitch_tb", cs (253., 253., 253.) (1., 1., 1.));
+      ]
+  in
+  assert_eq "white flash is not forced switch"
+    (Battle_hud.classify_screen white_flash)
+    Battle_hud.Other;
   let black_frame =
     frame [ ("start_game.black", cs (5., 5., 5.) (1., 1., 1.)) ]
   in
@@ -89,7 +107,7 @@ let test_screen_classification () =
 
 let test_probe_list_non_empty () =
   let picture : Wire.box = { x = 0.; y = 0.; w = 1.; h = 1. } in
-  assert_eq "hud probes count" (List.length (Battle_hud.probes ~picture)) 22
+  assert_eq "hud probes count" (List.length (Battle_hud.probes ~picture)) 25
 
 let () =
   test_hp_ratios ();

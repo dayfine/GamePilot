@@ -79,6 +79,130 @@ let underground =
     options = underground_options;
   }
 
+type catch_bounds = {
+  max_slot : int;
+  max_move : int;
+  floor_min_pct : int;
+  floor_max_pct : int;
+  max_balls : int;
+  min_turns : int;
+  max_turns : int;
+  pocket_bound : int;
+  max_row : int;
+}
+
+let catch_b =
+  {
+    max_slot = 6;
+    max_move = 4;
+    floor_min_pct = 15;
+    floor_max_pct = 80;
+    max_balls = 99;
+    min_turns = 10;
+    max_turns = 200;
+    pocket_bound = 5;
+    max_row = 20;
+  }
+
+let int_opt key lo hi default doc : Run_options.declared =
+  {
+    key;
+    value = Run_options.Int_range (lo, hi);
+    presence = Run_options.Default default;
+    doc;
+  }
+
+let battle_catch_options : Run_options.declared list =
+  [
+    {
+      key = "target";
+      value =
+        Run_options.One_of
+          [ "groudon"; "kyogre"; "latios"; "latias"; "mewtwo"; "generic" ];
+      presence = Run_options.Default "groudon";
+      doc = "Target encounter label for logs and policy defaults.";
+    };
+    {
+      key = "ball";
+      value =
+        Run_options.One_of
+          [ "luxury"; "ultra"; "timer"; "dusk"; "premier"; "master" ];
+      presence = Run_options.Default "luxury";
+      doc = "Poké Ball type to throw.";
+    };
+    int_opt "lead_slot" 1 catch_b.max_slot "1"
+      "1-based party slot sent out at battle start.";
+    int_opt "sleep_slot" 0 catch_b.max_slot "1"
+      "1-based party slot of Sleep user (0 disables status).";
+    int_opt "sleep_move" 1 catch_b.max_move "3"
+      "1-based move slot of the Sleep move.";
+    int_opt "false_swipe_slot" 0 catch_b.max_slot "1"
+      "1-based party slot of False Swipe user (0 disables).";
+    int_opt "false_swipe_move" 1 catch_b.max_move "2"
+      "1-based move slot of False Swipe.";
+    int_opt "setup_slot" 0 catch_b.max_slot "0"
+      "Optional 1-based party slot for stat-boosting setup (0 disables).";
+    int_opt "setup_move" 1 catch_b.max_move "4"
+      "1-based move slot of the setup move (e.g. Swords Dance).";
+    int_opt "setup_uses" 1 catch_b.max_slot "2"
+      "Number of setup turns to execute during the foe's first sleep.";
+    int_opt "chipper_slot" 0 catch_b.max_slot "0"
+      "Optional 1-based party slot of tank/bruiser heavy-chipper (0 disables).";
+    int_opt "chipper_move" 1 catch_b.max_move "1"
+      "1-based move slot of the heavy-chipper's safe neutral attack.";
+    int_opt "chipper_floor_pct" catch_b.floor_min_pct catch_b.floor_max_pct "30"
+      "Stop heavy-chipping once foe HP is at or below this percent.";
+    int_opt "wall_slot" 0 catch_b.max_slot "6"
+      "Optional 1-based party slot of defensive wall (0 disables).";
+    int_opt "wall_heal_move" 0 catch_b.max_move "0"
+      "Optional 1-based move slot of wall recovery move (0 uses Bag heal).";
+    int_opt "max_balls" 1 catch_b.max_balls "60"
+      "Pause after throwing this many balls.";
+    int_opt "max_turns" catch_b.min_turns catch_b.max_turns "80"
+      "Pause after this many turns to guard against Struggle.";
+    int_opt "ball_pocket_steps" (-catch_b.pocket_bound) catch_b.pocket_bound "0"
+      "Horizontal pocket steps from initial battle Bag pocket to Poké Balls.";
+    int_opt "ball_row" (-catch_b.max_row) catch_b.max_row "-1"
+      "Horizontal steps in the X-button Poké Ball carousel (-1 = Left once for \
+       last ball / Luxury Ball).";
+    {
+      key = "fallback_ball";
+      value =
+        Run_options.One_of
+          [ "none"; "dusk"; "timer"; "ultra"; "luxury"; "premier"; "master" ];
+      presence = Run_options.Default "none";
+      doc =
+        "Optional higher-rate Poké Ball switched to at fallback_turn (e.g. \
+         dusk or timer) to prevent Struggle KOs.";
+    };
+    int_opt "fallback_turn" 1 catch_b.max_turns "25"
+      "Turn number at which to switch from ball to fallback_ball.";
+    int_opt "fallback_ball_steps" (-catch_b.max_row) catch_b.max_row "-6"
+      "Horizontal steps in the X-button Poké Ball carousel from ball to \
+       fallback_ball.";
+    int_opt "heal_pocket_steps" (-catch_b.pocket_bound) catch_b.pocket_bound "0"
+      "Horizontal pocket steps from initial battle Bag pocket to Medicine.";
+    int_opt "heal_row" 0 catch_b.max_row "0"
+      "0-based row of the healing item in the Medicine pocket.";
+  ]
+
+let battle_catch =
+  {
+    id = "bdsp.battle_catch";
+    game;
+    name = "Battle Catch";
+    category = Shiny_hunting;
+    description =
+      "Catches an active BDSP wild encounter using Sleep, optional tank \
+       heavy-chipping to 20–30%, False Swipe to 1 HP, and Poké Balls.";
+    doc = "docs/guide/bdsp/battle_catch.md";
+    checkpoints = Some "src/games/pokemon/bdsp/programs/battle_catch/plans";
+    backends = [ Switch ];
+    viewport = Native;
+    rules = Bdsp_battle_catch;
+    options = battle_catch_options;
+  }
+
 type static_rng_bounds = {
   delay_min_ms : int;
   delay_max_ms : int;
@@ -162,4 +286,4 @@ let static_rng =
     options = static_rng_options;
   }
 
-let all = [ underground; static_rng ]
+let all = [ underground; static_rng; battle_catch ]

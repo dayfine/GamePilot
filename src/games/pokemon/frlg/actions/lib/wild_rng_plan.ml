@@ -71,9 +71,12 @@ let default_catch_config : Battle_catch_steps.config =
 let throw_only_policy (capture : Capture_plan.t) : CS.policy =
   {
     status_setter = None;
+    setup = None;
+    heavy_chipper = None;
     false_swiper = None;
     wall = None;
     ball_name = capture.ball;
+    fallback_ball = None;
     max_balls = capture.max_balls;
     foe_hp_target = 1.0;
     foe_hp_rechip = 1.0;

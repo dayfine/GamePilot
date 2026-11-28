@@ -31,8 +31,28 @@ type t = {
   fainted : int list;
       (** 1-based party slots known to have fainted in this battle; the policy
           never switches to a slot listed here. *)
+  setup_uses_done : int;
+      (** Number of setup-move turns completed so far (e.g. Swords Dance). *)
+  wall_move_heals_done : int;
+      (** Number of times the wall's self-healing move (e.g. Synthesis, 5 PP)
+          has been used so far; once exhausted, survival falls back to
+          {!Heal_active}. *)
+  status_uses_done : int;
+      (** Number of times the status move (e.g. Sleep Powder, 15 PP) has been
+          used so far; once exhausted, the policy stops selecting it. *)
 }
 (** Observed battle state at an action menu. *)
+
+type setup_config = {
+  slot : int;  (** 1-based party slot that uses the setup move. *)
+  move_slot : int;
+      (** 1-based move slot of the setup move (e.g. Swords Dance). *)
+  uses : int;  (** Number of setup turns to execute before chipping. *)
+  require_status : bool;
+      (** When [true], apply status (e.g. Sleep) before setting up. *)
+}
+(** Configuration for an optional stat-boosting setup phase during the foe's
+    first sleep (e.g. 2× Swords Dance before False Swiping). *)
 
 type role_config = {
   slot : int;  (** 1-based party slot fulfilling this role. *)
@@ -42,6 +62,21 @@ type role_config = {
           survival. *)
 }
 (** Configuration for a single-move support role such as a status setter. *)
+
+type heavy_chipper_config = {
+  slot : int;  (** 1-based party slot of the bruiser/tank chipper. *)
+  move_slot : int;  (** 1-based move slot of its safe neutral attack. *)
+  hp_floor : float;
+      (** Minimum HP ratio before retreating to the wall (or healing). *)
+  foe_hp_floor : float;
+      (** Stop heavy-chipping once the foe's HP ratio is at or below this floor
+          (e.g. [0.30] for 30%) so a critical hit cannot KO the target. *)
+  require_status : bool;
+      (** When [true], apply a status condition before sending in the chipper.
+      *)
+}
+(** Configuration for an optional bruiser/tank that winds a healthy foe down to
+    [foe_hp_floor] before handing off to {!false_swipe_config}. *)
 
 type false_swipe_config = {
   slot : int;  (** 1-based party slot of the False Swipe user. *)
@@ -68,6 +103,13 @@ type policy = {
   status_setter : role_config option;
       (** Optional party member that applies a status condition (e.g. Sleep
           Powder or Thunder Wave). *)
+  setup : setup_config option;
+      (** Optional stat-boosting setup phase (e.g. Swords Dance) executed during
+          the foe's first sleep before chipping. *)
+  heavy_chipper : heavy_chipper_config option;
+      (** Optional bruiser/tank that winds the foe down to [foe_hp_floor] (e.g.
+          20%–30%) before handing off to [false_swiper]. Only runs before the
+          first ball is thrown. *)
   false_swiper : false_swipe_config option;
       (** Optional party member that chips the foe's HP with False Swipe. *)
   wall : wall_config option;
@@ -75,6 +117,10 @@ type policy = {
           throws. When [None], survival heals the active member in place and
           ball throws happen directly. *)
   ball_name : string;  (** Name of the Poké Ball to throw. *)
+  fallback_ball : (int * string) option;
+      (** Optional [(turn, ball_name)] fallback switched to once [turn] is
+          reached (e.g. Luxury Ball -> Dusk/Timer Ball at turn 25 to avoid
+          Struggle KOs). *)
   max_balls : int;  (** Pause for user once this many balls have been thrown. *)
   foe_hp_target : float;
       (** Initial foe HP ratio threshold above which chipping runs. *)

@@ -25,7 +25,9 @@ type viewport = Nso_gba | Native
     PLZA's plans run from its main menu's Mystery Gift (Plza_engine,
     Plza_claim_gifts_series); [Bdsp_underground]: BDSP's Grand Underground
     series (Bdsp_engine, Bdsp_underground_series); [Bdsp_static_rng]: BDSP's
-    static legendary RNG series (Bdsp_engine, Bdsp_static_rng_series). *)
+    static legendary RNG series (Bdsp_engine, Bdsp_static_rng_series);
+    [Bdsp_battle_catch]: BDSP's wild-battle catcher series (Bdsp_engine,
+    Bdsp_battle_catch_series). *)
 type rules =
   | Pokemon_grid
   | Plza_story
@@ -33,6 +35,7 @@ type rules =
   | Plza_gifts
   | Bdsp_underground
   | Bdsp_static_rng
+  | Bdsp_battle_catch
 
 (** Shared program grouping across games, shown by [gamepilot programs] and
     recorded in [run.json]. *)

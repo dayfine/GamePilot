@@ -12,9 +12,27 @@ type t = {
   foe_status : foe_status option;
   balls_thrown : int;
   fainted : int list;
+  setup_uses_done : int;
+  wall_move_heals_done : int;
+  status_uses_done : int;
+}
+
+type setup_config = {
+  slot : int;
+  move_slot : int;
+  uses : int;
+  require_status : bool;
 }
 
 type role_config = { slot : int; move_slot : int; hp_floor : float }
+
+type heavy_chipper_config = {
+  slot : int;
+  move_slot : int;
+  hp_floor : float;
+  foe_hp_floor : float;
+  require_status : bool;
+}
 
 type false_swipe_config = {
   slot : int;
@@ -27,9 +45,12 @@ type wall_config = { slot : int; heal_move_slot : int option; hp_floor : float }
 
 type policy = {
   status_setter : role_config option;
+  setup : setup_config option;
+  heavy_chipper : heavy_chipper_config option;
   false_swiper : false_swipe_config option;
   wall : wall_config option;
   ball_name : string;
+  fallback_ball : (int * string) option;
   max_balls : int;
   foe_hp_target : float;
   foe_hp_rechip : float;

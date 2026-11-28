@@ -60,7 +60,8 @@ let bad_plans () =
           let plan_error =
             match p.rules with
             | Plza_story | Pokemon_home | Plza_gifts -> plza_plan_error
-            | Bdsp_underground | Bdsp_static_rng -> bdsp_plan_error
+            | Bdsp_underground | Bdsp_static_rng | Bdsp_battle_catch ->
+                bdsp_plan_error
             | Pokemon_grid -> frlg_plan_error
           in
           List.filter_map plan_error (plans_in dir))

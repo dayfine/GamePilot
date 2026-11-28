@@ -26,7 +26,7 @@ let hp_probes prefix ~filled ~rgb =
 
 let menu_frame ~t_ms ~foe_filled ~player_filled ~asleep : Effects.measurements =
   let sleep_probe =
-    if asleep then ("bdsp_foe_slp", cs (128., 122., 125.) (12., 12., 12.))
+    if asleep then ("bdsp_foe_slp", cs (121., 174., 225.) (12., 12., 12.))
     else ("bdsp_foe_slp", cs (245., 245., 245.) (3., 3., 3.))
   in
   {
@@ -67,6 +67,19 @@ let clear_frame ~t_ms : Effects.measurements =
     Wire.seq = 4;
     t_ms;
     probes = [ ("start_game.black", cs (200., 200., 200.) (10., 10., 10.)) ];
+  }
+
+let forced_switch_frame ~t_ms : Effects.measurements =
+  {
+    Wire.seq = 5;
+    t_ms;
+    probes =
+      [
+        ("bdsp_fswitch_top", cs (253., 253., 253.) (1., 1., 1.));
+        ("bdsp_fswitch_bot", cs (253., 253., 253.) (1., 1., 1.));
+        ("bdsp_fswitch_l", cs (186., 155., 150.) (64., 83., 87.));
+        ("bdsp_fswitch_tb", cs (156., 139., 136.) (66., 73., 76.));
+      ];
   }
 
 let run_scripted frames f =
@@ -124,7 +137,12 @@ let test_cfg : Battle_catch_steps.config =
         heal_pocket_steps = 0;
         heal_row = 0;
       };
-    timing = { Battle_catch_steps.default_timing with event_timeout_ms = 2000 };
+    timing =
+      {
+        Battle_catch_steps.default_timing with
+        event_timeout_ms = 2000;
+        status_cycle_ms = 0;
+      };
   }
 
 let kyogre_slots : Battle_catch_steps.party_slots =
@@ -188,7 +206,47 @@ let test_timeout_pauses_safely () =
        });
   assert_eq "timeout submits no presses" presses []
 
+let test_forced_switch_accepts_prompt_before_party_select () =
+  (* Active slot 2 faints -> wild-battle Yes/No prompt ("Use next Pokémon" /
+     "Run") appears -> must press A first to open the Party menu, then select
+     slot 3 (visual row 2 in [|2; 1; 3; 4; 5; 6|]) via Down x2 + A + A. *)
+  let frames =
+    [
+      forced_switch_frame ~t_ms:100.;
+      menu_frame ~t_ms:200. ~foe_filled:1 ~player_filled:10 ~asleep:true;
+      black_frame ~t_ms:300.;
+      clear_frame ~t_ms:600.;
+      clear_frame ~t_ms:900.;
+    ]
+  in
+  let policy = Battle_catch_steps.groudon_policy kyogre_slots in
+  let outcome, presses =
+    run_scripted frames (fun () ->
+        let steps = Battle_catch_steps.make test_cfg in
+        Catch_runner.run steps policy)
+  in
+  let expected_summary : Catch_runner.summary =
+    { turns = 1; balls_thrown = 1; switches = 1; heals = 0 }
+  in
+  assert_eq "forced switch then catch" outcome
+    (Catch_runner.Caught expected_summary);
+  (* First 5 presses are the forced switch: A (accept prompt), Down, Down, A, A.
+     Next presses are X-shortcut throw Luxury Ball: X, Right, Right, A. *)
+  assert_eq "forced switch press sequence" presses
+    [
+      Wire.A;
+      Wire.Down;
+      Wire.Down;
+      Wire.A;
+      Wire.A;
+      Wire.X;
+      Wire.Right;
+      Wire.Right;
+      Wire.A;
+    ]
+
 let () =
   test_scripted_kyogre_catch ();
   test_timeout_pauses_safely ();
+  test_forced_switch_accepts_prompt_before_party_select ();
   print_endline "OK"

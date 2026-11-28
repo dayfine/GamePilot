@@ -24,6 +24,7 @@
   gamepilot.bdsp_checkpoint_series
   gamepilot.bdsp_underground_series
   gamepilot.bdsp_static_rng_series
+  gamepilot.bdsp_battle_catch_series
   gamepilot.program_registry
   gamepilot.guide_page
   gamepilot.run_record

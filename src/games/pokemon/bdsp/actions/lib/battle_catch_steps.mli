@@ -31,6 +31,9 @@ type timing = {
   dialog_advance_ms : int;  (** Cooldown after advancing a battle dialog. *)
   black_hold_ms : float;
       (** Minimum black-screen duration to count as battle fade-out. *)
+  status_cycle_ms : int;
+      (** Sampling window in ms to catch the alternating Sleep pill on the foe
+          plate (0 disables extra wait in unit tests). *)
 }
 (** Button press and wait timings for BDSP battle navigation. *)
 
@@ -60,7 +63,11 @@ val default_timing : timing
 (** Conservative default timings for BDSP battle menus on Switch. *)
 
 val make :
-  ?log:(string -> unit) -> config -> Pokemon_catch.Catch_runner.game_steps
+  ?log:(string -> unit) ->
+  ?initial_move_slot:int ->
+  ?fallback_ball_steps:int ->
+  config ->
+  Pokemon_catch.Catch_runner.game_steps
 (** Build BDSP {!Pokemon_catch.Catch_runner.game_steps} driven through
     {!Effects}. *)
 
@@ -68,16 +75,20 @@ val kyogre_policy :
   ?ball_name:string ->
   ?max_balls:int ->
   ?max_turns:int ->
+  ?heavy_chipper:Pokemon_catch.Catch_state.heavy_chipper_config ->
   party_slots ->
   Pokemon_catch.Catch_state.policy
-(** Catch policy tuned for Ramanas Park Kyogre (sleep-first, fragile False
-    Swiper, Aqua Ring re-chip threshold, Luxury Ball default). *)
+(** Catch policy tuned for Ramanas Park Kyogre (sleep-first, optional tank
+    heavy-chipper down to 20–30%, False Swiper, Aqua Ring re-chip threshold,
+    Luxury Ball default). *)
 
 val groudon_policy :
   ?ball_name:string ->
   ?max_balls:int ->
   ?max_turns:int ->
+  ?heavy_chipper:Pokemon_catch.Catch_state.heavy_chipper_config ->
   party_slots ->
   Pokemon_catch.Catch_state.policy
-(** Catch policy tuned for Ramanas Park Groudon (sleep-first, fragile False
-    Swiper, Rest re-chip threshold, Luxury Ball default). *)
+(** Catch policy tuned for Ramanas Park Groudon (sleep-first, optional tank
+    heavy-chipper down to 20–30%, False Swiper, Rest re-chip threshold, Luxury
+    Ball default). *)

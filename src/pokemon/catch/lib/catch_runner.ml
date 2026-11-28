@@ -29,51 +29,89 @@ let is_wall_heal (policy : Catch_state.policy) (state : Catch_state.t) slot =
   | Some w -> state.active_slot = w.slot && w.heal_move_slot = Some slot
   | None -> false
 
-let record_command policy state summary = function
+let is_setup_move (policy : Catch_state.policy) (state : Catch_state.t) slot =
+  match policy.setup with
+  | Some su -> state.active_slot = su.slot && su.move_slot = slot
+  | None -> false
+
+let is_status_move (policy : Catch_state.policy) (state : Catch_state.t) slot =
+  match policy.status_setter with
+  | Some ss -> state.active_slot = ss.slot && ss.move_slot = slot
+  | None -> false
+
+type counters = {
+  summary : summary;
+  setup_uses : int;
+  wall_move_heals : int;
+  status_uses : int;
+}
+
+let empty_counters =
+  {
+    summary = empty_summary;
+    setup_uses = 0;
+    wall_move_heals = 0;
+    status_uses = 0;
+  }
+
+let bump_turn s = { s with turns = s.turns + 1 }
+
+let record_command policy state c = function
   | Catch_state.Throw_ball _ ->
-      {
-        summary with
-        turns = summary.turns + 1;
-        balls_thrown = summary.balls_thrown + 1;
-      }
+      let summary =
+        { (bump_turn c.summary) with balls_thrown = c.summary.balls_thrown + 1 }
+      in
+      { c with summary }
   | Switch_to _ ->
-      {
-        summary with
-        turns = summary.turns + 1;
-        switches = summary.switches + 1;
-      }
+      let summary =
+        { (bump_turn c.summary) with switches = c.summary.switches + 1 }
+      in
+      { c with summary }
   | Heal_active ->
-      { summary with turns = summary.turns + 1; heals = summary.heals + 1 }
+      let summary =
+        { (bump_turn c.summary) with heals = c.summary.heals + 1 }
+      in
+      { c with summary }
   | Use_move slot when is_wall_heal policy state slot ->
-      { summary with turns = summary.turns + 1; heals = summary.heals + 1 }
-  | Use_move _ | Pause_for_user _ -> { summary with turns = summary.turns + 1 }
+      let summary =
+        { (bump_turn c.summary) with heals = c.summary.heals + 1 }
+      in
+      { c with summary; wall_move_heals = c.wall_move_heals + 1 }
+  | Use_move slot when is_setup_move policy state slot ->
+      { c with summary = bump_turn c.summary; setup_uses = c.setup_uses + 1 }
+  | Use_move slot when is_status_move policy state slot ->
+      { c with summary = bump_turn c.summary; status_uses = c.status_uses + 1 }
+  | Use_move _ | Pause_for_user _ -> { c with summary = bump_turn c.summary }
 
 let merge_fainted state_fainted tracked =
   List.fold_left
     (fun acc slot -> if List.mem slot acc then acc else slot :: acc)
     state_fainted tracked
 
-let sync_state (state : Catch_state.t) fainted summary =
+let sync_state (state : Catch_state.t) fainted c =
   {
     state with
-    turn = max state.turn summary.turns;
-    balls_thrown = max state.balls_thrown summary.balls_thrown;
+    turn = max state.turn c.summary.turns;
+    balls_thrown = max state.balls_thrown c.summary.balls_thrown;
     fainted = merge_fainted state.fainted fainted;
+    setup_uses_done = max state.setup_uses_done c.setup_uses;
+    wall_move_heals_done = max state.wall_move_heals_done c.wall_move_heals;
+    status_uses_done = max state.status_uses_done c.status_uses;
   }
 
-let handle_action_menu ~log steps policy fainted summary state =
-  let state = sync_state state fainted summary in
+let handle_action_menu ~log steps policy fainted c state =
+  let state = sync_state state fainted c in
   match Catch_policy.decide policy state with
   | Catch_state.Pause_for_user reason ->
       log ("Pausing: " ^ reason);
-      Either.Right (Paused { reason; summary })
+      Either.Right (Paused { reason; summary = c.summary })
   | cmd -> (
       log ("Action: " ^ Catch_state.describe_command cmd);
       match steps.execute cmd with
-      | Ok () -> Either.Left (record_command policy state summary cmd)
-      | Error reason -> Either.Right (Failed { reason; summary }))
+      | Ok () -> Either.Left (record_command policy state c cmd)
+      | Error reason -> Either.Right (Failed { reason; summary = c.summary }))
 
-let handle_forced_switch ~log steps policy fainted summary fainted_slot =
+let handle_forced_switch ~log steps policy fainted c fainted_slot =
   let fainted =
     if List.mem fainted_slot fainted then fainted else fainted_slot :: fainted
   in
@@ -81,41 +119,43 @@ let handle_forced_switch ~log steps policy fainted summary fainted_slot =
   | None ->
       let reason = "no healthy send-in left" in
       log ("Pausing: " ^ reason);
-      Either.Right (Paused { reason; summary })
+      Either.Right (Paused { reason; summary = c.summary })
   | Some slot -> (
       log (Printf.sprintf "Forced switch: sending in slot %d" slot);
       match steps.send_in slot with
       | Ok () ->
-          Either.Left (fainted, { summary with switches = summary.switches + 1 })
-      | Error reason -> Either.Right (Failed { reason; summary }))
+          let summary = { c.summary with switches = c.summary.switches + 1 } in
+          Either.Left (fainted, { c with summary })
+      | Error reason -> Either.Right (Failed { reason; summary = c.summary }))
 
-let step ~log steps policy fainted summary (ev : (event, string) result) =
+let step ~log steps policy fainted c (ev : (event, string) result) =
   match ev with
-  | Error reason -> Either.Right (Failed { reason; summary })
+  | Error reason -> Either.Right (Failed { reason; summary = c.summary })
   | Ok Caught ->
       log "Target caught!";
-      Either.Right (Caught summary)
+      Either.Right (Caught c.summary)
   | Ok No_balls ->
       log "Out of target Poké Balls";
-      Either.Right (No_balls summary)
+      Either.Right (No_balls c.summary)
   | Ok Foe_ended ->
       log "Wild foe ended the battle";
-      Either.Right (Foe_ended summary)
-  | Ok Battle_lost -> Either.Right (Failed { reason = "battle lost"; summary })
+      Either.Right (Foe_ended c.summary)
+  | Ok Battle_lost ->
+      Either.Right (Failed { reason = "battle lost"; summary = c.summary })
   | Ok (Unexpected reason) ->
       log ("Pausing on unexpected event: " ^ reason);
-      Either.Right (Paused { reason; summary })
+      Either.Right (Paused { reason; summary = c.summary })
   | Ok (Action_menu state) -> (
-      match handle_action_menu ~log steps policy fainted summary state with
-      | Either.Left summary -> Either.Left (fainted, summary)
+      match handle_action_menu ~log steps policy fainted c state with
+      | Either.Left c -> Either.Left (fainted, c)
       | Either.Right outcome -> Either.Right outcome)
   | Ok (Forced_switch { fainted_slot }) ->
-      handle_forced_switch ~log steps policy fainted summary fainted_slot
+      handle_forced_switch ~log steps policy fainted c fainted_slot
 
 let run ?(log = ignore) steps policy =
-  let rec loop fainted summary =
-    match step ~log steps policy fainted summary (steps.next_event ()) with
-    | Either.Left (fainted, summary) -> loop fainted summary
+  let rec loop fainted c =
+    match step ~log steps policy fainted c (steps.next_event ()) with
+    | Either.Left (fainted, c) -> loop fainted c
     | Either.Right outcome -> outcome
   in
-  loop [] empty_summary
+  loop [] empty_counters

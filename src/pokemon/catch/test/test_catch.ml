@@ -40,10 +40,13 @@ let fake_game_steps events =
 let kyogre_policy : Catch_state.policy =
   {
     status_setter = Some { slot = 2; move_slot = 1; hp_floor = 0.35 };
+    setup = None;
+    heavy_chipper = None;
     false_swiper =
       Some { slot = 5; move_slot = 2; require_status = true; hp_floor = 0.40 };
     wall = Some { slot = 3; heal_move_slot = Some 4; hp_floor = 0.45 };
     ball_name = "Luxury Ball";
+    fallback_ball = None;
     max_balls = 50;
     foe_hp_target = 0.15;
     foe_hp_rechip = 0.35;
@@ -55,10 +58,13 @@ let kyogre_policy : Catch_state.policy =
 let groudon_policy : Catch_state.policy =
   {
     status_setter = Some { slot = 2; move_slot = 1; hp_floor = 0.35 };
+    setup = None;
+    heavy_chipper = None;
     false_swiper =
       Some { slot = 5; move_slot = 2; require_status = true; hp_floor = 0.40 };
     wall = Some { slot = 6; heal_move_slot = None; hp_floor = 0.40 };
     ball_name = "Luxury Ball";
+    fallback_ball = None;
     max_balls = 3;
     foe_hp_target = 0.15;
     foe_hp_rechip = 0.40;
@@ -70,9 +76,12 @@ let groudon_policy : Catch_state.policy =
 let dex_policy : Catch_state.policy =
   {
     status_setter = None;
+    setup = None;
+    heavy_chipper = None;
     false_swiper = None;
     wall = None;
     ball_name = "Ultra Ball";
+    fallback_ball = None;
     max_balls = 20;
     foe_hp_target = 0.15;
     foe_hp_rechip = 0.35;
@@ -91,6 +100,9 @@ let menu ?(fainted = []) ~active_slot ~active_hp ~foe_hp ~foe_status () =
       foe_status;
       balls_thrown = 0;
       fainted;
+      setup_uses_done = 0;
+      wall_move_heals_done = 0;
+      status_uses_done = 0;
     }
 
 let full_menu ~active_slot ~active_hp ~foe_hp ~foe_status =
@@ -230,12 +242,14 @@ let test_mid_battle_fainted_roles () =
         Catch_runner.Caught;
       ]
   in
-  assert_eq "fainted swiper"
+  assert_eq "fainted swiper at full HP pauses"
     (Catch_runner.run s3 kyogre_policy)
-    (Catch_runner.Caught
-       { turns = 1; balls_thrown = 1; switches = 1; heals = 0 });
-  assert_eq "fainted swiper actions" (r3 ())
-    [ Send_in 3; Cmd (Throw_ball "Luxury Ball") ];
+    (Catch_runner.Paused
+       {
+         reason = "foe above HP target and false swiper fainted";
+         summary = { turns = 0; balls_thrown = 0; switches = 1; heals = 0 };
+       });
+  assert_eq "fainted swiper actions" (r3 ()) [ Send_in 3 ];
   (* Wall (3) faints; active False Swiper (5) low HP -> heals in place, then stays & throws. *)
   let s4, r4 =
     fake_game_steps
@@ -321,6 +335,141 @@ let test_limits_and_unexpected () =
          summary = { turns = 0; balls_thrown = 0; switches = 2; heals = 0 };
        })
 
+let test_lead_tank_chip_then_false_swipe_and_balls () =
+  let policy : Catch_state.policy =
+    {
+      status_setter = Some { slot = 1; move_slot = 3; hp_floor = 0.35 };
+      setup = None;
+      heavy_chipper =
+        Some
+          {
+            slot = 5;
+            move_slot = 1;
+            hp_floor = 0.40;
+            foe_hp_floor = 0.30;
+            require_status = true;
+          };
+      false_swiper =
+        Some { slot = 1; move_slot = 2; require_status = true; hp_floor = 0.35 };
+      wall = Some { slot = 6; heal_move_slot = None; hp_floor = 0.40 };
+      ball_name = "Luxury Ball";
+      fallback_ball = None;
+      max_balls = 50;
+      foe_hp_target = 0.15;
+      foe_hp_rechip = 0.35;
+      reapply_status = true;
+      max_turns = 60;
+      send_in_order = [ 6; 1; 5 ];
+    }
+  in
+  let events =
+    [
+      menu ~active_slot:1 ~active_hp:(Some 1.0) ~foe_hp:(Some 1.0)
+        ~foe_status:(Some Catch_state.Healthy) ();
+      menu ~active_slot:1 ~active_hp:(Some 1.0) ~foe_hp:(Some 1.0)
+        ~foe_status:(Some Catch_state.Asleep) ();
+      menu ~active_slot:5 ~active_hp:(Some 1.0) ~foe_hp:(Some 1.0)
+        ~foe_status:(Some Catch_state.Asleep) ();
+      menu ~active_slot:5 ~active_hp:(Some 1.0) ~foe_hp:(Some 0.65)
+        ~foe_status:(Some Catch_state.Asleep) ();
+      menu ~active_slot:5 ~active_hp:(Some 1.0) ~foe_hp:(Some 0.30)
+        ~foe_status:(Some Catch_state.Asleep) ();
+      menu ~active_slot:1 ~active_hp:(Some 1.0) ~foe_hp:(Some 0.30)
+        ~foe_status:(Some Catch_state.Asleep) ();
+      menu ~active_slot:1 ~active_hp:(Some 1.0) ~foe_hp:(Some 0.10)
+        ~foe_status:(Some Catch_state.Asleep) ();
+      menu ~active_slot:6 ~active_hp:(Some 1.0) ~foe_hp:(Some 0.10)
+        ~foe_status:(Some Catch_state.Asleep) ();
+      Catch_runner.Caught;
+    ]
+  in
+  let steps, record = fake_game_steps events in
+  let outcome = Catch_runner.run steps policy in
+  assert_eq "lead + tank + false_swipe caught" outcome
+    (Catch_runner.Caught
+       { turns = 8; balls_thrown = 1; switches = 3; heals = 0 });
+  assert_eq "lead + tank + false_swipe trace" (record ())
+    [
+      Cmd (Catch_state.Use_move 3);
+      Cmd (Catch_state.Switch_to 5);
+      Cmd (Catch_state.Use_move 1);
+      Cmd (Catch_state.Use_move 1);
+      Cmd (Catch_state.Switch_to 1);
+      Cmd (Catch_state.Use_move 2);
+      Cmd (Catch_state.Switch_to 6);
+      Cmd (Catch_state.Throw_ball "Luxury Ball");
+    ]
+
+let test_regression_fainted_swiper_and_status_pp () =
+  (* Regression from Console A battle-catch-testing-3 (T54-T56):
+     1. When solo Venusaur (status + false swiper + wall) faints and Groudon
+        uses Rest back to 100% HP, the policy must pause instead of throwing
+        Luxury Balls at full HP.
+     2. When Sleep Powder hits 0 PP (15 uses) and foe is already at 10% HP,
+        the policy stops clicking move 3 and throws balls directly. *)
+  let venusaur_policy : Catch_state.policy =
+    {
+      status_setter = Some { slot = 1; move_slot = 3; hp_floor = 0.55 };
+      setup = Some { slot = 1; move_slot = 4; uses = 2; require_status = true };
+      heavy_chipper = None;
+      false_swiper =
+        Some { slot = 1; move_slot = 2; require_status = true; hp_floor = 0.55 };
+      wall = Some { slot = 1; heal_move_slot = Some 1; hp_floor = 0.55 };
+      ball_name = "Luxury Ball";
+      fallback_ball = None;
+      max_balls = 60;
+      foe_hp_target = 0.15;
+      foe_hp_rechip = 0.35;
+      reapply_status = true;
+      max_turns = 80;
+      send_in_order = [ 1; 2; 3 ];
+    }
+  in
+  let events_rest_after_faint =
+    [
+      Catch_runner.Forced_switch { fainted_slot = 1 };
+      full_menu ~active_slot:2 ~active_hp:1.0 ~foe_hp:1.0
+        ~foe_status:Catch_state.Asleep;
+    ]
+  in
+  let steps1, record1 = fake_game_steps events_rest_after_faint in
+  let out1 = Catch_runner.run steps1 venusaur_policy in
+  (match out1 with
+  | Catch_runner.Paused { summary; _ } ->
+      assert_eq "no balls thrown at full HP" summary.balls_thrown 0
+  | _ -> fail "expected Paused when false swiper fainted and foe at 100% HP");
+  assert_eq "forced switch to slot 2 then paused" (record1 ()) [ Send_in 2 ];
+  let pp_exhausted_state : Catch_state.t =
+    {
+      turn = 20;
+      active_slot = 1;
+      active_hp_ratio = Some 0.9;
+      foe_hp_ratio = Some 0.10;
+      foe_status = Some Catch_state.Healthy;
+      balls_thrown = 5;
+      fainted = [];
+      setup_uses_done = 2;
+      wall_move_heals_done = 5;
+      status_uses_done = 15;
+    }
+  in
+  assert_eq "status 0 PP throws ball at 10% HP"
+    (Catch_policy.decide venusaur_policy pp_exhausted_state)
+    (Catch_state.Throw_ball "Luxury Ball");
+  let low_hp_after_5_heals =
+    { pp_exhausted_state with active_hp_ratio = Some 0.40 }
+  in
+  assert_eq "wall heal 0 PP falls back to Heal_active"
+    (Catch_policy.decide venusaur_policy low_hp_after_5_heals)
+    Catch_state.Heal_active;
+  let fallback_policy =
+    { venusaur_policy with fallback_ball = Some (25, "Dusk Ball") }
+  in
+  let late_turn_state = { pp_exhausted_state with turn = 25 } in
+  assert_eq "turn >= 25 switches to fallback Dusk Ball"
+    (Catch_policy.decide fallback_policy late_turn_state)
+    (Catch_state.Throw_ball "Dusk Ball")
+
 let () =
   test_kyogre_full_flow ();
   test_groudon_rest_and_forced_switch ();
@@ -328,4 +477,6 @@ let () =
   test_mid_battle_fainted_roles ();
   test_terminal_no_balls_and_foe_ended ();
   test_limits_and_unexpected ();
+  test_lead_tank_chip_then_false_swipe_and_balls ();
+  test_regression_fainted_swiper_and_status_pp ();
   print_endline "OK"
