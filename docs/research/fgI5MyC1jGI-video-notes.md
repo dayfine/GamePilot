@@ -43,9 +43,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 02:50:00–02:55:00 | Reviewed |
 | 02:55:00–03:00:00 | Reviewed |
 | 03:00:00–03:05:00 | Reviewed |
-| 03:05:00–03:18:16 | Pending |
+| 03:05:00–03:10:00 | Reviewed |
+| 03:10:00–03:18:16 | Pending |
 
-Resume at **03:05:00** during Aaron’s fight after Palkia has knocked out Dustox and Heracross.
+Resume at **03:10:00** during Flint’s battle after Palkia knocks out Rapidash.
 
 ## Review method
 
@@ -693,3 +694,18 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 | 3:04:28–3:05:00 | Use a Full Restore to cure bad poison and heal Palkia. Dustox uses Bug Buzz again, leaving Palkia at 141/172 HP. Surf KOs Dustox. Light Screen expires, and the next Surf KOs Heracross Lv. 54. |
 
 **State at 3:05:00.** Aaron has lost Dustox and Heracross. Palkia is the only party member at Lv. 52 and 141/172 HP with Choice Specs, one X Speed boost, and two X Sp. Atk boosts. There are 43 Full Restores in the Bag.
+
+## 3:05:00–3:10:00 | Aaron, Bertha, and the start of Flint
+
+| Video time | Observed action |
+| --- | --- |
+| 3:05:00–3:05:49 | Palkia finishes Aaron with Surf against Beautifly Lv. 53, Vespiquen Lv. 54, and Drapion Lv. 57. Palkia reaches Lv. 53. |
+| 3:05:50–3:06:14 | Take the next elevator. Swap Metronome back onto Palkia and teach TM59 Dragon Pulse in place of Spacial Rend. |
+| 3:06:15–3:07:07 | Bertha leads with Quagsire Lv. 55. Use one X Defense and take Earthquake. Use one X Sp. Atk and take Toxic. Use a Full Restore, then take a second Earthquake that leaves Palkia at 142/175 HP. |
+| 3:07:08–3:07:41 | Palkia uses Dragon Pulse to KO Quagsire, Sudowoodo Lv. 56, and Whiscash Lv. 55. |
+| 3:07:42–3:08:29 | Use Slash on Golem Lv. 56. Golem uses Rock Polish and then moves first with Earthquake, leaving Palkia at 87/175 HP. Dragon Pulse KOs Golem. Hippowdon Lv. 59 sets sand with Sand Stream and also faints to Dragon Pulse. Palkia reaches Lv. 54. |
+| 3:08:30–3:08:54 | Take the elevator, swap Choice Specs back onto Palkia, use a Full Restore to recover 88 HP, and use the Max Elixir to refill PP. |
+| 3:08:55–3:09:41 | Flint leads with Rapidash Lv. 58. Use X Speed and take Hypnosis. Use X Defense while asleep and take Flame Charge, which raises Rapidash’s Speed. Use X Sp. Atk and take Poison Jab. |
+| 3:09:42–3:10:00 | Rapidash gets two more Poison Jabs in as Palkia attempts Surf. Palkia wakes up at 111/179 HP and KOs Rapidash with Surf. |
+
+**State at 3:10:00.** Palkia is Lv. 54 at 111/179 HP with Choice Specs and the X Speed, X Defense, and X Sp. Atk boosts active. Flint’s Rapidash has fainted. There are 41 Full Restores in the Bag.
