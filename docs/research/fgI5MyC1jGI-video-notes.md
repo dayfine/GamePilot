@@ -27,9 +27,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 01:30:00–01:35:00 | Reviewed |
 | 01:35:00–01:40:00 | Reviewed |
 | 01:40:00–01:45:00 | Reviewed |
-| 01:45:00–03:18:16 | Pending |
+| 01:45:00–01:50:00 | Reviewed |
+| 01:50:00–03:18:16 | Pending |
 
-Resume at **01:45:00** in Canalave Gym as Worker Gerardo sends out his first Pokémon.
+Resume at **01:50:00** at Byron’s platform just after the Mine Badge is awarded.
 
 ## Review method
 
@@ -443,3 +444,19 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 | 1:44:38–1:45:00 | Continue across the moving platforms and up the lifts to Worker Gerardo. |
 
 **State at 1:45:00.** Worker Gerardo’s battle is starting on the upper floor of Canalave Gym. Kazza is Lv. 38 at 90/90 HP with Choice Specs and knows Psychic, Psyshock, Grass Knot, and Shadow Ball. Monferno remains fainted with Wise Glasses. The Rare Candy remains in the Bag.
+
+## 1:45:00–1:50:00 | Canalave Gym and Byron
+
+| Video time | Observed action |
+| --- | --- |
+| 1:45:00–1:45:36 | Worker Gerardo sends two Onix Lv. 29. Kazza KOs each with Shadow Ball. |
+| 1:45:37–1:46:28 | Take the moving platforms along the back wall to Black Belt David. Kazza KOs Onix Lv. 30 and Steelix Lv. 32 with Grass Knot. |
+| 1:46:29–1:47:10 | Take the lifts at the right wall to Ace Trainer Breanna. Kazza KOs her Azumarill Lv. 33 with Grass Knot and reaches Lv. 39. |
+| 1:47:12–1:47:37 | Move Monferno to the lead, use a Revive to bring it to 40/80 HP, and use one Potion to reach 60/80. Take the red lift to Byron. |
+| 1:47:52–1:48:22 | Byron leads with Bronzor Lv. 36. Monferno uses Taunt to block Trick Room, then sets Stealth Rock. It takes Flash Cannon, uses Flamethrower, and takes a second Flash Cannon. The first Taunt expires. |
+| 1:48:23–1:48:46 | Taunt again to block Trick Room, then use Mach Punch. Bronzor uses Flash Cannon, leaving Monferno at 13/80 HP. A second Flamethrower KOs Bronzor. Monferno reaches Lv. 28. |
+| 1:48:48–1:49:19 | Steelix Lv. 36 takes Stealth Rock damage. Monferno uses Taunt, then faints to Earthquake. Send out Kazza and KO Steelix with Grass Knot. Kazza reaches Lv. 40 and declines Role Play. |
+| 1:49:24–1:49:49 | Bastiodon Lv. 39 takes Stealth Rock damage. Use one X Sp. Atk. Stone Edge leaves Kazza at 32/95 HP. Grass Knot KOs Bastiodon. |
+| 1:49:52–1:50:00 | Byron awards the Mine Badge. |
+
+**State at 1:50:00.** Six badges. Kazza is Lv. 40 at 32/95 HP and holds Choice Specs. Lead Monferno is Lv. 28, fainted, and holds Wise Glasses. The player is still on Byron’s platform.
