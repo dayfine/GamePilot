@@ -1,0 +1,10 @@
+(tests
+ (names test_static_rng)
+ (libraries
+  gamepilot.wire
+  gamepilot.run_options
+  gamepilot.bdsp_rng
+  gamepilot.bdsp_blink_rng
+  gamepilot.bdsp_readers
+  gamepilot.bdsp_actions
+  gamepilot.bdsp_static_rng))

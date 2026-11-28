@@ -5,4 +5,5 @@
   gamepilot.repo_io
   gamepilot.switch
   gamepilot.run_options
-  gamepilot.plza_story))
+  gamepilot.plza_story
+  gamepilot.bdsp_rng))

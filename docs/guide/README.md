@@ -5,30 +5,49 @@ what your save needs, the commands, what happens, how long it takes and what to 
 Each page ends with "How it works", for developers: the ported files, the mechanics and the timings.
 
 <!-- generated:programs -->
+### [Pokémon FireRed/LeafGreen](frlg/README.md)
+
 | Program | Id | Runs on | What it does |
 |---|---|---|---|
-| [Sevii Story](frlg.sevii_story.md) | `frlg.sevii_story` | mGBA | Plays the Sevii Islands story after the Cinnabar Gym. |
-| [Mail Glitch](frlg.mail_glitch.md) | `frlg.mail_glitch` | mGBA, the Switch | Turns on the Mail Glitch against Lea & Jed on Route 16 and copies one item with it. |
-| [ACE Setup](frlg.ace_setup.md) | `frlg.ace_setup` | mGBA | Sets up arbitrary code execution: the ? Mail puts species 0x0351 in Box 3 slot 1. |
-| [ACE](frlg.ace.md) | `frlg.ace` | mGBA | Runs code typed as PC box names through species 0x0351: 999 of an item in the PC, some of them to the bag. |
-| [Supplies](frlg.supplies.md) | `frlg.supplies` | mGBA, the Switch | Stocks what the duplication programs use: Retro Mail and Super Repels. |
-| [Team Training](frlg.team_training.md) | `frlg.team_training` | mGBA, the Switch | Copies Rare Candies with the Mail Glitch to level the team. |
-| [Catcher Prep](frlg.catcher_prep.md) | `frlg.catcher_prep` | mGBA, the Switch | Catches Paras and levels it into a Spore Parasect for wild hunts. |
-| [Dex Collection](frlg.dex_collection.md) | `frlg.dex_collection` | mGBA | Catches Pokemon the Pokedex lacks, toward the National Pokedex. |
-| [Wild RNG](frlg.wild_rng.md) | `frlg.wild_rng` | mGBA | Catches a chosen shiny wild Pokemon by timing the game's random numbers. |
-| [AutoStory](plza.autostory.md) | `plza.autostory` | the Switch | Plays the story from a new game, checkpoint by checkpoint. |
-| [Claim Gifts](plza.claim-gifts.md) | `plza.claim-gifts` | the Switch | Claims the Mystery Gifts of its catalog that have not expired, puts their Pokémon in the Boxes and saves. |
-| [Bank PLZA in HOME](pokemon_home.bank-plza.md) | `pokemon_home.bank-plza` | the Switch | Moves the claimed gifts from the game's box into their Pokémon HOME boxes and saves HOME. |
-| [Grand Underground](bdsp.underground.md) | `bdsp.underground` | the Switch | Farms Mysterious Shards and treasures in the Grand Underground. |
+| [Sevii Story](frlg/sevii_story.md) | `frlg.sevii_story` | mGBA | Plays the Sevii Islands story after the Cinnabar Gym. |
+| [Mail Glitch](frlg/mail_glitch.md) | `frlg.mail_glitch` | mGBA, the Switch | Turns on the Mail Glitch against Lea & Jed on Route 16 and copies one item with it. |
+| [ACE Setup](frlg/ace_setup.md) | `frlg.ace_setup` | mGBA | Sets up arbitrary code execution: the ? Mail puts species 0x0351 in Box 3 slot 1. |
+| [ACE](frlg/ace.md) | `frlg.ace` | mGBA | Runs code typed as PC box names through species 0x0351: 999 of an item in the PC, some of them to the bag. |
+| [Supplies](frlg/supplies.md) | `frlg.supplies` | mGBA, the Switch | Stocks what the duplication programs use: Retro Mail and Super Repels. |
+| [Team Training](frlg/team_training.md) | `frlg.team_training` | mGBA, the Switch | Copies Rare Candies with the Mail Glitch to level the team. |
+| [Catcher Prep](frlg/catcher_prep.md) | `frlg.catcher_prep` | mGBA, the Switch | Catches Paras and levels it into a Spore Parasect for wild hunts. |
+| [Dex Collection](frlg/dex_collection.md) | `frlg.dex_collection` | mGBA | Catches Pokemon the Pokedex lacks, toward the National Pokedex. |
+| [Wild RNG](frlg/wild_rng.md) | `frlg.wild_rng` | mGBA | Catches a chosen shiny wild Pokemon by timing the game's random numbers. |
+
+### [Pokémon Legends: Z-A](plza/README.md)
+
+| Program | Id | Runs on | What it does |
+|---|---|---|---|
+| [AutoStory](plza/autostory.md) | `plza.autostory` | the Switch | Plays the story from a new game, checkpoint by checkpoint. |
+| [Claim Gifts](plza/claim-gifts.md) | `plza.claim-gifts` | the Switch | Claims the Mystery Gifts of its catalog that have not expired, puts their Pokémon in the Boxes and saves. |
+
+### [Pokémon HOME](pokemon_home/README.md)
+
+| Program | Id | Runs on | What it does |
+|---|---|---|---|
+| [Bank PLZA in HOME](pokemon_home/bank-plza.md) | `pokemon_home.bank-plza` | the Switch | Moves the claimed gifts from the game's box into their Pokémon HOME boxes and saves HOME. |
+
+### [Pokémon Brilliant Diamond / Shining Pearl](bdsp/README.md)
+
+| Program | Id | Runs on | What it does |
+|---|---|---|---|
+| [Grand Underground](bdsp/underground.md) | `bdsp.underground` | the Switch | Farms Mysterious Shards and treasures in the Grand Underground. |
+| [Static Legendary RNG](bdsp/static_rng.md) | `bdsp.static_rng` | the Switch | Hunts shiny static legendaries using 0PK pedestal player-blink seed recovery, in-chamber 1PK re-identification, and timed encounter triggers. |
 <!-- /generated -->
 
 The Mail Glitch has a second page for its last checkpoint:
-[item duplication](frlg.mail_glitch.item_duplication.md).
+[item duplication](frlg/mail_glitch.item_duplication.md).
 
 ## For contributors
 
-Each registered program has a page here, `<program id>.md`, and may have more for a part of it,
-`<program id>.<part>.md`. The blocks between `<!-- generated:NAME -->` and `<!-- /generated -->`
+Guides are organized by game under `<game>/`, with an index at `<game>/README.md`. Each registered
+program has a page at `<game>/<program>.md`, and may have more for a part of it,
+`<game>/<program>.<part>.md`. The blocks between `<!-- generated:NAME -->` and `<!-- /generated -->`
 come from the registry and the plans; everything else is hand-written and kept as it is.
 
     cd src && opam exec -- dune exec -- gamepilot guide --write    # refill every block; start missing pages
@@ -37,7 +56,8 @@ come from the registry and the plans; everything else is hand-written and kept a
 
 The blocks:
 
-- `programs`: this table.
+- `programs [GAME]`: the program index grouped by game (no argument), or one game's table for
+  `<game>/README.md`.
 - `backends`: where it runs (on the Switch, with its game picture).
 - `checkpoints [RANGE]`: each checkpoint's title, and a digest of its plans, so any plan change
   needs a regenerated page.
@@ -76,7 +96,7 @@ A descriptor (`Program_registry.t`) gives:
   tile's colour, and the lab app panel whose console setup `gamepilot switch-devices` reads).
 - the display name, the shared `category` (`Testing`, `Story`, `Glitch_setup`, `Farming`,
   `Dex_collection`, `Shiny_hunting`, `Gifts`, `Storage`) and a one-line description.
-- `doc`: its guide, `docs/guide/<program id>.md` (or an existing page, for a proof of concept).
+- `doc`: its guide, `docs/guide/<game>/<program>.md` (or an existing page, for a proof of concept).
 - `checkpoints`: its plans folder, or none for a one-shot program (`gamepilot run`).
 - the backends it runs on.
 - `viewport`: where its game picture sits in a Switch capture, `Nso_gba` (a GBA game in the

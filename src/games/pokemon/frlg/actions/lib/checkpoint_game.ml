@@ -239,11 +239,14 @@ let wild_rng_policy_catch ~log ~timings (plan : Wild_rng_plan.t) =
   | Wild_rng_plan.Catch_policy { policy; config }, visual_shiny_check ->
       make ~visual_shiny_check ~config ~policy
 
-let wild_rng_catch ~log ~encounter_method timings capture ~party =
+let wild_rng_catch ~log ~show_counters ~encounter_method timings capture ~party
+    =
+  let steps =
+    Wild_rng_steps.game_steps ~log ~show_counters ~encounter_method timings
+      capture
+  in
   Effects.with_probes Frlg_battle.Battle_look.probes (fun () ->
-      Capture.run
-        (Wild_rng_steps.game_steps ~log ~encounter_method timings capture)
-        capture ~party)
+      Capture.run steps capture ~party)
 
 let run_wild_rng t (plan : Wild_rng_plan.t) () =
   let log = t.config.log in
@@ -253,8 +256,10 @@ let run_wild_rng t (plan : Wild_rng_plan.t) () =
     | Error e -> Menu_input.fail "wild_rng_no_target" e
   in
   log ("Wild RNG: " ^ Frlg_rng.Wild_target.describe target ^ ".");
+  let show_counters = Watch_report.counters in
   let catch =
-    wild_rng_catch ~log ~encounter_method:plan.encounter_method target.timings
+    wild_rng_catch ~log ~show_counters ~encounter_method:plan.encounter_method
+      target.timings
   in
   let policy_catch = wild_rng_policy_catch ~log ~timings:target.timings plan in
   let game_steps : Wild_rng.game_steps =
@@ -263,6 +268,7 @@ let run_wild_rng t (plan : Wild_rng_plan.t) () =
       policy_catch;
       shiny_at = (fun slot -> Wild_rng_steps.shiny_at ~log ~slot);
       log;
+      show_counters;
     }
   in
   let r =

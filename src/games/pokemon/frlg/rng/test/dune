@@ -6,7 +6,9 @@
   test_seeds_database
   test_rng_timings
   test_wild_target
-  test_switch_rng_calibration)
+  test_switch_rng_calibration
+  test_base_stats
+  test_rng_miss_search)
  (modules
   fixture_lines
   search_fixture
@@ -16,8 +18,11 @@
   test_seeds_database
   test_rng_timings
   test_wild_target
-  test_switch_rng_calibration)
+  test_switch_rng_calibration
+  test_base_stats
+  test_rng_miss_search)
  (deps
   (glob_files fixtures/*.txt)
-  ../../assets/rng_seeds_mgba_sevii_save.json)
+  ../../assets/rng_seeds_mgba_sevii_save.json
+  ../../assets/base_stats.json)
  (libraries yojson gamepilot.table_test gamepilot.frlg_rng))

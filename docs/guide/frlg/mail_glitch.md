@@ -3,7 +3,7 @@
 Turns on the Mail Glitch on a post-game FireRed save, then copies one item with it.
 
 This page covers 01-celadon-setup to 08-activate-and-verify; the item copy that ends 08 has its
-own page, [Item duplication](frlg.mail_glitch.item_duplication.md). How the glitch works:
+own page, [Item duplication](mail_glitch.item_duplication.md). How the glitch works:
 the Pomeg Letterbombers' [Mail Glitch notes](https://pomeg-letterbombers.github.io/pokemon-ace-notes/mail-glitch/).
 
 **What you get:**
@@ -70,7 +70,7 @@ Give each as `--options KEY=VALUE`:
 <!-- /generated -->
 
 Build first (`cd src && opam exec -- dune build`; on the Switch, also the daemon), and set the
-`GAMEPILOT_*` variables described in [Running on mGBA](../mgba.md) (mGBA) and
+`GAMEPILOT_*` variables described in [Running on mGBA](../../mgba.md) (mGBA) and
 `docs/switch-bring-up.md` (the Switch).
 
 <!-- generated:commands 01-celadon-setup..08-activate-and-verify -->
@@ -137,7 +137,7 @@ In plain words, beyond the table:
    back.
 9. **08-activate-and-verify, the check.** MIMIEN must show a held item. Without saving, the program
    reads the glitched mail and copies one Antidote
-   ([Item duplication](frlg.mail_glitch.item_duplication.md)). It saves only once the copy has
+   ([Item duplication](mail_glitch.item_duplication.md)). It saves only once the copy has
    worked, so there is never a save right after the battle.
 
 ## How long it takes

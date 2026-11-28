@@ -6,22 +6,21 @@
     screen in a row, how many at the overworld after A).
 
     Where we differ: members are found by the species PKMN DATA shows under the
-    hand, not by slot (DOWN until it shows, CANCEL fails); several in one visit;
-    A is pressed only on a row whose label was read: the PC list's top row
-    ("BILL'S PC" or "SOMEONE'S PC"), DEPOSIT POKéMON, and STORE on a Pokémon's
-    menu, whose RELEASE is three rows below and never reached (the cursor is
-    never moved there); the box is the first with room from the one the chooser
-    opens on, RIGHT after "The BOX is full." (pokefirered's [Task_DepositMenu]
-    prints it and waits for a key), where the fork names a box; a member holding
-    Mail fails the deposit when the game says "Please remove the MAIL." over the
-    party panel (pokefirered's [Task_DepositMenu] refuses it there) instead of
-    choosing STORE again until the press bound runs out; on a message a wait
-    first, B only when the next settled look reads a message too (the fork
-    presses B on any message): "Which PC should be accessed?" is printed with no
-    button wait and the PC list opens right behind it (pokefirered pc.inc:
-    message, waitmessage, then the list), so a B on it can land as the list
-    opens, cancel it and turn the PC off, as it did to {!Pc_box}'s walk on
-    console B (2026-11-25). *)
+    hand, not by slot, picking the last matching occupied slot without Mail (new
+    catches always append to the end of the party, so this stores the new catch
+    rather than an earlier member of the same species, and skips any duplicate
+    that holds Mail); several in one visit; A is pressed only on a row whose
+    label was read: the PC list's top row ("BILL'S PC" or "SOMEONE'S PC"),
+    DEPOSIT POKéMON, and STORE on a Pokémon's menu, whose RELEASE is three rows
+    below and never reached (the cursor is never moved there); the box is the
+    first with room from the one the chooser opens on, RIGHT after "The BOX is
+    full." (pokefirered's [Task_DepositMenu] prints it and waits for a key),
+    where the fork names a box; on a message a wait first, B only when the next
+    settled look reads a message too (the fork presses B on any message): "Which
+    PC should be accessed?" is printed with no button wait and the PC list opens
+    right behind it (pokefirered pc.inc: message, waitmessage, then the list),
+    so a B on it can land as the list opens, cancel it and turn the PC off, as
+    it did to {!Pc_box}'s walk on console B (2026-11-25). *)
 
 type look = {
   view : Frlg_readers.Pc_screen.view;
