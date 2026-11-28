@@ -31,9 +31,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 01:50:00–01:55:00 | Reviewed |
 | 01:55:00–02:00:00 | Reviewed |
 | 02:00:00–02:05:00 | Reviewed |
-| 02:05:00–03:18:16 | Pending |
+| 02:05:00–02:10:00 | Reviewed |
+| 02:10:00–03:18:16 | Pending |
 
-Resume at **02:05:00** as Kazza enters against Candice’s Snover in Snowpoint Gym.
+Resume at **02:10:00** in the Galactic Warehouse during Scientist Fredrick’s opening send-out.
 
 ## Review method
 
@@ -509,3 +510,17 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 | 2:04:25–2:05:00 | Slide from the entrance toward the back of the Gym, then along the left wall and back onto the center stairs. Reapply Super Repel near the stairs. Challenge Candice, who leads with Snover. |
 
 **State at 2:05:00.** Kazza is the only party member, Lv. 46 at 107/107 HP with Wise Glasses. Monferno is boxed with Choice Specs. Fifteen Super Repels remain and one is active. Candice’s battle is underway.
+
+## 2:05:00–2:10:00 | Candice, Lake Acuity, and the Galactic Warehouse
+
+| Video time | Observed action |
+| --- | --- |
+| 2:05:01–2:05:28 | Snover Lv. 38 starts hail with Snow Warning. Use one X Sp. Atk. Avalanche drops Kazza from 107/107 to 55/107 HP, and hail drops it to 49/107. Dazzling Gleam KOs Snover. |
+| 2:05:29–2:06:20 | Kazza KOs Sneasel Lv. 38 with Dazzling Gleam, then KOs Medicham Lv. 40 and Abomasnow Lv. 42 with Psychic. Kazza takes hail damage between send-outs and reaches Lv. 47 after Abomasnow. |
+| 2:06:25–2:06:39 | Receive the Icicle Badge, which enables Rock Climb outside battle, and TM72 Avalanche. Slide back to the Gym entrance and exit. |
+| 2:06:40–2:07:15 | Ride west from Snowpoint through Acuity Lakefront and enter Lake Acuity. Jupiter finishes speaking to the rival, mentions the Veilstone headquarters, and leaves. Speak with the rival. |
+| 2:07:16–2:07:55 | Fly to Veilstone. Speak to the Grunt outside Galactic HQ and pick up the Storage Key after he leaves. Dismiss the expired repel prompt on the way to the warehouse. Use the Storage Key on the warehouse door and take the stairs down. |
+| 2:07:57–2:09:09 | Run east along the basement. Wait at the corner for the first patrolling Grunt, then pass behind him and battle the next Grunt. Kazza KOs Dustox Lv. 35 with Psychic and Bronzor Lv. 35 with Shadow Ball. |
+| 2:09:10–2:10:00 | Take the stairways up, use the yellow warp pads, and take the stairs into the room with a yellow table. Scientist Fredrick challenges the player and starts with Kadabra. |
+
+**State at 2:10:00.** Seven badges. Kazza is Lv. 47 at 34/110 HP and remains the only party member, holding Wise Glasses. Monferno is boxed with Choice Specs. The Storage Key was used, and Fredrick’s battle is beginning.
