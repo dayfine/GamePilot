@@ -40,9 +40,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 02:35:00–02:40:00 | Reviewed |
 | 02:40:00–02:45:00 | Reviewed |
 | 02:45:00–02:50:00 | Reviewed |
-| 02:50:00–03:18:16 | Pending |
+| 02:50:00–02:55:00 | Reviewed |
+| 02:55:00–03:18:16 | Pending |
 
-Resume at **02:50:00** at the first Strength boulders in Victory Road after Ace Trainer Mariah.
+Resume at **02:55:00** in the flooded Victory Road chamber just after Psychic Valencia’s Chimecho faints.
 
 ## Review method
 
@@ -647,4 +648,17 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 | 2:48:33–2:49:36 | Cross the wooden bridge, use Rock Climb to descend, and battle Ace Trainer Mariah. Kazza KOs Golduck Lv. 46 and Blissey Lv. 48 with Psyshock. Kazza reaches Lv. 56, and Palkia reaches Lv. 49. |
 | 2:49:37–2:50:00 | Pick up the Max Elixir, cross the walkway and enter the next room, then use Rock Smash and activate Strength beside the boulders. |
 
-**State at 2:50:00.** Eight badges. Kazza leads at Lv. 56 and 92/129 HP with Choice Specs. Palkia is Lv. 49 with Metronome. Monferno remains fainted with Wise Glasses. Seven Super Repels remain with one active.
+**State at 2:50:00.** Eight badges. Kazza leads at Lv. 56 and 92/130 HP with Choice Specs. Palkia is Lv. 49 with Metronome. Monferno remains fainted with Wise Glasses. Seven Super Repels remain with one active.
+
+## 2:50:00–2:55:00 | Victory Road boulders and the flooded chamber
+
+| Video time | Observed action |
+| --- | --- |
+| 2:50:00–2:51:06 | Push the boulders and battle Ace Trainer Omar. Kazza uses Psychic on Rapidash Lv. 45, Carnivine Lv. 45, and Rampardos Lv. 48. Kazza reaches Lv. 57 after Rapidash. |
+| 2:51:07–2:51:28 | Use one Super Potion to restore Kazza from 94/132 to 132/132 HP and one Ether to restore Psychic PP. Clear the rocks with Rock Smash, move the boulder, and reapply Super Repel. |
+| 2:51:29–2:52:14 | Ace Trainer Sydney sends Clefable and Torterra, both Lv. 46. Kazza KOs both with Psychic. |
+| 2:52:15–2:53:13 | Push the boulder and go north to Veteran Clayton. Kazza uses Psychic on Staraptor and Hippowdon, both Lv. 47, and reaches Lv. 58. Staraptor lowers Attack with Intimidate and Hippowdon starts a sandstorm. |
+| 2:53:14–2:54:08 | Take the stairs, cross the walkway, and use Rock Climb to descend. Black Belt Miles sends Machamp Lv. 49, which Kazza KOs with Psychic. Palkia reaches Lv. 50. Enter the flooded chamber to the east. |
+| 2:54:09–2:55:00 | Use Surf and land on the narrow path at Psychic Valencia. Kazza KOs Chingling Lv. 44 and Chimecho Lv. 48 with Shadow Ball. |
+
+**State at 2:55:00.** Kazza is Lv. 58 at 133/133 HP with Choice Specs. Palkia is Lv. 50 with Metronome and Monferno remains fainted with Wise Glasses. Six Super Repels remain with one active. Valencia’s final Pokémon has just fainted.
