@@ -160,11 +160,21 @@ let blind () =
     }
   |> List.map command_text |> String.concat ", "
 
-let title_parity csf_offset () =
+let title_parity ?(seed_delay_ms = 50920) ?(advances = 1554) csf_offset () =
   let timings =
     Result.get_ok
       (Frlg_rng.Rng_timings.sweet_scent Frlg_rng.Rng_timings.switch
-         ~seed_delay_ms:50920 ~advances:1554 ~use_teachy_tv:false
+         ~seed_delay_ms ~advances ~use_teachy_tv:false
+         { Frlg_rng.Rng_timings.no_calibrations with csf_offset })
+  in
+  Wild_rng_steps.title_presses timings
+  |> List.map command_text |> String.concat ", "
+
+let gift_title_parity ~seed_delay_ms ~advances csf_offset () =
+  let timings =
+    Result.get_ok
+      (Frlg_rng.Rng_timings.gift Frlg_rng.Rng_timings.switch ~seed_delay_ms
+         ~advances ~use_teachy_tv:false
          { Frlg_rng.Rng_timings.no_calibrations with csf_offset })
   in
   Wild_rng_steps.title_presses timings
@@ -180,6 +190,18 @@ let presses =
       "wait 50075, A 3000/0, wait 333, A 50/1450, B 50/2450";
     case "switch odd parity title_presses (csf_offset = 1) shifts recap wait"
       (title_parity 1) "wait 50075, A 3000/0, wait 333, A 50/1467, B 50/2450";
+    case "console B Electrode #1 5217/1015 title_presses (csf_offset = 0)"
+      (gift_title_parity ~seed_delay_ms:30754 ~advances:1015 0)
+      "wait 29909, A 3000/0, wait 333, A 50/1450, B 50/2450";
+    case "console B Electrode #1 5217/1015 title_presses (csf_offset = 1)"
+      (gift_title_parity ~seed_delay_ms:30754 ~advances:1015 1)
+      "wait 29909, A 3000/0, wait 333, A 50/1467, B 50/2450";
+    case "console B Electabuzz 4ADF/1732 title_presses (csf_offset = 0)"
+      (title_parity ~seed_delay_ms:35187 ~advances:1732 0)
+      "wait 34342, A 3000/0, wait 333, A 50/1450, B 50/2450";
+    case "console B Electabuzz 4ADF/1732 title_presses (csf_offset = 1)"
+      (title_parity ~seed_delay_ms:35187 ~advances:1732 1)
+      "wait 34342, A 3000/0, wait 333, A 50/1467, B 50/2450";
   ]
 
 let capture_result end_ : Capture.result =

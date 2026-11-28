@@ -62,6 +62,33 @@ let () =
         Rng_timings.switch ~seed:50920 ~advances:1554
         ~calibrations:{ Rng_timings.no_calibrations with csf_offset = 1 }
         "seed 50075 csf 3333 recap 1467 teachy 0 ingame 11283 total 64708";
+      (* Console B Switch runs (TID 15287, SID 51290, 59.999977 fps):
+         1. Static Electrode #1 odd target 5217/1015 (FR_Eng delay 30754 ms;
+            observed indoor Power Plant parity lock at even advances 1014/1016):
+            csf_offset = 1 shifts recap_delay_ms from 1450 to 1467 (+17 ms) and
+            total_delay_ms by +17 ms while seed_delay_ms and csf_delay_ms stay
+            identical. *)
+      gift_case "console B static Electrode #1 odd 5217/1015 (csf_offset = 0)"
+        Rng_timings.switch ~seed:30754 ~advances:1015
+        "seed 29909 csf 3333 recap 1450 teachy 0 ingame 6791 total 40033";
+      gift_case "console B static Electrode #1 odd 5217/1015 (csf_offset = 1)"
+        Rng_timings.switch ~seed:30754 ~advances:1015
+        ~calibrations:{ Rng_timings.no_calibrations with csf_offset = 1 }
+        "seed 29909 csf 3333 recap 1467 teachy 0 ingame 6791 total 40050";
+      (* 2. Static Electrode #1 even target A91A/1040 (FR_Eng delay 30620 ms;
+            caught on attempt 2/25 on Console B). *)
+      gift_case "console B static Electrode #1 even A91A/1040 (csf_offset = 0)"
+        Rng_timings.switch ~seed:30620 ~advances:1040
+        "seed 29775 csf 3333 recap 1450 teachy 0 ingame 7000 total 40108";
+      (* 3. Wild Electabuzz target 4ADF/1732 (FR_Eng delay 35187 ms; caught on
+            attempt 2/25 on Console B via Sweet Scent). *)
+      case "console B wild Electabuzz 4ADF/1732 (csf_offset = 0)"
+        Rng_timings.switch ~seed:35187 ~advances:1732
+        "seed 34342 csf 3333 recap 1450 teachy 0 ingame 9833 total 47508";
+      case "console B wild Electabuzz 4ADF/1732 (csf_offset = 1)"
+        Rng_timings.switch ~seed:35187 ~advances:1732
+        ~calibrations:{ Rng_timings.no_calibrations with csf_offset = 1 }
+        "seed 34342 csf 3333 recap 1467 teachy 0 ingame 9833 total 47525";
       (* 29448 advances: floor((29448 - 12000 + 7500) / 313) * 313 = 24727 on
          Teachy TV, (29448 - 24727) * 16.6667 / 2 - 14067 in game. *)
       case "switch, Teachy TV" Rng_timings.switch ~seed:50920 ~advances:30000
