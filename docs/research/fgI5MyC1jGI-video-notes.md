@@ -29,9 +29,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 01:40:00–01:45:00 | Reviewed |
 | 01:45:00–01:50:00 | Reviewed |
 | 01:50:00–01:55:00 | Reviewed |
-| 01:55:00–03:18:16 | Pending |
+| 01:55:00–02:00:00 | Reviewed |
+| 02:00:00–03:18:16 | Pending |
 
-Resume at **01:55:00** riding north on Route 217 after Ace Trainer Dalton.
+Resume at **02:00:00** on the shore of Lake Verity as the first Galactic double battle begins.
 
 ## Review method
 
@@ -477,3 +478,18 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 | 1:54:55–1:55:00 | Resume riding north in the Route 217 blizzard. |
 
 **State at 1:55:00.** Kazza leads at Lv. 41 and 83/97 HP with Choice Specs. Monferno remains fainted at Lv. 28 with Wise Glasses. Three Rare Candies and 20 Super Repels remain. One repel is active.
+
+## 1:55:00–2:00:00 | Rock Climb, Lake Valor, and Lake Verity
+
+| Video time | Observed action |
+| --- | --- |
+| 1:55:00–1:55:32 | Ride north in the Route 217 blizzard. Reapply Super Repel, pick up a Calcium, and collect TM100 Rock Climb behind the snowbound house. |
+| 1:55:33–1:56:23 | Ace Trainer Olivia sends Roselia and Seaking, both Lv. 37. Kazza KOs both with Psyshock and takes one round of hail damage. |
+| 1:56:24–1:56:46 | Ride through Acuity Lakefront to the Snowpoint City entrance. Swap held items so Kazza has Wise Glasses and fainted Monferno has Choice Specs, then Fly to Veilstone City. |
+| 1:56:50–1:57:29 | Reapply Super Repel in Veilstone and ride south through Route 214. Reapply again at Valor Lakefront before entering Lake Valor. |
+| 1:57:30–1:58:08 | Cross the drained lakebed around the Grunts and beached Magikarp. Enter Valor Cavern and challenge Commander Saturn. |
+| 1:58:11–1:58:59 | Kazza KOs Kadabra Lv. 35 with Shadow Ball and reaches Lv. 42, then KOs Toxicroak Lv. 37 with Psyshock and Bronzor Lv. 35 with Shadow Ball. |
+| 1:59:05–1:59:30 | Saturn mentions Mars at Lake Verity. Exit the cavern, swap Choice Specs back to Kazza and Wise Glasses back to Monferno, then Fly to Twinleaf Town. |
+| 1:59:31–2:00:00 | Enter the player’s house for Mom to heal the party. Ride north through Route 201 and Verity Lakefront, pass Rowan at the lake, and reapply Super Repel just before two Galactic Grunts intercept the player. |
+
+**State at 2:00:00.** At Lake Verity with Kazza Lv. 42 holding Choice Specs and Monferno Lv. 28 holding Wise Glasses. Both are healed. Rock Climb is registered, three Rare Candies remain, and one Super Repel is active.
