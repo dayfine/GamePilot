@@ -57,3 +57,6 @@ val start :
 
 val stop : t -> unit
 (** SIGTERM, then wait for it to exit. *)
+
+val wait : t -> unit
+(** Waits until the daemon exits, stopping it cleanly on SIGINT or SIGTERM. *)

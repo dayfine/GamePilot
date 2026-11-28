@@ -49,11 +49,8 @@ let option_json (d : Run_options.declared) =
     @ value_fields @ presence_fields)
 
 let program_json (p : Program_registry.t) =
-  let checkpoints = List.map (fun s -> `String s) (checkpoints_of p) in
-  let backends =
-    List.map (fun b -> `String (Program_registry.backend_name b)) p.backends
-  in
-  let options = List.map option_json p.options in
+  let strs xs = `List (List.map (fun s -> `String s) xs) in
+  let backends = List.map Program_registry.backend_name p.backends in
   `Assoc
     [
       ("id", `String p.id);
@@ -62,9 +59,9 @@ let program_json (p : Program_registry.t) =
       ("game_name", `String p.game.game_name);
       ("category", `String (Program_registry.category_name p.category));
       ("description", `String p.description);
-      ("backends", `List backends);
-      ("checkpoints", `List checkpoints);
-      ("options", `List options);
+      ("backends", strs backends);
+      ("checkpoints", strs (checkpoints_of p));
+      ("options", `List (List.map option_json p.options));
     ]
 
 let programs_json () =
@@ -79,8 +76,8 @@ let capture_json (c : Console_config.Device_discovery.capture_device) =
     ]
 
 let devices_json () =
-  let serials = Console_config.Device_discovery.discover_serial_ports () in
-  let captures = Console_config.Device_discovery.discover_capture_devices () in
+  let serials = Console_config.Device_discovery.discover_serial_ports ()
+  and captures = Console_config.Device_discovery.discover_capture_devices () in
   `Assoc
     [
       ("serial_ports", `List (List.map (fun s -> `String s) serials));
@@ -91,18 +88,19 @@ let console_health (c : Console_config.console) =
   match c.backend with
   | Switch { serial = Some port; capture } ->
       let ok = Sys.win32 || Sys.file_exists port in
-      let detail =
+      let msg =
         if ok then Printf.sprintf "serial %s, capture %s" port capture
         else Printf.sprintf "serial port %s not connected" port
       in
-      (ok, detail)
+      (ok, msg)
   | Switch { serial = None; capture } ->
       (true, Printf.sprintf "capture %s (no serial)" capture)
   | Mgba { port } -> (true, Printf.sprintf "mGBA bridge port %d" port)
 
+let opt_json f = Option.fold ~none:`Null ~some:f
+
 let console_status_json ~active_run (c : Console_config.console) =
-  let ready, detail = console_health c in
-  let active = active_run c in
+  let ready, detail = console_health c and active = active_run c in
   let status =
     match active with
     | Some _ -> "running"
@@ -114,7 +112,7 @@ let console_status_json ~active_run (c : Console_config.console) =
         [
           ("backend", `String "switch");
           ("capture", `String capture);
-          ("serial", Option.fold ~none:`Null ~some:(fun s -> `String s) serial);
+          ("serial", opt_json (fun s -> `String s) serial);
         ]
     | Mgba { port } -> [ ("backend", `String "mgba"); ("mgba_port", `Int port) ]
   in
@@ -125,6 +123,7 @@ let console_status_json ~active_run (c : Console_config.console) =
        ("ready", `Bool ready);
        ("status", `String status);
        ("detail", `String detail);
+       ("watch_port", opt_json (fun p -> `Int p) c.watch_port);
        ("active_run", Option.value active ~default:`Null);
      ]
     @ backend_fields)
@@ -141,8 +140,7 @@ let consoles_json ?path ~active_run () =
        ])
 
 let decode_console_upsert json =
-  let wrapped = `Assoc [ ("consoles", `List [ json ]) ] in
-  match Console_config.of_json wrapped with
+  match Console_config.of_json (`Assoc [ ("consoles", `List [ json ]) ]) with
   | Ok [ c ] -> Ok c
   | Ok _ -> Error "expected one console object"
   | Error e -> Error e
@@ -215,15 +213,19 @@ let range_args (p : Program_registry.t) (req : launch_request) =
   | None, None -> Ok (mode_args req.mode)
   | _ -> Error (p.id ^ " has incomplete checkpoint range")
 
-let watch_args ~preflight ?listen () =
+let opt_flag flag = Option.fold ~none:[] ~some:(fun v -> [ flag; v ])
+
+let watch_args ~preflight ?listen ?watch_port () =
   if preflight then []
   else
-    match listen with
-    | Some addr when addr <> "" && addr <> "127.0.0.1" ->
-        [ "--watch"; "--listen"; addr ]
-    | _ -> [ "--watch" ]
+    let listen_v =
+      Option.bind listen (fun a ->
+          if a <> "" && a <> "127.0.0.1" then Some a else None)
+    in
+    let port_v = Option.map string_of_int watch_port in
+    ("--watch" :: opt_flag "--listen" listen_v) @ opt_flag "--watch-port" port_v
 
-let build_run_argv ~gamepilot ?listen ~console req =
+let build_run_argv ~gamepilot ?listen ~(console : Console_config.console) req =
   let* prog =
     Option.to_result
       ~none:("unknown program " ^ req.program_id)
@@ -235,8 +237,10 @@ let build_run_argv ~gamepilot ?listen ~console req =
     List.concat_map
       (fun (k, v) -> [ "--options"; k ^ "=" ^ v ])
       (Run_options.pairs checked)
+  and watch =
+    watch_args ~preflight:req.preflight ?listen ?watch_port:console.watch_port
+      ()
   in
-  let watch = watch_args ~preflight:req.preflight ?listen () in
   Ok
     ([ gamepilot; "run"; prog.id ]
     @ Console_config.to_run_args console
@@ -245,24 +249,23 @@ let build_run_argv ~gamepilot ?listen ~console req =
 let extract_watch_url line =
   let prefix = "http://" in
   let n = String.length line and p = String.length prefix in
+  let rec end_ j =
+    if j >= n || line.[j] = ' ' || line.[j] = '\t' || line.[j] = '\r' then j
+    else end_ (j + 1)
+  in
   let rec find i =
     if i + p > n then None
     else if String.sub line i p = prefix then
-      let rec end_ j =
-        if j >= n || line.[j] = ' ' || line.[j] = '\t' || line.[j] = '\r' then j
-        else end_ (j + 1)
-      in
       Some (String.sub line i (end_ i - i))
     else find (i + 1)
   in
   find 0
 
 let split_http raw =
-  let sep = "\r\n\r\n" in
   let n = String.length raw in
   let rec find i =
     if i + 4 > n then (raw, "")
-    else if String.sub raw i 4 = sep then
+    else if String.sub raw i 4 = "\r\n\r\n" then
       (String.sub raw 0 i, String.sub raw (i + 4) (n - i - 4))
     else find (i + 1)
   in
@@ -282,16 +285,14 @@ let status_text = function
   | 409 -> "Conflict"
   | _ -> "Internal Server Error"
 
-let stop_prefix = "/api/runs/"
-let stop_suffix = "/stop"
-
 let stop_id_of_path path =
+  let p = "/api/runs/" and s = "/stop" in
   let n = String.length path
-  and p = String.length stop_prefix
-  and s = String.length stop_suffix in
+  and pl = String.length p
+  and sl = String.length s in
   if
-    n > p + s
-    && String.starts_with ~prefix:stop_prefix path
-    && String.ends_with ~suffix:stop_suffix path
-  then Some (String.sub path p (n - p - s))
+    n > pl + sl
+    && String.starts_with ~prefix:p path
+    && String.ends_with ~suffix:s path
+  then Some (String.sub path pl (n - pl - sl))
   else None
