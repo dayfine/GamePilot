@@ -11,6 +11,7 @@ type search_bounds = {
   max_blinks : int;
   tick_seconds : float option;
   order_swap_tolerance : float;
+  max_pk_phase_width_seconds : float option;
 }
 
 type config = {
@@ -48,6 +49,7 @@ let default_bounds =
     max_blinks = 24;
     tick_seconds = None;
     order_swap_tolerance = MR.default_order_swap_tolerance;
+    max_pk_phase_width_seconds = Some 1.0;
   }
 
 let default_config ~picture ~target ~base_state =
@@ -70,6 +72,7 @@ type watch_state = {
   mutable resets : int;
   mutable samples_rev : BE.match_sample list;
   mutable raw_gaps_rev : Wire.gap list;
+  mutable best_anchor : anchor option;
 }
 
 let make_watch start_s =
@@ -82,6 +85,7 @@ let make_watch start_s =
     resets = 0;
     samples_rev = [];
     raw_gaps_rev = [];
+    best_anchor = None;
   }
 
 let now_seconds () = Effects.now () /. ms_per_s
@@ -166,6 +170,35 @@ let handle_no_match config watch ~origin ~gaps ~events ~count attempt =
     reid_failure_error ~gaps attempt
   else `Continue
 
+let phase_width (a : anchor) =
+  a.next_pokemon_blink_max_seconds -. a.next_pokemon_blink_min_seconds
+
+let remember_best_anchor watch candidate =
+  let replace =
+    match watch.best_anchor with
+    | None -> true
+    | Some prev -> phase_width candidate <= phase_width prev
+  in
+  if replace then watch.best_anchor <- Some candidate
+
+let phase_within_limit (config : config) anchor =
+  match config.bounds.max_pk_phase_width_seconds with
+  | None -> true
+  | Some max_w -> phase_width anchor <= max_w
+
+let fallback_or_error watch ~gaps attempt =
+  match watch.best_anchor with
+  | Some anchor -> `Done (Ok anchor)
+  | None -> reid_failure_error ~gaps attempt
+
+let handle_match config watch ~origin ~last_ev_s ~gaps ~count result =
+  let candidate = anchor_of config ~origin ~last_ev_s ~gaps result in
+  remember_best_anchor watch candidate;
+  if phase_within_limit config candidate then `Done (Ok candidate)
+  else if count >= config.bounds.max_blinks then
+    `Done (Ok (Option.value watch.best_anchor ~default:candidate))
+  else `Continue
+
 let evaluate_events (config : config) watch ~origin ~gaps ~events ~count =
   let eval =
     Win.evaluate ~base_state:config.base_state
@@ -176,12 +209,16 @@ let evaluate_events (config : config) watch ~origin ~gaps ~events ~count =
   in
   match eval with
   | Win.Matched { result; last_ev_s } ->
-      `Done (Ok (anchor_of config ~origin ~last_ev_s ~gaps result))
+      handle_match config watch ~origin ~last_ev_s ~gaps ~count result
   | Win.Ambiguous attempt ->
-      if count >= config.bounds.max_blinks then reid_failure_error ~gaps attempt
+      if count >= config.bounds.max_blinks then
+        fallback_or_error watch ~gaps attempt
       else `Continue
-  | Win.No_match attempt ->
-      handle_no_match config watch ~origin ~gaps ~events ~count attempt
+  | Win.No_match attempt -> (
+      match watch.best_anchor with
+      | Some anchor -> `Done (Ok anchor)
+      | None ->
+          handle_no_match config watch ~origin ~gaps ~events ~count attempt)
 
 let check_samples config watch =
   match List.rev watch.samples_rev with
@@ -242,7 +279,9 @@ and loop config watch =
   maybe_renew_lease config watch now_s;
   drain_gaps watch;
   if now_s -. watch.start_s >= config.timeout_seconds then
-    timeout_error config watch
+    match watch.best_anchor with
+    | Some anchor -> Ok anchor
+    | None -> timeout_error config watch
   else (
     await_next_frame config watch;
     step_after_frame config watch)
