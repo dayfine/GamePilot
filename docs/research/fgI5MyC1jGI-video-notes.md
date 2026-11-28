@@ -22,9 +22,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 01:05:00–01:10:00 | Reviewed |
 | 01:10:00–01:15:00 | Reviewed |
 | 01:15:00–01:20:00 | Reviewed |
-| 01:20:00–03:18:16 | Pending |
+| 01:20:00–01:25:00 | Reviewed |
+| 01:25:00–03:18:16 | Pending |
 
-Resume at **01:20:00** inside Pastoria Gym after Tuber Caitlyn’s first Pokémon faints.
+Resume at **01:25:00** during the Galactic Grunt chase at the east end of Pastoria, with Kazza healed and Monferno fainted.
 
 ## Review method
 
@@ -358,3 +359,20 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 - **Pastoria Gym**, on the right-hand lower platform in Tuber Caitlyn’s battle. Azurill has fainted and her next Pokémon has yet to enter.
 - **Kazza Lv. 29, 70/70 HP** leads with **Metronome**. **Monferno Lv. 27** is second.
 - **2 Super Potions** and **2 Super Repels** remain by the observed uses. The Bag gained a Max Ether, a Calcium and two Rawst Berries.
+
+## 1:20:00–1:25:00 | Crasher Wake and the Galactic Grunt chase
+
+| Video time | Observed action |
+| --- | --- |
+| 1:20:06–1:20:23 | Tuber Caitlyn sends Marill Lv. 24. Kazza uses Psychic to finish the battle. |
+| 1:20:24–1:20:48 | Cross the east-side planks, activate the green switch, circle through the lowered channels and stairs, and approach Sailor Samson on the west side. |
+| 1:20:50–1:21:43 | Samson sends West Sea Shellos, Wingull, and East Sea Shellos, all Lv. 24. Kazza uses Psychic through the fight, including a critical hit on the first Shellos. Kazza reaches Lv. 30 and replaces Confusion with Psyshock. |
+| 1:21:49–1:22:09 | Press the blue switch beside Samson and cross the raised bridges to Wake. Use Calcium on Kazza, set Battle Style to Switch, then save the game in front of Wake. |
+| 1:22:22–1:22:48 | Wake opens with Gyarados Lv. 27. Intimidate lowers Kazza’s Attack, then Shock Wave KOs Gyarados. At the Switch prompt, send in Monferno before Quagsire Lv. 27. |
+| 1:23:00–1:23:29 | Monferno uses Taunt at 48/80 HP and faints to Mud Shot. Send Kazza back in and use one X Speed. Quagsire uses Mud Shot again, leaving Kazza at 54/73 HP and dropping its Speed. Grass Knot KOs Quagsire. |
+| 1:23:38–1:24:08 | Kazza moves first and KOs Floatzel Lv. 30 with Grass Knot, then reaches Lv. 31. Wake awards the Fen Badge and TM55 Brine. The badge enables Defog outside battle. |
+| 1:24:09–1:24:35 | Exit via the perimeter walkways. Speak to the Galactic Grunt outside the Great Marsh gate and follow him east. |
+| 1:24:36–1:24:54 | Restore Battle Style to Set. Use one Super Repel, give Kazza a Rawst Berry, use one Ether on Kazza, then use one Energy Root to restore Kazza from 56/75 to 75/75 HP. |
+| 1:24:55–1:25:00 | Speak to the Grunt beside the east-side building. He runs off again. |
+
+**State at 1:25:00.** Four badges. Kazza is Lv. 31 at 75/75 HP with a Rawst Berry. Monferno is Lv. 27 and fainted. One Super Repel remains and one is active. Battle Style is Set.
