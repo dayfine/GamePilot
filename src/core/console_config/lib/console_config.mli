@@ -25,6 +25,8 @@ type console = {
       (** Short identifier for [--console ID] (lowercase, digits, [-], [_]). *)
   name : string;  (** Display label (e.g. ["Console A"]). *)
   backend : backend;  (** Backend and device settings for this console. *)
+  watch_port : int option;
+      (** Optional default watch page port for this console ([1..65535]). *)
 }
 (** One configured console entry in [consoles.json]. *)
 
@@ -33,6 +35,10 @@ type t = console list
 
 val default_mgba_port : int
 (** Default mGBA bridge port (47810). *)
+
+val console_id_env : string
+(** Environment variable naming the default console (["GAMEPILOT_CONSOLE_ID"]).
+*)
 
 val default_path : unit -> string
 (** Default path to [consoles.json]:
@@ -71,11 +77,33 @@ val to_run_args : console -> string list
 (** CLI flags corresponding to [console] ([--backend], [--capture], [--serial]
     or [--mgba-port]). *)
 
+val match_by_flags : t -> string list -> console option
+(** Finds a configured console matching [--serial] and [--capture] (or
+    [--mgba-port]) in a [gamepilot run] flag list. *)
+
+val resolve :
+  ?path:string ->
+  ?env_console_id:string option ->
+  string option ->
+  (console, string) result
+(** Resolves a console from an explicit id, falling back to
+    [GAMEPILOT_CONSOLE_ID] (overridable via [env_console_id] for tests). *)
+
+val effective_watch_port : explicit:int option -> console -> int
+(** Watch port to bind: [explicit] when given, else [console.watch_port], else
+    [0] (any free port). *)
+
 val expand_console_flag :
-  ?path:string -> string list -> (string list, string) result
+  ?path:string ->
+  ?env_console_id:string option ->
+  string list ->
+  (string list, string) result
 (** Expands [--console ID] in a [gamepilot run] flag list by prepending
     {!to_run_args} for [ID] (so any explicit flags after it still override).
-    Leaves flag lists without [--console] unchanged. *)
+    When [--watch] or [--listen] is present without an explicit [--watch-port],
+    also injects [--watch-port] from the resolved console ([--console], matching
+    [--serial]+[--capture], [GAMEPILOT_CONSOLE_ID], or matching [--mgba-port]).
+*)
 
 val describe : console -> string
 (** One-line human-readable summary of [console]. *)

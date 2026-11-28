@@ -2,9 +2,11 @@ module Level_up = Frlg_battle.Level_up
 module Level_up_policy = Frlg_battle.Level_up_policy
 
 type game_steps = {
-  level : slot:int -> (int option, Pokemon_engine.Failure.cause) result;
-  candy : slot:int -> Level_up_policy.policy -> Rare_candy.result;
-  member :
+  read_level : slot:int -> (int option, Pokemon_engine.Failure.cause) result;
+  open_bag : unit -> (Rare_candy.opened, Pokemon_engine.Failure.cause) result;
+  use_candy : slot:int -> Level_up_policy.policy -> Rare_candy.result;
+  close_bag : unit -> (unit, Pokemon_engine.Failure.cause) result;
+  read_member :
     slot:int -> (Room_policy.member option, Pokemon_engine.Failure.cause) result;
   log : string -> unit;
 }
@@ -44,46 +46,79 @@ let add fed (o : Level_up.outcome) =
   }
 
 let read_level (game_steps : game_steps) ~slot =
-  let* level = game_steps.level ~slot in
+  let* level = game_steps.read_level ~slot in
   match level with
   | Some l -> Ok l
   | None -> fail "level_unread" "slot %d's level did not read" slot
 
-let candy game_steps (goal : Candy_plan.goal) ~slot ~level fed =
-  if fed.count >= goal.max_candies then
-    fail "max_candies" "%d candies used and slot %d is Lv %d, not %d" fed.count
-      slot level goal.target_level
-  else
-    match game_steps.candy ~slot goal.use.policy with
-    | Out_of_candies ->
-        fail "out_of_candies" "no Rare Candy left: slot %d is Lv %d, not %d"
-          slot level goal.target_level
-    | Failed why -> fail "rare_candy_failed" "%s" why
-    | Stopped cause -> Error cause
-    | Used o when o.levels = 0 ->
-        fail "no_effect" "the candy did not take on slot %d (Lv %d)" slot level
-    | Used o -> Ok (add fed o)
+let close_then_fail game_steps err =
+  let* () = game_steps.close_bag () in
+  err
 
-let rec feed game_steps goal ~slot ~before fed =
-  let* level = read_level game_steps ~slot in
-  match before with
-  | Some b when level <= b ->
-      fail "level_stuck" "slot %d still reads Lv %d after a candy" slot level
-  | _ ->
-      game_steps.log
-        (Printf.sprintf "Candy level: slot %d is Lv %d after %d candies." slot
-           level fed.count);
-      if level >= goal.Candy_plan.target_level then Ok (level, fed)
-      else
-        let* fed = candy game_steps goal ~slot ~level fed in
-        feed game_steps goal ~slot ~before:(Some level) fed
+let use_one_candy game_steps (goal : Candy_plan.goal) ~slot ~current fed =
+  match game_steps.use_candy ~slot goal.use.policy with
+  | Out_of_candies ->
+      close_then_fail game_steps
+        (fail "out_of_candies" "no Rare Candy left: slot %d is Lv %d, not %d"
+           slot current goal.target_level)
+  | Failed why -> fail "rare_candy_failed" "%s" why
+  | Stopped cause -> Error cause
+  | Used o when o.levels = 0 ->
+      close_then_fail game_steps
+        (fail "no_effect" "the candy did not take on slot %d (Lv %d)" slot
+           current)
+  | Used o -> Ok (add fed o)
+
+let rec feed_in_bag game_steps goal ~slot ~start_level ~planned fed =
+  if fed.count >= planned then
+    let* () = game_steps.close_bag () in
+    Ok fed
+  else
+    let current = start_level + fed.count in
+    let* fed = use_one_candy game_steps goal ~slot ~current fed in
+    feed_in_bag game_steps goal ~slot ~start_level ~planned fed
+
+let check_batch_count (goal : Candy_plan.goal) ~slot ~start_level ~needed fed =
+  if fed.count < needed then
+    fail "max_candies" "%d candies used and slot %d is Lv %d, not %d" fed.count
+      slot (start_level + fed.count) goal.target_level
+  else Ok fed
+
+let open_and_feed game_steps (goal : Candy_plan.goal) ~slot ~start_level ~needed
+    ~planned =
+  let* opened = game_steps.open_bag () in
+  match opened with
+  | No_candy ->
+      fail "out_of_candies" "no Rare Candy left: slot %d is Lv %d, not %d" slot
+        start_level goal.target_level
+  | Not_opened why -> fail "rare_candy_failed" "%s" why
+  | Opened ->
+      let* fed =
+        feed_in_bag game_steps goal ~slot ~start_level ~planned start
+      in
+      check_batch_count goal ~slot ~start_level ~needed fed
+
+let feed_batch game_steps (goal : Candy_plan.goal) ~slot ~start_level ~needed =
+  let planned = min needed goal.max_candies in
+  if planned <= 0 then
+    fail "max_candies" "0 candies used and slot %d is Lv %d, not %d" slot
+      start_level goal.target_level
+  else open_and_feed game_steps goal ~slot ~start_level ~needed ~planned
+
+let feed game_steps (goal : Candy_plan.goal) ~slot =
+  let* start_level = read_level game_steps ~slot in
+  game_steps.log
+    (Printf.sprintf "Candy level: slot %d starts at Lv %d." slot start_level);
+  let needed = goal.target_level - start_level in
+  if needed <= 0 then Ok start
+  else feed_batch game_steps goal ~slot ~start_level ~needed
 
 let missing_moves (goal : Candy_plan.goal) known =
   List.filter (fun m -> not (List.mem m known)) goal.moves
 
 let check_level (goal : Candy_plan.goal) (m : Room_policy.member) =
   match m.level with
-  | Some l when l >= goal.target_level -> Ok ()
+  | Some l when l >= goal.target_level -> Ok l
   | Some l ->
       fail "level_short" "the summary reads Lv %d, not %d" l goal.target_level
   | None -> fail "level_unread" "the summary's level did not read"
@@ -103,12 +138,15 @@ let check_moves (goal : Candy_plan.goal) ~slot known =
         (String.concat ", " missing)
 
 let checked (goal : Candy_plan.goal) ~slot (m : Room_policy.member) =
-  let* () = check_level goal m in
+  let* level = check_level goal m in
   let* () = check_species goal ~slot m in
-  match (goal.moves, m.moves) with
-  | [], _ -> Ok ()
-  | _, None -> fail "moves_unread" "slot %d's moves did not read" slot
-  | _, Some known -> check_moves goal ~slot known
+  let* () =
+    match (goal.moves, m.moves) with
+    | [], _ -> Ok ()
+    | _, None -> fail "moves_unread" "slot %d's moves did not read" slot
+    | _, Some known -> check_moves goal ~slot known
+  in
+  Ok level
 
 let report (m : Room_policy.member) level fed =
   {
@@ -121,12 +159,12 @@ let report (m : Room_policy.member) level fed =
   }
 
 let levelled game_steps goal ~slot =
-  let* level, fed = feed game_steps goal ~slot ~before:None start in
-  let* member = game_steps.member ~slot in
+  let* fed = feed game_steps goal ~slot in
+  let* member = game_steps.read_member ~slot in
   match member with
   | None -> fail "no_summary" "slot %d's summary did not read" slot
   | Some m ->
-      let* () = checked goal ~slot m in
+      let* level = checked goal ~slot m in
       Ok (report m level fed)
 
 let run game_steps (goal : Candy_plan.goal) ~slot =

@@ -32,25 +32,53 @@ let default_owner = "ctl"
 let client = "gamepilot-ctl/0.1"
 
 let usage =
-  "  gamepilot ctl [--port N] [--owner LABEL] press A [--hold 100] [--wait \
-   500] | dpad UP [N]\n\
+  "  gamepilot ctl [--console ID] [--port N] [--owner LABEL] press A [--hold \
+   100] [--wait 500] | dpad UP [N]\n\
   \      | wait MS | shot FILE.png | read READER | status\n\
   \      | park | resume  (the Switch: HOME menu and back to " ^ lab_title ()
   ^ ")\n\
     \      | close-game | start-game TILE  (the Switch, from HOME: close the\n\
     \        running game; start the game on TILE, 1 the first, 0 the cursor's)\n"
   ^ Delete_save_command.usage_line ^ Home_boxes_command.usage_line
-  ^ "  gamepilot ctl [--port N] [--owner LABEL] run FILE\n    readers:\n"
-  ^ readers_usage ()
+  ^ "  gamepilot ctl [--console ID] [--port N] [--owner LABEL] run FILE\n\
+    \    readers:\n" ^ readers_usage ()
 
-type flags = { port : int; owner : string }
+type flags = {
+  port : int;
+  explicit_port : bool;
+  owner : string;
+  console : string option;
+  session : Console_session.options;
+}
+
+let parse_nonneg ~flag p =
+  match int_of_string_opt p with
+  | Some n when n >= 0 -> Ok n
+  | _ -> Error ("bad " ^ flag ^ " " ^ p)
+
+let set_session f g = { f with session = g f.session }
+
+let set_watch_port f p =
+  Result.map
+    (fun wp -> set_session f (fun s -> { s with watch_port = Some wp }))
+    (parse_nonneg ~flag:"--watch-port" p)
 
 let rec parse_flags f = function
-  | "--port" :: p :: rest -> (
-      match int_of_string_opt p with
-      | Some port -> parse_flags { f with port } rest
-      | None -> Error ("bad --port " ^ p))
+  | "--port" :: p :: rest ->
+      Result.bind (parse_nonneg ~flag:"--port" p) (fun port ->
+          parse_flags { f with port; explicit_port = true } rest)
   | "--owner" :: o :: rest -> parse_flags { f with owner = o } rest
+  | "--console" :: id :: rest -> parse_flags { f with console = Some id } rest
+  | "--watch-port" :: p :: rest ->
+      Result.bind (set_watch_port f p) (fun f -> parse_flags f rest)
+  | "--listen" :: v :: rest ->
+      parse_flags (set_session f (fun s -> { s with listen = Some v })) rest
+  | "--runs-dir" :: v :: rest ->
+      parse_flags (set_session f (fun s -> { s with runs_dir = v })) rest
+  | "--daemon" :: v :: rest ->
+      parse_flags (set_session f (fun s -> { s with daemon = v })) rest
+  | "--config" :: v :: rest ->
+      parse_flags (set_session f (fun s -> { s with config = Some v })) rest
   | rest -> Ok (f, rest)
 
 (* Script lines as (line number, text, step), blank and comment lines left
@@ -141,30 +169,51 @@ let start_game f tile =
       Error
         ("ctl: start-game takes a tile, 1 the first (0 the cursor's): " ^ tile)
 
-let main args =
-  match
-    parse_flags { port = Live.default_port; owner = default_owner } args
-  with
-  | Error e -> Error e
-  | Ok (_, []) -> Error "ctl: no command"
-  | Ok (f, [ "status" ]) -> Status_command.show f.port
-  | Ok (f, [ "park" ]) ->
+let dispatch f = function
+  | [] -> Error "ctl: no command"
+  | [ "status" ] -> Status_command.show f.port
+  | [ "park" ] ->
       Ok (Console_park_command.on_port ~port:f.port ~owner:f.owner `Park)
-  | Ok (f, [ "resume" ]) ->
+  | [ "resume" ] ->
       Ok (Console_park_command.on_port ~port:f.port ~owner:f.owner `Resume)
-  | Ok (f, [ "close-game" ]) ->
+  | [ "close-game" ] ->
       Ok (Console_park_command.on_port ~port:f.port ~owner:f.owner `Close_game)
-  | Ok (f, [ "start-game"; tile ]) -> start_game f tile
-  | Ok (f, "delete-save" :: args) ->
+  | [ "start-game"; tile ] -> start_game f tile
+  | "delete-save" :: args ->
       Delete_save_command.main ~port:f.port ~owner:f.owner args
-  | Ok (f, "home-boxes" :: args) ->
+  | "home-boxes" :: args ->
       Home_boxes_command.main ~port:f.port ~owner:f.owner args
-  | Ok (f, [ "run"; file ]) -> (
+  | [ "run"; file ] -> (
       match parse_script (read_lines file) with
       | Ok steps -> Ok (run_steps f steps)
       | Error e -> Error (file ^ ": " ^ e)
       | exception Sys_error e -> Error e)
-  | Ok (f, words) -> (
+  | words -> (
       match Ctl_script.parse_words words with
       | Ok step -> Ok (run_steps f [ (1, String.concat " " words, step) ])
       | Error e -> Error ("ctl: " ^ e))
+
+let run_with_console f id cmd =
+  let port = if f.explicit_port then f.port else 0 in
+  let session = { f.session with port } in
+  Result.bind
+    (Console_session.with_console session ~console_id:(Some id)
+       ~checkpoint:("ctl-" ^ id) (fun d ->
+         dispatch { f with port = d.port } cmd))
+    Fun.id
+
+let main args =
+  let defaults =
+    {
+      port = Live.default_port;
+      explicit_port = false;
+      owner = default_owner;
+      console = None;
+      session = Console_session.defaults ();
+    }
+  in
+  match parse_flags defaults args with
+  | Error e -> Error e
+  | Ok (_, []) -> Error "ctl: no command"
+  | Ok (({ console = Some id; _ } as f), cmd) -> run_with_console f id cmd
+  | Ok (f, cmd) -> dispatch f cmd
