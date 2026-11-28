@@ -411,6 +411,130 @@ let test_no_match_failure_includes_diagnostics () =
       assert_true "diagnostic includes gap count"
         (string_contains ~sub:"gaps=" msg)
 
+let run20_base_state : XS.state =
+  { s0 = 0x827e_406d; s1 = 0xc935_65fe; s2 = 0x8ebe_004d; s3 = 0x16ed_73a9 }
+
+let run20_tick_seconds = 1.0178
+let run20_reanchor_start_advance = 2233
+let run20_reanchor_search_min = 1993
+let run20_reanchor_search_max = 2413
+
+let make_live_anchor ~base_state ~anchor_advance ~tick_seconds : ICR.anchor =
+  let synthetic_anchor_time_ms = 5000.0 in
+  let first_blink_lookback = 10 in
+  let next_pk_min_s = 3.0 in
+  let next_pk_max_s = 5.0 in
+  {
+    base_state;
+    anchor_time_ms = synthetic_anchor_time_ms;
+    advances_to_first_blink = anchor_advance - first_blink_lookback;
+    advances_to_last_blink = anchor_advance;
+    next_pokemon_blink_min_seconds = next_pk_min_s;
+    next_pokemon_blink_max_seconds = next_pk_max_s;
+    fitted_tick_seconds = tick_seconds;
+    gaps = [];
+  }
+
+let verify_live_groudon_plan ~label ~base_state ~anchor_advance ~tick_seconds
+    ~expected_advance ~expected_shiny ~expected_nature ~(expected_ivs : SE.ivs)
+    =
+  let target =
+    match ST.find "groudon" with
+    | Some t -> t
+    | None -> fail (label ^ ": missing groudon target")
+  in
+  let anchor = make_live_anchor ~base_state ~anchor_advance ~tick_seconds in
+  let trig_cfg =
+    SRT.default_config ~target ~accept:(fun p -> p.SE.shiny <> SE.Not_shiny)
+  in
+  match SRT.plan trig_cfg anchor with
+  | Error msg -> fail (label ^ ": plan failed: " ^ msg)
+  | Ok plan ->
+      let pk = plan.hit.pokemon in
+      assert_true
+        (label ^ ": selects expected shiny advance")
+        (plan.hit.advances = expected_advance);
+      assert_true
+        (label ^ ": shiny type matches hardware hit")
+        (pk.shiny = expected_shiny);
+      assert_true
+        (label ^ ": nature matches hardware hit")
+        (SE.nature_name pk.nature = expected_nature);
+      assert_true (label ^ ": IVs match hardware hit") (pk.ivs = expected_ivs);
+      assert_true
+        (label ^ ": timeline_start_advance + schedule.span = target advance")
+        (plan.timeline_start_advance + plan.schedule.span = expected_advance)
+
+let test_live_console_a_groudon_seeds () =
+  (* Console A hardware-verified Shiny Groudon hit #1 (Run 16). *)
+  verify_live_groudon_plan ~label:"live run 16 groudon"
+    ~base_state:
+      { s0 = 0xfec1_66b1; s1 = 0x3e14_e56a; s2 = 0x0433_77a7; s3 = 0xabd7_6985 }
+    ~anchor_advance:468 ~tick_seconds:1.0163 ~expected_advance:1201
+    ~expected_shiny:SE.Star ~expected_nature:"Lonely"
+    ~expected_ivs:
+      { hp = 5; attack = 25; defense = 31; spatk = 13; spdef = 31; speed = 31 };
+  (* Console A hardware-verified Shiny Groudon hit #2 (Run 18). *)
+  verify_live_groudon_plan ~label:"live run 18 groudon"
+    ~base_state:
+      { s0 = 0x481b_a548; s1 = 0xa1a5_5a05; s2 = 0x786f_602c; s3 = 0xedbf_65ca }
+    ~anchor_advance:474 ~tick_seconds:1.0175 ~expected_advance:2252
+    ~expected_shiny:SE.Star ~expected_nature:"Hardy"
+    ~expected_ivs:
+      { hp = 31; attack = 24; defense = 31; spatk = 31; spdef = 12; speed = 10 };
+  (* Console A hardware-verified seed #3 (Run 20 Attempt 2). *)
+  verify_live_groudon_plan ~label:"live run 20 attempt 2 groudon"
+    ~base_state:run20_base_state ~anchor_advance:477
+    ~tick_seconds:run20_tick_seconds ~expected_advance:2413
+    ~expected_shiny:SE.Star ~expected_nature:"Calm"
+    ~expected_ivs:
+      { hp = 31; attack = 21; defense = 31; spatk = 2; spdef = 5; speed = 31 }
+
+let test_live_run20_final_reanchor_suffix_recovery () =
+  let origin_t_ms = 5000.0 in
+  let first_pk_s = 4.3 in
+  let frames, player_blinks, _ =
+    synthesize_1pk_frames ~base_state:run20_base_state
+      ~start_advance:run20_reanchor_start_advance
+      ~true_period:run20_tick_seconds ~first_pk_s ~origin_t_ms
+  in
+  let prev_ev, clean_start_ev = find_wide_gap player_blinks in
+  let glitch_s = (prev_ev.time_seconds +. clean_start_ev.time_seconds) /. 2.0 in
+  let corrupted_frames =
+    inject_spurious_dip frames ~origin_t_ms ~at_seconds:glitch_s
+  in
+  let reid_cfg =
+    {
+      (ICR.default_config ~picture:full_pic ~target:player_target
+         ~base_state:run20_base_state)
+      with
+      bounds =
+        {
+          ICR.default_bounds with
+          search_min = run20_reanchor_search_min;
+          search_max = run20_reanchor_search_max;
+          min_blinks = 10;
+          max_blinks = 18;
+        };
+    }
+  in
+  let anchor_res, _ =
+    run_with_frames ~frames:corrupted_frames ~injected_gaps:[]
+      ~start_t_ms:origin_t_ms (fun () -> ICR.run reid_cfg)
+  in
+  match anchor_res with
+  | Error msg -> fail ("run 20 final re-anchor suffix recovery failed: " ^ msg)
+  | Ok anchor ->
+      let expected_first =
+        run20_reanchor_start_advance + clean_start_ev.advance
+      in
+      assert_true "run 20 suffix recovery locked exact clean suffix first blink"
+        (anchor.advances_to_first_blink = expected_first);
+      assert_true "run 20 suffix recovery locked last advance > first"
+        (anchor.advances_to_last_blink > anchor.advances_to_first_blink);
+      assert_true "run 20 suffix recovery stayed within final re-anchor window"
+        (anchor.advances_to_last_blink <= run20_reanchor_search_max)
+
 let () =
   test_end_to_end_legendary ~target_id:"kyogre"
     ~base_state:
@@ -422,4 +546,6 @@ let () =
     ~start_advance:3100 ~true_period:1.0170 ~first_pk_s:6.1;
   test_suffix_recovery_after_corrupted_early_blink ();
   test_no_match_failure_includes_diagnostics ();
+  test_live_console_a_groudon_seeds ();
+  test_live_run20_final_reanchor_suffix_recovery ();
   print_endline "OK"
