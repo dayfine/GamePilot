@@ -39,9 +39,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 02:30:00–02:35:00 | Reviewed |
 | 02:35:00–02:40:00 | Reviewed |
 | 02:40:00–02:45:00 | Reviewed |
-| 02:45:00–03:18:16 | Pending |
+| 02:45:00–02:50:00 | Reviewed |
+| 02:50:00–03:18:16 | Pending |
 
-Resume at **02:45:00** during Volkner’s battle after Palkia has defeated Ambipom and Raichu.
+Resume at **02:50:00** at the first Strength boulders in Victory Road after Ace Trainer Mariah.
 
 ## Review method
 
@@ -633,3 +634,17 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 | 2:44:33–2:45:00 | Palkia KOs Ambipom with Surf and then KOs the returning Raichu with Surf. Palkia reaches Lv. 48 and declines Dragon Claw. |
 
 **State at 2:45:00.** Volkner has lost Ambipom and Raichu. Palkia is Lv. 48 with Metronome and the active X Sp. Atk and X Speed boosts. Kazza is Lv. 55 with Choice Specs, and Monferno remains fainted with Wise Glasses.
+
+## 2:45:00–2:50:00 | Beacon Badge, Route 223, and Victory Road
+
+| Video time | Observed action |
+| --- | --- |
+| 2:45:00–2:45:37 | Palkia uses Surf to KO Octillery Lv. 47. Luxray Lv. 49 lowers Palkia’s Attack with Intimidate, then also faints to Surf. Palkia ends the battle at 83/159 HP. |
+| 2:45:39–2:46:15 | Receive the Beacon Badge and TM57 Charge Beam. Retrace the gear walkways and exit the Gym. |
+| 2:46:16–2:46:46 | Follow the walkways and stairs to the north beach. Speak to Jasmine for TM99 Waterfall and the Pokétch Hidden Move. Start surfing north, move Kazza to the lead, and use Super Repel. |
+| 2:46:47–2:47:51 | Surf between the rocks on Route 223. Swimmer Oscar challenges the player. Kazza KOs Mantyke Lv. 38, Remoraid Lv. 40, and Mantine Lv. 42 with Psyshock. |
+| 2:47:52–2:48:32 | Continue through the channels, reapply Super Repel, then use Waterfall at the Pokémon League. Land beside the Pokémon Center and enter Victory Road. |
+| 2:48:33–2:49:36 | Cross the wooden bridge, use Rock Climb to descend, and battle Ace Trainer Mariah. Kazza KOs Golduck Lv. 46 and Blissey Lv. 48 with Psyshock. Kazza reaches Lv. 56, and Palkia reaches Lv. 49. |
+| 2:49:37–2:50:00 | Pick up the Max Elixir, cross the walkway and enter the next room, then use Rock Smash and activate Strength beside the boulders. |
+
+**State at 2:50:00.** Eight badges. Kazza leads at Lv. 56 and 92/129 HP with Choice Specs. Palkia is Lv. 49 with Metronome. Monferno remains fainted with Wise Glasses. Seven Super Repels remain with one active.
