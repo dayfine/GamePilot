@@ -37,9 +37,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 02:20:00–02:25:00 | Reviewed |
 | 02:25:00–02:30:00 | Reviewed |
 | 02:30:00–02:35:00 | Reviewed |
-| 02:35:00–03:18:16 | Pending |
+| 02:35:00–02:40:00 | Reviewed |
+| 02:40:00–03:18:16 | Pending |
 
-Resume at **02:35:00** in the south gate from Veilstone to Route 214, with Palkia in the party.
+Resume at **02:40:00** during Guitarist Jerry’s opening send-out in Sunyshore Gym.
 
 ## Review method
 
@@ -602,3 +603,18 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 | 2:34:31–2:35:00 | Use an Escape Rope to return to Route 207, Fly to Veilstone, and ride through its south gate toward Route 214. |
 
 **State at 2:35:00.** Kazza leads at Lv. 53 and 123/123 HP with Choice Specs. Monferno is Lv. 35 at 0/101 HP with Wise Glasses. Palkia is Lv. 47 at 156/156 HP, holds Metronome, and knows Surf, Slash, Aqua Ring, and Spacial Rend. Eleven Super Repels remain.
+
+## 2:35:00–2:40:00 | Route 222 and Sunyshore Gym
+
+| Video time | Observed action |
+| --- | --- |
+| 2:35:02–2:35:38 | Ride south on Route 214 and east from Valor Lakefront onto Route 222. Reapply Super Repel on Route 214 and again on Route 222. Follow the lower beach, using Rock Smash by the orange-roofed building. |
+| 2:35:39–2:36:37 | Sailor Luther sends Feebas Lv. 37, Machoke Lv. 40, and Gastrodon Lv. 43. Kazza KOs all three with Psychic. |
+| 2:36:38–2:37:06 | Ride through the gate into Sunyshore City. Flint asks the player to challenge Volkner. Follow the elevated walkways to the lighthouse. |
+| 2:37:07–2:37:49 | Take the lighthouse elevator, speak to Volkner, and return to street level. The repel expires on the elevated walkway. Continue to the Gym. |
+| 2:37:50–2:38:17 | Speak with Flint outside the Gym, then enter and use the green switches to align the gear walkways. Cross to School Kid Tiera. |
+| 2:38:20–2:38:48 | Kazza KOs Tiera’s Pachirisu Lv. 44 with Psychic. |
+| 2:38:49–2:39:35 | Enter the next room, use the blue switch, then take the west stairs to School Kid Forrest. Kazza KOs Forrest’s Mr. Mime Lv. 44 with Shadow Ball. |
+| 2:39:36–2:40:00 | Use the upper green switch to rotate the gears, cross to the east stairs, and battle Guitarist Jerry, who leads with Luxio. |
+
+**State at 2:40:00.** Kazza is Lv. 53 at 123/123 HP with Choice Specs. Palkia is Lv. 47 with Metronome, and Monferno remains fainted with Wise Glasses. The player is in the second Sunyshore Gym room during Guitarist Jerry’s battle.
