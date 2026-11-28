@@ -262,7 +262,7 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 | Video time | Observed action and outcome |
 |---|---|
 | 55:00–55:16 | Navigate east through Route 207’s rocky terraces. Pause near the hiker, then take the cave entrance into **Mt. Coronet**. |
-| 55:16–55:29 | Use a **Super Potion** on Monferno to restore it from **22/66** to **66/66 HP**. Use the last **Antidote** to cure the poison. Use a **Repel** and register the **Bike** to the left shortcut. |
+| 55:16–55:29 | Use a **Super Potion** on Monferno to restore it from **22/66** to **66/66 HP**. Use the last **Antidote** to cure the poison. Use a **Repel** and register the **Bike** to the top shortcut. |
 | 55:29–55:58 | Move around the pools and approach the stairs. Advance **Cyrus’s** dialogue. Climb the stairs, pick up the hidden **Ether**, and continue east to **Route 208**. |
 | 55:58–56:32 | Cross the wooden bridges and wait near the hikers to pass. Renew **Repel** at the expiry prompt before descending into the grass. Go through the east gatehouse into **Hearthome City**. |
 | 56:33–57:05 | Advance the scene with **Keira’s Buneary** at the city entrance. Decline another Repel in town. Ride to the **Contest Hall** and speak with **Fantina**, who leaves after her dialogue. |
