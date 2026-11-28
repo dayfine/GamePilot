@@ -13,11 +13,13 @@ let sample_console : Console_config.console =
     watch_port = None;
   }
 
-let build_run ?(console = sample_console) json () =
+let build_run ?(console = sample_console) ?runs_dir json () =
   match Ui_api.decode_launch (Yojson.Safe.from_string json) with
   | Error e -> "decode error: " ^ e
   | Ok req -> (
-      match Ui_api.build_run_argv ~gamepilot:"gamepilot" ~console req with
+      match
+        Ui_api.build_run_argv ~gamepilot:"gamepilot" ?runs_dir ~console req
+      with
       | Ok argv -> String.concat " " argv
       | Error e -> "build error: " ^ e)
 
@@ -292,6 +294,19 @@ let () =
         "gamepilot run frlg.supplies --backend switch --capture 0 --serial \
          /dev/cu.usbserial-1 --from su-01 --to su-01 --mode testing --watch \
          --watch-port 47910 --options retro-mail=20 --options super-repel=0";
+      case "build_run_argv includes --runs-dir when configured"
+        (build_run ~runs_dir:"/var/lib/gamepilot/runs"
+           {|{"console":"console-a","program":"frlg.supplies","from":"su-01","to":"su-01","options":{"retro-mail":"20","super-repel":"0"}}|})
+        "gamepilot run frlg.supplies --backend switch --capture 0 --serial \
+         /dev/cu.usbserial-1 --from su-01 --to su-01 --mode testing --watch \
+         --runs-dir /var/lib/gamepilot/runs --options retro-mail=20 --options \
+         super-repel=0";
+      case "build_run_argv omits --runs-dir when empty"
+        (build_run ~runs_dir:""
+           {|{"console":"console-a","program":"frlg.supplies","from":"su-01","to":"su-01","options":{"retro-mail":"20","super-repel":"0"}}|})
+        "gamepilot run frlg.supplies --backend switch --capture 0 --serial \
+         /dev/cu.usbserial-1 --from su-01 --to su-01 --mode testing --watch \
+         --options retro-mail=20 --options super-repel=0";
       case "build_run_argv rejects invalid option value"
         (build_run
            {|{"console":"console-a","program":"frlg.supplies","options":{"retro-mail":"9999"}}|})

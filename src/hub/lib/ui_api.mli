@@ -49,13 +49,15 @@ val decode_launch : Yojson.Safe.t -> (launch_request, string) result
 val build_run_argv :
   gamepilot:string ->
   ?listen:string ->
+  ?runs_dir:string ->
   console:Console_config.console ->
   launch_request ->
   (string list, string) result
 (** Validates [launch_request] against {!Program_registry} and builds the
     [gamepilot run ...] argv list to execute. When [listen] is set and not
     ["127.0.0.1"], appends [--listen] alongside [--watch] so LAN clients can
-    reach the daemon's watch page. *)
+    reach the daemon's watch page. When [runs_dir] is set and non-empty, appends
+    [--runs-dir] so spawned runs write under the hub's runs directory. *)
 
 val extract_watch_url : string -> string option
 (** Extracts the first [http://...] URL from a child process log line, if any.
