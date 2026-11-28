@@ -15,9 +15,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 00:30:00–00:35:00 | Reviewed |
 | 00:35:00–00:40:00 | Reviewed |
 | 00:40:00–00:45:00 | Reviewed |
-| 00:45:00–03:18:16 | Pending |
+| 00:45:00–00:50:00 | Reviewed |
+| 00:50:00–03:18:16 | Pending |
 
-Resume at **00:45:00** during Gardenia’s first battle, after Cherubi’s first Dazzling Gleam.
+Resume at **00:50:00** as Scientist Travon sends out Kadabra in the Eterna Galactic Building.
 
 ## Review method
 
@@ -214,3 +215,22 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 - Gardenia battle, turn two selection about to begin. **Cherubi** is still active.
 - **Monferno Lv. 19, 35/59 HP**, with one Attack boost. Moves are **Power-Up Punch**, **Mach Punch**, **Flame Wheel** and **Taunt**. Cheri Berry was consumed against Jenna, and poison from Lindsay’s Roselia was cured.
 - **Kazza Lv. 18** is second. **1 Antidote** remains after the observed use.
+
+## 45:00–50:00 | Forest Badge, herbal medicine and Galactic Building
+
+| Video time | Observed action and outcome |
+|---|---|
+| 45:00–45:28 | **Flame Wheel** finishes Gardenia’s **Cherubi**. Use Flame Wheel again to knock out male **Turtwig Lv. 19** in one hit. Monferno reaches **Lv. 20**. |
+| 45:29–46:03 | Female **Roserade Lv. 22** moves first with **Grass Knot**, reducing Monferno from **37/61** to **18/61 HP**. A single **Flame Wheel** knocks it out. **Monferno** reaches **Lv. 21**, **Kazza** reaches **Lv. 19**, and Gardenia awards **₽2,904**, the **Forest Badge**, her Stickers and **TM86s (Grass Knot)**. Cut becomes usable once obtained, and traded Pokémon up through Lv. 30 will obey. |
+| 46:04–46:28 | Exit the Gym and open the party menu near the Poké Mart. Move **Kazza** into the lead. Transfer its **Pecha Berry** to Monferno, then use a **Super Potion** on Monferno, restoring **21/64** to **64/64 HP**. |
+| 46:29–47:08 | Meet **Cynthia** by the Pokémon Center and receive **TM93s (Cut)**. Go east to the **Herb Shop** and buy **5 Heal Powders** for ₽2,250, **1 Revival Herb** for ₽2,800, and **13 Energy Roots** for ₽10,400. The first confirmation prompt for one Energy Root is followed by a second, confirmed purchase for 13. |
+| 47:09–47:42 | Return west to the blocked entrance of the **Team Galactic Eterna Building**. Use **Cut**, with Bidoof appearing in the field-move animation. Enter the building and approach the pair of grunts at the stairwell. |
+| 47:43–48:39 | In the double battle, **Kazza’s Confusion** knocks out **Wurmple**, and **Monferno’s Flame Wheel** knocks out **Zubat**. Kazza reaches **Lv. 20** and has **Psycho Cut** visible in the following move menu. Against the replacement **Glameow** and **Cascoon**, use Confusion on Cascoon and Flame Wheel on Glameow. Both are knocked out. |
+| 48:40–49:45 | Climb the stairs, cross the computer floor and climb again. Approach the grunt in the near cubicle. **Kazza** knocks out **Wurmple**, **Zubat** and **Silcoon** with one **Confusion** each. |
+| 49:46–50:00 | Briefly open the party menu, then head across to the right side of the floor. **Scientist Travon** challenges the player and starts sending out **Kadabra**. |
+
+### State at 50:00
+
+- Inside the **Team Galactic Eterna Building**, entering Scientist Travon’s battle.
+- **Kazza Lv. 20** leads. Its last visible HP was **51/51** and **Confusion** and **Psycho Cut** were visible. **Monferno Lv. 21, 64/64 HP** is second with the **Pecha Berry**.
+- Forest Badge and Cut obtained. **5 Super Potions** remain after the observed use. The new shop items are **5 Heal Powders**, **1 Revival Herb** and **13 Energy Roots**.
