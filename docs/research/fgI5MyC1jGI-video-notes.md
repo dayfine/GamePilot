@@ -26,9 +26,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 01:25:00–01:30:00 | Reviewed |
 | 01:30:00–01:35:00 | Reviewed |
 | 01:35:00–01:40:00 | Reviewed |
-| 01:40:00–03:18:16 | Pending |
+| 01:40:00–01:45:00 | Reviewed |
+| 01:45:00–03:18:16 | Pending |
 
-Resume at **01:40:00** on the water on Route 218 after picking up the Rare Candy.
+Resume at **01:45:00** in Canalave Gym as Worker Gerardo sends out his first Pokémon.
 
 ## Review method
 
@@ -426,3 +427,19 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 | 1:39:29–1:40:00 | Ride west through the gate to Route 218. Use Surf from the pier, turn toward the trees on the east bank, pick up the Rare Candy, then Surf west again. |
 
 **State at 1:40:00.** Five badges. Kazza is Lv. 36 at 86/86 HP and holds Metronome. Monferno remains fainted and holds the Rawst Berry. Ten Super Potions and 22 Super Repels remain, with one repel active. The player is surfing on Route 218.
+
+## 1:40:00–1:45:00 | Canalave rival and Gym trainers
+
+| Video time | Observed action |
+| --- | --- |
+| 1:40:02–1:40:31 | Land on the west bank of Route 218, then go through the gate. Rowan’s assistant checks the Pokédex and says it already has the upgrade. Enter Canalave City. |
+| 1:40:32–1:40:45 | Dismiss the expired repel prompt and cross the bridge, where the rival challenges the player. |
+| 1:40:48–1:41:35 | The rival’s Staravia Lv. 32 lowers Kazza’s Attack with Intimidate. Kazza KOs it with Shock Wave, then KOs Heracross Lv. 32 and Roselia Lv. 33 with Psychic. Kazza reaches Lv. 37. |
+| 1:41:37–1:42:15 | Kazza uses Psychic on each of Ponyta Lv. 34 and Prinplup Lv. 37, completing the sweep without taking damage. |
+| 1:42:16–1:42:49 | Enter Canalave Gym on the west bank and take the left aisle from the entrance to Black Belt Ricky and his Steelix Lv. 33. |
+| 1:42:50–1:43:13 | Grass Knot triggers Sturdy. Steelix’s Iron Tail leaves Kazza at 1/88 HP and lowers its Defense. A second Grass Knot KOs Steelix. Kazza reaches Lv. 38. |
+| 1:43:14–1:43:51 | Take the lifts past the first worker to the upper platform. Give Kazza Choice Specs in place of Metronome and give the fainted Monferno Wise Glasses in place of the Rawst Berry. Use one Energy Root to restore Kazza from 3/90 to 90/90 HP. Teach Kazza Shadow Ball in place of Shock Wave. |
+| 1:43:52–1:44:37 | Fight Ace Trainer Cesar. Kazza uses Shadow Ball on each of Skorupi Lv. 30 and Steelix Lv. 32 for two KOs. |
+| 1:44:38–1:45:00 | Continue across the moving platforms and up the lifts to Worker Gerardo. |
+
+**State at 1:45:00.** Worker Gerardo’s battle is starting on the upper floor of Canalave Gym. Kazza is Lv. 38 at 90/90 HP with Choice Specs and knows Psychic, Psyshock, Grass Knot, and Shadow Ball. Monferno remains fainted with Wise Glasses. The Rare Candy remains in the Bag.
