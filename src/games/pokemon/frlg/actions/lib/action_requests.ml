@@ -13,6 +13,7 @@ type t =
   | Ingame_trade of { offer : string; receive : string option }
   | Spin_for_encounter of { max_batches : int }
   | Cut_tree of Grid_geometry.Direction.t
+  | Surf
   | Verify_mail_glitch of Action_args.member
   | Pc_deposit of deposit
   | Pc_withdraw
@@ -96,6 +97,7 @@ let readers ~options stocks =
     ( "cut_tree",
       fun ~where a ->
         Cut_tree (Grid_maps.Grid_field.direction ~where "direction" a) );
+    ("surf", fun ~where:_ _ -> Surf);
     ( "verify_mail_glitch",
       fun ~where a -> Verify_mail_glitch (Action_args.member ~options ~where a)
     );
@@ -116,6 +118,7 @@ let names =
     "ingame_trade";
     "spin_for_encounter";
     "cut_tree";
+    "surf";
     "verify_mail_glitch";
     "pc_deposit";
     "pc_withdraw";
@@ -156,6 +159,7 @@ let to_string = function
   | Spin_for_encounter { max_batches } ->
       Printf.sprintf "spin for an encounter, %d batches at most" max_batches
   | Cut_tree d -> "cut the tree to the " ^ Grid_geometry.Direction.name d
+  | Surf -> "surf onto water"
   | Verify_mail_glitch m -> "verify the mail glitch on " ^ member_text m
   | Pc_deposit (Members l) -> "deposit " ^ String.concat ", " l ^ " at the PC"
   | Pc_deposit Holding_no_mail -> "deposit the member holding no Mail at the PC"

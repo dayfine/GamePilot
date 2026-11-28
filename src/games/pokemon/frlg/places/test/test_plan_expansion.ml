@@ -302,14 +302,15 @@ let () =
     in
     List.rev (snd (List.fold_left step (None, []) plan.checkpoint.events))
   in
-  let check_dex_plan rel ~expected_id ~expected_town ~expected_species =
+  let check_dex_plan rel ~expected_id ~expected_events ~expected_town
+      ~catch_index ~expected_species =
     let path = Option.get (Repo_io.Repo_files.locate rel) in
     let plan = Result.get_ok (Frlg_checkpoints.Plan_file.load path) in
     check_eq ~show:Fun.id (expected_id ^ " id") expected_id
       plan.checkpoint.checkpoint_id;
     check_eq ~show:string_of_int
-      (expected_id ^ " expands to 10 events")
-      10
+      (Printf.sprintf "%s expands to %d events" expected_id expected_events)
+      expected_events
       (List.length plan.checkpoint.events);
     let fly_town =
       match (List.hd plan.checkpoint.events).kind with
@@ -322,13 +323,13 @@ let () =
       (Some (`String expected_town))
       fly_town;
     let catch_species =
-      match (List.nth plan.checkpoint.events 3).kind with
+      match (List.nth plan.checkpoint.events catch_index).kind with
       | PE.Named_action args -> List.assoc_opt "species" args
       | _ -> None
     in
     check_eq
       ~show:(Option.fold ~none:"None" ~some:Yojson.Safe.to_string)
-      (expected_id ^ " catches " ^ expected_species)
+      (expected_id ^ " targets " ^ expected_species)
       (Some (`String expected_species))
       catch_species;
     check_eq
@@ -338,9 +339,21 @@ let () =
   in
   check_dex_plan
     "src/games/pokemon/frlg/programs/dex_collection/plans/05-shiny-growlithe.plan.json"
-    ~expected_id:"05-shiny-growlithe" ~expected_town:"CeladonCity"
-    ~expected_species:"growlithe";
+    ~expected_id:"05-shiny-growlithe" ~expected_events:10
+    ~expected_town:"CeladonCity" ~catch_index:3 ~expected_species:"growlithe";
   check_dex_plan
     "src/games/pokemon/frlg/programs/dex_collection/plans/06-shiny-oddish.plan.json"
-    ~expected_id:"06-shiny-oddish" ~expected_town:"SaffronCity"
-    ~expected_species:"oddish"
+    ~expected_id:"06-shiny-oddish" ~expected_events:10
+    ~expected_town:"SaffronCity" ~catch_index:3 ~expected_species:"oddish";
+  check_dex_plan
+    "src/games/pokemon/frlg/programs/dex_collection/plans/07-shiny-psyduck.plan.json"
+    ~expected_id:"07-shiny-psyduck" ~expected_events:11
+    ~expected_town:"ViridianCity" ~catch_index:4 ~expected_species:"psyduck";
+  check_dex_plan
+    "src/games/pokemon/frlg/programs/dex_collection/plans/08-shiny-shellder.plan.json"
+    ~expected_id:"08-shiny-shellder" ~expected_events:10
+    ~expected_town:"VermilionCity" ~catch_index:3 ~expected_species:"shellder";
+  check_dex_plan
+    "src/games/pokemon/frlg/programs/dex_collection/plans/09-shiny-scyther.plan.json"
+    ~expected_id:"09-shiny-scyther" ~expected_events:8
+    ~expected_town:"CeladonCity" ~catch_index:3 ~expected_species:"scyther"

@@ -56,6 +56,7 @@ let replayed_walk () =
       gait = Running;
       end_check_only = false;
       program_options = Run_options.none;
+      default_frame_model = Frlg_actions.Wild_rng_plan.default_frame_model;
       log = (fun line -> lines := line :: !lines);
     }
   in

@@ -23,9 +23,19 @@ type viewport = Nso_gba | Native
     (Plza_engine, Plza_series); [Pokemon_home]: Pokémon HOME plans run from the
     Switch's HOME menu (Plza_engine, Plza_bank_home_series); [Plza_gifts]:
     PLZA's plans run from its main menu's Mystery Gift (Plza_engine,
-    Plza_claim_gifts_series); [Bdsp]: BDSP's checkpoint rules (Bdsp_engine,
-    Bdsp_checkpoint_series). *)
-type rules = Pokemon_grid | Plza_story | Pokemon_home | Plza_gifts | Bdsp
+    Plza_claim_gifts_series); [Bdsp_underground]: BDSP's Grand Underground
+    series (Bdsp_engine, Bdsp_underground_series); [Bdsp_static_rng]: BDSP's
+    static legendary RNG series (Bdsp_engine, Bdsp_static_rng_series);
+    [Bdsp_battle_catch]: BDSP's wild-battle catcher series (Bdsp_engine,
+    Bdsp_battle_catch_series). *)
+type rules =
+  | Pokemon_grid
+  | Plza_story
+  | Pokemon_home
+  | Plza_gifts
+  | Bdsp_underground
+  | Bdsp_static_rng
+  | Bdsp_battle_catch
 
 (** Shared program grouping across games, shown by [gamepilot programs] and
     recorded in [run.json]. *)
@@ -96,6 +106,10 @@ val lab_game_of_env : unit -> (game * switch, string) result
 
 val all : t list
 (** By game, then group, then name. *)
+
+val short_id : t -> string
+(** The part of {!t.id} after [<game>.] (["mail_glitch"] for
+    ["frlg.mail_glitch"]). *)
 
 val find : string -> t option
 (** By id, or by the part after the game ([mail_glitch]) when only one program

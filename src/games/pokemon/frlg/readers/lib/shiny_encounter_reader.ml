@@ -20,8 +20,13 @@ type state = {
   finished : bool;
 }
 
+(* Calibrated on Switch 1080p capture: non-shiny wild intros measure
+   2239..2336 ms (which false-triggered the old 2300 ms floor), while a
+   verified shiny Oddish measured 3828 ms (exceeding the old 3700 ms ceiling).
+   The 2800..5000 ms window gives >450 ms margin above non-shiny and >1000 ms
+   margin around shiny. *)
 let default_thresholds =
-  { shiny_delay_ms = 2800.; min_margin_ms = 500.; max_margin_ms = 900. }
+  { shiny_delay_ms = 3800.; min_margin_ms = 1000.; max_margin_ms = 1200. }
 
 let probes = Battle_screen.probes @ Battle_text_arrow.probes
 

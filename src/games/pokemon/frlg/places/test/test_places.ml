@@ -117,10 +117,10 @@ let () =
     [
       case "every place's object is in the maps, usable from its stand tile"
         (fun () -> failures resolves)
-        "44 places, all pass";
+        "50 places, all pass";
       case "every place's stand tile is walked to from a warp"
         (fun () -> failures reachable)
-        "44 places, all pass";
+        "50 places, all pass";
       case "every town's Fly name is one Fly knows" towns_fly
         "12 towns, all pass";
       case "every town's nurse and mart start with the town's key" towns_prefix
@@ -187,10 +187,18 @@ let () =
     (resolve ~kind:"town" "lavender" ~field:(Some "pc"));
   check_res "lavender.outside resolves" (Ok "lavender_center_outside")
     (resolve ~kind:"town" "lavender" ~field:(Some "outside"));
+  check_res "viridian.pc resolves" (Ok "viridian_center_pc")
+    (resolve ~kind:"town" "viridian" ~field:(Some "pc"));
+  check_res "viridian.outside resolves" (Ok "viridian_center_outside")
+    (resolve ~kind:"town" "viridian" ~field:(Some "outside"));
   check_res "town without pc errors" (Error "pewter has no pc place")
     (resolve ~kind:"town" "pewter" ~field:(Some "pc"));
   check_res "place resolves valid place" (Ok "route10_north_grass")
     (resolve ~kind:"place" "route10_north_grass" ~field:None);
+  check_res "route4.outside resolves" (Ok "route4_center_outside")
+    (resolve ~kind:"town" "route4" ~field:(Some "outside"));
+  check_res "mt_moon_b1f_paras resolves" (Ok "mt_moon_b1f_paras")
+    (resolve ~kind:"place" "mt_moon_b1f_paras" ~field:None);
   check_res "place rejects field" (Error "a place has no pc")
     (resolve ~kind:"place" "route10_north_grass" ~field:(Some "pc"));
   check_res "string passes through" (Ok "growlithe")

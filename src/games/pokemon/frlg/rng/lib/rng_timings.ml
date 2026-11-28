@@ -6,6 +6,7 @@ type frame_model = {
   ingame_advances_per_frame : float;
   fixed_seed_offset_ms : int;
   sweet_scent_advances_offset : int;
+  static_advances_offset : int;
 }
 
 let switch_framerate = 59.999977
@@ -18,6 +19,7 @@ let switch =
     ingame_advances_per_frame = 2.0;
     fixed_seed_offset_ms = -845;
     sweet_scent_advances_offset = -352;
+    static_advances_offset = 160;
   }
 
 let mgba =
@@ -26,10 +28,13 @@ let mgba =
     ingame_advances_per_frame = 1.0;
     fixed_seed_offset_ms = 0;
     sweet_scent_advances_offset = -183;
+    static_advances_offset = 0;
   }
 
 let continue_screen_frames = 200
 let sweet_scent_fixed_duration_ms = 7400
+let gift_fixed_duration_ms = 5000
+let static_fixed_duration_ms = 5000
 
 type calibrations = { seed_offset : int; csf_offset : int; ingame_offset : int }
 
@@ -62,7 +67,7 @@ let teachy_advances ~use_teachy_tv modified =
     *. teachy_advances_per_frame
   else 0.0
 
-let checked t =
+let checked ~fixed_duration_ms ~min_wait_ms ~label t =
   if t.csf_delay_ms < min_csf_delay_ms then
     Error
       "The Continue Screen delay cannot be less than 3200ms (192 advances). \
@@ -71,16 +76,16 @@ let checked t =
     Error
       "The title screen delay cannot be less than 30s. Check your seed delay \
        and calibration."
-  else if t.ingame_delay_ms < sweet_scent_fixed_duration_ms + min_press_gap_ms
-  then Error "The in-game delay is too short for the Sweet Scent presses."
+  else if t.ingame_delay_ms < fixed_duration_ms + min_wait_ms then
+    Error ("The in-game delay is too short for the " ^ label ^ " presses.")
   else Ok t
 
-let sweet_scent m ~seed_delay_ms ~advances ~use_teachy_tv c =
+let compute ~advances_offset ~fixed_duration_ms ~min_wait_ms ~label m
+    ~seed_delay_ms ~advances ~use_teachy_tv c =
   let dur = m.frame_duration_ms in
   let modified =
     float_of_int
-      (advances - continue_screen_frames + c.ingame_offset
-     + m.sweet_scent_advances_offset)
+      (advances - continue_screen_frames + c.ingame_offset + advances_offset)
   in
   let teachy = teachy_advances ~use_teachy_tv modified in
   let seed =
@@ -100,7 +105,7 @@ let sweet_scent m ~seed_delay_ms ~advances ~use_teachy_tv c =
   else if seed < 0.0 || csf < 0.0 || ingame < 0.0 then
     Error "A delay cannot be negative. Check your calibration values."
   else
-    checked
+    checked ~fixed_duration_ms ~min_wait_ms ~label
       {
         seed_delay_ms = int_of_float seed;
         csf_delay_ms = int_of_float csf;
@@ -108,3 +113,19 @@ let sweet_scent m ~seed_delay_ms ~advances ~use_teachy_tv c =
           int_of_float (teachy *. dur /. teachy_advances_per_frame);
         ingame_delay_ms = int_of_float ingame;
       }
+
+let sweet_scent m ~seed_delay_ms ~advances ~use_teachy_tv c =
+  compute ~advances_offset:m.sweet_scent_advances_offset
+    ~fixed_duration_ms:sweet_scent_fixed_duration_ms
+    ~min_wait_ms:min_press_gap_ms ~label:"Sweet Scent" m ~seed_delay_ms
+    ~advances ~use_teachy_tv c
+
+let gift m ~seed_delay_ms ~advances ~use_teachy_tv c =
+  compute ~advances_offset:0 ~fixed_duration_ms:gift_fixed_duration_ms
+    ~min_wait_ms:min_press_gap_ms ~label:"gift" m ~seed_delay_ms ~advances
+    ~use_teachy_tv c
+
+let static m ~seed_delay_ms ~advances ~use_teachy_tv c =
+  compute ~advances_offset:m.static_advances_offset
+    ~fixed_duration_ms:static_fixed_duration_ms ~min_wait_ms:0
+    ~label:"static encounter" m ~seed_delay_ms ~advances ~use_teachy_tv c

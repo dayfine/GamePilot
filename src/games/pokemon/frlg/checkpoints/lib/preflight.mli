@@ -25,14 +25,16 @@ type need = Need.t
 (** {!Need.t}: one thing the save must hold. *)
 
 val needs :
+  ?options:Run_options.t ->
   Frlg_actions.Mart_plan.stocks ->
   before:Pokemon_engine.Postconditions.t option ->
   Pokemon_engine.Plan.t ->
   (need list, string) result
 (** What the save must hold for the plan's first event, in the table's order:
     the plan's declared preconditions ({!Plan_preconditions.needs}), then the
-    party, the money, the items, the place. [Error] for declared preconditions
-    or plan args that do not decode. *)
+    party, the money, the items, the place. [options] (default
+    {!Run_options.none}) is forwarded to {!Plan_needs.needs}. [Error] for
+    declared preconditions or plan args that do not decode. *)
 
 type read = Need_check.read = {
   observed : Pokemon_engine.Postcondition_check.observed;

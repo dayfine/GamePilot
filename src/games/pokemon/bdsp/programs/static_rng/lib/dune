@@ -1,0 +1,14 @@
+(library
+ (name bdsp_static_rng)
+ (public_name gamepilot.bdsp_static_rng)
+ (libraries
+  gamepilot.wire
+  gamepilot.run_options
+  gamepilot.effects
+  gamepilot.engine_run
+  gamepilot.switch
+  gamepilot.bdsp_checkpoint_series
+  gamepilot.bdsp_rng
+  gamepilot.bdsp_blink_rng
+  gamepilot.bdsp_readers
+  gamepilot.bdsp_actions))

@@ -11,7 +11,7 @@ Runs on: the Switch.
 ## Before you start
 
 - The gifts are in the game's Box 1, first row, in the slots of the gift catalog
-  ([Claim Gifts](plza.claim-gifts.md#the-gifts)), where Claim Gifts leaves them.
+  ([Claim Gifts](../plza/claim-gifts.md#the-gifts)), where Claim Gifts leaves them.
 - Legends: Z-A and Pokémon HOME are installed, and their tiles are among the first 8 on the
   Switch's HOME menu. The console may be anywhere the HOME button reaches the HOME menu; a running
   game is closed.

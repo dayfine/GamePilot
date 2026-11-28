@@ -27,11 +27,16 @@ let member ~log ~slot =
     (List.find_opt (fun (m : Room_policy.member) -> m.slot = slot))
     (Menu_step.result (Party_summary.read_all ~log))
 
-let candy_level_game_steps ~log ~party : Candy_level.game_steps =
+let candy_level_game_steps ~log ~party (steps : Rare_candy.game_steps) :
+    Candy_level.game_steps =
   {
-    level = (fun ~slot -> level ~log ~slot);
-    candy = (fun ~slot policy -> one_candy ~log ~party ~slot policy);
-    member = (fun ~slot -> member ~log ~slot);
+    read_level = (fun ~slot -> level ~log ~slot);
+    open_bag = steps.open_bag;
+    use_candy =
+      (fun ~slot policy ->
+        Rare_candy.use_one steps policy ~member:(member_at ~party ~slot));
+    close_bag = steps.close_bag;
+    read_member = (fun ~slot -> member ~log ~slot);
     log;
   }
 
@@ -66,7 +71,11 @@ let use_candy ~log ~party ~slot (use : Candy_plan.use) =
   | Stopped cause -> Error cause
 
 let candy_level ~log ~party ~slot goal =
-  let* r = Candy_level.run (candy_level_game_steps ~log ~party) goal ~slot in
+  let* r =
+    Effects.with_probes Rare_candy_steps.probes (fun () ->
+        let steps = Rare_candy_steps.make ~log in
+        Candy_level.run (candy_level_game_steps ~log ~party steps) goal ~slot)
+  in
   Ok (renamed ~party ~slot r.species)
 
 let on_member ~party decode run (_ : Pokemon_engine.Plan.event) args =

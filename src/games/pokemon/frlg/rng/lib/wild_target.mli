@@ -26,6 +26,8 @@ val total_ms : t -> int
 
 val find :
   ?calibrations:Rng_timings.calibrations ->
+  ?super_rod:bool ->
+  ?exclude_targets:(int * int) list ->
   Rng_timings.frame_model ->
   delays:int array ->
   seeds:int array ->
@@ -37,7 +39,9 @@ val find :
   t option
 (** Over the rows of one seed column ([seeds.(i)] at [delays.(i)]) and the
     advances [min_advance] to [max_advance] inclusive, timed with [calibrations]
-    (default {!Rng_timings.no_calibrations}). *)
+    (default {!Rng_timings.no_calibrations}). Set [super_rod] to [true] when
+    [slots] are a 5-slot Super Rod table. Any [(seed, advance)] pair in
+    [exclude_targets] (default [[]]) is skipped. *)
 
 val describe : t -> string
 (** ["seed BEF4 at 30740 ms, advance 1555: ekans Lv 15, nature 6, PID 26D0850C"].

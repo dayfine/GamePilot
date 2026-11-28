@@ -54,7 +54,7 @@ val default_config :
   accept:(Bdsp_rng.Static_encounter.pokemon -> bool) ->
   config
 (** Default static trigger configuration: [tsv = 0], no Synchronize,
-    [min_wait_advances = 20], [max_wait_advances = 5000],
+    [min_wait_advances = 20], [max_wait_advances = 3000],
     {!Bdsp_rng.Static_press_schedule.default_timings}, zero calibration offset,
     and 30 s lease renewal. *)
 

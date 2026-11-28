@@ -122,6 +122,7 @@ let preflight_setup program plan_dir f backend ~viewport ~from_id :
     backend;
     viewport;
     home_tile = program.home_tile;
+    options = program.options;
     info;
     watch = watch_of f;
   }

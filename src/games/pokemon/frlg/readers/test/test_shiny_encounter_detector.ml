@@ -85,33 +85,35 @@ let run_with_frames frames f =
   (result, !subscribed, !unsubscribed)
 
 let test_pure_state_machine () =
-  (* Shiny: 2800 ms between battle text box and advance arrow. *)
+  (* Shiny: 3828 ms (verified Switch shiny Oddish) between battle text box and
+     advance arrow. *)
   let s =
     R.init
     |> R.step_signals ~t_ms:500. ~battle_text:true ~foe_box:false
          ~advance_arrow:false ~player_box:false ~battle_menu:false
-    |> R.step_signals ~t_ms:3300. ~battle_text:true ~foe_box:true
+    |> R.step_signals ~t_ms:4328. ~battle_text:true ~foe_box:true
          ~advance_arrow:true ~player_box:false ~battle_menu:false
   in
   assert_eq "shiny finished" (R.is_finished s) true;
   assert_eq "shiny reading" (R.classify s)
     {
       R.verdict = R.Shiny;
-      wild_intro_ms = Some 2800.;
+      wild_intro_ms = Some 3828.;
       phase = R.Intro_complete;
     };
-  (* Non-shiny: 1500 ms between foe box and player send-out. *)
+  (* Non-shiny: 2336 ms (Switch non-shiny upper bound) between foe box and
+     player send-out. *)
   let s_norm =
     R.init
     |> R.step_signals ~t_ms:200. ~battle_text:false ~foe_box:true
          ~advance_arrow:false ~player_box:false ~battle_menu:false
-    |> R.step_signals ~t_ms:1700. ~battle_text:true ~foe_box:true
+    |> R.step_signals ~t_ms:2536. ~battle_text:true ~foe_box:true
          ~advance_arrow:false ~player_box:true ~battle_menu:false
   in
   assert_eq "non-shiny reading" (R.classify s_norm)
     {
       R.verdict = R.Not_shiny;
-      wild_intro_ms = Some 1500.;
+      wild_intro_ms = Some 2336.;
       phase = R.Intro_complete;
     };
   (* Started late: advance arrow already up on first frame -> Unknown. *)
@@ -128,15 +130,15 @@ let test_detect_shiny () =
     [
       frame ~seq:1 ~t_ms:100. ~battle_text:false ~advance_arrow:false;
       frame ~seq:2 ~t_ms:400. ~battle_text:true ~advance_arrow:false;
-      frame ~seq:3 ~t_ms:1800. ~battle_text:true ~advance_arrow:false;
-      frame ~seq:4 ~t_ms:3300. ~battle_text:true ~advance_arrow:true;
+      frame ~seq:3 ~t_ms:2200. ~battle_text:true ~advance_arrow:false;
+      frame ~seq:4 ~t_ms:4228. ~battle_text:true ~advance_arrow:true;
     ]
   in
   let reading, sub, unsub = run_with_frames frames (fun () -> D.detect ()) in
   assert_eq "detect shiny reading" reading
     {
       R.verdict = R.Shiny;
-      wild_intro_ms = Some 2900.;
+      wild_intro_ms = Some 3828.;
       phase = R.Intro_complete;
     };
   assert_eq "probes cleanly unsubscribed" sub unsub;
@@ -146,14 +148,14 @@ let test_detect_not_shiny () =
   let frames =
     [
       frame ~seq:1 ~t_ms:400. ~battle_text:true ~advance_arrow:false;
-      frame ~seq:2 ~t_ms:1900. ~battle_text:true ~advance_arrow:true;
+      frame ~seq:2 ~t_ms:2736. ~battle_text:true ~advance_arrow:true;
     ]
   in
   let reading, sub, unsub = run_with_frames frames (fun () -> D.detect ()) in
   assert_eq "detect not_shiny reading" reading
     {
       R.verdict = R.Not_shiny;
-      wild_intro_ms = Some 1500.;
+      wild_intro_ms = Some 2336.;
       phase = R.Intro_complete;
     };
   assert_eq "not_shiny probes unsubscribed" sub unsub

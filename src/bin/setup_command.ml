@@ -8,14 +8,13 @@ let setup_usage =
   "  gamepilot setup [--config FILE]\n"
   ^ "  gamepilot setup --discover [--write] [--config FILE]\n"
   ^ "  gamepilot setup --add-switch ID --capture DEVICE [--serial PORT] \
-     [--name NAME] [--config FILE]\n"
+     [--name NAME] [--watch-port PORT] [--config FILE]\n"
   ^ "  gamepilot setup --add-mgba ID [--mgba-port PORT] [--name NAME] \
-     [--config FILE]\n" ^ "  gamepilot setup --remove ID [--config FILE]\n"
+     [--watch-port PORT] [--config FILE]\n"
+  ^ "  gamepilot setup --remove ID [--config FILE]\n"
 
-let doctor_usage =
-  "  gamepilot doctor [--console ID] [--daemon PATH] [--config FILE]\n"
-
-let usage = setup_usage ^ doctor_usage
+let usage = setup_usage ^ Doctor_command.usage
+let max_port = 65535
 
 type setup_action =
   | Show
@@ -25,16 +24,24 @@ type setup_action =
       name : string option;
       capture : string option;
       serial : string option;
+      watch_port : int option;
     }
-  | Add_mgba of { id : string; name : string option; port : int }
+  | Add_mgba of {
+      id : string;
+      name : string option;
+      port : int;
+      watch_port : int option;
+    }
   | Remove of string
 
 type setup_flags = { config : string option; action : setup_action }
 
-let parse_int ~flag raw =
+let parse_port ~flag raw =
   match int_of_string_opt raw with
-  | Some n when n > 0 -> Ok n
-  | _ -> Error (flag ^ " expects a positive integer, got " ^ raw)
+  | Some n when n > 0 && n <= max_port -> Ok n
+  | _ ->
+      Error
+        (Printf.sprintf "%s expects a port in 1..%d, got %s" flag max_port raw)
 
 let set_name action name =
   match action with
@@ -56,15 +63,33 @@ let set_serial action serial =
 let set_port action raw =
   match action with
   | Add_mgba m ->
-      let* port = parse_int ~flag:"--mgba-port" raw in
+      let* port = parse_port ~flag:"--mgba-port" raw in
       Ok (Add_mgba { m with port })
   | _ -> Error "--mgba-port requires --add-mgba"
 
+let set_watch_port action raw =
+  match action with
+  | Add_switch s ->
+      let* port = parse_port ~flag:"--watch-port" raw in
+      Ok (Add_switch { s with watch_port = Some port })
+  | Add_mgba m ->
+      let* port = parse_port ~flag:"--watch-port" raw in
+      Ok (Add_mgba { m with watch_port = Some port })
+  | Show | Discover _ | Remove _ ->
+      Error "--watch-port requires --add-switch or --add-mgba"
+
 let add_switch_action id =
-  Add_switch { id; name = None; capture = None; serial = None }
+  Add_switch
+    { id; name = None; capture = None; serial = None; watch_port = None }
 
 let add_mgba_action id =
-  Add_mgba { id; name = None; port = Console_config.default_mgba_port }
+  Add_mgba
+    {
+      id;
+      name = None;
+      port = Console_config.default_mgba_port;
+      watch_port = None;
+    }
 
 let rec parse_setup f = function
   | [] -> Ok f
@@ -92,6 +117,9 @@ let rec parse_setup f = function
       parse_setup { f with action } rest
   | "--mgba-port" :: v :: rest ->
       let* action = set_port f.action v in
+      parse_setup { f with action } rest
+  | "--watch-port" :: v :: rest ->
+      let* action = set_watch_port f.action v in
       parse_setup { f with action } rest
   | a :: _ -> Error ("setup: unknown argument " ^ a)
 
@@ -130,7 +158,7 @@ let print_discovered ~serials ~captures =
         captures
 
 let suggested_console (id, name, serial, capture) : Console_config.console =
-  { id; name; backend = Switch { serial; capture } }
+  { id; name; backend = Switch { serial; capture }; watch_port = None }
 
 let run_discover ~path ~write =
   let serials = Console_config.Device_discovery.discover_serial_ports () in
@@ -160,32 +188,36 @@ let run_discover ~path ~write =
       suggested;
     Ok 0)
 
+let print_setup_help () =
+  print_endline
+    "\n\
+     Auto-discover connected Switch hardware:\n\
+    \  gamepilot setup --discover [--write]\n\
+     Or add manually:\n\
+    \  gamepilot setup --add-switch console-a --name \"Console A\" --capture \
+     <DEVICE> [--serial <PORT>] [--watch-port 47910]\n\
+    \  gamepilot setup --add-mgba mgba --name \"mGBA\" [--mgba-port 47810] \
+     [--watch-port 47911]\n\
+     Then verify with: gamepilot doctor"
+
 let run_setup f =
   let path = Option.value f.config ~default:(Console_config.default_path ()) in
   match f.action with
   | Show ->
       let* consoles = Console_config.load ~path () in
       print_consoles path consoles;
-      print_endline "";
-      print_endline "Auto-discover connected Switch hardware:";
-      print_endline "  gamepilot setup --discover [--write]";
-      print_endline "Or add manually:";
-      print_endline
-        "  gamepilot setup --add-switch console-a --name \"Console A\" \
-         --capture <DEVICE> [--serial <PORT>]";
-      print_endline
-        "  gamepilot setup --add-mgba mgba --name \"mGBA\" [--mgba-port 47810]";
-      print_endline "Then verify with: gamepilot doctor";
+      print_setup_help ();
       Ok 0
   | Discover { write } -> run_discover ~path ~write
   | Add_switch { capture = None; _ } ->
       Error "--add-switch requires --capture DEVICE"
-  | Add_switch { id; name; capture = Some capture; serial } ->
+  | Add_switch { id; name; capture = Some capture; serial; watch_port } ->
       let name = Option.value name ~default:id in
-      save_console ~path { id; name; backend = Switch { serial; capture } }
-  | Add_mgba { id; name; port } ->
+      save_console ~path
+        { id; name; backend = Switch { serial; capture }; watch_port }
+  | Add_mgba { id; name; port; watch_port } ->
       let name = Option.value name ~default:id in
-      save_console ~path { id; name; backend = Mgba { port } }
+      save_console ~path { id; name; backend = Mgba { port }; watch_port }
   | Remove id ->
       let* existing = Console_config.load ~path () in
       let updated, removed = Console_config.remove existing id in
@@ -199,87 +231,4 @@ let main_setup args =
   let* f = parse_setup { config = None; action = Show } args in
   run_setup f
 
-type doctor_flags = {
-  console : string option;
-  daemon : string option;
-  config : string option;
-}
-
-let rec parse_doctor f = function
-  | [] -> Ok f
-  | "--console" :: id :: rest -> parse_doctor { f with console = Some id } rest
-  | "--daemon" :: p :: rest -> parse_doctor { f with daemon = Some p } rest
-  | "--config" :: p :: rest -> parse_doctor { f with config = Some p } rest
-  | a :: _ -> Error ("doctor: unknown argument " ^ a)
-
-let check_line ~ok label detail =
-  let tag = if ok then "PASS" else "FAIL" in
-  Printf.printf "[%s] %-16s %s\n" tag label detail;
-  ok
-
-let check_switch_serial name port capture =
-  let exists = Sys.win32 || Sys.file_exists port in
-  let detail =
-    if exists then
-      Printf.sprintf "%s (switch, serial=%s, capture=%s)" name port capture
-    else
-      Printf.sprintf "%s (serial port %s not found; capture=%s)" name port
-        capture
-  in
-  (exists, detail)
-
-let check_console (c : Console_config.console) =
-  let label = "console:" ^ c.id in
-  match c.backend with
-  | Switch { serial = Some port; capture } ->
-      let ok, detail = check_switch_serial c.name port capture in
-      check_line ~ok label detail
-  | Switch { serial = None; capture } ->
-      check_line ~ok:true label
-        (Printf.sprintf "%s (switch, capture=%s, no serial)" c.name capture)
-  | Mgba { port } ->
-      check_line ~ok:true label
-        (Printf.sprintf "%s (mgba, port=%d)" c.name port)
-
-let selected_consoles consoles = function
-  | None -> Ok consoles
-  | Some id -> (
-      match Console_config.find consoles id with
-      | Some c -> Ok [ c ]
-      | None -> Error ("unknown console " ^ id))
-
-let main_doctor args =
-  let* f = parse_doctor { console = None; daemon = None; config = None } args in
-  let path = Option.value f.config ~default:(Console_config.default_path ()) in
-  let* consoles = Console_config.load ~path () in
-  let* targets = selected_consoles consoles f.console in
-  let sample_plan =
-    "src/games/pokemon/frlg/programs/supplies/plans/su-01.plan.json"
-  in
-  let data_ok =
-    match Repo_io.Repo_files.locate sample_plan with
-    | Some found -> check_line ~ok:true "bundled data" found
-    | None ->
-        check_line ~ok:false "bundled data"
-          "plans/assets not found (set GAMEPILOT_DATA or run from release \
-           folder)"
-  in
-  let daemon =
-    Option.value f.daemon ~default:(Repo_io.Repo_files.default_daemon ())
-  in
-  let daemon_ok =
-    if Sys.file_exists daemon then check_line ~ok:true "daemon" daemon
-    else
-      check_line ~ok:false "daemon"
-        (daemon ^ " not found (build daemon or pass --daemon PATH)")
-  in
-  let consoles_ok =
-    match targets with
-    | [] ->
-        Printf.printf
-          "[WARN] %-16s none configured in %s (run: gamepilot setup)\n"
-          "consoles" path;
-        true
-    | _ -> List.fold_left (fun acc c -> check_console c && acc) true targets
-  in
-  Ok (if data_ok && daemon_ok && consoles_ok then 0 else 1)
+let main_doctor = Doctor_command.main

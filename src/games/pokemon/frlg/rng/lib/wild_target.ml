@@ -29,27 +29,34 @@ let sooner a b =
   | None, x | x, None -> x
   | Some x, Some y -> if total_ms y < total_ms x then b else a
 
+let excluded ~exclude_targets ~seed ~advance =
+  List.exists (fun (s, a) -> s = seed && a = advance) exclude_targets
+
 (* The soonest hit of one seed: the first wanted advance whose timings pass. *)
-let first_hit model calibrations slots ~species ~tid_xor_sid ~max_advance
-    ~table_delay_ms ~seed ~min_advance =
+let first_hit model calibrations ~super_rod ~exclude_targets slots ~species
+    ~tid_xor_sid ~max_advance ~table_delay_ms ~seed ~min_advance =
   let rec walk (state : Rng_state.t) =
     if state.advance > max_advance then None
     else
-      let e = Wild_encounter.pokemon_of_state state slots ~super_rod:false in
+      let e = Wild_encounter.pokemon_of_state state slots ~super_rod in
       let hit =
-        if wanted ~species ~tid_xor_sid e then
-          timed model calibrations ~table_delay_ms ~seed state e
+        if
+          (not (excluded ~exclude_targets ~seed ~advance:state.advance))
+          && wanted ~species ~tid_xor_sid e
+        then timed model calibrations ~table_delay_ms ~seed state e
         else None
       in
       if Option.is_some hit then hit else walk (Rng_state.next state)
   in
   walk (Rng_state.of_seed ~seed ~advance:min_advance Method1)
 
-let find ?(calibrations = Rng_timings.no_calibrations) model ~delays ~seeds
-    slots ~species ~tid_xor_sid ~min_advance ~max_advance =
+let find ?(calibrations = Rng_timings.no_calibrations) ?(super_rod = false)
+    ?(exclude_targets = []) model ~delays ~seeds slots ~species ~tid_xor_sid
+    ~min_advance ~max_advance =
   let row i =
-    first_hit model calibrations slots ~species ~tid_xor_sid ~max_advance
-      ~table_delay_ms:delays.(i) ~seed:seeds.(i) ~min_advance
+    first_hit model calibrations ~super_rod ~exclude_targets slots ~species
+      ~tid_xor_sid ~max_advance ~table_delay_ms:delays.(i) ~seed:seeds.(i)
+      ~min_advance
   in
   let rows = min (Array.length delays) (Array.length seeds) in
   List.fold_left

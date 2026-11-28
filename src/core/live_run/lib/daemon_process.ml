@@ -149,3 +149,24 @@ let stop t =
   (try Unix.kill t.pid Sys.sigterm with Unix.Unix_error _ -> ());
   try ignore (Unix.waitpid [] t.pid : int * Unix.process_status)
   with Unix.Unix_error _ -> ()
+
+let sleep_quietly s =
+  try Unix.sleepf s with Unix.Unix_error (Unix.EINTR, _, _) -> ()
+
+let wait t =
+  let running = ref true in
+  let on_sig _ = running := false in
+  let prev_int = Sys.signal Sys.sigint (Sys.Signal_handle on_sig) in
+  let prev_term =
+    if Sys.win32 then Sys.Signal_default
+    else Sys.signal Sys.sigterm (Sys.Signal_handle on_sig)
+  in
+  let restore () =
+    Sys.set_signal Sys.sigint prev_int;
+    if not Sys.win32 then Sys.set_signal Sys.sigterm prev_term
+  in
+  Fun.protect ~finally:restore (fun () ->
+      while !running && not (exited t.pid) do
+        sleep_quietly poll_interval_s
+      done;
+      if not (exited t.pid) then stop t)

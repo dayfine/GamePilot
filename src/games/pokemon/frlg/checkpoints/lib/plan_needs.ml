@@ -68,6 +68,10 @@ let use_item action acc item =
       { acc with bought = (item, n - 1) :: List.remove_assoc item acc.bought }
   | _ -> { acc with items = (item, action) :: acc.items }
 
+let rec use_items action acc item count =
+  if count <= 0 then acc
+  else use_items action (use_item action acc item) item (count - 1)
+
 let gain acc (item, quantity) =
   let had = Option.value (List.assoc_opt item acc.bought) ~default:0 in
   {
@@ -100,7 +104,7 @@ let of_request stocks action acc : A.Action_requests.t -> acc = function
   | Ingame_trade { offer; receive } ->
       let acc = use_member action acc offer in
       { acc with brought = Option.to_list receive @ acc.brought }
-  | Cut_tree _ -> field_move action (use_badge action acc)
+  | Cut_tree _ | Surf -> field_move action (use_badge action acc)
   | Verify_mail_glitch member -> use_action_member action acc member
   | Pc_deposit Holding_no_mail ->
       let first = Option.value acc.without_mail ~default:action in
@@ -113,9 +117,24 @@ let of_request stocks action acc : A.Action_requests.t -> acc = function
   | Redeem_prize_mon _ | Spin_for_encounter _ | Pc_withdraw | Read_caught _ ->
       acc
 
-(* One ball at least: the plan's, a Poke Ball when it names none. *)
-let of_capture action acc (plan : A.Capture_plan.t) =
-  let acc = use_item action acc plan.ball in
+(* The capture's ball budget (after --options overrides): an explicit [balls]
+   in the plan or [--options balls=N] is respected verbatim; when [balls] is
+   omitted, computes the Gen 3 99% catch-probability budget from the species,
+   ball, and catch mode ({!Frlg_actions.Catch_ball_budget}), falling back to
+   [plan.max_balls] for unknown species or [Uncaught] targets. *)
+let capture_balls ~explicit_balls ~mode (plan : A.Capture_plan.t) =
+  if explicit_balls then plan.max_balls
+  else
+    match plan.target with
+    | Species s ->
+        Option.value
+          (A.Catch_ball_budget.required ~species:s ~ball:plan.ball ~mode)
+          ~default:plan.max_balls
+    | Uncaught _ -> plan.max_balls
+
+let of_capture ~explicit_balls ~mode action acc (plan : A.Capture_plan.t) =
+  let count = capture_balls ~explicit_balls ~mode plan in
+  let acc = use_items action acc plan.ball count in
   match plan.target with
   | Species s -> { acc with brought = s :: acc.brought }
   | Uncaught _ -> acc
@@ -126,10 +145,8 @@ let of_capture action acc (plan : A.Capture_plan.t) =
    (Item_duplication.min_mail): count + 1 in the bag at the start. *)
 let of_duplicate action acc (member, (plan : A.Item_duplication.plan)) =
   let acc = use_action_member action acc member in
-  List.fold_left (use_item action) acc
-    (List.init
-       (plan.rounds + A.Item_duplication.min_mail - 1)
-       (fun _ -> "retro-mail"))
+  use_items action acc "retro-mail"
+    (plan.rounds + A.Item_duplication.min_mail - 1)
 
 (* The Rare Candy actions need one candy at least; how many more a
    [candy_level] eats depends on the member's level. *)
@@ -139,24 +156,49 @@ let of_candy action acc member =
 let decode_error ~where (cause : Pokemon_engine.Failure.cause) =
   where ^ cause.detail
 
-let decode_duplicate ~where args =
-  ( A.Action_args.member ~where args,
-    A.Mail_glitch_use.duplication_plan ~options:Run_options.none ~where args )
+let decode_duplicate ~options ~where args =
+  ( A.Action_args.member ~options ~where args,
+    A.Mail_glitch_use.duplication_plan ~options ~where args )
 
-let game_action stocks ~where action args acc =
+let capture_mode action args =
+  match action with
+  | "wild_rng" | "static_rng" ->
+      let raw =
+        match Json_field.find "catch_mode" args with
+        | Some (`String s) -> Some s
+        | _ -> None
+      in
+      A.Catch_ball_budget.catch_mode_of_string raw
+  | _ -> A.Catch_ball_budget.Throw_only
+
+let capture_action ~options action args acc plan =
+  let explicit_balls =
+    Json_field.has "balls" args
+    || Option.is_some (Run_options.int options "balls")
+  in
+  let mode = capture_mode action args in
+  of_capture ~explicit_balls ~mode action acc
+    (A.Capture_plan.apply_options options plan)
+
+let game_action ~options stocks ~where action args acc =
   let map f r = Result.map f (Result.map_error (decode_error ~where) r) in
   match action with
   | _ when List.mem action A.Action_requests.names ->
       map
         (of_request stocks action acc)
-        (A.Action_requests.decode stocks action args)
+        (A.Action_requests.decode ~options stocks action args)
   | _ when List.mem_assoc action field_move_users ->
       Ok (field_move action (use_badge action acc))
-  | "capture" | "wild_rng" ->
-      map (of_capture action acc) (A.Capture_plan.decode args)
+  | "capture" | "wild_rng" | "static_rng" ->
+      map (capture_action ~options action args acc) (A.Capture_plan.decode args)
+  | "gift_rng" ->
+      let decode ~where a = Json_field.string ~where "species" a in
+      map
+        (fun s -> { acc with brought = s :: acc.brought })
+        (A.Action_args.decode ~action decode args)
   | "duplicate_item" ->
       map (of_duplicate action acc)
-        (A.Action_args.decode ~action decode_duplicate args)
+        (A.Action_args.decode ~action (decode_duplicate ~options) args)
   | "use_rare_candy" ->
       map
         (fun (u : A.Candy_plan.use) -> of_candy action acc u.member)
@@ -170,10 +212,10 @@ let game_action stocks ~where action args acc =
         (List.fold_left (use_member action) acc)
         (A.Action_args.decode ~action A.Action_args.named_species args)
 
-let event stocks acc (e : P.event) =
+let event ~options stocks acc (e : P.event) =
   match (e.kind, e.way) with
   | Named_action args, Some action ->
-      game_action stocks ~where:(e.id ^ ": ") action args acc
+      game_action ~options stocks ~where:(e.id ^ ": ") action args acc
   | _ -> Ok acc
 
 let party_needs before acc =
@@ -234,8 +276,8 @@ let item_needs before acc =
       (fun (item, (count, for_)) -> Item_at_least { item; count; for_ })
       counted
 
-let needs stocks ~before (plan : P.t) =
-  let step acc e = Result.bind acc (fun acc -> event stocks acc e) in
+let needs ?(options = Run_options.none) stocks ~before (plan : P.t) =
+  let step acc e = Result.bind acc (fun acc -> event ~options stocks acc e) in
   Result.map
     (fun acc ->
       let place =

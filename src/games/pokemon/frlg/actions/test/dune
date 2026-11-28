@@ -42,6 +42,8 @@
   test_ace_actions
   test_pc_box
   test_wild_rng
+  test_gift_rng
+  test_static_rng
   test_pokedex_entry
   test_skip_conditions
   test_naming_entry
@@ -51,7 +53,8 @@
   test_ace_presets
   test_ace_code
   test_ace_item
-  test_battle_catch_steps)
+  test_battle_catch_steps
+  test_catch_ball_budget)
  (modules
   test_pc_deposit_steps
   test_pc_withdraw_steps
@@ -79,6 +82,8 @@
   test_ace_actions
   test_pc_box
   test_wild_rng
+  test_gift_rng
+  test_static_rng
   test_pokedex_entry
   test_skip_conditions
   test_naming_entry
@@ -88,7 +93,8 @@
   test_ace_presets
   test_ace_code
   test_ace_item
-  test_battle_catch_steps)
+  test_battle_catch_steps
+  test_catch_ball_budget)
  (deps
   mgba.probes.jsonl
   menus.mgba.probes.jsonl

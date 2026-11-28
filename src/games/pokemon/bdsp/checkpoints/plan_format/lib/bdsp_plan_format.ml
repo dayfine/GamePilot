@@ -5,25 +5,16 @@ module F = Json_field
 let pose_of_plan = Engine_plan_format.Zone_pose_decode.pose_of_plan
 let start_of_plan = pose_of_plan
 
-let save_game ~where args =
+let no_args_action action ~where args =
   F.catch (fun () ->
       known_fields_only ~where [] args;
-      T.Action.Save_game)
-
-let underground_farm ~where args =
-  F.catch (fun () ->
-      known_fields_only ~where [] args;
-      T.Action.Underground_farm)
-
-let battle_catch ~where args =
-  F.catch (fun () ->
-      known_fields_only ~where [] args;
-      T.Action.Battle_catch)
+      action)
 
 let action_of_plan = function
-  | "save_game" -> Some save_game
-  | "underground_farm" -> Some underground_farm
-  | "battle_catch" -> Some battle_catch
+  | "save_game" -> Some (no_args_action T.Action.Save_game)
+  | "underground_farm" -> Some (no_args_action T.Action.Underground_farm)
+  | "static_rng" -> Some (no_args_action T.Action.Static_rng)
+  | "battle_catch" -> Some (no_args_action T.Action.Battle_catch)
   | _ -> None
 
 let postconditions_of_plan ~where obj =

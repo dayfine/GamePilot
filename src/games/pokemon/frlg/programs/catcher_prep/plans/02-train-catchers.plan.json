@@ -1,0 +1,46 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "checkpoint": {
+    "id": "02-train-catchers",
+    "title": "Level Paras into Spore Parasect (Lv 27) with Rare Candies",
+    "start": {"map": "Route4", "tiles": [[12, 6]], "facing": "south"},
+    "events": [
+      {
+        "id": "level_paras_spore",
+        "kind": "game_action",
+        "action": "candy_level",
+        "args": {
+          "species": "paras",
+          "target_level": 27,
+          "evolve": true,
+          "learn": [{"move": "spore", "replacing": "scratch"}],
+          "expect_species": "parasect",
+          "expect_moves": ["spore"]
+        },
+        "why": "Evolve Paras into Parasect at Lv 24 and teach Spore at Lv 27 (Gen 3 FireRed learnset)."
+      },
+      {
+        "id": "save_catchers",
+        "kind": "game_action",
+        "action": "save_game",
+        "args": {},
+        "why": "Save the trained Spore Parasect."
+      }
+    ]
+  },
+  "execution": {"menu": "full"},
+  "metadata": {
+    "phase": "testing",
+    "notes": "Starts outside Route 4's Pokemon Center with Paras and Rare Candies from frlg.team_training in the bag. Evolves Paras to Parasect with Spore (Lv 27). Pair with Scyther from 09-shiny-scyther (arrives at Lv 25 already knowing False Swipe). Use frlg.team_training to stock Rare Candies and optionally level both higher (Lv 70-100) before running frlg.dex_collection.",
+    "postconditions": {
+      "party_includes": ["parasect"],
+      "knows": [
+        {"species": "parasect", "moves": ["spore"]}
+      ],
+      "levels": [
+        {"species": "parasect", "min": 27}
+      ]
+    }
+  }
+}

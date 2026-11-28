@@ -193,6 +193,7 @@ let decide ~capture_end ~shiny ~party () =
           steps := Printf.sprintf "summary %d" slot :: !steps;
           shiny);
       log = ignore;
+      show_counters = ignore;
     }
   in
   let plan =
@@ -246,6 +247,7 @@ let decide_policy ?(found = true) ?intro_verdict ~catch_outcome
           add (Printf.sprintf "summary %d" slot);
           shiny);
       log = ignore;
+      show_counters = ignore;
     }
   in
   let plan =
@@ -381,6 +383,188 @@ let decisions =
       ": wild_rng_party_full";
   ]
 
+let method_decoding =
+  let decode_method json () =
+    match Wild_rng_plan.decode (obj json) with
+    | Ok t ->
+        Printf.sprintf "%s at %s (%s, %s, %s)" t.species t.location
+          (Wild_rng_plan.encounter_method_to_string t.encounter_method)
+          t.seeds t.frame_model
+    | Error c -> Pokemon_engine.Failure.cause_to_string c
+  in
+  let super_rod_blind () =
+    Wild_rng_steps.blind_presses_for Wild_rng_plan.Super_rod
+      {
+        seed_delay_ms = 33033;
+        csf_delay_ms = 3348;
+        teachy_delay_ms = 0;
+        ingame_delay_ms = 10129;
+      }
+    |> List.map command_text |> String.concat ", "
+  in
+  let check_surf_target () =
+    let args =
+      obj
+        {|{"method": "surf", "species": "psyduck", "location": "viridian_city",
+           "tid": 12345, "sid": 54321}|}
+    in
+    match
+      Result.bind (Wild_rng_plan.decode args) (fun p ->
+          Result.map_error
+            (Pokemon_engine.Failure.cause "target")
+            (Wild_rng_plan.target p))
+    with
+    | Ok t -> t.encounter.species
+    | Error c -> Pokemon_engine.Failure.cause_to_string c
+  in
+  let check_super_rod_target () =
+    let args =
+      obj
+        {|{"method": "super_rod", "species": "shellder",
+           "location": "vermilion_city", "tid": 12345, "sid": 54321}|}
+    in
+    match
+      Result.bind (Wild_rng_plan.decode args) (fun p ->
+          Result.map_error
+            (Pokemon_engine.Failure.cause "target")
+            (Wild_rng_plan.target p))
+    with
+    | Ok t -> t.encounter.species
+    | Error c -> Pokemon_engine.Failure.cause_to_string c
+  in
+  [
+    case "surf method with default seeds and frame_model"
+      (decode_method
+         {|{"method": "surf", "species": "psyduck",
+            "location": "viridian_city", "tid": 1, "sid": 2}|})
+      "psyduck at viridian_city (surf, rng_seeds_mgba_sevii_save.json, mgba)";
+    case "super_rod method with default seeds and frame_model"
+      (decode_method
+         {|{"method": "super_rod", "species": "shellder",
+            "location": "vermilion_city", "tid": 1, "sid": 2}|})
+      "shellder at vermilion_city (super_rod, rng_seeds_mgba_sevii_save.json, \
+       mgba)";
+    case "invalid method rejected"
+      (decode_method
+         {|{"method": "old_rod", "species": "magikarp",
+            "location": "vermilion_city", "tid": 1, "sid": 2}|})
+      "bad_args: wild_rng: method is old_rod, not grass, surf, or super_rod";
+    case "super_rod blind presses cast registered rod with Select"
+      super_rod_blind
+      "wait 33033, A 3000/0, wait 348, A 50/1450, B 50/2450, wait 9629, Select \
+       200/300";
+    case "surf target search finds shiny psyduck in viridian_city"
+      check_surf_target "psyduck";
+    case "super_rod target search finds shiny shellder in vermilion_city"
+      check_super_rod_target "shellder";
+  ]
+
+let format_counters_log history =
+  history |> List.rev
+  |> List.map (fun items ->
+         items
+         |> List.map (fun (c : Wire.Watch.counter) ->
+                Printf.sprintf "%s=%s" c.label c.value)
+         |> String.concat " ")
+  |> String.concat " -> "
+
+let wild_counters_policy ?(found = true) ?intro_verdict ~catch_outcome ~shiny
+    ~attempts ~party () =
+  let emitted = ref [] in
+  let pc : Wild_rng.policy_catch_steps =
+    {
+      find_encounter = (fun () -> found);
+      detect_shiny = Option.map (fun v () -> reading_of v) intro_verdict;
+      on_miss = ignore;
+      catch_battle = (fun () -> catch_outcome);
+      finish_catch = (fun _ -> true);
+    }
+  in
+  let game_steps : Wild_rng.game_steps =
+    {
+      catch = (fun _ ~party:_ -> failwith "legacy catch should not run");
+      policy_catch = Some pc;
+      shiny_at = (fun _ -> shiny);
+      log = ignore;
+      show_counters = (fun items -> emitted := items :: !emitted);
+    }
+  in
+  let plan =
+    {
+      (Result.get_ok (Wild_rng_plan.decode (obj plan_args))).capture with
+      max_encounters = attempts;
+    }
+  in
+  ignore (Wild_rng.run game_steps plan ~party : Wild_rng.result);
+  format_counters_log !emitted
+
+let wild_counters_legacy ~encounters ~capture_end ~shiny ~attempts ~party () =
+  let emitted = ref [] in
+  let game_steps : Wild_rng.game_steps =
+    {
+      catch =
+        (fun _ ~party:_ -> { (capture_result capture_end) with encounters });
+      policy_catch = None;
+      shiny_at = (fun _ -> shiny);
+      log = ignore;
+      show_counters = (fun items -> emitted := items :: !emitted);
+    }
+  in
+  let plan =
+    {
+      (Result.get_ok (Wild_rng_plan.decode (obj plan_args))).capture with
+      max_encounters = attempts;
+    }
+  in
+  ignore (Wild_rng.run game_steps plan ~party : Wild_rng.result);
+  format_counters_log !emitted
+
+let watch_counters_cases =
+  [
+    case
+      "policy shiny hit emits reset -> encounter -> catch -> summary -> shiny"
+      (wild_counters_policy ~intro_verdict:Shiny
+         ~catch_outcome:(Caught caught_summary) ~shiny:true ~attempts:25
+         ~party:5)
+      "attempt=1/25 phase=reset -> attempt=1/25 phase=encounter -> \
+       attempt=1/25 phase=catch -> attempt=1/25 phase=summary -> attempt=1/25 \
+       phase=shiny";
+    case "policy visual non-shiny miss stops after encounter phase"
+      (wild_counters_policy ~intro_verdict:Not_shiny
+         ~catch_outcome:(Caught caught_summary) ~shiny:true ~attempts:10
+         ~party:5)
+      "attempt=1/10 phase=reset -> attempt=1/10 phase=encounter";
+    case "policy without visual check emits reset -> catch -> summary -> shiny"
+      (wild_counters_policy ~catch_outcome:(Caught caught_summary) ~shiny:true
+         ~attempts:5 ~party:4)
+      "attempt=1/5 phase=reset -> attempt=1/5 phase=catch -> attempt=1/5 \
+       phase=summary -> attempt=1/5 phase=shiny";
+    case "policy non-shiny summary stops at summary phase"
+      (wild_counters_policy ~intro_verdict:Unknown
+         ~catch_outcome:(Caught caught_summary) ~shiny:false ~attempts:3
+         ~party:5)
+      "attempt=1/3 phase=reset -> attempt=1/3 phase=encounter -> attempt=1/3 \
+       phase=catch -> attempt=1/3 phase=summary";
+    case "policy no encounter emits only reset phase"
+      (wild_counters_policy ~found:false ~intro_verdict:Shiny
+         ~catch_outcome:(Caught caught_summary) ~shiny:true ~attempts:5 ~party:5)
+      "attempt=1/5 phase=reset";
+    case "legacy shiny catch reports attempt count through summary and shiny"
+      (wild_counters_legacy ~encounters:3 ~capture_end:All_caught ~shiny:true
+         ~attempts:25 ~party:5)
+      "attempt=1/25 phase=reset -> attempt=3/25 phase=summary -> attempt=3/25 \
+       phase=shiny";
+    case "legacy non-shiny catch stops at summary"
+      (wild_counters_legacy ~encounters:2 ~capture_end:All_caught ~shiny:false
+         ~attempts:5 ~party:5)
+      "attempt=1/5 phase=reset -> attempt=2/5 phase=summary";
+    case "full party emits no counters"
+      (wild_counters_legacy ~encounters:1 ~capture_end:All_caught ~shiny:true
+         ~attempts:5 ~party:6)
+      "";
+  ]
+
 let () =
   Table_test.run "wild_rng"
-    (decoding @ policy_decoding @ presses @ decisions @ policy_decisions)
+    (decoding @ policy_decoding @ method_decoding @ presses @ decisions
+   @ policy_decisions @ watch_counters_cases)

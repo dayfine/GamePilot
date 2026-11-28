@@ -81,6 +81,11 @@ val refine_offset : ?updated_at:string -> entry -> miss_observation -> entry
     - [ingame_offset] shifts by [(target_advance - observed_advance)] so landing
       late shortens the in-game wait and landing early lengthens it. *)
 
+val refine_timing :
+  ?updated_at:string -> entry -> boot_delta_ms:int -> ingame_delta:int -> entry
+(** Refines [boot_offset_ms] and [ingame_offset] by adding [boot_delta_ms] and
+    [ingame_delta], leaving [seed_shift] unchanged. *)
+
 val to_calibrations : entry -> Rng_timings.calibrations
 (** Converts [boot_offset_ms] (rounded to {!Rng_timings.switch} frames) and
     [ingame_offset] into {!Rng_timings.calibrations}. *)
@@ -105,4 +110,15 @@ val record_miss :
   miss_observation ->
   (entry, string) result
 (** Loads [path], refines [console_id]'s entry with {!refine_offset}, persists
+    the updated store, and returns the refined {!entry}. *)
+
+val record_timing_miss :
+  ?path:string ->
+  ?console_id:string ->
+  ?updated_at:string ->
+  boot_delta_ms:int ->
+  ingame_delta:int ->
+  unit ->
+  (entry, string) result
+(** Loads [path], refines [console_id]'s entry with {!refine_timing}, persists
     the updated store, and returns the refined {!entry}. *)
