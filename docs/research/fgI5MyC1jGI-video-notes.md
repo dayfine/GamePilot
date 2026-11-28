@@ -35,9 +35,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 02:10:00–02:15:00 | Reviewed |
 | 02:15:00–02:20:00 | Reviewed |
 | 02:20:00–02:25:00 | Reviewed |
-| 02:25:00–03:18:16 | Pending |
+| 02:25:00–02:30:00 | Reviewed |
+| 02:30:00–03:18:16 | Pending |
 
-Resume at **02:25:00** at Spear Pillar during the entrance Grunts’ double battle.
+Resume at **02:30:00** in the Spear Pillar cutscene after the Mars and Jupiter battle.
 
 ## Review method
 
@@ -570,3 +571,18 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 | 2:24:33–2:25:00 | The next pair is Glameow and Croagunk, both Lv. 38. Croagunk’s Sucker Punch drops Kazza from 103/116 to 55/116 HP. Dazzling Gleam KOs both opponents. |
 
 **State at 2:25:00.** At Spear Pillar during the entrance double battle. Kazza is Lv. 50 at 55/116 HP with Wise Glasses. Monferno is Lv. 33 at 95/95 HP with Choice Specs. Eleven Super Repels remain, with one active.
+
+## 2:25:00–2:30:00 | Spear Pillar and Mars and Jupiter
+
+| Video time | Observed action |
+| --- | --- |
+| 2:25:00–2:25:18 | The entrance battle ends, and Monferno reaches Lv. 34. Use an Energy Root on Kazza, restoring 61 HP to 116/116. |
+| 2:25:19–2:26:29 | Advance into Spear Pillar. Cyrus uses the Red Chain to summon Palkia. Mars and Jupiter block the player, and the rival joins the double battle with Munchlax Lv. 42. |
+| 2:26:30–2:27:08 | Both commanders lead with Bronzor Lv. 41. Use X Defense on Kazza while the Bronzor use Gyro Ball and Payback. Munchlax uses Bite. On the next turn, use X Sp. Atk while the opponents set Light Screen and Reflect. Munchlax lands a critical Bite. |
+| 2:27:09–2:27:49 | Shadow Ball KOs Mars’s Bronzor. The other Bronzor uses Payback and Munchlax uses Bite. Mars sends Golbat Lv. 42, which Kazza KOs with Psychic. The remaining Bronzor uses Payback again, then Munchlax finishes it with Bite. |
+| 2:27:50–2:28:21 | Mars sends Purugly Lv. 45 and Jupiter sends Skuntank Lv. 46. Use an Energy Root on Kazza. Purugly hits Kazza with U-turn, Skuntank poisons Kazza and Munchlax with Poison Gas, and Munchlax paralyzes Skuntank with Body Slam. |
+| 2:28:22–2:28:59 | Psychic KOs Purugly and Kazza reaches Lv. 51. Skuntank is fully paralyzed, allowing another Body Slam. After both screens expire, Dazzling Gleam finishes Skuntank. Monferno reaches Lv. 35. |
+| 2:29:01–2:29:25 | Kazza is at 32/118 HP and poisoned when Jupiter sends her final Golbat Lv. 41. Psychic KOs it and wins the battle. The rival fully heals the party afterward. |
+| 2:29:26–2:30:00 | Cyrus continues the ritual as the lake Pokémon begin to appear around Palkia. |
+
+**State at 2:30:00.** At Spear Pillar in the cutscene. Kazza is Lv. 51 with Wise Glasses and Monferno is Lv. 35 with Choice Specs. Both are fully healed.
