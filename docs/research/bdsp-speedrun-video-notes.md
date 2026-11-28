@@ -16,7 +16,7 @@ The sampled visual review covers **00:00–3:18:16** in **40 consecutive blocks*
 | 2:25:00–2:55:00 | 6 | [Spear Pillar, Palkia and Volkner](#2250023000--spear-pillar-and-mars-and-jupiter) |
 | 2:55:00–3:18:16 | 5 | [Victory Road, League and Hall of Fame](#2550030000--victory-road-exit-and-pokémon-league-arrival) |
 
-The [battle audit](fgI5MyC1jGI-battle-audit.md) indexes trainer, wild and tutorial encounters separately from this route transcript. It records entry states, battle actions and modeled outcomes. The final battle ends at about **3:16:38**. The Hall of Fame and the start of the credits occupy the remainder of the review.
+The [battle audit](bdsp-speedrun-battle-audit.md) indexes trainer, wild and tutorial encounters separately from this route transcript. It records entry states, battle actions and modeled outcomes. The final battle ends at about **3:16:38**. The Hall of Fame and the start of the credits occupy the remainder of the review.
 
 ## Review method
 
