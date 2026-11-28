@@ -53,18 +53,23 @@
     and reads the stats for its RNG search. *)
 
 type opened =
-  | Opened  (** the candy given to the member *)
-  | No_candy  (** no Rare Candy in the bag: the bag is closed again *)
-  | Not_opened of string  (** why *)
+  | Opened  (** the bag is open on Rare Candy, or the candy was given *)
+  | No_candy  (** no Rare Candy in the bag *)
+  | Not_opened of string  (** why the bag or candy could not be opened *)
 
 type game_steps = {
-  open_candy : slot:int -> (opened, Pokemon_engine.Failure.cause) result;
-      (** From the overworld: the bag, the Rare Candy, USE, the slot (from 1).
-          [Error] when a menu step after the candy's USE fails, as its cause. *)
+  open_bag : unit -> (opened, Pokemon_engine.Failure.cause) result;
+      (** From the overworld: opens the bag to Rare Candy. On [No_candy], the
+          bag is closed back to the overworld; [Error] when a menu step fails.
+      *)
+  use_candy : slot:int -> (opened, Pokemon_engine.Failure.cause) result;
+      (** In the open bag: confirms Rare Candy is under the cursor, chooses USE
+          and picks [slot] (from 1) on the party menu. Leaves the bag open on
+          [No_candy] so the caller can close it once. *)
   level_up : Frlg_battle.Level_up.game_steps;
       (** The party menu's: {!Frlg_battle.Level_up.Back} is the bag. *)
   close_bag : unit -> (unit, Pokemon_engine.Failure.cause) result;
-      (** From the bag, back to the overworld; [Error] as {!open_candy}. *)
+      (** From the bag, back to the overworld; [Error] as {!open_bag}. *)
   log : string -> unit;
 }
 (** The steps in the game this module can take: what it reads and does on this
@@ -78,12 +83,22 @@ type result =
   | Stopped of Pokemon_engine.Failure.cause
       (** a menu step of the game steps failed, as this cause *)
 
+val use_one :
+  game_steps ->
+  Frlg_battle.Level_up_policy.policy ->
+  member:Frlg_battle.Level_up.member ->
+  result
+(** One candy on the member while the bag is already open on Rare Candy:
+    {!Frlg_battle.Level_up.run} with it alone, leaving the bag open on [Used] or
+    [Out_of_candies]. *)
+
 val run :
   game_steps ->
   Frlg_battle.Level_up_policy.policy ->
   member:Frlg_battle.Level_up.member ->
   result
-(** One candy on the member: {!Frlg_battle.Level_up.run} with it alone. *)
+(** One candy on the member, from the overworld back to it: opens the bag, calls
+    {!use_one}, and closes the bag on [Used] or [Out_of_candies]. *)
 
 val describe : result -> string
 (** One line for the log. *)

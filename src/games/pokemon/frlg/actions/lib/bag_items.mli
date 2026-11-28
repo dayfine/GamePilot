@@ -56,6 +56,18 @@ val choose_in_item_menu : string -> int -> unit
     later (it drops an A sooner), the action on this row (from 0) chosen with A.
     Fails as [no_item_menu]. *)
 
+val open_to_item : string -> unit
+(** From the overworld: opens the item's pocket ({!open_pocket_top}) and moves
+    the cursor onto the item ({!select}). Fails as {!open_pocket_top} and
+    {!select} do. *)
+
+val use_selected : string -> int -> unit
+(** In an open bag with the cursor on the item: confirms the cursor's row still
+    reads the item's name (failing as [not_in_bag] if it no longer does, e.g.
+    after the last one was used), opens its item menu with A, and chooses the
+    action on this row (from 0) with A. Fails as [no_bag], [not_in_bag] or
+    [no_item_menu]. *)
+
 val item_action : string -> int -> unit
 (** From the overworld: the item's pocket opened ({!open_pocket_top}), the item
     selected ({!select}), A, and once its menu shows (USE or CHECK or OPEN,
