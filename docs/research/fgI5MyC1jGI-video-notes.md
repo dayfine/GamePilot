@@ -36,9 +36,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 02:15:00–02:20:00 | Reviewed |
 | 02:20:00–02:25:00 | Reviewed |
 | 02:25:00–02:30:00 | Reviewed |
-| 02:30:00–03:18:16 | Pending |
+| 02:30:00–02:35:00 | Reviewed |
+| 02:35:00–03:18:16 | Pending |
 
-Resume at **02:30:00** in the Spear Pillar cutscene after the Mars and Jupiter battle.
+Resume at **02:35:00** in the south gate from Veilstone to Route 214, with Palkia in the party.
 
 ## Review method
 
@@ -586,3 +587,18 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 | 2:29:26–2:30:00 | Cyrus continues the ritual as the lake Pokémon begin to appear around Palkia. |
 
 **State at 2:30:00.** At Spear Pillar in the cutscene. Kazza is Lv. 51 with Wise Glasses and Monferno is Lv. 35 with Choice Specs. Both are fully healed.
+
+## 2:30:00–2:35:00 | Cyrus and the Palkia capture
+
+| Video time | Observed action |
+| --- | --- |
+| 2:30:00–2:30:52 | Uxie, Mesprit, and Azelf break the Red Chain. Cyrus challenges the player. |
+| 2:30:54–2:31:29 | Kazza KOs Honchkrow Lv. 45 with Dazzling Gleam. Gyarados Lv. 45 lowers Kazza’s Attack with Intimidate, survives Psyshock, and KOs Kazza with Crunch. |
+| 2:31:30–2:32:02 | Send out Monferno and use the Revival Herb to fully revive Kazza. Gyarados KOs Monferno with Waterfall. Send Kazza back in and finish Gyarados with Psychic. |
+| 2:32:03–2:32:18 | Crobat Lv. 46 sets Tailwind, then faints to Psychic. Kazza reaches Lv. 52. |
+| 2:32:23–2:32:50 | Cyrus sends Weavile Lv. 48. Use one X Sp. Atk as Weavile starts Dig. Dig lands and leaves Kazza at 41/121 HP. Dazzling Gleam KOs Weavile. |
+| 2:32:52–2:34:07 | Cyrus and the commanders leave. Rowan and Dawn arrive. Approach Palkia Lv. 47 and use the Master Ball on the first turn. Kazza reaches Lv. 53. Palkia joins the party, and the cutscene ends back inside Mt. Coronet. |
+| 2:34:08–2:34:30 | Swap Choice Specs back onto Kazza and Wise Glasses onto Monferno. Heal Kazza from 43/123 to 123/123 HP with one Energy Root. Give Palkia Metronome and teach it Surf in place of Ancient Power. |
+| 2:34:31–2:35:00 | Use an Escape Rope to return to Route 207, Fly to Veilstone, and ride through its south gate toward Route 214. |
+
+**State at 2:35:00.** Kazza leads at Lv. 53 and 123/123 HP with Choice Specs. Monferno is Lv. 35 at 0/101 HP with Wise Glasses. Palkia is Lv. 47 at 156/156 HP, holds Metronome, and knows Surf, Slash, Aqua Ring, and Spacial Rend. Eleven Super Repels remain.
