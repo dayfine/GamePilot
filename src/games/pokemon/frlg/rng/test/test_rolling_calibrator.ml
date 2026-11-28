@@ -293,7 +293,8 @@ let test_parity_lock_unit () =
   in
   check_eq ~show:string_of_bool "same-side -1 misses not parity locked" false
     (Rolling_calibrator.parity_locked same_side);
-  (* Having ever hit advance_delta = 0 in the window prevents parity lock. *)
+  (* Having ever hit advance_delta = 0 on the target seed in the window
+     prevents parity lock. *)
   let hit_zero =
     Rolling_calibrator.empty |> feed ~used:(-24) ~delta:0
     |> feed ~used:(-25) ~delta:(-1)
@@ -301,7 +302,69 @@ let test_parity_lock_unit () =
     |> feed ~used:(-25) ~delta:(-1)
   in
   check_eq ~show:string_of_bool "prior exact hit prevents parity lock" false
-    (Rolling_calibrator.parity_locked hit_zero)
+    (Rolling_calibrator.parity_locked hit_zero);
+  (* Console B Static Electrode 5217/1015: same-offset parity straddling at
+     used_ingame_offset = 3 (+1, -1, +1) triggers parity lock, and a prior
+     off-seed advance_delta = 0 hit (e.g. 7D40 hitting 1015 (+0)) does not
+     clear parity lock on the target seed. *)
+  let feed_seed cal ~used ~seed_delta ~delta =
+    Rolling_calibrator.record cal ~used_boot_offset_ms:0
+      ~used_ingame_offset:used ~seed_delta_frames:seed_delta
+      ~advance_delta:delta
+    |> expect_accepted "parity_same_offset"
+    |> fst
+  in
+  let same_offset_straddle =
+    Rolling_calibrator.empty
+    |> feed_seed ~used:3 ~seed_delta:0 ~delta:1
+    |> feed_seed ~used:3 ~seed_delta:0 ~delta:(-1)
+    |> feed_seed ~used:3 ~seed_delta:0 ~delta:1
+  in
+  check_eq ~show:string_of_bool "same-offset +1/-1/+1 triggers parity lock" true
+    (Rolling_calibrator.parity_locked same_offset_straddle);
+  let off_seed_zero_then_straddle =
+    Rolling_calibrator.empty
+    |> feed_seed ~used:3 ~seed_delta:1 ~delta:0
+    |> feed_seed ~used:3 ~seed_delta:0 ~delta:1
+    |> feed_seed ~used:3 ~seed_delta:0 ~delta:(-1)
+    |> feed_seed ~used:3 ~seed_delta:0 ~delta:1
+  in
+  check_eq ~show:string_of_bool
+    "off-seed 0 hit does not prevent parity lock on target seed" true
+    (Rolling_calibrator.parity_locked off_seed_zero_then_straddle)
+
+(* Observed Console B Static Electrode #1 successful 2-attempt Luxury Ball catch
+   on EVEN target A91A/1040 (paired positive trace alongside the failed ODD
+   5217/1015 parity-locked trace above):
+   - Attempt 1 (boot=747, ingame=4): hit 5FD4 (-1 frame), advance 1042 (+2 adv)
+     -> calibrates to boot_offset_ms=764, ingame_offset=2; not parity locked.
+   - Attempt 2 (boot=764, ingame=2): lands exact A91A/1040 (0 frames, 0 adv)
+     -> converges cleanly at boot_offset_ms=764, ingame_offset=2; parity_locked
+        remains false. *)
+let test_console_b_electrode_success () =
+  let cal1, est1 =
+    Rolling_calibrator.record Rolling_calibrator.empty ~used_boot_offset_ms:747
+      ~used_ingame_offset:4 ~seed_delta_frames:(-1) ~advance_delta:2
+    |> expect_accepted "electrode A91A/1040 attempt 1"
+  in
+  check_eq ~show:string_of_int "attempt 1 boot_offset_ms" 764
+    est1.boot_offset_ms;
+  check_eq ~show:string_of_int "attempt 1 ingame_offset" 2 est1.ingame_offset;
+  check_eq ~show:string_of_int "attempt 1 sample_count" 1 est1.sample_count;
+  check_eq ~show:string_of_bool "attempt 1 not parity locked" false
+    (Rolling_calibrator.parity_locked cal1);
+  let cal2, est2 =
+    Rolling_calibrator.record cal1 ~used_boot_offset_ms:est1.boot_offset_ms
+      ~used_ingame_offset:est1.ingame_offset ~seed_delta_frames:0
+      ~advance_delta:0
+    |> expect_accepted "electrode A91A/1040 attempt 2"
+  in
+  check_eq ~show:string_of_int "attempt 2 boot_offset_ms" 764
+    est2.boot_offset_ms;
+  check_eq ~show:string_of_int "attempt 2 ingame_offset" 2 est2.ingame_offset;
+  check_eq ~show:string_of_int "attempt 2 sample_count" 2 est2.sample_count;
+  check_eq ~show:string_of_bool "attempt 2 not parity locked" false
+    (Rolling_calibrator.parity_locked cal2)
 
 (* Slice 2: mGBA (1 advance/frame) never triggers parity-lock target switching
    and converges cleanly on both odd and even advances. *)
@@ -354,6 +417,7 @@ let () =
   test_advance_convergence ();
   test_outlier_rejection ();
   test_parity_lock_unit ();
+  test_console_b_electrode_success ();
   test_console_b_five_targets ();
   test_mgba_non_regression ();
   print_endline "rolling_calibrator: all passed"
