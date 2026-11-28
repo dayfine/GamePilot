@@ -101,6 +101,7 @@ let test_target_and_presses () =
       {
         seed_delay_ms = 33033;
         csf_delay_ms = 3348;
+        recap_delay_ms = 1450;
         teachy_delay_ms = 0;
         ingame_delay_ms = 10000;
       }

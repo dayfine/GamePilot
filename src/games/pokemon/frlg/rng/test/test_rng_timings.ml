@@ -7,8 +7,10 @@ open Frlg_rng
 
 let text = function
   | Ok (t : Rng_timings.t) ->
-      Printf.sprintf "seed %d csf %d teachy %d ingame %d" t.seed_delay_ms
-        t.csf_delay_ms t.teachy_delay_ms t.ingame_delay_ms
+      Printf.sprintf "seed %d csf %d recap %d teachy %d ingame %d total %d"
+        t.seed_delay_ms t.csf_delay_ms t.recap_delay_ms t.teachy_delay_ms
+        t.ingame_delay_ms
+        (Rng_timings.total_delay_ms t)
   | Error why -> "error: " ^ why
 
 let case name model ~seed ~advances ?(teachy = false)
@@ -23,24 +25,54 @@ let case name model ~seed ~advances ?(teachy = false)
     expectation;
   }
 
+let gift_case name model ~seed ~advances ?(teachy = false)
+    ?(calibrations = Rng_timings.no_calibrations) expectation =
+  {
+    Table_test.name;
+    input =
+      (fun () ->
+        text
+          (Rng_timings.gift model ~seed_delay_ms:seed ~advances
+             ~use_teachy_tv:teachy calibrations));
+    expectation;
+  }
+
 let () =
   Table_test.run "rng_timings"
     [
       (* (1555 - 200 - 352) * 16.6667 / 2 = 8358; 50920 - 845; 200 frames. *)
       case "switch, no calibration" Rng_timings.switch ~seed:50920
-        ~advances:1555 "seed 50075 csf 3333 teachy 0 ingame 8358";
-      (* +3 seed frames, -4 CSF frames, +10 advances. *)
+        ~advances:1555
+        "seed 50075 csf 3333 recap 1450 teachy 0 ingame 8358 total 61766";
+      (* +3 seed frames, -4 CSF frames (shifts recap, not csf), +10 advances. *)
       case "switch, calibrated" Rng_timings.switch ~seed:50920 ~advances:1555
         ~calibrations:{ seed_offset = 3; csf_offset = -4; ingame_offset = 10 }
-        "seed 50125 csf 3266 teachy 0 ingame 8441";
+        "seed 50125 csf 3333 recap 1383 teachy 0 ingame 8441 total 61832";
+      (* Odd vs even target parity on Switch (2 adv/frame in-game): csf_offset=1
+         shifts recap_delay_ms by +1 frame (+17 ms) while preserving
+         seed_delay_ms and csf_delay_ms. *)
+      case "switch, even target parity (csf_offset = 0)" Rng_timings.switch
+        ~seed:50920 ~advances:1554
+        "seed 50075 csf 3333 recap 1450 teachy 0 ingame 8350 total 61758";
+      case "switch, odd target parity (csf_offset = 1)" Rng_timings.switch
+        ~seed:50920 ~advances:1554
+        ~calibrations:{ Rng_timings.no_calibrations with csf_offset = 1 }
+        "seed 50075 csf 3333 recap 1467 teachy 0 ingame 8350 total 61775";
+      gift_case "switch gift, odd parity (csf_offset = 1) shifts recap only"
+        Rng_timings.switch ~seed:50920 ~advances:1554
+        ~calibrations:{ Rng_timings.no_calibrations with csf_offset = 1 }
+        "seed 50075 csf 3333 recap 1467 teachy 0 ingame 11283 total 64708";
       (* 29448 advances: floor((29448 - 12000 + 7500) / 313) * 313 = 24727 on
          Teachy TV, (29448 - 24727) * 16.6667 / 2 - 14067 in game. *)
       case "switch, Teachy TV" Rng_timings.switch ~seed:50920 ~advances:30000
-        ~teachy:true "seed 50075 csf 3333 teachy 1316 ingame 25274";
+        ~teachy:true
+        "seed 50075 csf 3333 recap 1450 teachy 1316 ingame 25274 total 79998";
       case "teachy TV unused under its buffer" Rng_timings.switch ~seed:50920
-        ~advances:1555 ~teachy:true "seed 50075 csf 3333 teachy 0 ingame 8358";
+        ~advances:1555 ~teachy:true
+        "seed 50075 csf 3333 recap 1450 teachy 0 ingame 8358 total 61766";
       case "mgba, the shiny Ekans run" Rng_timings.mgba ~seed:30740
-        ~advances:1555 "seed 30740 csf 3348 teachy 0 ingame 19622";
+        ~advances:1555
+        "seed 30740 csf 3348 recap 1450 teachy 0 ingame 19622 total 53710";
       case "too few advances for Sweet Scent's presses" Rng_timings.mgba
         ~seed:30740 ~advances:700
         "error: The in-game delay is too short for the Sweet Scent presses.";
@@ -48,6 +80,10 @@ let () =
         ~advances:1555
         "error: The title screen delay cannot be less than 30s. Check your \
          seed delay and calibration.";
+      case "recap delay too short" Rng_timings.switch ~seed:50920 ~advances:1555
+        ~calibrations:{ Rng_timings.no_calibrations with csf_offset = -70 }
+        "error: The Recap delay cannot be less than 300ms. Check your Continue \
+         Screen calibration.";
       case "negative advances" Rng_timings.switch ~seed:50920 ~advances:300
         "error: In-game advances cannot be negative. Check your in-game \
          advances and calibration.";

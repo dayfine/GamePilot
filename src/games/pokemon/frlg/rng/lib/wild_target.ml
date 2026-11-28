@@ -8,9 +8,7 @@ type t = {
   timings : Rng_timings.t;
 }
 
-let total_ms t =
-  t.timings.seed_delay_ms + t.timings.csf_delay_ms + t.timings.teachy_delay_ms
-  + t.timings.ingame_delay_ms
+let total_ms t = Rng_timings.total_delay_ms t.timings
 
 let wanted ~species ~tid_xor_sid (e : Wild_encounter.result) =
   Wild_encounter.species_matches ~observed:species ~candidate:e.species

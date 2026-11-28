@@ -1,6 +1,7 @@
-(** The four waits of an RNG attempt, from the target's advances and the
+(** The waits of an RNG attempt, from the target's advances and the
     calibrations: the title screen's (which picks the seed), the continue
-    screen's, Teachy TV's and the in-game one (which reaches the advance).
+    screen's, the Continue-to-Recap screen's (1 advance/frame parity window),
+    Teachy TV's and the in-game one (which reaches the advance).
 
     Port of the timing preparation in
     [PokemonFRLG/Programs/RngManipulation/PokemonFRLG_RngCalibration.cpp], its
@@ -10,13 +11,22 @@
     (https://github.com/PokemonAutomation/Arduino-Source). The C++ logs and
     throws; this returns the timings or the C++'s message.
 
-    Where it differs: the C++ has one frame model, the Switch's (59.999977
-    frames a second, two advances per in-game frame, a seed 845 ms after the
-    table's delay). {!frame_model} makes it a value, with {!switch} the C++'s
-    and {!mgba} measured on mGBA FireRed 1.1 after [backend.reset]: one advance
-    per frame, the seed set by the press on the delay's own frame (the mGBA seed
-    table holds press times), Sweet Scent's encounter 183 advances before the
-    C++'s formula lands without the offset. *)
+    Where it differs:
+    - The C++ has one frame model, the Switch's (59.999977 frames a second, two
+      advances per in-game frame, a seed 845 ms after the table's delay).
+      {!frame_model} makes it a value, with {!switch} the C++'s and {!mgba}
+      measured on mGBA FireRed 1.1 after [backend.reset]: one advance per frame,
+      the seed set by the press on the delay's own frame (the mGBA seed table
+      holds press times), Sweet Scent's encounter 183 advances before the C++'s
+      formula lands without the offset.
+    - The C++ applies [csf_offset] to [csf_delay_ms], which sits on the Title /
+      Continue screen before pressing [A] on Continue. On Switch hardware,
+      shifting [csf_delay_ms] by +1 frame added 0 RNG advances, so it cannot
+      flip odd/even advance parity when the overworld advances at 2
+      advances/frame. Instead, [csf_offset] shifts [recap_delay_ms] (baseline
+      {!recap_base_delay_ms} = 1450 ms, the Continue [A] -> Recap-skip [B]
+      window during "Previously on your quest..."), which is a true
+      1-advance/frame window in FRLG. *)
 
 type frame_model = {
   frame_duration_ms : float;
@@ -44,6 +54,11 @@ val mgba : frame_model
 val continue_screen_frames : int
 (** 200: the advances the continue screen is held for. *)
 
+val recap_base_delay_ms : int
+(** 1450: the baseline cooldown in ms between pressing [A] on Continue and
+    pressing [B] to skip the "Previously on your quest..." Recap screen
+    (matching [load_game_after_delay] in [PokemonFRLG_BlindNavigation.cpp]). *)
+
 val sweet_scent_fixed_duration_ms : int
 (** 7400: the Sweet Scent presses' own share of the in-game wait, in ms. *)
 
@@ -55,8 +70,9 @@ type calibrations = {
   seed_offset : int;
       (** Frames added to the title screen's wait, to hit the target seed. *)
   csf_offset : int;
-      (** Frames added to the continue screen's wait (csf: continue screen
-          frames). *)
+      (** Frames added to {!recap_delay_ms} (the 1-advance/frame Continue ->
+          Recap window between Continue [A] and Recap-skip [B]). Used to flip
+          odd/even advance parity on 2-advance/frame consoles such as Switch. *)
   ingame_offset : int;
       (** Advances added to the in-game wait, to hit the target advance. *)
 }
@@ -71,14 +87,26 @@ type t = {
       (** How long the title screen is held before the press that sets the seed.
       *)
   csf_delay_ms : int;
-      (** How long the continue screen is held before loading the save. *)
+      (** How long the continue screen is held before pressing [A] to load the
+          save (fixed at {!continue_screen_frames} frames; does not include
+          [csf_offset]). *)
+  recap_delay_ms : int;
+      (** How long to wait between pressing [A] on Continue and pressing [B] to
+          skip the Recap screen ({!recap_base_delay_ms} shifted by [csf_offset]
+          frames, rounded to the nearest millisecond). *)
   teachy_delay_ms : int;
       (** How long Teachy TV plays, advancing the RNG fast; 0 without it. *)
   ingame_delay_ms : int;
       (** How long to wait in the overworld before Sweet Scent, so its encounter
           lands on the target advance. *)
 }
-(** The four waits of one attempt, in ms. *)
+(** The waits of one attempt, in ms. *)
+
+val total_delay_ms : t -> int
+(** Total attempt delay in ms:
+    [seed_delay_ms + csf_delay_ms + (recap_delay_ms - recap_base_delay_ms) +
+     teachy_delay_ms + ingame_delay_ms]. The baseline {!recap_base_delay_ms} is
+    already accounted for inside [ingame_delay_ms]'s fixed duration. *)
 
 val sweet_scent :
   frame_model ->
