@@ -136,7 +136,8 @@ let should_run ~mode ~counts = function
 
 let event_species (e : Pokemon_engine.Plan.event) =
   match (e.kind, e.way) with
-  | Named_action args, Some ("wild_rng" | "capture" | "gift_rng") -> (
+  | Named_action args, Some ("wild_rng" | "capture" | "gift_rng" | "static_rng")
+    -> (
       match J.find "species" args with
       | Some (`String s) when String.trim s <> "" -> Some (normalize s)
       | _ -> None)

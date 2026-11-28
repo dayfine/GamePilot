@@ -51,8 +51,9 @@ val should_run : mode:mode -> counts:counts -> string option -> bool
     [counts]. *)
 
 val plan_species : Pokemon_engine.Plan.t -> string option
-(** The first [wild_rng], [capture], or [gift_rng] event's ["species"] slug in
-    the plan, or [None] if the checkpoint does not catch a named species. *)
+(** The first [wild_rng], [capture], [gift_rng], or [static_rng] event's
+    ["species"] slug in the plan, or [None] if the checkpoint does not catch a
+    named species. *)
 
 val load_counts : ?path:string -> unit -> (counts, string) result
 (** Reads per-species catch counts from [path] (default:
