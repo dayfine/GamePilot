@@ -42,7 +42,9 @@ let weakened_asleep_factors = { hp_factor = 1.0; status_multiplier = 2.0 }
 type rate_tier = { rate : int; names : string }
 
 (* Gen 3 base catch rates from pokefirered src/data/pokemon/base_stats.h for
-   all FRLG wild encounter species and static legendaries. *)
+   all FRLG wild encounter species and static legendaries.
+   TODO: read catch_rate from game data (base_stats.json / PokemonSimulation)
+   instead of hardcoding an English species-slug table. *)
 let species_tiers =
   [
     {
