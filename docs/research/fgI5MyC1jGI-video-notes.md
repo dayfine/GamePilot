@@ -44,9 +44,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 02:55:00–03:00:00 | Reviewed |
 | 03:00:00–03:05:00 | Reviewed |
 | 03:05:00–03:10:00 | Reviewed |
-| 03:10:00–03:18:16 | Pending |
+| 03:10:00–03:15:00 | Reviewed |
+| 03:15:00–03:18:16 | Pending |
 
-Resume at **03:10:00** during Flint’s battle after Palkia knocks out Rapidash.
+Resume at **03:15:00** on the first turn against Cynthia’s Spiritomb after using X Sp. Def.
 
 ## Review method
 
@@ -709,3 +710,18 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 | 3:09:42–3:10:00 | Rapidash gets two more Poison Jabs in as Palkia attempts Surf. Palkia wakes up at 111/179 HP and KOs Rapidash with Surf. |
 
 **State at 3:10:00.** Palkia is Lv. 54 at 111/179 HP with Choice Specs and the X Speed, X Defense, and X Sp. Atk boosts active. Flint’s Rapidash has fainted. There are 41 Full Restores in the Bag.
+
+## 3:10:00–3:15:00 | Flint, Lucian, and the start of Cynthia
+
+| Video time | Observed action |
+| --- | --- |
+| 3:10:01–3:10:40 | Palkia KOs Flint’s Lopunny Lv. 57, Steelix Lv. 57, and Drifblim Lv. 58 with Surf. |
+| 3:10:45–3:11:24 | Infernape Lv. 61 survives Surf with Focus Sash and uses Close Combat, reducing Palkia from 111/179 to 59/179 HP. Flint uses Full Restore. Palkia’s next Surf KOs Infernape, and Palkia reaches Lv. 55. |
+| 3:11:25–3:11:44 | Take the next elevator and dismiss the expired repel prompt. Use one Full Restore to heal Palkia to 183/183 HP, then save outside Lucian’s room. |
+| 3:11:45–3:12:34 | Challenge Lucian. Against Mr. Mime Lv. 59, use X Sp. Def as it sets Light Screen and X Speed as it uses Dazzling Gleam. Use the first X Sp. Atk as Mr. Mime sets Reflect. |
+| 3:12:35–3:12:56 | Use two more X Sp. Atk. Two more Dazzling Gleams leave Palkia at 13/183 HP. Surf KOs Mr. Mime. |
+| 3:12:57–3:14:03 | Palkia KOs Medicham Lv. 60, Alakazam Lv. 60, Girafarig Lv. 59, and Bronzong Lv. 63 with Surf. Palkia reaches Lv. 56 after Girafarig and declines Aura Sphere. |
+| 3:14:04–3:14:54 | Take the elevator and use one Full Restore. Enter Cynthia’s room and start the Champion battle. Cynthia leads with Spiritomb, and both active Pokémon have Pressure. |
+| 3:14:55–3:15:00 | Use one X Sp. Def on Palkia. Spiritomb responds with Shadow Ball. |
+
+**State at 3:15:00.** Palkia is the only party member at Lv. 56 with Choice Specs. It entered the battle at 186/186 HP, and its X Sp. Def boost is active. There are 39 Full Restores in the Bag.
