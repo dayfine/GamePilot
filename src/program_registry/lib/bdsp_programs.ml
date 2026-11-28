@@ -75,7 +75,7 @@ let underground =
     checkpoints = Some "src/games/pokemon/bdsp/programs/underground/plans";
     backends = [ Switch ];
     viewport = Native;
-    rules = Bdsp;
+    rules = Bdsp_underground;
     options = underground_options;
   }
 
@@ -158,7 +158,7 @@ let static_rng =
     checkpoints = Some "src/games/pokemon/bdsp/programs/static_rng/plans";
     backends = [ Switch ];
     viewport = Native;
-    rules = Bdsp;
+    rules = Bdsp_static_rng;
     options = static_rng_options;
   }
 

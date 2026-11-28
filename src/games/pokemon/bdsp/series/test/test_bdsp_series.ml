@@ -69,8 +69,17 @@ let test_select_range_defaults_to_all dir =
       assert_eq ~name:"selected" ~expected:[ "01-save-game" ]
         ~actual:sel.selected
 
+let test_load_title dir =
+  match Checkpoint_series.load_title ~plan_dir:dir "01-save-game" with
+  | Error e -> fail ("load_title: " ^ e)
+  | Ok (id, title) ->
+      assert_eq ~name:"checkpoint_id" ~expected:"01-save-game" ~actual:id;
+      assert_eq ~name:"title" ~expected:"Save Game" ~actual:title
+
 let () =
   test_flags_accepts_testing ();
   test_flags_rejects_verification ();
-  with_temp_plan_dir (fun dir -> test_select_range_defaults_to_all dir);
+  with_temp_plan_dir (fun dir ->
+      test_select_range_defaults_to_all dir;
+      test_load_title dir);
   print_endline "test_bdsp_series: OK"
