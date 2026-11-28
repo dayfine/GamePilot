@@ -796,7 +796,32 @@ let test_rng_party_room_and_needs () =
   let gift_needs =
     Result.get_ok (Plan_needs.needs stocks ~before:None gift_plan)
   in
-  check "gift_rng Plan_needs requires no start member" (gift_needs = [])
+  check "gift_rng Plan_needs requires no start member" (gift_needs = []);
+  let static_plan =
+    decode "static"
+      {|{"format": "gamepilot-checkpoint/1", "game": "frlg",
+         "checkpoint": {"id": "static", "title": "Static RNG Zapdos",
+           "events": [
+             {"id": "s", "kind": "game_action", "action": "static_rng",
+              "args": {"species": "zapdos", "ball": "ultra-ball"}}]},
+         "execution": {"menu": "full"}}|}
+  in
+  let static_room = chain_need [ static_plan ] in
+  check "static_rng needs 1 free slot" (Party_room.free_needed static_room = 1);
+  check "static_rng precondition is 1 free slot"
+    (Party_room.precondition static_room = { Room_policy.free_slots = 1 });
+  check "static_rng joins zapdos" (static_room.joins = [ ("zapdos", "static") ]);
+  check "static_rng does not require static species in start party"
+    (static_room.used = []);
+  let static_needs =
+    Result.get_ok (Plan_needs.needs stocks ~before:None static_plan)
+  in
+  check "static_rng Plan_needs requires ball and no start member"
+    (static_needs
+    = [
+        Need.Item_at_least
+          { item = "ultra-ball"; count = 99; for_ = "static_rng" };
+      ])
 
 let () =
   test_rng_party_room_and_needs ();

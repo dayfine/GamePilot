@@ -83,7 +83,7 @@ let action_effect ~where action args =
     | _, Some move -> Ok { no_effect with eff_moves = [ move ] }
     | "capture", _ ->
         map (of_capture ~single:false) (A.Capture_plan.decode args)
-    | "wild_rng", _ ->
+    | "wild_rng", _ | "static_rng", _ ->
         map (of_capture ~single:true) (A.Capture_plan.decode args)
     | "gift_rng", _ ->
         let decode ~where a = Json_field.string ~where "species" a in

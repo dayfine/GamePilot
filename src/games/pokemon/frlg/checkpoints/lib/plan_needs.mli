@@ -4,9 +4,9 @@
     ([pc_deposit]), some member knowing Cut or Fly, the badge each field move
     needs, the money its purchases cost, the bag items it gives or uses that no
     earlier purchase or pickup ([pick_up_item]) of its own brought (a Rare Candy
-    for [use_rare_candy] and [candy_level], the ball budget for [capture] and
-    [wild_rng]), what the checkpoint before it promised, and the place. Each is
-    a {!Need.t}. *)
+    for [use_rare_candy] and [candy_level], the ball budget for [capture],
+    [wild_rng] and [static_rng]), what the checkpoint before it promised, and
+    the place. Each is a {!Need.t}. *)
 
 val needs :
   ?options:Run_options.t ->

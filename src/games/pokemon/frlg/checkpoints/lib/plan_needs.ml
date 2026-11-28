@@ -161,14 +161,15 @@ let decode_duplicate ~options ~where args =
     A.Mail_glitch_use.duplication_plan ~options ~where args )
 
 let capture_mode action args =
-  if action <> "wild_rng" then A.Catch_ball_budget.Throw_only
-  else
-    let raw =
-      match Json_field.find "catch_mode" args with
-      | Some (`String s) -> Some s
-      | _ -> None
-    in
-    A.Catch_ball_budget.catch_mode_of_string raw
+  match action with
+  | "wild_rng" | "static_rng" ->
+      let raw =
+        match Json_field.find "catch_mode" args with
+        | Some (`String s) -> Some s
+        | _ -> None
+      in
+      A.Catch_ball_budget.catch_mode_of_string raw
+  | _ -> A.Catch_ball_budget.Throw_only
 
 let capture_action ~options action args acc plan =
   let explicit_balls =
@@ -188,7 +189,7 @@ let game_action ~options stocks ~where action args acc =
         (A.Action_requests.decode ~options stocks action args)
   | _ when List.mem_assoc action field_move_users ->
       Ok (field_move action (use_badge action acc))
-  | "capture" | "wild_rng" ->
+  | "capture" | "wild_rng" | "static_rng" ->
       map (capture_action ~options action args acc) (A.Capture_plan.decode args)
   | "gift_rng" ->
       let decode ~where a = Json_field.string ~where "species" a in

@@ -172,6 +172,13 @@ val throw_only_policy : Capture_plan.t -> Pokemon_catch.Catch_state.policy
     Swiper, or wall: throws [capture.ball] directly up to [capture.max_balls].
 *)
 
+val catch_mode : where:string -> Capture_plan.t -> Json_field.obj -> catch_mode
+(** Reads optional ["catch_mode"] (["throw_only"] | ["phase1"] | ["phase2"],
+    default ["throw_only"]). *)
+
+val visual_shiny_check : where:string -> Json_field.obj -> bool
+(** Reads optional boolean ["visual_shiny_check"] (default [false]). *)
+
 val load_trainer_ids : unit -> (trainer_ids, string) result
 (** Reads fallback trainer IDs from [GAMEPILOT_FRLG_TID] / [GAMEPILOT_FRLG_SID],
     falling back to [trainer_ids.json] inside the FRLG config directory

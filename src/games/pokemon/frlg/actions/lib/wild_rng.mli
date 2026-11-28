@@ -73,8 +73,9 @@ val watch_counters :
 (** Builds the standard [attempt] ([current/total]) and [phase] counter items
     for [watch.counters]. Shared with {!Wild_rng_steps} and {!Gift_rng}. *)
 
-val run : game_steps -> Capture_plan.t -> party:int -> result
-(** From the overworld with [party] members. *)
+val run : ?label:string -> game_steps -> Capture_plan.t -> party:int -> result
+(** From the overworld with [party] members. [label] prefixes the visual shiny
+    detector's log line (defaults to ["Wild RNG"]). *)
 
 val failure_code : end_ -> string option
 (** [None] for [Shiny]; else ["wild_rng_not_shiny"],

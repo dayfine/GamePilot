@@ -43,6 +43,7 @@
   test_pc_box
   test_wild_rng
   test_gift_rng
+  test_static_rng
   test_pokedex_entry
   test_skip_conditions
   test_naming_entry
@@ -82,6 +83,7 @@
   test_pc_box
   test_wild_rng
   test_gift_rng
+  test_static_rng
   test_pokedex_entry
   test_skip_conditions
   test_naming_entry
