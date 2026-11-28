@@ -16,9 +16,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 00:35:00–00:40:00 | Reviewed |
 | 00:40:00–00:45:00 | Reviewed |
 | 00:45:00–00:50:00 | Reviewed |
-| 00:50:00–03:18:16 | Pending |
+| 00:50:00–00:55:00 | Reviewed |
+| 00:55:00–03:18:16 | Pending |
 
-Resume at **00:50:00** as Scientist Travon sends out Kadabra in the Eterna Galactic Building.
+Resume at **00:55:00** on Route 207, after picking up the hidden Revive and heading east.
 
 ## Review method
 
@@ -227,10 +228,30 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 | 47:09–47:42 | Return west to the blocked entrance of the **Team Galactic Eterna Building**. Use **Cut**, with Bidoof appearing in the field-move animation. Enter the building and approach the pair of grunts at the stairwell. |
 | 47:43–48:39 | In the double battle, **Kazza’s Confusion** knocks out **Wurmple**, and **Monferno’s Flame Wheel** knocks out **Zubat**. Kazza reaches **Lv. 20** and has **Psycho Cut** visible in the following move menu. Against the replacement **Glameow** and **Cascoon**, use Confusion on Cascoon and Flame Wheel on Glameow. Both are knocked out. |
 | 48:40–49:45 | Climb the stairs, cross the computer floor and climb again. Approach the grunt in the near cubicle. **Kazza** knocks out **Wurmple**, **Zubat** and **Silcoon** with one **Confusion** each. |
-| 49:46–50:00 | Briefly open the party menu, then head across to the right side of the floor. **Scientist Travon** challenges the player and starts sending out **Kadabra**. |
+| 49:46–50:00 | Move Monferno back into the lead, then head across to the right side of the floor. **Scientist Travon** challenges the player and starts sending out **Kadabra**. |
 
 ### State at 50:00
 
 - Inside the **Team Galactic Eterna Building**, entering Scientist Travon’s battle.
-- **Kazza Lv. 20** leads. Its last visible HP was **51/51** and **Confusion** and **Psycho Cut** were visible. **Monferno Lv. 21, 64/64 HP** is second with the **Pecha Berry**.
+- **Monferno Lv. 21, 64/64 HP** leads with the **Pecha Berry**. **Kazza Lv. 20, 51/51 HP** is second, with **Confusion** and **Psycho Cut** visible.
 - Forest Badge and Cut obtained. **5 Super Potions** remain after the observed use. The new shop items are **5 Heal Powders**, **1 Revival Herb** and **13 Energy Roots**.
+
+## 50:00–55:00 | Jupiter, the Explorer Kit and Cycling Road
+
+| Video time | Observed action and outcome |
+|---|---|
+| 50:00–50:24 | **Scientist Travon** sends out Kadabra. **Monferno** knocks it out with one **Flame Wheel** and reaches **Lv. 22**. **Kazza** reaches **Lv. 21**. |
+| 50:25–51:06 | Climb to the top floor and put **Kazza** back in front before approaching **Commander Jupiter**. Kazza starts at **53/53 HP**. One **Confusion** knocks out female **Zubat Lv. 18**. Jupiter sends out female **Skuntank Lv. 20**. |
+| 51:07–51:42 | Swap Kazza for **Monferno** at **66/66 HP**. Skuntank’s first **Poison Gas** triggers the held **Pecha Berry**, curing Monferno immediately. Use **Power-Up Punch** twice. Skuntank poisons Monferno again on the first turn, then **Acid Spray** reduces its Special Defense on the second. Monferno falls to **35/66 HP** after poison damage. |
+| 51:43–52:13 | Use **Flame Wheel**, after which Skuntank consumes a **Sitrus Berry**. **Flamethrower** and poison leave Monferno at **6/66 HP**. Use a **Super Potion** to reach full HP before **Snarl** and poison damage. A second **Flame Wheel** knocks out Skuntank and triggers **Aftermath**. |
+| 52:14–52:57 | Win against Jupiter. **Kazza** reaches **Lv. 22**. Advance the scene in which the rescued man gets his Clefairy back. Backtrack down the stairs, exit the building, use **Cut** again to leave the grounds, and enter the house beside the Pokémon Center. |
+| 52:58–53:41 | Receive the **Explorer Kit** from the Underground Man. Outside, use it to enter the **Grand Underground** and finish **Roark’s** introduction. Select **Go up** and return immediately. The Underground Man gives **Red, Blue and Green Sphere S** rewards. |
+| 53:42–54:11 | Enter the **Bike Shop** and follow the rescued owner outside. Select and confirm a **blue Bike**. Clear the gears and bike-riding tutorial. |
+| 54:11–54:38 | Ride south through the gatehouse and down **Route 206 Cycling Road** without a trainer battle. Exit the southern gatehouse onto **Route 207**. |
+| 54:39–55:00 | Advance **Dawn’s** hand-choice dialogue and receive the **Vs. Seeker** and the **Dowsing Machine** app. Pick up the hidden **Revive** near the yellow-leaved tree, then head east along the rocky passage. |
+
+### State at 55:00
+
+- **Route 207**, east of the Cycling Road exit and heading toward Mt. Coronet. The Bike, Explorer Kit, Vs. Seeker and Dowsing Machine are obtained.
+- **Kazza Lv. 22** leads. **Monferno Lv. 22** is second, last shown at **22/66 HP** and poisoned in Eterna. Its held Pecha Berry was consumed in the Jupiter fight.
+- **4 Super Potions** remain after the observed use. The Revive was picked up, and the separate Revival Herb is still in the Bag.
