@@ -10,15 +10,14 @@ let sample_console : Console_config.console =
     id = "console-a";
     name = "Console A";
     backend = Switch { serial = Some "/dev/cu.usbserial-1"; capture = "0" };
+    watch_port = None;
   }
 
-let build_run json () =
+let build_run ?(console = sample_console) json () =
   match Ui_api.decode_launch (Yojson.Safe.from_string json) with
   | Error e -> "decode error: " ^ e
   | Ok req -> (
-      match
-        Ui_api.build_run_argv ~gamepilot:"gamepilot" ~console:sample_console req
-      with
+      match Ui_api.build_run_argv ~gamepilot:"gamepilot" ~console req with
       | Ok argv -> String.concat " " argv
       | Error e -> "build error: " ^ e)
 
@@ -286,6 +285,13 @@ let () =
         "gamepilot run frlg.supplies --backend switch --capture 0 --serial \
          /dev/cu.usbserial-1 --preflight --from su-01 --options retro-mail=100 \
          --options super-repel=5";
+      case "build_run_argv includes console watch_port when configured"
+        (build_run
+           ~console:{ sample_console with watch_port = Some 47910 }
+           {|{"console":"console-a","program":"frlg.supplies","from":"su-01","to":"su-01","options":{"retro-mail":"20","super-repel":"0"}}|})
+        "gamepilot run frlg.supplies --backend switch --capture 0 --serial \
+         /dev/cu.usbserial-1 --from su-01 --to su-01 --mode testing --watch \
+         --watch-port 47910 --options retro-mail=20 --options super-repel=0";
       case "build_run_argv rejects invalid option value"
         (build_run
            {|{"console":"console-a","program":"frlg.supplies","options":{"retro-mail":"9999"}}|})
