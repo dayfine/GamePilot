@@ -9,9 +9,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 00:00:00–00:05:00 | Reviewed |
 | 00:05:00–00:10:00 | Reviewed |
 | 00:10:00–00:15:00 | Reviewed |
-| 00:15:00–03:18:16 | Pending |
+| 00:15:00–00:20:00 | Reviewed |
+| 00:20:00–03:18:16 | Pending |
 
-Resume at **00:15:00** during the first rival battle on Route 203, after the first Ember against Piplup.
+Resume at **00:20:00** during Youngster Darius’s battle introduction in the Oreburgh Gym.
 
 ## Review method
 
@@ -89,3 +90,25 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 - Route 203 rival battle. Starly has fainted. Piplup remains active with green HP after the first Ember. Its response is pending at the boundary.
 - Chimchar is **Lv. 8, 23/27 HP**, with one Growl applied. Last visible PP before the attack was **Scratch 30/35**, **Leer 29/30**, and **Ember 19/25**. Ember should have **18/25** after the attack.
 - Parcel delivered. Town Map and Pokétch obtained. **9 Potions** remain by count after the observed use.
+
+## 15:00–20:00 | Rival win, Route 207 Machop and Oreburgh Mine
+
+| Video time | Observed action and outcome |
+|---|---|
+| 15:00–15:26 | The rival’s **Piplup Lv. 9** uses **Growl** after the first **Ember**. Keep using Ember. Two **Pounds** drop Chimchar from **23/27** to **19/27**, then **15/27 HP**. The fourth Ember burns Piplup, which uses Growl before taking burn damage. |
+| 15:27–16:05 | Continue with Ember through Piplup’s Growl, Pound and burn turns. The second-to-last Ember is a critical hit. Piplup faints after eight total Embers, including the one just before 15:00. The count is supported by the drop from **19/25** to **11/25 PP** by the next battle that shows the move menu. Chimchar is last shown at **11/27 HP** before the level-up. |
+| 16:06–16:17 | Gain **124 EXP**, reach **Lv. 9**, and learn **Taunt**. Defeat the rival and receive **₽1,188**. Clear the post-battle dialogue. |
+| 16:18–16:41 | Travel east along Route 203, passing the pond and through the grass toward **Oreburgh Gate**. Inside, the hiker gives **TM98s (Rock Smash)** and unlocks the Hidden Moves Pokétch app. Continue east past the trainers. |
+| 16:42–17:19 | Flee a wild male **Geodude Lv. 6** inside the gate and exit into **Oreburgh City**. A boy leads the player to the Gym. Continue past it, turn north at the stairs and enter **Route 207**. |
+| 17:20–17:38 | Flee a second wild Geodude. Move in and out of the grass by the Route 207 sign until the next encounter. |
+| 17:38–18:17 | Encounter female **Machop Lv. 7**. Use **Scratch** once, leaving its HP green. **Low Kick** reduces Chimchar from **13/29** to **10/29 HP**. Throw one ordinary **Poké Ball** and catch Machop. Chimchar gains **70 EXP** and remains Lv. 9. |
+| 18:18–18:46 | Return south to Oreburgh City and heal both Pokémon at the Pokémon Center. Leave and head south through the industrial area into **Oreburgh Mine**. |
+| 18:47–19:16 | Collect **X Defense** near the crates and barrels on the entry level. Descend to the lower level, pick up the **Escape Rope** by the crates, then follow the bottom passage east. Speak to **Roark**, who demonstrates Rock Smash and leaves. |
+| 19:17–19:28 | Move **Machop** ahead of Chimchar in the party. The Bag shows **9 Potions**, **19 Poké Balls**, **1 Escape Rope**, and **₽10,296**. Use the Escape Rope to return to the mine entrance. |
+| 19:29–20:00 | Return north to the city, turn west to the **Oreburgh Gym**, and enter. Take the left staircase past the lower trainer, cross to the right and approach **Youngster Darius**. The battle introduction is still in progress at the boundary. |
+
+### State at 20:00
+
+- Oreburgh Gym, entering the battle with Youngster Darius. The first opposing Pokémon is pending.
+- **Machop** (female, **Lv. 7, 27/27 HP**) is first. **Chimchar** (male, **Lv. 9, 29/29 HP**) is second and knows **Scratch**, **Leer**, **Ember** and **Taunt**. The last Pokémon Center visit restored both.
+- **9 Potions** and **19 Poké Balls** remain. X Defense is in the Bag. The Escape Rope was used.
