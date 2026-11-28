@@ -25,9 +25,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 01:20:00–01:25:00 | Reviewed |
 | 01:25:00–01:30:00 | Reviewed |
 | 01:30:00–01:35:00 | Reviewed |
-| 01:35:00–03:18:16 | Pending |
+| 01:35:00–01:40:00 | Reviewed |
+| 01:40:00–03:18:16 | Pending |
 
-Resume at **01:35:00** outside the Celestic ruins with the Super Potion action open for Kazza.
+Resume at **01:40:00** on the water on Route 218 after picking up the Rare Candy.
 
 ## Review method
 
@@ -409,3 +410,19 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 | 1:34:34–1:35:00 | Exit the ruins and speak with Cyrus. Swap held items so Kazza has the Rawst Berry and Monferno has Metronome. Open Kazza’s Restore menu and select Super Potion. |
 
 **State at 1:35:00.** Outside the Celestic ruins. Kazza is Lv. 34 at 54/82 HP and holds the Rawst Berry. Monferno is Lv. 27 at 0/80 HP and holds Metronome. Wise Glasses, Choice Specs, 13 Super Potions, three Revives, and 23 Super Repels are in the Bag. The objective is Fantina at Hearthome Gym.
+
+## 1:35:00–1:40:00 | Fantina and Route 218 Surf
+
+| Video time | Observed action |
+| --- | --- |
+| 1:35:00–1:35:17 | Use one Super Potion on Kazza, Fly to Hearthome City, and ride east to the Gym. |
+| 1:35:25–1:36:08 | Take the elevators and choose doors in order: right, center, left, right. Reach Fantina without battling the Gym trainers. |
+| 1:36:19–1:36:45 | Fantina opens with Drifblim Lv. 32. Use X Sp. Def and take Hex, which leaves Kazza at 46/82 HP. Use X Speed while Drifblim starts Fly. |
+| 1:36:46–1:37:12 | Use a Super Potion while Drifblim is airborne. Fly drops Kazza from 82/82 to 21/82 HP. Use a second Super Potion while Drifblim starts another Fly, then use X Sp. Atk on the landing turn. Kazza survives at 23/82 HP and KOs Drifblim with Psyshock. |
+| 1:37:18–1:37:33 | Psychic KOs Gengar Lv. 34. Cursed Body disables Psychic, and Kazza reaches Lv. 35. |
+| 1:37:38–1:38:08 | Psyshock KOs Mismagius Lv. 36. Kazza reaches Lv. 36. Fantina awards the Relic Badge and TM65 Shadow Claw. The badge enables Surf outside battle. |
+| 1:38:09–1:39:06 | Retrace the elevators and exit. Cynthia points the player toward Canalave City and its library. |
+| 1:39:07–1:39:23 | Swap the held items back to Kazza with Metronome and Monferno with the Rawst Berry. Use one Energy Root on Kazza to heal 59 HP, activate a Super Repel, and Fly to Jubilife City. |
+| 1:39:29–1:40:00 | Ride west through the gate to Route 218. Use Surf from the pier, turn toward the trees on the east bank, pick up the Rare Candy, then Surf west again. |
+
+**State at 1:40:00.** Five badges. Kazza is Lv. 36 at 86/86 HP and holds Metronome. Monferno remains fainted and holds the Rawst Berry. Ten Super Potions and 22 Super Repels remain, with one repel active. The player is surfing on Route 218.
