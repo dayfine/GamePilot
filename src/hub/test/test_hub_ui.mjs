@@ -21,20 +21,83 @@ const webDir = path.resolve(
 function loadWebAssets() {
   const html = fs.readFileSync(path.join(webDir, 'index.html'), 'utf8');
   const script = fs.readFileSync(path.join(webDir, 'app.js'), 'utf8');
-  return { html, script };
+  const css = fs.readFileSync(path.join(webDir, 'style.css'), 'utf8');
+  return { html, script, css };
 }
 
-function makeFakeElement(id) {
+function makeFakeElement(id = '', tagName = 'DIV') {
   const classes = new Set();
-  return {
+  const childNodes = [];
+  let _innerHTML = '';
+  const el = {
     id,
-    innerHTML: '',
+    tagName: tagName.toUpperCase(),
     textContent: '',
     value: '',
     href: '',
+    target: '',
     checked: false,
     disabled: false,
     dataset: {},
+    parentNode: null,
+    scrollTop: 0,
+    clientHeight: 200,
+    scrollHeight: 200,
+    childNodes,
+    get children() {
+      return childNodes.filter((n) => n.nodeType !== 3);
+    },
+    get firstChild() {
+      return childNodes[0] || null;
+    },
+    get className() {
+      return Array.from(classes).join(' ');
+    },
+    set className(val) {
+      classes.clear();
+      for (const c of String(val || '').split(/\s+/)) {
+        if (c) classes.add(c);
+      }
+    },
+    get innerHTML() {
+      return _innerHTML;
+    },
+    set innerHTML(val) {
+      _innerHTML = val;
+      for (const c of childNodes) c.parentNode = null;
+      childNodes.length = 0;
+    },
+    appendChild(child) {
+      if (child.parentNode) child.parentNode.removeChild(child);
+      child.parentNode = el;
+      childNodes.push(child);
+      return child;
+    },
+    insertBefore(child, ref) {
+      if (child.parentNode) child.parentNode.removeChild(child);
+      child.parentNode = el;
+      const idx = ref ? childNodes.indexOf(ref) : -1;
+      if (idx === -1) childNodes.push(child);
+      else childNodes.splice(idx, 0, child);
+      return child;
+    },
+    removeChild(child) {
+      const idx = childNodes.indexOf(child);
+      if (idx !== -1) childNodes.splice(idx, 1);
+      child.parentNode = null;
+      return child;
+    },
+    remove() {
+      if (el.parentNode) el.parentNode.removeChild(el);
+    },
+    contains(node) {
+      let cur = node;
+      while (cur) {
+        if (cur === el) return true;
+        cur = cur.parentNode;
+      }
+      return false;
+    },
     classList: {
       toggle(c, force) {
         if (force === undefined) {
@@ -51,6 +114,16 @@ function makeFakeElement(id) {
       },
     },
   };
+  return el;
+}
+
+function findDescendants(root, pred) {
+  const out = [];
+  for (const child of root.childNodes || []) {
+    if (pred(child)) out.push(child);
+    out.push(...findDescendants(child, pred));
+  }
+  return out;
 }
 
 function createHubSandbox(mockRoutes, opts = {}) {
@@ -115,11 +188,19 @@ function createHubSandbox(mockRoutes, opts = {}) {
       assert.ok(els[id], `unexpected getElementById(${id})`);
       return els[id];
     },
+    createElement(tag) {
+      return makeFakeElement('', tag);
+    },
+    createTextNode(text) {
+      return { nodeType: 3, textContent: String(text), parentNode: null };
+    },
     querySelectorAll(sel) {
       if (sel === '[data-opt]') return optInputs;
       return [];
     },
   };
+
+  let activeSelection = { isCollapsed: true, rangeCount: 0, anchorNode: null, focusNode: null };
 
   async function fetch(url, init = {}) {
     const method = (init.method || 'GET').toUpperCase();
@@ -150,6 +231,9 @@ function createHubSandbox(mockRoutes, opts = {}) {
           replacedUrls.push(url);
         },
       },
+      getSelection() {
+        return activeSelection;
+      },
     },
     URLSearchParams,
     fetch,
@@ -160,7 +244,17 @@ function createHubSandbox(mockRoutes, opts = {}) {
   };
   vm.createContext(sandbox);
   vm.runInContext(script, sandbox);
-  return { html, sandbox, els, optInputs, fetchLog, replacedUrls };
+  return {
+    html,
+    sandbox,
+    els,
+    optInputs,
+    fetchLog,
+    replacedUrls,
+    setSelection(sel) {
+      activeSelection = sel;
+    },
+  };
 }
 
 const sampleFixtures = () => ({
@@ -312,7 +406,9 @@ test('Initial load renders consoles, Newest Live Run link, and full 9-column Run
   assert.match(els.consolesGrid.innerHTML, /http:\/\/Mac-mini\.local:57023\//);
   assert.match(els.consolesGrid.innerHTML, /Console B/);
   assert.equal(els.runCount.textContent, '1 run(s)');
-  assert.doesNotMatch(els.runsList.innerHTML, /stopRun\('ext-80610'\)/);
+  const stopBtns = findDescendants(els.runsList, (n) => n.tagName === 'BUTTON');
+  assert.equal(stopBtns.length, 1);
+  assert.equal(stopBtns[0].classList.contains('hidden'), true);
   assert.equal(els.historyCount.textContent, '2 of 2 runs');
   assert.match(
     els.historyList.innerHTML,
@@ -445,4 +541,91 @@ test('Series Run History entry links to /series/<id>/ with series tag', async ()
   );
   assert.match(els.historyList.innerHTML, /<span class="tag">series<\/span>/);
   assert.match(els.historyList.innerHTML, /su-01 → <b>su-02<\/b>/);
+});
+
+test('Hub CSS makes active run log box vertically resizable without max-height cap', () => {
+  const { css } = loadWebAssets();
+  const preBlock = css.match(/pre\s*\{[^}]*\}/);
+  assert.ok(preBlock, 'expected pre rule in style.css');
+  assert.match(preBlock[0], /resize:\s*vertical/);
+  assert.match(preBlock[0], /overflow:\s*auto/);
+  assert.match(preBlock[0], /max-height:\s*none/);
+});
+
+test('loadRuns preserves card/log DOM identity, appends incrementally, and respects active selection', async () => {
+  const routes = sampleFixtures();
+  const run = {
+    id: 'run-1',
+    console: 'console-b',
+    program: 'frlg.supplies',
+    command: 'gamepilot run ...',
+    status: 'running',
+    external: false,
+    watch_url: 'http://127.0.0.1:57024/',
+    logs: ['line 1', 'line 2'],
+  };
+  routes['GET /api/runs'] = () => ({ json: { runs: [{ ...run, logs: run.logs.slice() }] } });
+
+  const { sandbox, els, setSelection } = createHubSandbox(routes);
+  await sandbox.loadRuns();
+
+  const card1 = els.runsList.children[0];
+  assert.ok(card1, 'expected run card');
+  const pre1 = findDescendants(card1, (n) => n.tagName === 'PRE')[0];
+  assert.ok(pre1, 'expected log <pre>');
+  assert.deepEqual(
+    pre1.children.map((c) => c.textContent),
+    ['line 1', 'line 2']
+  );
+  const firstLineNode = pre1.children[0];
+
+  // Simulate new line appended while scrolled to bottom and no selection.
+  pre1.scrollHeight = 400;
+  pre1.scrollTop = 200; // scrollTop + clientHeight (200) >= scrollHeight - 4
+  run.logs = ['line 1', 'line 2', 'line 3'];
+  await sandbox.loadRuns();
+
+  assert.equal(els.runsList.children[0], card1, 'run card DOM node should be reused');
+  assert.equal(
+    findDescendants(card1, (n) => n.tagName === 'PRE')[0],
+    pre1,
+    'log <pre> DOM node should be reused'
+  );
+  assert.equal(pre1.children[0], firstLineNode, 'existing log line node should not be recreated');
+  assert.deepEqual(
+    pre1.children.map((c) => c.textContent),
+    ['line 1', 'line 2', 'line 3']
+  );
+  assert.equal(pre1.scrollTop, 400, 'should auto-scroll to bottom when at bottom without selection');
+
+  // Simulate user selecting text inside log box while sliding window shifts.
+  setSelection({
+    isCollapsed: false,
+    rangeCount: 1,
+    anchorNode: firstLineNode,
+    focusNode: pre1.children[1],
+  });
+  pre1.scrollTop = 200;
+  pre1.scrollHeight = 500;
+  run.logs = ['line 2', 'line 3', 'line 4'];
+  await sandbox.loadRuns();
+
+  assert.equal(pre1.children[0], firstLineNode, 'should not remove selected leading line');
+  assert.deepEqual(
+    pre1.children.map((c) => c.textContent),
+    ['line 1', 'line 2', 'line 3', 'line 4']
+  );
+  assert.equal(pre1.scrollTop, 200, 'should not auto-scroll while user has selection in log');
+
+  // Clear selection: next poll trims dropped leading lines and keeps overlapping middle nodes.
+  setSelection({ isCollapsed: true, rangeCount: 0, anchorNode: null, focusNode: null });
+  const line2Node = pre1.children[1];
+  run.logs = ['line 2', 'line 3', 'line 4', 'line 5'];
+  await sandbox.loadRuns();
+
+  assert.equal(pre1.children[0], line2Node, 'overlapping line node should be preserved');
+  assert.deepEqual(
+    pre1.children.map((c) => c.textContent),
+    ['line 2', 'line 3', 'line 4', 'line 5']
+  );
 });

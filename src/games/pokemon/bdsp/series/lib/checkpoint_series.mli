@@ -41,6 +41,23 @@ type program = {
 val load_plan : plan_dir:string -> string -> (Bdsp_engine.Plan.t, string) result
 (** Loads and decodes [<plan_dir>/<id>.plan.json]. *)
 
+val load_title : plan_dir:string -> string -> (string * string, string) result
+(** Loads [<plan_dir>/<id>.plan.json] and returns [(checkpoint_id, title)] for
+    guide tables. *)
+
+val run_save_game :
+  log:(string -> unit) ->
+  picture:Wire.box ->
+  unit ->
+  (unit, Engine_run.Failure.cause) result
+(** Runs BDSP's shared [Save_game] action ({!Bdsp_actions.Save_game.save_game}),
+    wrapping errors as a repeatable {!Engine_run.Failure.cause}. *)
+
+val default_program : run_action:action_runner -> program
+(** Builds a standard BDSP {!program} with no extra plan checks, no extra daemon
+    flags, {!Switch.Initial_screen.In_game_or_resume} [None], and [run_action].
+*)
+
 val select_range :
   plan_dir:string ->
   unit Run_flags.flags ->

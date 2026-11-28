@@ -3,7 +3,7 @@
 Turns on the Mail Glitch on a post-game FireRed save, then copies one item with it.
 
 This page covers 01-celadon-setup to 08-activate-and-verify; the item copy that ends 08 has its
-own page, [Item duplication](frlg.mail_glitch.item_duplication.md). How the glitch works:
+own page, [Item duplication](mail_glitch.item_duplication.md). How the glitch works:
 the Pomeg Letterbombers' [Mail Glitch notes](https://pomeg-letterbombers.github.io/pokemon-ace-notes/mail-glitch/).
 
 **What you get:**
@@ -50,7 +50,7 @@ What the plans need, as the pre-flight checks it (generated from the plans):
 - the thunder badge (fly)
 - the cascade badge (cut_tree)
 - money at least ¥10350 (all the purchases)
-- poke-ball at least x1 (capture)
+- poke-ball at least x10 (capture)
 - at the start, anywhere outdoors where Fly works
 <!-- /generated -->
 
@@ -70,7 +70,7 @@ Give each as `--options KEY=VALUE`:
 <!-- /generated -->
 
 Build first (`cd src && opam exec -- dune build`; on the Switch, also the daemon), and set the
-`GAMEPILOT_*` variables described in [Running on mGBA](../mgba.md) (mGBA) and
+`GAMEPILOT_*` variables described in [Running on mGBA](../../mgba.md) (mGBA) and
 `docs/switch-bring-up.md` (the Switch).
 
 <!-- generated:commands 01-celadon-setup..08-activate-and-verify -->
@@ -137,7 +137,7 @@ In plain words, beyond the table:
    back.
 9. **08-activate-and-verify, the check.** MIMIEN must show a held item. Without saving, the program
    reads the glitched mail and copies one Antidote
-   ([Item duplication](frlg.mail_glitch.item_duplication.md)). It saves only once the copy has
+   ([Item duplication](mail_glitch.item_duplication.md)). It saves only once the copy has
    worked, so there is never a save right after the battle.
 
 ## How long it takes
@@ -172,7 +172,7 @@ checkpoint before it promised:
 | Resume from | The pre-flight checks |
 |---|---|
 | 01-celadon-setup | a member knows fly (fly); the thunder badge (fly); money at least ¥4100 (mart, buy_coins); at the start, anywhere outdoors where Fly works |
-| 02-trade-farfetchd | party includes blastoise, abra; a member knows cut (cut_tree); a member knows fly (fly); the cascade badge (cut_tree); the thunder badge (fly); poke-ball at least x1 (capture); at the start, CeladonCity |
+| 02-trade-farfetchd | party includes blastoise, abra; a member knows cut (cut_tree); a member knows fly (fly); the cascade badge (cut_tree); the thunder badge (fly); poke-ball at least x10 (capture); at the start, CeladonCity |
 | 03-trade-mr-mime | party includes blastoise, abra, farfetchd; abra in the party (ingame_trade); a member knows fly (fly); a member knows cut (cut_tree); the thunder badge (fly); the cascade badge (cut_tree); money at least ¥3550 (mart); at the start, VermilionCity |
 | 04-grind-farfetchd | party includes blastoise, mr-mime, farfetchd; farfetchd in the party (grind); blastoise in the party (grind); a member knows fly (fly); the thunder badge (fly); escape-rope at least x1 (use_item); at the start, LavenderTown_PokemonCenter_1F |
 | 05-grind-mr-mime | party includes blastoise, mr-mime, farfetchd; mr-mime in the party (grind); blastoise in the party (grind); at the start, IndigoPlateau_PokemonCenter_1F |

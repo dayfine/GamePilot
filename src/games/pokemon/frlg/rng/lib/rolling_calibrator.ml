@@ -1,9 +1,13 @@
-(* Port of PA/CC's 10-attempt rolling calibration history from
-   PokemonFRLG/Programs/RngManipulation/PokemonFRLG_RngCalibration.cpp
-   (get_seed_calibration_frames, get_advances_calibration, update_history). *)
+(* Port of the 10-attempt rolling calibration history from
+   PokemonFRLG/Programs/RngManipulation/PokemonFRLG_RngCalibration.cpp. *)
 
 type sample = { implied_boot_offset_ms : float; implied_ingame_offset : int }
-type advance_obs = { used_ingame_offset : int; advance_delta : int }
+
+type advance_obs = {
+  used_ingame_offset : int;
+  seed_delta_frames : int;
+  advance_delta : int;
+}
 
 type estimate = {
   boot_offset_ms : int;
@@ -61,15 +65,16 @@ let step_bounds (max_neg, min_pos) o =
   else (max_neg, opt_min min_pos o.used_ingame_offset)
 
 let bracket_bounds obs = List.fold_left step_bounds (None, None) obs
+let hit_target_advance o = o.seed_delta_frames = 0 && o.advance_delta = 0
 
 let parity_locked t =
   let recent = take min_parity_lock_samples t.advance_obs in
   List.length recent = min_parity_lock_samples
-  && (not (List.exists (fun o -> o.advance_delta = 0) t.advance_obs))
+  && (not (List.exists hit_target_advance t.advance_obs))
   && List.for_all (fun o -> abs o.advance_delta = 1) recent
   &&
   match bracket_bounds recent with
-  | Some max_neg, Some min_pos -> max_neg < min_pos
+  | Some max_neg, Some min_pos -> max_neg <= min_pos
   | _ -> false
 
 let sum_samples samples =
@@ -106,7 +111,7 @@ let record t ~used_boot_offset_ms ~used_ingame_offset ~seed_delta_frames
     in
     let implied_ingame_offset = used_ingame_offset - advance_delta in
     let sample = { implied_boot_offset_ms; implied_ingame_offset } in
-    let obs = { used_ingame_offset; advance_delta } in
+    let obs = { used_ingame_offset; seed_delta_frames; advance_delta } in
     let next_samples = take t.max_history (sample :: t.samples) in
     let next_obs = take t.max_history (obs :: t.advance_obs) in
     let estimate = compute_estimate next_samples in

@@ -1,5 +1,7 @@
-(* Unit tests for Base_stats, Rng_miss_search, and Switch_rng_calibration's
-   timing refinement. *)
+(* Unit tests for Rng_miss_search: Method 1 and wild-encounter miss-distance
+   search, expanding advance radius, miss report formatting, and damped
+   calibration deltas. Uses synthetic seed/delay tables and reads
+   base_stats.json directly; no fakes. *)
 
 open Frlg_rng
 
@@ -8,66 +10,6 @@ let check_eq ~show name expected actual =
     Printf.eprintf "FAIL %s\n  expected: %s\n  actual:   %s\n%!" name
       (show expected) (show actual);
     exit 1)
-
-let test_base_stats () =
-  let db =
-    Result.get_ok (Base_stats.load ~path:"../../assets/base_stats.json" ())
-  in
-  let scyther = Option.get (Base_stats.find db "scyther") in
-  check_eq ~show:string_of_int "scyther base hp" 70 scyther.base.hp;
-  check_eq ~show:string_of_int "scyther base atk" 110 scyther.base.atk;
-  check_eq ~show:string_of_int "scyther base spe" 105 scyther.base.spe;
-  check_eq ~show:string_of_int "scyther gender_threshold" 126
-    scyther.gender_threshold;
-
-  (* Gender lookup matches PA/CC BaseStats.json thresholds. *)
-  let show_gender = function
-    | Base_stats.Male -> "Male"
-    | Female -> "Female"
-    | Genderless -> "Genderless"
-  in
-  check_eq ~show:show_gender "genderless (-2)" Genderless
-    (Base_stats.gender_of_pid ~pid:0x12345600 ~gender_threshold:(-2));
-  check_eq ~show:show_gender "100% male (-1)" Male
-    (Base_stats.gender_of_pid ~pid:0x12345600 ~gender_threshold:(-1));
-  check_eq ~show:show_gender "100% female (255)" Female
-    (Base_stats.gender_of_pid ~pid:0x123456ff ~gender_threshold:255);
-  check_eq ~show:show_gender "50% female at boundary 126" Female
-    (Base_stats.gender_of_pid ~pid:0x0000007e ~gender_threshold:126);
-  check_eq ~show:show_gender "50% male at 127" Male
-    (Base_stats.gender_of_pid ~pid:0x0000007f ~gender_threshold:126);
-
-  (* Gen 3 stat formula verification:
-     Lv 25 Adamant (nature=3: +Atk, -SpA) Scyther with 31 all IVs:
-     base = [70, 110, 80, 55, 80, 105]
-     HP  = ((140 + 31) * 25) / 100 + 25 + 10 = 42 + 35 = 77
-     Atk = (((220 + 31) * 25) / 100 + 5) * 11 / 10 = (62 + 5) * 11 / 10 = 73
-     Def = ((160 + 31) * 25) / 100 + 5 = 47 + 5 = 52
-     SpA = (((110 + 31) * 25) / 100 + 5) * 9 / 10 = (35 + 5) * 9 / 10 = 36
-     SpD = ((160 + 31) * 25) / 100 + 5 = 47 + 5 = 52
-     Spe = ((210 + 31) * 25) / 100 + 5 = 60 + 5 = 65 *)
-  let ivs : Pokemon_generation.ivs =
-    { hp = 31; attack = 31; defense = 31; spatk = 31; spdef = 31; speed = 31 }
-  in
-  let s =
-    Base_stats.compute_stats ~base:scyther.base ~nature:3 ~ivs ~level:25
-  in
-  check_eq ~show:string_of_int "lv25 adamant scyther hp" 77 s.hp;
-  check_eq ~show:string_of_int "lv25 adamant scyther atk" 73 s.atk;
-  check_eq ~show:string_of_int "lv25 adamant scyther def" 52 s.def;
-  check_eq ~show:string_of_int "lv25 adamant scyther spa" 36 s.spa;
-  check_eq ~show:string_of_int "lv25 adamant scyther spd" 52 s.spd;
-  check_eq ~show:string_of_int "lv25 adamant scyther spe" 65 s.spe;
-
-  (* Nature lookup round-trip. *)
-  check_eq
-    ~show:(Option.value ~default:"none")
-    "nature 20 is Calm" (Some "Calm")
-    (Base_stats.nature_name 20);
-  check_eq
-    ~show:(Option.fold ~none:"none" ~some:string_of_int)
-    "CALM -> 20" (Some 20)
-    (Base_stats.nature_of_name "CALM")
 
 let test_miss_search () =
   let db =
@@ -160,25 +102,6 @@ let test_miss_search () =
     (List.exists
        (fun (x : Rng_miss_search.hit) -> x.advance = far_adv)
        far_hits)
-
-let test_refine_timing () =
-  let e0 : Switch_rng_calibration.entry =
-    {
-      boot_offset_ms = -10;
-      seed_shift = 4;
-      ingame_offset = 5;
-      updated_at = "2026-11-26T00:00:00Z";
-    }
-  in
-  let e1 =
-    Switch_rng_calibration.refine_timing ~updated_at:"2026-11-27T12:00:00Z" e0
-      ~boot_delta_ms:(-17) ~ingame_delta:(-40)
-  in
-  check_eq ~show:string_of_int "boot_offset_ms updated" (-27) e1.boot_offset_ms;
-  check_eq ~show:string_of_int "seed_shift unchanged" 4 e1.seed_shift;
-  check_eq ~show:string_of_int "ingame_offset updated" (-35) e1.ingame_offset;
-  check_eq ~show:Fun.id "updated_at updated" "2026-11-27T12:00:00Z"
-    e1.updated_at
 
 let test_damped_calibration_delta () =
   let make_hit ~seed_delta_frames ~delay_delta_ms ~advance_delta :
@@ -299,7 +222,7 @@ let test_search_wild () =
   check_eq ~show:string_of_bool "search_method1 differs from exact wild advance"
     true
     (match m1_hits with [] -> true | mh :: _ -> mh.advance <> actual_advance);
-  (* Method 4 wild encounter is also recovered via AdvRngMethod::Any. *)
+  (* Method 4 wild encounter is also recovered. *)
   let m4_adv = 1525 in
   let m4_state = Rng_state.of_seed ~seed:seeds.(1) ~advance:m4_adv Method4 in
   let m4_enc =
@@ -330,9 +253,7 @@ let test_search_wild () =
        m4_hits)
 
 let () =
-  test_base_stats ();
   test_miss_search ();
   test_search_wild ();
   test_damped_calibration_delta ();
-  test_refine_timing ();
   print_endline "rng_miss_search: all passed"

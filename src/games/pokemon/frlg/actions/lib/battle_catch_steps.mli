@@ -61,9 +61,6 @@ type phase2_slots = {
 val default_event_timeout_ms : int
 (** Default timeout in ms when waiting for the next battle event (30000 ms). *)
 
-val default_config : config
-(** Default {!config}: active slot 1, bag rows 0, 30 s timeout. *)
-
 val default_phase1_slots : phase1_slots
 (** Default Phase 1 layout: Slot 1 Spore (move 1) Parasect, Slot 2 False Swipe
     (move 1) Farfetch'd/Scyther, sleeper used as wall, send-in order
@@ -98,13 +95,3 @@ val phase2_policy :
   Pokemon_catch.Catch_state.policy
 (** Catch policy for the Phase 2 single-slot Lv 100 Parasect (Spore and False
     Swipe on the same slot with zero voluntary switches). *)
-
-val spore_ball_policy :
-  ?ball_name:string ->
-  ?max_balls:int ->
-  ?max_turns:int ->
-  unit ->
-  Pokemon_catch.Catch_state.policy
-(** Spore-then-throw catch policy: slot 1 uses move 1 (Spore) on Turn 1 and
-    re-applies it on wake, then throws [ball_name] directly without switching or
-    False Swiping. *)

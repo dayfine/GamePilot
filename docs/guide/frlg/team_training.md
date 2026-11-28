@@ -13,10 +13,10 @@ Runs on: mGBA, the Switch (in its GBA app).
 
 ## Before you start
 
-- The glitch active: the end of [Mail Glitch](frlg.mail_glitch.md).
+- The glitch active: the end of [Mail Glitch](mail_glitch.md).
 - The glitched-mail holder (e.g. MIMIEN) in slot 1, with mail on slots 2 to 6.
 - At least `candies + 1` Retro Mail in the bag (99 for the default 98): run
-  [Supplies](frlg.supplies.md) first.
+  [Supplies](supplies.md) first.
 
 <!-- generated:needs -->
 - a member knows fly (fly)
@@ -76,7 +76,7 @@ It turns the Mail Glitch's item duplication into levels (roadmap A1, issue #10).
 where `frlg.mail_glitch` has run to 08-activate-and-verify: the glitched-mail holder (e.g. MIMIEN)
 in slot 1, mail on slots 2 to 6. tt-01 picks up Route 6's hidden Rare Candy under a Super Repel,
 gives it to slot 1 and runs `--options candies=N` rounds (default 98) of `duplicate_item`
-([Item duplication](frlg.mail_glitch.item_duplication.md)): 99 candies by default.
+([Item duplication](mail_glitch.item_duplication.md)): 99 candies by default.
 
 **Next.** The levelling checkpoints, once the `candy_level` action lands: Blastoise to Lv 100 as the
 lead, then the Dex Collection's catchers (Parasect with Spore, Haunter with Mean Look and Hypnosis).

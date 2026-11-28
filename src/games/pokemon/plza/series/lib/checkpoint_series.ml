@@ -45,6 +45,11 @@ let no_end_place ~next:_ plan = Ok plan
 let load_plan ~plan_dir id =
   P.Plan_decode.load (Plan_folder.plan_file ~plan_dir id)
 
+let load_title ~plan_dir id =
+  Result.map
+    (fun (p : P.Plan.t) -> (p.checkpoint.checkpoint_id, p.checkpoint.title))
+    (load_plan ~plan_dir id)
+
 let failed ?(repeats = false) ?(off_start = false) at reason =
   Failed { at; reason; repeats; off_start }
 

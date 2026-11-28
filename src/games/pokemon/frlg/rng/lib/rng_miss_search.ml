@@ -1,4 +1,4 @@
-(* Port of get_search_results and calibration delta logic from
+(* Port of the RNG miss search and calibration delta logic from
    PokemonFRLG/Programs/RngManipulation/PokemonFRLG_RngCalibration.cpp. *)
 
 type gender = Male | Female | Genderless | Unknown

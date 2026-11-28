@@ -10,15 +10,14 @@
     the console moves. *)
 
 val run_series :
-  moves:Plza_bank_home.Catalog_moves.t ->
   program:(string * string) list ->
   options:Run_options.t ->
   viewport:(string option, string) result ->
   string ->
   string list ->
   (int, string) result
-(** [run_series ~moves ~program ~options ~viewport plan_dir args]:
+(** [run_series ~program ~options ~viewport plan_dir args]: loads the gift
+    catalog and today's UTC date ({!Plza_checkpoint_series.Gift_inputs}), builds
+    the catalog moves ({!Plza_bank_home.Catalog_moves.of_catalog}), and runs
     {!Plza_checkpoint_series.Checkpoint_series.run_series} with bank-home's
-    attempts, which move [moves] (the gift catalog's on the host's day,
-    {!Plza_bank_home.Catalog_moves.of_catalog}, read before the run); [program]
-    is run.json's program fields. *)
+    attempts; [program] is run.json's program fields. *)

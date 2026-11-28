@@ -26,8 +26,8 @@ val nature_line : Text_lines.t
 (** The first line of Page 1's [TRAINER MEMO] box (e.g. ["CALM nature."]). *)
 
 val nature_candidates : string list
-(** The 25 candidate strings (["HARDY nature."] .. ["QUIRKY nature."]) in
-    [AdvNature] order (0..24). *)
+(** The 25 English candidate strings (["HARDY nature."] .. ["QUIRKY nature."])
+    in Gen 3 nature order (0..24). *)
 
 val nature_index_of_candidate : string -> int option
 (** Maps a matched candidate string from {!nature_candidates} back to its Gen 3
@@ -68,10 +68,11 @@ val read_level : Glyph_table.t -> int option
 (** Reads the level on the open Summary page ({!Summary_level.read}). *)
 
 val read_nature : Glyph_table.t -> int option
-(** Reads the Gen 3 nature index [0..24] from Page 1's [TRAINER MEMO] line. *)
+(** Reads the Gen 3 nature index [0..24] from Page 1's [TRAINER MEMO] line.
+    English only; non-English saves need localized nature strings. *)
 
 val read_gender : unit -> gender option
-(** Reads the Page 1 gender icon by subscribing {!gender_probes} for one frame.
+(** Reads the Page 1 gender icon from the current frame, or [None] on timeout.
 *)
 
 val read_stats : Glyph_table.t -> stats option

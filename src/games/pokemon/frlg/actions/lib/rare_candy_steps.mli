@@ -1,7 +1,8 @@
 (** The game's {!Rare_candy.game_steps}, and the party menu's
-    {!Level_up.game_steps} in them: the bag's Rare Candy used on a member
-    ({!Bag_items.item_action}, USE, {!Party_actions.choose_slot}), then what
-    follows read and answered as upstream's
+    {!Level_up.game_steps} in them: the bag opened to Rare Candy
+    ({!Bag_items.open_to_item}), USE ({!Bag_items.use_selected}) and the party
+    slot chosen with A retried until the party accepts it, then what follows
+    read and answered as upstream's
     Programs/RngManipulation/PokemonFRLG_RngNavigation.cpp does after a Rare
     Candy: the stats window and the party's YES/NO box
     ({!Frlg_readers.Party_dialogs}; its Inference/Dialogs/

@@ -1,10 +1,8 @@
 (** 10-attempt rolling-average RNG timing calibrator.
 
-    Port of PA/CC's rolling calibration history from
+    Port of the 10-attempt rolling calibration history from
     [PokemonFRLG/Programs/RngManipulation/PokemonFRLG_RngCalibration.cpp]
-    ([get_seed_calibration_frames], [get_advances_calibration], and
-    [update_history] with [MAX_HISTORY_LENGTH = 10],
-    https://github.com/PokemonAutomation/Arduino-Source).
+    (https://github.com/PokemonAutomation/Arduino-Source).
 
     Deliberate differences from the C++:
     - Seed calibration is tracked in milliseconds ([boot_offset_ms]) using
@@ -53,7 +51,7 @@ type outcome =
           and was ignored without modifying the window. *)
 
 val max_history_length : int
-(** Default rolling window cap ([10], matching PA/CC's [MAX_HISTORY_LENGTH]). *)
+(** Default rolling window cap ([10]). *)
 
 val max_seed_delta_frames : int
 (** Maximum accepted [abs seed_delta_frames] ([30]); larger misses are rejected
@@ -92,10 +90,13 @@ val samples : t -> sample list
 
 val parity_locked : t -> bool
 (** [true] when the target advance appears unreachable on a 2-advance-per-frame
-    console: no sample in the window has hit [advance_delta = 0], at least
+    console: no sample in the window has hit the target seed and advance
+    ([seed_delta_frames = 0 && advance_delta = 0]; an off-seed
+    [advance_delta = 0] hit does not clear parity lock), at least
     {!min_parity_lock_samples} recent samples all missed by [±1] advance, and
-    the used [ingame_offset] values strictly bracket both sides (every [-1]
-    observation used a smaller [ingame_offset] than every [+1] observation). *)
+    the used [ingame_offset] values bracket both sides (every [-1] observation
+    used an [ingame_offset] less than or equal to every [+1] observation,
+    catching both adjacent-offset bracketing and same-offset straddling). *)
 
 val reset : t -> t
 (** Clears all retained samples and advance observations while keeping the

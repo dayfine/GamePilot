@@ -1,7 +1,8 @@
 (* The generated blocks of a user guide page (docs/guide/, Guide_page): what
    the code and the plans say, so the page cannot drift from them.
 
-   - programs: every registered program, with its guide (the guides' index);
+   - programs [GAME]: every registered program grouped by game (the guides'
+     index), or one game's programs table (its per-game README);
    - backends: where the program runs, on the Switch with its game picture
      (Program_registry's backends and viewport);
    - checkpoints [RANGE]: each checkpoint's id and its plan's title, a
@@ -22,7 +23,8 @@ module R = Program_registry
 
 let ( let* ) = Result.bind
 let guide_dir = "docs/guide"
-let page_of (p : R.t) = Filename.concat guide_dir (p.id ^ ".md")
+let rel_path_of (p : R.t) = p.game.game_id ^ "/" ^ R.short_id p ^ ".md"
+let page_of (p : R.t) = guide_dir ^ "/" ^ rel_path_of p
 
 (* What a program's rules give its guide (Checkpoint_families): its
    checkpoints' rows, the needs and pre-flight blocks of a range of them, and
@@ -172,20 +174,42 @@ let options (p : R.t) =
   | [] -> Ok "This program takes no options."
   | decls -> Ok (String.concat "\n" (options_head @ List.map option_row decls))
 
-let program_row (p : R.t) =
-  Printf.sprintf "| [%s](%s.md) | `%s` | %s | %s |" p.name p.id p.id
+let table_head =
+  [ "| Program | Id | Runs on | What it does |"; "|---|---|---|---|" ]
+
+let program_row ~link (p : R.t) =
+  Printf.sprintf "| [%s](%s) | `%s` | %s | %s |" p.name (link p) p.id
     (String.concat ", " (List.map backend_label p.backends))
     (Guide_page.cell p.description)
 
-let programs () =
-  Ok
-    (String.concat "\n"
-       ([ "| Program | Id | Runs on | What it does |"; "|---|---|---|---|" ]
-       @ List.map program_row R.all))
+let game_table ~link ps =
+  String.concat "\n" (table_head @ List.map (program_row ~link) ps)
+
+let games_in_order () =
+  let add acc (p : R.t) =
+    if List.exists (fun (g : R.game) -> g.game_id = p.game.game_id) acc then acc
+    else acc @ [ p.game ]
+  in
+  List.fold_left add [] R.all
+
+let programs_of_game game_id =
+  List.filter (fun (p : R.t) -> p.game.game_id = game_id) R.all
+
+let game_section (g : R.game) =
+  Printf.sprintf "### [%s](%s/README.md)\n\n%s" g.game_name g.game_id
+    (game_table ~link:rel_path_of (programs_of_game g.game_id))
+
+let programs = function
+  | None ->
+      Ok (String.concat "\n\n" (List.map game_section (games_in_order ())))
+  | Some game_id -> (
+      match programs_of_game game_id with
+      | [] -> Error ("programs: no programs for game " ^ game_id)
+      | ps -> Ok (game_table ~link:(fun p -> R.short_id p ^ ".md") ps))
 
 let generate ~guide (p : R.t option) (b : Guide_page.block) =
   match (b.name, p) with
-  | "programs", _ -> programs ()
+  | "programs", _ -> programs b.arg
   | "backends", Some p -> backends p
   | "checkpoints", Some p -> checkpoints ~guide p b.arg
   | "needs", Some p -> needs ~guide p b.arg

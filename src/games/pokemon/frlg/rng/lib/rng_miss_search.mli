@@ -1,6 +1,7 @@
-(** Method 1 RNG miss-distance search and calibration delta calculation.
+(** Method 1 and wild-encounter RNG miss-distance search and calibration delta
+    calculation.
 
-    Port of [get_search_results] and calibration delta logic from
+    Port of the RNG miss search and calibration delta logic from
     [PokemonFRLG/Programs/RngManipulation/PokemonFRLG_RngCalibration.cpp]
     (https://github.com/PokemonAutomation/Arduino-Source). Given an observed
     non-shiny Pokémon's Summary data (nature, gender, level, and optional 6
@@ -78,9 +79,11 @@ val search_method1 :
   hit list
 (** Searches Method 1 Pokémon in
     [[target_seed_index - seed_radius .. target_seed_index + seed_radius]] and
-    [[max 0 (target_advance - adv_radius) .. target_advance + adv_radius]],
-    doubling [adv_radius] up to {!max_advances_radius} if 0 hits are found. Hits
-    are sorted by [(abs seed_delta_frames * 5) + abs advance_delta]. *)
+    [[max 0 (target_advance - advances_radius) .. target_advance +
+     advances_radius]] (defaulting [seed_radius] to {!default_seed_radius} and
+    [advances_radius] to {!default_advances_radius}), doubling [advances_radius]
+    up to {!max_advances_radius} if 0 hits are found. Hits are sorted by
+    [(abs seed_delta_frames * 5) + abs advance_delta]. *)
 
 val search_wild :
   slots:Wild_encounter.slot array ->
@@ -96,13 +99,15 @@ val search_wild :
   observation ->
   hit list
 (** Searches wild encounters via {!Wild_encounter.pokemon_of_state} across
-    [Method1], [Method2], and [Method4] (matching PA/CC's [AdvRngMethod::Any])
-    in [[target_seed_index - seed_radius .. target_seed_index + seed_radius]]
-    and [[max 0 (target_advance - adv_radius) .. target_advance + adv_radius]],
-    doubling [adv_radius] up to {!max_advances_radius} if 0 hits are found.
-    Matches when {!Wild_encounter.species_matches}, [level], nature, gender, and
-    stats agree, returning at most one hit per [(seed_index, advance)], sorted
-    by [(abs seed_delta_frames * 5) + abs advance_delta]. *)
+    [Method1], [Method2], and [Method4] in
+    [[target_seed_index - seed_radius .. target_seed_index + seed_radius]] and
+    [[max 0 (target_advance - advances_radius) .. target_advance +
+     advances_radius]] (defaulting [seed_radius] to {!default_seed_radius} and
+    [advances_radius] to {!default_advances_radius}), doubling [advances_radius]
+    up to {!max_advances_radius} if 0 hits are found. Matches when
+    {!Wild_encounter.species_matches}, [level], nature, gender, and stats agree,
+    returning at most one hit per [(seed_index, advance)], sorted by
+    [(abs seed_delta_frames * 5) + abs advance_delta]. *)
 
 val format_observation : observation -> string
 (** Formats an {!observation} as a single log line (e.g.

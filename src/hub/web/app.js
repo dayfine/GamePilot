@@ -236,6 +236,200 @@ async function stopRun(id) {
   await refreshAll();
 }
 
+const runCards = new Map();
+
+function hasSelectionInside(el) {
+  if (!el || typeof window === 'undefined' || typeof window.getSelection !== 'function') {
+    return false;
+  }
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed || !sel.rangeCount) return false;
+  if (typeof el.contains !== 'function') return false;
+  return Boolean(
+    (sel.anchorNode && el.contains(sel.anchorNode)) ||
+      (sel.focusNode && el.contains(sel.focusNode))
+  );
+}
+
+function findLogOverlap(prev, next) {
+  for (let shift = 0; shift < prev.length; shift++) {
+    const overlap = prev.length - shift;
+    if (overlap > next.length) continue;
+    let same = true;
+    for (let i = 0; i < overlap; i++) {
+      if (prev[shift + i] !== next[i]) {
+        same = false;
+        break;
+      }
+    }
+    if (same) return { shift, matched: overlap };
+  }
+  return null;
+}
+
+function makeLogLine(line) {
+  const div = document.createElement('div');
+  div.className = 'log-line';
+  div.textContent = line;
+  return div;
+}
+
+function syncRunLogs(entry, logs) {
+  const nextLines = logs || [];
+  if (!nextLines.length) {
+    if (entry.pre && !hasSelectionInside(entry.pre)) {
+      entry.pre.remove();
+      entry.pre = null;
+      entry.renderedLines = [];
+    }
+    return;
+  }
+
+  let isNewPre = false;
+  if (!entry.pre) {
+    const pre = document.createElement('pre');
+    pre.className = 'run-log';
+    entry.card.appendChild(pre);
+    entry.pre = pre;
+    entry.renderedLines = [];
+    isNewPre = true;
+  }
+
+  const pre = entry.pre;
+  const prevLines = entry.renderedLines;
+  if (
+    prevLines.length === nextLines.length &&
+    prevLines.every((line, i) => line === nextLines[i])
+  ) {
+    return;
+  }
+
+  const selecting = hasSelectionInside(pre);
+  const atBottom =
+    isNewPre || pre.scrollTop + pre.clientHeight >= pre.scrollHeight - 4;
+  const overlap = findLogOverlap(prevLines, nextLines);
+
+  if (overlap) {
+    if (overlap.shift > 0 && !selecting) {
+      for (let i = 0; i < overlap.shift && pre.firstChild; i++) {
+        pre.removeChild(pre.firstChild);
+      }
+      prevLines.splice(0, overlap.shift);
+    }
+    for (let i = overlap.matched; i < nextLines.length; i++) {
+      pre.appendChild(makeLogLine(nextLines[i]));
+      prevLines.push(nextLines[i]);
+    }
+  } else if (prevLines.length === 0) {
+    for (const line of nextLines) {
+      pre.appendChild(makeLogLine(line));
+      prevLines.push(line);
+    }
+  } else if (!selecting) {
+    while (pre.firstChild) pre.removeChild(pre.firstChild);
+    prevLines.length = 0;
+    for (const line of nextLines) {
+      pre.appendChild(makeLogLine(line));
+      prevLines.push(line);
+    }
+  }
+
+  if (atBottom && !selecting) {
+    pre.scrollTop = pre.scrollHeight;
+  }
+}
+
+function createRunCard(run) {
+  const card = document.createElement('div');
+  card.className = 'run-item';
+  card.dataset.runId = run.id;
+
+  const top = document.createElement('div');
+  top.className = 'card-top';
+
+  const title = document.createElement('div');
+  const progStrong = document.createElement('strong');
+  progStrong.textContent = run.program || '';
+  const consStrong = document.createElement('strong');
+  consStrong.textContent = run.console || '';
+  const idSpan = document.createElement('span');
+  idSpan.className = 'muted';
+  idSpan.textContent = `(${run.id})`;
+  title.appendChild(progStrong);
+  title.appendChild(document.createTextNode(' on '));
+  title.appendChild(consStrong);
+  title.appendChild(document.createTextNode(' '));
+  title.appendChild(idSpan);
+
+  const actions = document.createElement('div');
+  actions.className = 'row';
+
+  const watchLink = document.createElement('a');
+  watchLink.target = '_blank';
+  watchLink.textContent = 'Open Watch Page';
+
+  const extPill = document.createElement('span');
+  extPill.className = 'pill stopped';
+  extPill.textContent = 'external';
+
+  const statusPill = document.createElement('span');
+
+  const stopBtn = document.createElement('button');
+  stopBtn.className = 'danger';
+  stopBtn.textContent = 'Stop';
+  stopBtn.onclick = () => stopRun(run.id);
+
+  actions.appendChild(watchLink);
+  actions.appendChild(extPill);
+  actions.appendChild(statusPill);
+  actions.appendChild(stopBtn);
+
+  top.appendChild(title);
+  top.appendChild(actions);
+
+  const cmdEl = document.createElement('div');
+  cmdEl.className = 'muted';
+
+  card.appendChild(top);
+  card.appendChild(cmdEl);
+
+  const entry = {
+    id: run.id,
+    card,
+    watchLink,
+    extPill,
+    statusPill,
+    stopBtn,
+    cmdEl,
+    pre: null,
+    renderedLines: [],
+  };
+  updateRunCard(entry, run);
+  return entry;
+}
+
+function updateRunCard(entry, run) {
+  const href = run.watch_url ? watchHref(run.watch_url) : '';
+  entry.watchLink.classList.toggle('hidden', !href);
+  if (href && entry.watchLink.href !== href) entry.watchLink.href = href;
+
+  entry.extPill.classList.toggle('hidden', !run.external);
+
+  const statusClass = 'pill ' + (run.status || '');
+  if (entry.statusPill.className !== statusClass) entry.statusPill.className = statusClass;
+  if (entry.statusPill.textContent !== (run.status || '')) {
+    entry.statusPill.textContent = run.status || '';
+  }
+
+  const showStop = run.status === 'running' && !run.external;
+  entry.stopBtn.classList.toggle('hidden', !showStop);
+
+  const cmdText = '$ ' + (run.command || '');
+  if (entry.cmdEl.textContent !== cmdText) entry.cmdEl.textContent = cmdText;
+
+  syncRunLogs(entry, run.logs);
+}
+
 async function loadRuns() {
   const r = await fetch('/api/runs');
   const j = await r.json();
@@ -243,25 +437,33 @@ async function loadRuns() {
   document.getElementById('runCount').textContent = runs.length + ' run(s)';
   const el = document.getElementById('runsList');
   if (!runs.length) {
+    runCards.clear();
     el.innerHTML = '<div class="muted">No runs launched yet.</div>';
     return;
   }
-  el.innerHTML = runs
-    .map((run) => `
-    <div class="run-item">
-      <div class="card-top">
-        <div><strong>${esc(run.program)}</strong> on <strong>${esc(run.console)}</strong> <span class="muted">(${esc(run.id)})</span></div>
-        <div class="row">
-          ${run.watch_url ? `<a href="${esc(watchHref(run.watch_url))}" target="_blank">Open Watch Page</a>` : ''}
-          ${run.external ? '<span class="pill stopped">external</span>' : ''}
-          <span class="pill ${esc(run.status)}">${esc(run.status)}</span>
-          ${run.status === 'running' && !run.external ? `<button class="danger" onclick="stopRun('${esc(run.id)}')">Stop</button>` : ''}
-        </div>
-      </div>
-      <div class="muted">$ ${esc(run.command)}</div>
-      ${(run.logs || []).length ? `<pre>${esc(run.logs.join('\n'))}</pre>` : ''}
-    </div>`)
-    .join('');
+  if (!runCards.size) {
+    el.innerHTML = '';
+  }
+  const activeIds = new Set(runs.map((run) => run.id));
+  for (const [id, entry] of runCards) {
+    if (!activeIds.has(id)) {
+      entry.card.remove();
+      runCards.delete(id);
+    }
+  }
+  runs.forEach((run, idx) => {
+    let entry = runCards.get(run.id);
+    if (!entry) {
+      entry = createRunCard(run);
+      runCards.set(run.id, entry);
+    } else {
+      updateRunCard(entry, run);
+    }
+    const currentAtIdx = el.children[idx];
+    if (currentAtIdx !== entry.card) {
+      el.insertBefore(entry.card, currentAtIdx || null);
+    }
+  });
 }
 
 // --- Run History ---------------------------------------------------------------

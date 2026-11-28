@@ -25,12 +25,21 @@ type search_bounds = {
       (** Known player tick period, or [None] to fit from observed blinks. *)
   order_swap_tolerance : float;
       (** Half-width tolerance in seconds for player/Pokemon order swaps. *)
+  max_pk_phase_width_seconds : float option;
+      (** Maximum acceptable Pokemon blink-phase interval width
+          ([next_pokemon_blink_max_seconds -. next_pokemon_blink_min_seconds])
+          before locking a unique anchor. When [Some w] and a unique match has a
+          wider interval, re-identification continues collecting blinks up to
+          [max_blinks] to tighten the phase, falling back to the tightest unique
+          anchor seen if [max_blinks], a later mismatch, or timeout is reached.
+          [None] locks immediately on the first unique advance. *)
 }
 (** Search window and blink-count bounds for [1PK] re-identification. *)
 
 val default_bounds : search_bounds
-(** Default bounds: [[0, 40000]], 8 to 24 blinks, auto-fitted tick period, and
-    {!Bdsp_rng.Mixed_reidentifier.default_order_swap_tolerance}. *)
+(** Default bounds: [[0, 40000]], 8 to 24 blinks, auto-fitted tick period,
+    {!Bdsp_rng.Mixed_reidentifier.default_order_swap_tolerance}, and a 1.0 s
+    maximum Pokemon blink-phase width. *)
 
 type config = {
   picture : Wire.box;  (** Game picture viewport for probe clipping. *)
@@ -81,5 +90,6 @@ type anchor = {
 
 val run : config -> (anchor, string) result
 (** Watches player blinks in the chamber until a unique [1PK] {!anchor} is
-    locked, or returns [Error] on timeout, [max_blinks] exhaustion, or missing
-    probe. *)
+    locked, retrying suffixes and trimming poisoned prefixes on zero-candidate
+    failures. Returns [Error] with a compact blink diagnostic summary on
+    timeout, [max_blinks] exhaustion, or missing probe. *)

@@ -245,14 +245,12 @@ let run_wild_rng t (plan : Wild_rng_plan.t) () =
     (fun code -> Menu_input.fail code (Wild_rng.message r))
     (Wild_rng.failure_code r.end_)
 
-let apply_switch_calibration (plan : Wild_rng_plan.t) =
-  if plan.frame_model <> "switch" then Ok plan
+let apply_switch_calibration ~frame_model ~apply plan =
+  if frame_model <> "switch" then Ok plan
   else
     Frlg_rng.Switch_rng_calibration.load_console ()
     |> Result.map_error (Failure.cause ~repeats:true "bad_args")
-    |> Result.map (function
-         | Some entry -> Wild_rng_plan.apply_calibration entry plan
-         | None -> plan)
+    |> Result.map (function Some entry -> apply entry plan | None -> plan)
 
 let load_wild_rng_fallback options =
   match (Run_options.int options "tid", Run_options.int options "sid") with
@@ -269,17 +267,11 @@ let wild_rng t (_ : Pokemon_engine.Plan.event) args =
   let* plan =
     Wild_rng_plan.decode ~options ~fallback ~default_frame_model args
   in
-  let* plan = apply_switch_calibration plan in
+  let* plan =
+    apply_switch_calibration ~frame_model:plan.frame_model
+      ~apply:Wild_rng_plan.apply_calibration plan
+  in
   Menu_input.run (run_wild_rng t plan)
-
-let apply_gift_switch_calibration (plan : Gift_rng.plan) =
-  if plan.frame_model <> "switch" then Ok plan
-  else
-    Frlg_rng.Switch_rng_calibration.load_console ()
-    |> Result.map_error (Failure.cause ~repeats:true "bad_args")
-    |> Result.map (function
-         | Some entry -> Gift_rng.apply_calibration entry plan
-         | None -> plan)
 
 let run_gift_rng t (plan : Gift_rng.plan) () =
   let log = t.config.log in
@@ -309,8 +301,42 @@ let gift_rng t (_ : Pokemon_engine.Plan.event) args =
   let default_frame_model = t.config.default_frame_model in
   let* fallback = load_wild_rng_fallback options in
   let* plan = Gift_rng.decode ~options ~fallback ~default_frame_model args in
-  let* plan = apply_gift_switch_calibration plan in
+  let* plan =
+    apply_switch_calibration ~frame_model:plan.frame_model
+      ~apply:Gift_rng.apply_calibration plan
+  in
   Menu_input.run (run_gift_rng t plan)
+
+let run_static_rng t (plan : Static_rng.plan) () =
+  let log = t.config.log in
+  let target =
+    match Static_rng.target plan with
+    | Ok target -> target
+    | Error e -> Menu_input.fail "static_rng_no_target" e
+  in
+  log ("Static RNG: " ^ Frlg_rng.Gift_target.describe target ^ ".");
+  let steps = Static_rng.live_game_steps ~log ~timings:target.timings plan in
+  let r =
+    Static_rng.run steps ~attempts:plan.attempts plan.capture
+      ~party:(Party_roster.size !(t.party))
+  in
+  Option.iter (fun c -> t.party := Capture.party_after !(t.party) c) r.capture;
+  log (Static_rng.message r);
+  Option.iter
+    (fun code -> Menu_input.fail code (Static_rng.message r))
+    (Static_rng.failure_code r.end_)
+
+let static_rng t (_ : Pokemon_engine.Plan.event) args =
+  let ( let* ) = Result.bind in
+  let options = t.config.program_options in
+  let default_frame_model = t.config.default_frame_model in
+  let* fallback = load_wild_rng_fallback options in
+  let* plan = Static_rng.decode ~options ~fallback ~default_frame_model args in
+  let* plan =
+    apply_switch_calibration ~frame_model:plan.frame_model
+      ~apply:Static_rng.apply_calibration plan
+  in
+  Menu_input.run (run_static_rng t plan)
 
 (* The game saved from the Start menu, as between loop rounds: what a hard
    reset ({!Effects.reset}) boots from. *)
@@ -445,6 +471,7 @@ let game t : Pokemon_engine.Game.t =
         :: ("capture", capture t)
         :: ("wild_rng", wild_rng t)
         :: ("gift_rng", gift_rng t)
+        :: ("static_rng", static_rng t)
         :: ("save_game", save_game t)
         :: ("lift_floor", lift t)
         :: ("prepare_berry_pp", prepare_berry_pp t)

@@ -47,6 +47,7 @@ val battle_timeout_ms : int
 val game_steps :
   log:(string -> unit) ->
   ?reset_mode:Rng_reset.mode ->
+  ?show_counters:(Wire.Watch.counter list -> unit) ->
   ?encounter_method:Wild_rng_plan.encounter_method ->
   Frlg_rng.Rng_timings.t ->
   Capture_plan.t ->
@@ -54,6 +55,28 @@ val game_steps :
 (** {!Capture_steps}' throws and catch, with {!find_encounter} for the
     encounter, and no flee: a foe that is not the target is left in its battle,
     and the next attempt's reset ends it. *)
+
+val legacy_catch :
+  log:(string -> unit) ->
+  ?show_counters:(Wire.Watch.counter list -> unit) ->
+  find_encounter:(unit -> bool) ->
+  Capture_plan.t ->
+  party:int ->
+  Capture.result
+(** Runs {!Capture.run} under {!Frlg_battle.Battle_look.probes} with
+    [find_encounter] and no flee. Shared by {!Wild_rng} and {!Static_rng}. *)
+
+val policy_catch_for :
+  log:(string -> unit) ->
+  find_encounter:(unit -> bool) ->
+  ?on_miss:(unit -> unit) ->
+  catch_mode:Wild_rng_plan.catch_mode ->
+  visual_shiny_check:bool ->
+  Capture_plan.t ->
+  Wild_rng.policy_catch_steps option
+(** Selects {!Wild_rng.policy_catch_steps} or [None] (legacy throw-only) from
+    [catch_mode] and [visual_shiny_check], using [find_encounter] to start each
+    battle. Shared by {!Wild_rng} and {!Static_rng}. *)
 
 val policy_catch_steps :
   log:(string -> unit) ->

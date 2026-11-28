@@ -232,11 +232,40 @@ let choose_in_item_menu item row =
   to_item_menu_row item row;
   M.press Wire.A
 
+let open_to_item item =
+  open_pocket_top (pocket_of_item item);
+  select item
+
+let read_cursor_name_tries = 10
+let max_item_menu_presses = 5
+
+let rec read_cursor_name candidates tries =
+  match cursor_text candidates with
+  | _, Some text -> Some text
+  | _, None when tries > 1 ->
+      ignore (Effects.submit [ Wire.Wait { wait_ms = M.tap_release_ms } ]);
+      read_cursor_name candidates (tries - 1)
+  | _, None -> None
+
+let confirm_selected item =
+  let pocket, candidates, name = pocket_names item in
+  ignore (M.await_screen ~code:"no_bag" "the bag" pocket_shown);
+  match read_cursor_name candidates read_cursor_name_tries with
+  | Some text when text = name -> ()
+  | _ ->
+      M.fail "not_in_bag" (item ^ " is not in " ^ Bag_screen.pocket_name pocket)
+
+let use_selected item row =
+  confirm_selected item;
+  M.press_until ~max_presses:max_item_menu_presses ~code:"no_item_menu"
+    ("the menu of " ^ item) Wire.A ~cooldown_ms:item_menu_input_ms
+    Bag_screen.item_menu;
+  choose_in_item_menu item row
+
 let action_a = Wire.press ~hold_ms:M.button_hold_ms ~cooldown_ms:0 [ Wire.A ]
 
 let item_action_press item row =
-  open_pocket_top (pocket_of_item item);
-  select item;
+  open_to_item item;
   M.press Wire.A;
   to_item_menu_row item row;
   action_a

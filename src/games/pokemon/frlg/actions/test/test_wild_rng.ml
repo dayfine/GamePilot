@@ -211,6 +211,7 @@ let decide ~capture_end ~shiny ~party () =
           steps := Printf.sprintf "summary %d" slot :: !steps;
           shiny);
       log = ignore;
+      show_counters = ignore;
     }
   in
   let plan =
@@ -264,6 +265,7 @@ let decide_policy ?(found = true) ?intro_verdict ~catch_outcome
           add (Printf.sprintf "summary %d" slot);
           shiny);
       log = ignore;
+      show_counters = ignore;
     }
   in
   let plan =
@@ -507,6 +509,7 @@ let policy_decisions =
                 add (Printf.sprintf "summary#%d=%b" !attempt ok);
                 ok);
             log = ignore;
+            show_counters = ignore;
           }
         in
         let base = Result.get_ok (Wild_rng_plan.decode (obj plan_args)) in
@@ -560,6 +563,7 @@ let policy_decisions =
                 add (Printf.sprintf "summary#%d(slot=%d)" !attempt slot);
                 true);
             log = ignore;
+            show_counters = ignore;
           }
         in
         let base = Result.get_ok (Wild_rng_plan.decode (obj plan_args)) in
@@ -867,7 +871,112 @@ let method_decoding =
       "first=4ADF/1732 switched=true species=electabuzz";
   ]
 
+let format_counters_log history =
+  history |> List.rev
+  |> List.map (fun items ->
+         items
+         |> List.map (fun (c : Wire.Watch.counter) ->
+                Printf.sprintf "%s=%s" c.label c.value)
+         |> String.concat " ")
+  |> String.concat " -> "
+
+let wild_counters_policy ?(found = true) ?intro_verdict ~catch_outcome ~shiny
+    ~attempts ~party () =
+  let emitted = ref [] in
+  let pc : Wild_rng.policy_catch_steps =
+    {
+      find_encounter = (fun () -> found);
+      detect_shiny = Option.map (fun v () -> reading_of v) intro_verdict;
+      on_miss = (fun ~party:_ -> ());
+      catch_battle = (fun () -> catch_outcome);
+      finish_catch = (fun _ -> true);
+    }
+  in
+  let game_steps : Wild_rng.game_steps =
+    {
+      catch = (fun _ ~party:_ -> failwith "legacy catch should not run");
+      policy_catch = Some pc;
+      shiny_at = (fun _ -> shiny);
+      log = ignore;
+      show_counters = (fun items -> emitted := items :: !emitted);
+    }
+  in
+  let plan =
+    {
+      (Result.get_ok (Wild_rng_plan.decode (obj plan_args))).capture with
+      max_encounters = attempts;
+    }
+  in
+  ignore (Wild_rng.run game_steps plan ~party : Wild_rng.result);
+  format_counters_log !emitted
+
+let wild_counters_legacy ~encounters ~capture_end ~shiny ~attempts ~party () =
+  let emitted = ref [] in
+  let game_steps : Wild_rng.game_steps =
+    {
+      catch =
+        (fun _ ~party:_ -> { (capture_result capture_end) with encounters });
+      policy_catch = None;
+      shiny_at = (fun _ -> shiny);
+      log = ignore;
+      show_counters = (fun items -> emitted := items :: !emitted);
+    }
+  in
+  let plan =
+    {
+      (Result.get_ok (Wild_rng_plan.decode (obj plan_args))).capture with
+      max_encounters = attempts;
+    }
+  in
+  ignore (Wild_rng.run game_steps plan ~party : Wild_rng.result);
+  format_counters_log !emitted
+
+let watch_counters_cases =
+  [
+    case
+      "policy shiny hit emits reset -> encounter -> catch -> summary -> shiny"
+      (wild_counters_policy ~intro_verdict:Shiny
+         ~catch_outcome:(Caught caught_summary) ~shiny:true ~attempts:25
+         ~party:5)
+      "attempt=1/25 phase=reset -> attempt=1/25 phase=encounter -> \
+       attempt=1/25 phase=catch -> attempt=1/25 phase=summary -> attempt=1/25 \
+       phase=shiny";
+    case "policy visual non-shiny miss retries across attempts"
+      (wild_counters_policy ~intro_verdict:Not_shiny
+         ~catch_outcome:(Caught caught_summary) ~shiny:true ~attempts:2 ~party:5)
+      "attempt=1/2 phase=reset -> attempt=1/2 phase=encounter -> attempt=2/2 \
+       phase=reset -> attempt=2/2 phase=encounter";
+    case "policy without visual check emits reset -> catch -> summary -> shiny"
+      (wild_counters_policy ~catch_outcome:(Caught caught_summary) ~shiny:true
+         ~attempts:5 ~party:4)
+      "attempt=1/5 phase=reset -> attempt=1/5 phase=catch -> attempt=1/5 \
+       phase=summary -> attempt=1/5 phase=shiny";
+    case "policy non-shiny summary stops at summary phase on single attempt"
+      (wild_counters_policy ~intro_verdict:Unknown
+         ~catch_outcome:(Caught caught_summary) ~shiny:false ~attempts:1
+         ~party:5)
+      "attempt=1/1 phase=reset -> attempt=1/1 phase=encounter -> attempt=1/1 \
+       phase=catch -> attempt=1/1 phase=summary";
+    case "policy no encounter emits only reset phase"
+      (wild_counters_policy ~found:false ~intro_verdict:Shiny
+         ~catch_outcome:(Caught caught_summary) ~shiny:true ~attempts:5 ~party:5)
+      "attempt=1/5 phase=reset";
+    case "legacy shiny catch reports attempt count through summary and shiny"
+      (wild_counters_legacy ~encounters:3 ~capture_end:All_caught ~shiny:true
+         ~attempts:25 ~party:5)
+      "attempt=1/25 phase=reset -> attempt=3/25 phase=summary -> attempt=3/25 \
+       phase=shiny";
+    case "legacy non-shiny catch stops at summary on single attempt"
+      (wild_counters_legacy ~encounters:1 ~capture_end:All_caught ~shiny:false
+         ~attempts:1 ~party:5)
+      "attempt=1/1 phase=reset -> attempt=1/1 phase=summary";
+    case "full party emits no counters"
+      (wild_counters_legacy ~encounters:1 ~capture_end:All_caught ~shiny:true
+         ~attempts:5 ~party:6)
+      "";
+  ]
+
 let () =
   Table_test.run "wild_rng"
     (decoding @ policy_decoding @ method_decoding @ presses @ decisions
-   @ policy_decisions)
+   @ policy_decisions @ watch_counters_cases)

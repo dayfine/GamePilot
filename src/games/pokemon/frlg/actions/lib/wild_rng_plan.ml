@@ -27,9 +27,9 @@ type t = {
   cal_ball_row : int;
 }
 
-type trainer_ids = { tid : int option; sid : int option }
+type trainer_ids = Trainer_ids.t = { tid : int option; sid : int option }
 
-let max_id = 0xffff
+let max_id = Trainer_ids.max_id
 let seed_mask = 0xffff
 let default_min_advance = 900
 let default_max_advance = 4000
@@ -38,14 +38,13 @@ let max_attempts = 99
 let max_ingame_offset = 99
 let max_cal_ball_row = 20
 let throw_only_max_turns = 80
-let no_trainer_ids = { tid = None; sid = None }
+let spore_hp_floor = 0.35
+let no_trainer_ids = Trainer_ids.none
 let assets = "src/games/pokemon/frlg/assets/"
 let encounter_slots = assets ^ "encounter_slots_firered.json"
 let default_seeds = "rng_seeds_mgba_sevii_save.json"
 let default_frame_model = "mgba"
 let column = "Mono / Help / A"
-let config_env = "GAMEPILOT_FRLG_CONFIG"
-let config_file = "trainer_ids.json"
 let ( let* ) = Result.bind
 
 let default_seeds_for_model m =
@@ -64,60 +63,36 @@ let encounter_table_kind = function
   | Surf -> "surfing"
   | Super_rod -> "superrod"
 
-let default_catch_config = Battle_catch_steps.default_config
+let default_catch_config : Battle_catch_steps.config =
+  {
+    initial_active_slot = 1;
+    bag = { ball_row = 0; heal_row = 0 };
+    event_timeout_ms = Battle_catch_steps.default_event_timeout_ms;
+  }
 
 let throw_only_policy (c : Capture_plan.t) : CS.policy =
-  let base =
-    Battle_catch_steps.spore_ball_policy ~ball_name:c.ball
-      ~max_balls:c.max_balls ~max_turns:throw_only_max_turns ()
-  in
-  { base with status_setter = None; reapply_status = false }
+  {
+    status_setter = None;
+    false_swiper = None;
+    wall = None;
+    ball_name = c.ball;
+    max_balls = c.max_balls;
+    foe_hp_target = 1.0;
+    foe_hp_rechip = 1.0;
+    reapply_status = false;
+    max_turns = throw_only_max_turns;
+    send_in_order = Battle_catch_steps.default_phase1_slots.send_in_order;
+  }
 
-let env_var name = "GAMEPILOT_FRLG_" ^ String.uppercase_ascii name
-
-let check_id ~label n =
-  if n >= 0 && n <= max_id then Ok (Some n)
-  else Error (Printf.sprintf "%s is %d, not 0..%d" label n max_id)
-
-let env_id name =
-  let var = env_var name in
-  match Sys.getenv_opt var with
-  | None | Some "" -> Ok None
-  | Some raw -> (
-      match int_of_string_opt (String.trim raw) with
-      | None -> Error (Printf.sprintf "%s is %S, not 0..%d" var raw max_id)
-      | Some n -> check_id ~label:var n)
-
-let json_id ~path name fields =
-  match List.assoc_opt name fields with
-  | None | Some `Null -> Ok None
-  | Some (`Int n) -> check_id ~label:(path ^ ": " ^ name) n
-  | Some _ -> Error (Printf.sprintf "%s: %s is not an integer" path name)
-
-let file_trainer_ids () =
-  let path =
-    Filename.concat (Repo_io.Repo_files.data_dir config_env "frlg") config_file
-  in
-  if not (Sys.file_exists path) then Ok no_trainer_ids
-  else
-    let* json = Repo_io.Json_file.read path in
-    match json with
-    | `Assoc fields ->
-        let* tid = json_id ~path "tid" fields in
-        let* sid = json_id ~path "sid" fields in
-        Ok { tid; sid }
-    | _ -> Error (path ^ ": expected a JSON object")
+let spore_ball_policy (c : Capture_plan.t) : CS.policy =
+  {
+    (throw_only_policy c) with
+    status_setter = Some { slot = 1; move_slot = 1; hp_floor = spore_hp_floor };
+    reapply_status = true;
+  }
 
 let pick a b = if Option.is_some a then a else b
-
-let load_trainer_ids () =
-  let* tid = env_id "tid" in
-  let* sid = env_id "sid" in
-  let* f =
-    if Option.is_some tid && Option.is_some sid then Ok no_trainer_ids
-    else file_trainer_ids ()
-  in
-  Ok { tid = pick tid f.tid; sid = pick sid f.sid }
+let load_trainer_ids = Trainer_ids.load
 
 let find_frame_model = function
   | "mgba" -> Some R.Rng_timings.mgba
@@ -132,7 +107,8 @@ let opt_int ~where ~default ~low ~high name args =
       if n >= low && n <= high then n
       else J.fail "%s%s is %d, not %d..%d" where name n low high
 
-let visual_shiny_check ~where ~frame_model ~catch_mode args =
+let visual_shiny_check ~where ?(frame_model = default_frame_model)
+    ?(catch_mode = Throw_only) args =
   match J.find "visual_shiny_check" args with
   | None -> frame_model = "switch" && catch_mode <> Throw_only
   | Some (`Bool b) -> b
@@ -157,7 +133,7 @@ let encounter_method ~where args =
   | Some other ->
       J.fail "%smethod is %s, not grass, surf, or super_rod" where other
 
-let catch_mode ~where ~options (c : Capture_plan.t) args =
+let catch_mode ~where ?(options = Run_options.none) (c : Capture_plan.t) args =
   let module B = Battle_catch_steps in
   let wrap p = Catch_policy { policy = p; config = default_catch_config } in
   let ball_name = c.ball and max_balls = c.max_balls in
@@ -171,7 +147,7 @@ let catch_mode ~where ~options (c : Capture_plan.t) args =
       wrap (B.phase1_policy ~ball_name ~max_balls B.default_phase1_slots)
   | Some "phase2" ->
       wrap (B.phase2_policy ~ball_name ~max_balls B.default_phase2_slots)
-  | Some "spore_ball" -> wrap (B.spore_ball_policy ~ball_name ~max_balls ())
+  | Some "spore_ball" -> wrap (spore_ball_policy c)
   | Some other ->
       J.fail "%scatch_mode is %s, not throw_only, phase1, phase2, or spore_ball"
         where other
@@ -192,7 +168,7 @@ let resolved_id ~where ~options ~fallback name args =
   | None, None, Some n -> n
   | None, None, None ->
       J.fail "%smissing %s (pass --options %s=N, set %s, or set it in %s)" where
-        name name (env_var name) config_file
+        name name (Trainer_ids.env_var name) Trainer_ids.config_file
 
 let read ~options ~fallback ~default_frame_model ~where args =
   let min_advance, max_advance = advances ~where args in
@@ -232,9 +208,11 @@ let read ~options ~fallback ~default_frame_model ~where args =
   }
 
 let apply_timing_delta ~boot_delta_ms ~ingame_delta t =
-  let boot_offset_ms = t.boot_offset_ms + boot_delta_ms in
-  let ingame_offset = t.ingame_offset + ingame_delta in
-  { t with boot_offset_ms; ingame_offset }
+  {
+    t with
+    boot_offset_ms = t.boot_offset_ms + boot_delta_ms;
+    ingame_offset = t.ingame_offset + ingame_delta;
+  }
 
 let apply_calibration (e : R.Switch_rng_calibration.entry) t =
   let seed_shift = (t.seed_shift + e.seed_shift) land seed_mask in
@@ -254,9 +232,12 @@ let json path =
 let seed_column_of ~seeds ~seed_shift =
   let* j = json (assets ^ seeds) in
   let* db = R.Seeds_database.of_json j in
-  let has (c : R.Seeds_database.column) = c.name = column in
   let shift s = (s + seed_shift) land seed_mask in
-  match List.find_opt has db.columns with
+  match
+    List.find_opt
+      (fun (c : R.Seeds_database.column) -> c.name = column)
+      db.columns
+  with
   | Some c -> Ok (db.delays, Array.map shift c.seeds)
   | None -> Error (seeds ^ " has no column " ^ column)
 
@@ -269,12 +250,25 @@ let slots t =
 
 let calibrated_model ~boot_offset_ms ~ingame_offset
     (m : R.Rng_timings.frame_model) =
-  let csf_offset =
+  let csf =
     if m.ingame_advances_per_frame > 1.0 then ingame_offset land 1 else 0
   in
-  let ingame_offset = ingame_offset - csf_offset in
   ( { m with fixed_seed_offset_ms = m.fixed_seed_offset_ms + boot_offset_ms },
-    { R.Rng_timings.no_calibrations with csf_offset; ingame_offset } )
+    {
+      R.Rng_timings.no_calibrations with
+      csf_offset = csf;
+      ingame_offset = ingame_offset - csf;
+    } )
+
+let calibrations_of_offsets ~boot_offset_ms ~ingame_offset
+    (m : R.Rng_timings.frame_model) =
+  let seed_offset =
+    if boot_offset_ms = 0 then 0
+    else
+      int_of_float
+        (Float.round (float_of_int boot_offset_ms /. m.frame_duration_ms))
+  in
+  { R.Rng_timings.no_calibrations with seed_offset; ingame_offset }
 
 let target ?(exclude_targets = []) t =
   let* delays, seeds = seed_column_of ~seeds:t.seeds ~seed_shift:t.seed_shift in

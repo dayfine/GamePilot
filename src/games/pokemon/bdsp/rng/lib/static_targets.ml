@@ -1,9 +1,11 @@
+type entry_mode = Ramanas_slate_chamber | Standing_at_encounter
 type trigger_kind = Direct_no_pokemon_model | Timeline_single_confirm
 
 type t = {
   id : string;
   template : Static_encounter.template;
   base_stats : Static_encounter.base_stats;
+  entry_mode : entry_mode;
   default_trigger : trigger_kind;
   advances_after_accept : int;
 }
@@ -17,6 +19,7 @@ type encounter_defaults = {
   half_female : int;
   legendary_ivs : int;
   default_delay : int;
+  groudon_delay : int;
 }
 
 type encounter_levels = {
@@ -37,13 +40,14 @@ let defaults =
     half_female = 127;
     legendary_ivs = 3;
     default_delay = 84;
+    groudon_delay = 86;
   }
 
 let levels =
   { ramanas = 70; lake = 50; spear_pillar = 47; arceus = 80; rotom = 15 }
 
 let make ~id ~species ~level ~guaranteed_ivs ~ability_kind ~gender_ratio
-    ~base_stats ?(default_trigger = Timeline_single_confirm)
+    ~base_stats ~entry_mode ?(default_trigger = Timeline_single_confirm)
     ?(advances_after_accept = defaults.default_delay) () =
   {
     id;
@@ -57,32 +61,35 @@ let make ~id ~species ~level ~guaranteed_ivs ~ability_kind ~gender_ratio
         shiny_locked = false;
       };
     base_stats;
+    entry_mode;
     default_trigger;
     advances_after_accept;
   }
 
-let ramanas_single ~id ~species ?(gender_ratio = defaults.genderless) base_stats
-    =
+let ramanas_single ~id ~species ?(gender_ratio = defaults.genderless)
+    ?(advances_after_accept = defaults.default_delay) base_stats =
   make ~id ~species ~level:levels.ramanas ~guaranteed_ivs:defaults.legendary_ivs
-    ~ability_kind:defaults.standard_ability ~gender_ratio ~base_stats ()
+    ~ability_kind:defaults.standard_ability ~gender_ratio ~base_stats
+    ~entry_mode:Ramanas_slate_chamber ~advances_after_accept ()
 
 let ramanas_hidden ~id ~species base_stats =
   make ~id ~species ~level:levels.ramanas ~guaranteed_ivs:defaults.legendary_ivs
     ~ability_kind:defaults.hidden_ability ~gender_ratio:defaults.genderless
-    ~base_stats ()
+    ~base_stats ~entry_mode:Ramanas_slate_chamber ()
 
 let sinnoh ~id ~species ~level ?(guaranteed_ivs = defaults.legendary_ivs)
     ?(gender_ratio = defaults.genderless)
     ?(default_trigger = Timeline_single_confirm) base_stats =
   make ~id ~species ~level ~guaranteed_ivs
     ~ability_kind:defaults.standard_ability ~gender_ratio ~base_stats
-    ~default_trigger ()
+    ~entry_mode:Standing_at_encounter ~default_trigger ()
 
 let all =
   [
     ramanas_single ~id:"kyogre" ~species:"Kyogre"
       { hp = 100; attack = 100; defense = 90; spatk = 150; spdef = 140; speed = 90 };
     ramanas_single ~id:"groudon" ~species:"Groudon"
+      ~advances_after_accept:defaults.groudon_delay
       { hp = 100; attack = 150; defense = 140; spatk = 100; spdef = 90; speed = 90 };
     ramanas_single ~id:"rayquaza" ~species:"Rayquaza"
       { hp = 105; attack = 150; defense = 90; spatk = 150; spdef = 90; speed = 95 };

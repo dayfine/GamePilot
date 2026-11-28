@@ -168,6 +168,12 @@ function renderSeries() {
     li.append(seriesChip(c));
     return li;
   }));
+  const cur = series.checkpoints.find((c) => c.state === "current");
+  if (cur) {
+    resetAttemptForCheckpoint(cur.id);
+    const last = cur.runs.length ? cur.runs[cur.runs.length - 1] : null;
+    if (last && last.attempt > 1) updateAttemptFromStructured(last.attempt, null);
+  }
   document.title = (series.program_name || series.program || "series") + " " + series.from +
     " → " + series.to + " · GamePilot Watch";
 }

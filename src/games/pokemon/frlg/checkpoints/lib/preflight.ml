@@ -5,11 +5,11 @@ type need = Need.t
 
 (* The declared preconditions first: the save's state the plan's goal implies,
    before what its events' args need. *)
-let needs stocks ~before plan =
+let needs ?(options = Run_options.none) stocks ~before plan =
   Result.bind (Plan_preconditions.needs plan) (fun declared ->
       Result.map
         (fun derived -> declared @ derived)
-        (Plan_needs.needs stocks ~before plan))
+        (Plan_needs.needs ~options stocks ~before plan))
 
 type read = Need_check.read = {
   observed : Pokemon_engine.Postcondition_check.observed;

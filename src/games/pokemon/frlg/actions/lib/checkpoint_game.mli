@@ -50,8 +50,8 @@ type config = {
           checked against its registry entry): a game action of the program's
           reads its choices with {!Run_options.find} or {!Run_options.int}. *)
   default_frame_model : string;
-      (** Default RNG frame model (["mgba"] or ["switch"]) used by ["wild_rng"]
-          and ["gift_rng"] when a plan omits ["frame_model"]. *)
+      (** Default RNG frame model (["mgba"] or ["switch"]) used by ["wild_rng"],
+          ["gift_rng"], and ["static_rng"] when a plan omits ["frame_model"]. *)
   rng_reset_mode : Rng_reset.mode;
       (** How ["wild_rng"] and ["gift_rng"] hard-reset between attempts
           ({!Rng_reset.Mgba} on mGBA, {!Rng_reset.Switch} on Switch). *)

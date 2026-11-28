@@ -180,7 +180,16 @@ val calibrated_model :
   Frlg_rng.Rng_timings.frame_model * Frlg_rng.Rng_timings.calibrations
 (** Applies [boot_offset_ms] directly to [model.fixed_seed_offset_ms] for
     millisecond-accurate seed stepping and builds
-    {!Frlg_rng.Rng_timings.calibrations} with [ingame_offset]. *)
+    {!Frlg_rng.Rng_timings.calibrations} with [ingame_offset] (splitting odd
+    Switch parity into [csf_offset]). *)
+
+val calibrations_of_offsets :
+  boot_offset_ms:int ->
+  ingame_offset:int ->
+  Frlg_rng.Rng_timings.frame_model ->
+  Frlg_rng.Rng_timings.calibrations
+(** Builds {!Frlg_rng.Rng_timings.calibrations} from boot and in-game offsets.
+*)
 
 val default_catch_config : Battle_catch_steps.config
 (** Default {!Battle_catch_steps.config} (active slot 1, bag rows 0, 30 s
@@ -189,6 +198,25 @@ val default_catch_config : Battle_catch_steps.config
 val throw_only_policy : Capture_plan.t -> Pokemon_catch.Catch_state.policy
 (** Degenerate {!Pokemon_catch.Catch_state.policy} with no status setter, False
     Swiper, or wall: throws [capture.ball] directly up to [capture.max_balls].
+*)
+
+val catch_mode :
+  where:string ->
+  ?options:Run_options.t ->
+  Capture_plan.t ->
+  Json_field.obj ->
+  catch_mode
+(** Reads optional ["catch_mode"] (["throw_only"] | ["phase1"] | ["phase2"] |
+    ["spore_ball"], default ["throw_only"]), overridable via [--options]. *)
+
+val visual_shiny_check :
+  where:string ->
+  ?frame_model:string ->
+  ?catch_mode:catch_mode ->
+  Json_field.obj ->
+  bool
+(** Reads optional boolean ["visual_shiny_check"] (defaults to [true] when
+    [frame_model = "switch"] and [catch_mode <> Throw_only], [false] otherwise).
 *)
 
 val load_trainer_ids : unit -> (trainer_ids, string) result

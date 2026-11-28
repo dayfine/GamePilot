@@ -49,8 +49,8 @@ val find : t -> string -> entry option
 (** Looks up a species by slug (case-insensitive, trimmed). *)
 
 val nature_names : string array
-(** The 25 Gen 3 natures in [AdvNature] order: [0] = ["Hardy"] .. [24] =
-    ["Quirky"]. *)
+(** The 25 Gen 3 natures in standard Gen 3 order ([pid mod 25]): [0] = ["Hardy"]
+    .. [24] = ["Quirky"]. *)
 
 val nature_name : int -> string option
 (** Name of nature index [0..24], or [None] if out of range. *)

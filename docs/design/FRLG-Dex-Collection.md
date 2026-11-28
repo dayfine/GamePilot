@@ -8,8 +8,8 @@ shiny detection, and console calibration.
 Related docs:
 - Roadmap: [docs/roadmap/frlg-dex-exclusives.md](../roadmap/frlg-dex-exclusives.md) (A6),
   [docs/roadmap/frlg-rng-port.md](../roadmap/frlg-rng-port.md) (A5)
-- Guides: [docs/guide/frlg.dex_collection.md](../guide/frlg.dex_collection.md),
-  [docs/guide/frlg.wild_rng.md](../guide/frlg.wild_rng.md)
+- Guides: [docs/guide/frlg/dex_collection.md](../guide/frlg/dex_collection.md),
+  [docs/guide/frlg/wild_rng.md](../guide/frlg/wild_rng.md)
 - ACE item prep: [docs/design/FRLG-ACE-Execution.md](FRLG-ACE-Execution.md)
 - Shared catch engine: `src/pokemon/catch/` (`gamepilot.pokemon_catch`, introduced in PR #337)
 - Visual battle-intro shiny detection reference: BDSP `Bdsp_readers.Shiny_encounter_detector` /

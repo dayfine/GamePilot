@@ -51,13 +51,6 @@ let defaults : policy_defaults =
 
 let default_event_timeout_ms = 30_000
 
-let default_config : config =
-  {
-    initial_active_slot = 1;
-    bag = { ball_row = 0; heal_row = 0 };
-    event_timeout_ms = default_event_timeout_ms;
-  }
-
 let default_phase1_slots : phase1_slots =
   {
     sleeper_slot = 1;
@@ -79,11 +72,22 @@ let default_phase2_slots : phase2_slots =
 type tracker = {
   mutable subscribed : bool;
   mutable active_slot : int;
+  (* Live 0-based battle party order: switching swaps index 0 (active) with the
+     chosen bench index, so logical slot numbers move as switches happen. *)
+  party_order : int array;
   mutable turns : int;
   mutable balls_thrown : int;
   mutable last_action_was_throw : bool;
   mutable pending_event : CR.event option;
 }
+
+let find_battle_index tr logical_slot =
+  Array.find_index (( = ) logical_slot) tr.party_order
+
+let swap_into_lead tr idx =
+  let cur = tr.party_order.(0) in
+  tr.party_order.(0) <- tr.party_order.(idx);
+  tr.party_order.(idx) <- cur
 
 let ensure_probes tr =
   if not tr.subscribed then (
@@ -122,6 +126,9 @@ let rec next_live_event ~log (battle : B.game_steps) cfg tr =
   | B.Switch_in -> Ok (CR.Forced_switch { fainted_slot = tr.active_slot })
   | B.Battle_over ->
       if tr.last_action_was_throw then Ok CR.Caught else Ok CR.Foe_ended
+  (* Already-registered species show the in-battle nickname Yes/No (Move_learn)
+     after a ball throw instead of fading to Pokédex. *)
+  | B.Move_learn when tr.last_action_was_throw -> Ok CR.Caught
   | B.Timed_out -> Ok (CR.Unexpected "timed out waiting for FRLG battle event")
   | (B.Level_up | B.Move_learn | B.Evolution | B.Switch_offer) as ev ->
       Ok (CR.Unexpected ("unexpected battle prompt: " ^ B.event_name ev))
@@ -153,13 +160,18 @@ let execute_move ~log (battle : B.game_steps) tr move_slot =
   | B.Not_done reason -> Error reason
 
 let execute_switch ~log (battle : B.game_steps) tr slot =
-  log (Printf.sprintf "FRLG catch: Pokémon -> slot %d" slot);
-  tr.last_action_was_throw <- false;
-  if battle.switch_to ~slot:(slot - 1) then (
-    tr.active_slot <- slot;
-    tr.turns <- tr.turns + 1;
-    Ok ())
-  else Error (Printf.sprintf "could not switch to party slot %d" slot)
+  match find_battle_index tr slot with
+  | None -> Error (Printf.sprintf "unknown party slot %d" slot)
+  | Some idx ->
+      log
+        (Printf.sprintf "FRLG catch: Pokémon -> slot %d (pos %d)" slot (idx + 1));
+      tr.last_action_was_throw <- false;
+      if battle.switch_to ~slot:idx then (
+        swap_into_lead tr idx;
+        tr.active_slot <- slot;
+        tr.turns <- tr.turns + 1;
+        Ok ())
+      else Error (Printf.sprintf "could not switch to party slot %d" slot)
 
 let execute_throw ~log (battle : B.game_steps) cfg tr name =
   log ("FRLG catch: Bag -> throw " ^ name);
@@ -180,11 +192,7 @@ let execute_heal ~log (battle : B.game_steps) cfg tr =
   log (Printf.sprintf "FRLG catch: Bag -> heal slot %d" tr.active_slot);
   tr.last_action_was_throw <- false;
   let item : B.item =
-    {
-      pocket = Bag.Items;
-      row = cfg.bag.heal_row;
-      on_slot = Some (tr.active_slot - 1);
-    }
+    { pocket = Bag.Items; row = cfg.bag.heal_row; on_slot = Some 0 }
   in
   if battle.use_item item then (
     tr.turns <- tr.turns + 1;
@@ -202,25 +210,36 @@ let execute_command ~log battle cfg tr = function
   | CS.Pause_for_user _ -> Ok ()
 
 let send_in ~log (battle : B.game_steps) tr slot =
-  log (Printf.sprintf "FRLG catch: forced switch -> slot %d" slot);
-  tr.last_action_was_throw <- false;
-  if battle.send_in ~slot:(slot - 1) then (
-    tr.active_slot <- slot;
-    Ok ())
-  else Error (Printf.sprintf "could not send in party slot %d" slot)
+  match find_battle_index tr slot with
+  | None -> Error (Printf.sprintf "unknown party slot %d" slot)
+  | Some idx ->
+      log
+        (Printf.sprintf "FRLG catch: forced switch -> slot %d (pos %d)" slot
+           (idx + 1));
+      tr.last_action_was_throw <- false;
+      if battle.send_in ~slot:idx then (
+        swap_into_lead tr idx;
+        tr.active_slot <- slot;
+        Ok ())
+      else Error (Printf.sprintf "could not send in party slot %d" slot)
 
 let make ?battle ?(log = ignore) cfg : CR.game_steps =
   let battle = match battle with Some b -> b | None -> BS.make ~log () in
+  let party_order = [| 1; 2; 3; 4; 5; 6 |] in
   let tr =
     {
       subscribed = false;
       active_slot = cfg.initial_active_slot;
+      party_order;
       turns = 0;
       balls_thrown = 0;
       last_action_was_throw = false;
       pending_event = None;
     }
   in
+  (match find_battle_index tr cfg.initial_active_slot with
+  | Some idx when idx > 0 -> swap_into_lead tr idx
+  | _ -> ());
   {
     next_event = next_event ~log battle cfg tr;
     execute = execute_command ~log battle cfg tr;
@@ -276,20 +295,3 @@ let phase2_policy ?(ball_name = defaults.ball_name)
     ~spore_move:slots.spore_move ~swiper_slot:slots.catcher_slot
     ~false_swipe_move:slots.false_swipe_move ~wall:None
     ~send_in_order:slots.send_in_order
-
-let spore_ball_policy ?(ball_name = defaults.ball_name)
-    ?(max_balls = defaults.max_balls) ?(max_turns = defaults.max_turns) () :
-    CS.policy =
-  {
-    status_setter =
-      Some { slot = 1; move_slot = 1; hp_floor = defaults.hp_floor };
-    false_swiper = None;
-    wall = None;
-    ball_name;
-    max_balls;
-    foe_hp_target = 1.0;
-    foe_hp_rechip = 1.0;
-    reapply_status = true;
-    max_turns;
-    send_in_order = default_phase1_slots.send_in_order;
-  }

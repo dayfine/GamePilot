@@ -18,7 +18,7 @@ let autostory =
     name = "AutoStory";
     category = Story;
     description = "Plays the story from a new game, checkpoint by checkpoint.";
-    doc = "docs/guide/plza.autostory.md";
+    doc = "docs/guide/plza/autostory.md";
     checkpoints = Some "src/games/pokemon/plza/programs/autostory/plans";
     backends = [ Switch ];
     viewport = Native;
@@ -35,7 +35,7 @@ let claim_gifts =
     description =
       "Claims the Mystery Gifts of its catalog that have not expired, puts \
        their Pokémon in the Boxes and saves.";
-    doc = "docs/guide/plza.claim-gifts.md";
+    doc = "docs/guide/plza/claim-gifts.md";
     checkpoints = Some "src/games/pokemon/plza/programs/claim_gifts/plans";
     backends = [ Switch ];
     viewport = Native;

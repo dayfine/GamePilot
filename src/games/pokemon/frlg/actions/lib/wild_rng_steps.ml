@@ -1,8 +1,6 @@
 module M = Menu_input
 module T = Frlg_rng.Rng_timings
 module P = Wild_rng_plan
-module WT = Frlg_rng.Wild_target
-module RC = Frlg_rng.Rolling_calibrator
 
 (* The fork's press lengths (ms). *)
 let seed_hold_ms = 3000
@@ -91,24 +89,54 @@ let find_encounter ~log ?(reset_mode = Rng_reset.Mgba)
   | Holds _ -> true
   | Timeout -> false
 
-let game_steps ~log ?reset_mode ?encounter_method t plan =
+let capture_steps ~log ?(show_counters = ignore) ~find_encounter
+    (plan : Capture_plan.t) =
   let spot = ref (Pacing.on_patch None) in
+  let base = Capture_steps.make ~log ~spot plan in
+  let total = plan.max_encounters in
+  let attempt = ref 0 in
+  let report phase =
+    show_counters
+      (Wild_rng.watch_counters ~attempt:(max 1 !attempt) ~total ~phase)
+  in
   {
-    (Capture_steps.make ~log ~spot plan) with
-    find_encounter = find_encounter ~log ?reset_mode ?encounter_method t;
+    base with
+    find_encounter =
+      (fun () ->
+        incr attempt;
+        report "reset";
+        find_encounter ());
+    read_encounter =
+      (fun () ->
+        report "encounter";
+        base.read_encounter ());
+    throw_ball =
+      (fun () ->
+        report "catch";
+        base.throw_ball ());
     flee = (fun () -> true);
   }
 
-let policy_catch_steps ~log ?reset_mode ?encounter_method ~timings
-    ?(visual_shiny_check = false) ?(on_miss = fun ~party:_ -> ()) ~config
-    ~policy () : Wild_rng.policy_catch_steps =
+let game_steps ~log ?reset_mode ?show_counters ?encounter_method t plan =
+  capture_steps ~log ?show_counters
+    ~find_encounter:(find_encounter ~log ?reset_mode ?encounter_method t)
+    plan
+
+let legacy_catch ~log ?show_counters ~find_encounter capture ~party =
+  Effects.with_probes Frlg_battle.Battle_look.probes (fun () ->
+      Capture.run
+        (capture_steps ~log ?show_counters ~find_encounter capture)
+        capture ~party)
+
+let make_policy_catch ~log ~find_encounter ~visual_shiny_check ~on_miss ~config
+    ~policy : Wild_rng.policy_catch_steps =
   let detect_shiny =
     if visual_shiny_check then
       Some (fun () -> Frlg_readers.Shiny_encounter_detector.detect ())
     else None
   in
   {
-    find_encounter = find_encounter ~log ?reset_mode ?encounter_method timings;
+    find_encounter;
     detect_shiny;
     on_miss;
     catch_battle =
@@ -118,6 +146,27 @@ let policy_catch_steps ~log ?reset_mode ?encounter_method ~timings
           policy);
     finish_catch = Capture_steps.finish_catch ~log;
   }
+
+let policy_catch_for ~log ~find_encounter ?(on_miss = ignore) ~catch_mode
+    ~visual_shiny_check capture =
+  let mk =
+    make_policy_catch ~log ~find_encounter ~on_miss:(fun ~party:_ -> on_miss ())
+  in
+  match (catch_mode, visual_shiny_check) with
+  | Wild_rng_plan.Throw_only, false -> None
+  | Wild_rng_plan.Throw_only, true ->
+      Some
+        (mk ~visual_shiny_check:true ~config:Wild_rng_plan.default_catch_config
+           ~policy:(Wild_rng_plan.throw_only_policy capture))
+  | Wild_rng_plan.Catch_policy { policy; config }, visual_shiny_check ->
+      Some (mk ~visual_shiny_check ~config ~policy)
+
+let policy_catch_steps ~log ?reset_mode ?encounter_method ~timings
+    ?(visual_shiny_check = false) ?(on_miss = fun ~party:_ -> ()) ~config
+    ~policy () =
+  make_policy_catch ~log
+    ~find_encounter:(find_encounter ~log ?reset_mode ?encounter_method timings)
+    ~visual_shiny_check ~on_miss ~config ~policy
 
 let check_open_summary ~log ~slot ~read_miss () =
   Summary_moves.open_summary slot;
@@ -147,154 +196,19 @@ let check_summary ~log ~slot ~read_miss =
 
 let shiny_at ~log ~slot = check_summary ~log ~slot ~read_miss:false = `Shiny
 
-type live_state = {
-  plan : P.t ref;
-  target : WT.t ref;
-  calibrator : RC.t ref;
-  excluded : (int * int) list ref;
-  attempt : int ref;
-  is_switch : bool;
-  label : unit -> string;
-}
+let calibrated_find ~log ~reset_mode ~encounter_method =
+  find_encounter ~log ~reset_mode ~encounter_method
 
-let next_wild_target st =
-  incr st.attempt;
-  if !(st.attempt) = 1 then Ok !(st.target)
-  else P.target ~exclude_targets:!(st.excluded) !(st.plan)
+let calibrated_game_steps ~log ~reset_mode ~encounter_method t plan =
+  game_steps ~log ~reset_mode ~show_counters:Watch_report.counters
+    ~encounter_method t plan
 
-let prepare_target ~log st () =
-  match next_wild_target st with
-  | Error e ->
-      log (st.label () ^ ": failed to recompute target: " ^ e);
-      Error e
-  | Ok tgt ->
-      st.target := tgt;
-      log (st.label () ^ ": " ^ WT.describe tgt ^ ".");
-      Ok tgt
+let calibrated_policy ~log ~reset_mode ~encounter_method ~timings
+    ~visual_shiny_check ~on_miss ~config ~policy =
+  policy_catch_steps ~log ~reset_mode ~encounter_method ~timings
+    ~visual_shiny_check ~on_miss ~config ~policy
 
-let skip_parity_locked ~log st (tgt : WT.t) next_cal =
-  log
-    (Printf.sprintf
-       "%s: parity lock detected on seed %04X advance %d — skipping target and \
-        resetting advance history."
-       (st.label ()) tgt.seed tgt.advance);
-  st.excluded := (tgt.seed, tgt.advance) :: !(st.excluded);
-  st.calibrator := RC.reset next_cal
-
-let with_estimate (p : P.t) (e : RC.estimate) =
-  { p with boot_offset_ms = e.boot_offset_ms; ingame_offset = e.ingame_offset }
-
-let apply_rolling_update ~log st (p : P.t) tgt (next_cal, est) =
-  st.plan := with_estimate p est;
-  if st.is_switch && RC.parity_locked next_cal then
-    skip_parity_locked ~log st tgt next_cal
-  else st.calibrator := next_cal
-
-let calibrate_miss ~log st (miss : Rng_miss_calibration.summary_miss) =
-  let p = !(st.plan) and tgt = !(st.target) and label = st.label () in
-  let species = Option.value ~default:p.species miss.species in
-  match P.slots p with
-  | Error e -> log (label ^ " miss search skipped: " ^ e)
-  | Ok slots ->
-      let super_rod = p.encounter_method = P.Super_rod in
-      Rng_miss_calibration.report_and_calibrate_wild_rolling ~log ~label
-        ~species ~slots ~super_rod ~seeds:p.seeds ~seed_shift:p.seed_shift
-        ~target_seed:tgt.seed ~target_delay_ms:tgt.table_delay_ms
-        ~target_advance:tgt.advance ~persist:st.is_switch
-        ~calibrator:!(st.calibrator) ~used_boot_offset_ms:p.boot_offset_ms
-        ~used_ingame_offset:p.ingame_offset miss.observation
-      |> Option.iter (apply_rolling_update ~log st p tgt)
-
-let calibrated_policy_catch ~log ~reset_mode ~timings ~prepare ~on_miss
-    (plan : P.t) =
-  let encounter_method = plan.encounter_method in
-  let find_encounter () =
-    match prepare () with
-    | Error _ -> false
-    | Ok (tgt : WT.t) ->
-        find_encounter ~log ~reset_mode ~encounter_method tgt.timings ()
-  in
-  let make ~visual_shiny_check ~config ~policy =
-    let base =
-      policy_catch_steps ~log ~reset_mode ~encounter_method ~timings
-        ~visual_shiny_check ~on_miss ~config ~policy ()
-    in
-    Some { base with find_encounter }
-  in
-  match (plan.catch_mode, plan.visual_shiny_check) with
-  | P.Throw_only, false -> None
-  | P.Throw_only, true ->
-      make ~visual_shiny_check:true ~config:P.default_catch_config
-        ~policy:(P.throw_only_policy plan.capture)
-  | P.Catch_policy { policy; config }, visual_shiny_check ->
-      make ~visual_shiny_check ~config ~policy
-
-let calibrated_catch ~log ~reset_mode ~encounter_method ~prepare capture ~party
-    =
-  match prepare () with
-  | Error e ->
-      { Capture.end_ = Failed e; encounters = 0; balls_thrown = 0; caught = [] }
-  | Ok (tgt : WT.t) ->
-      let steps =
-        game_steps ~log ~reset_mode ~encounter_method tgt.timings capture
-      in
-      Effects.with_probes Frlg_battle.Battle_look.probes (fun () ->
-          Capture.run steps capture ~party)
-
-let calibrated_shiny_at ~log st slot =
-  match check_summary ~log ~slot ~read_miss:st.is_switch with
-  | `Shiny -> true
-  | `Not_shiny None -> false
-  | `Not_shiny (Some miss) ->
-      calibrate_miss ~log st miss;
-      false
-
-(* Fast throw-only catch on a visual Not_shiny miss (throws cal_ball_row in the
-   Poké Balls pocket on Turn 1), then reads Summary to calibrate the next try. *)
-let fast_calibration_on_miss ~log st ~shiny_at ~party =
-  log (st.label () ^ ": visual miss — fast throw-only catch for calibration.");
-  let p = !(st.plan) in
-  let bag = { Battle_catch_steps.ball_row = p.cal_ball_row; heal_row = 0 } in
-  let steps =
-    Battle_catch_steps.make ~log { P.default_catch_config with bag }
-  in
-  match
-    Pokemon_catch.Catch_runner.run ~log steps (P.throw_only_policy p.capture)
-  with
-  | Pokemon_catch.Catch_runner.Caught _ ->
-      if Capture_steps.finish_catch ~log Party then
-        ignore (shiny_at (party + 1) : bool)
-      else log (st.label () ^ ": calibration catch did not return to overworld.")
-  | _ -> log (st.label () ^ ": fast calibration catch ended without catching.")
-
-let live_calibrated_game_steps ~log ?(reset_mode = Rng_reset.Mgba) (plan : P.t)
-    (tgt : WT.t) : Wild_rng.game_steps =
-  let attempt = ref 0 and total = max 1 plan.capture.max_encounters in
-  let st =
-    {
-      plan = ref plan;
-      target = ref tgt;
-      calibrator = ref RC.empty;
-      excluded = ref [];
-      attempt;
-      is_switch = plan.frame_model = "switch";
-      label =
-        (fun () -> Printf.sprintf "Wild RNG (attempt %d/%d)" !attempt total);
-    }
-  in
-  let prepare = prepare_target ~log st
-  and shiny_at = calibrated_shiny_at ~log st in
-  let on_miss =
-    if st.is_switch then fast_calibration_on_miss ~log st ~shiny_at
-    else fun ~party:_ -> ()
-  in
-  {
-    catch =
-      calibrated_catch ~log ~reset_mode ~encounter_method:plan.encounter_method
-        ~prepare;
-    policy_catch =
-      calibrated_policy_catch ~log ~reset_mode ~timings:tgt.timings ~prepare
-        ~on_miss plan;
-    shiny_at;
-    log;
-  }
+let live_calibrated_game_steps ~log ?reset_mode plan tgt =
+  Wild_rng_calibrated_steps.make ~log ?reset_mode
+    ~find_encounter:calibrated_find ~game_steps:calibrated_game_steps
+    ~policy_catch_steps:calibrated_policy ~check_summary plan tgt
