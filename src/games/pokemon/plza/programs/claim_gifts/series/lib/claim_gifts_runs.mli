@@ -10,24 +10,19 @@
     checked ({!Plza_claim_gifts.Claim_gifts.check_plan}) before the console
     moves. *)
 
-type inputs = {
-  catalog : Plza_gift_catalog.Gift_catalog.t;  (** The gifts, in claim order. *)
-  today : Plza_gift_catalog.Gift_catalog.date;  (** The host's day (UTC). *)
-  name_templates : (string * string) list;
-      (** Each Internet gift's name template in the run's language, as PNG
-          bytes, by gift id. *)
-}
-(** What a run is given, read before it starts: the program reads no clock and
-    no file. *)
+val guide_blocks : (string * (unit -> (string, string) result)) list
+(** Program-specific guide blocks for [plza.claim-gifts], by block name
+    ([gifts]: the gift catalog table). *)
 
 val run_series :
-  inputs ->
   program:(string * string) list ->
   options:Run_options.t ->
   viewport:(string option, string) result ->
   string ->
   string list ->
   (int, string) result
-(** [run_series inputs ~program ~options ~viewport plan_dir args]:
+(** [run_series ~program ~options ~viewport plan_dir args]: loads the gift
+    catalog, today's UTC date, and Internet gift name templates for [options]'s
+    language ({!Plza_checkpoint_series.Gift_inputs}), then runs
     {!Plza_checkpoint_series.Checkpoint_series.run_series} with claim-gifts'
     attempts; [program] is run.json's program fields. *)
