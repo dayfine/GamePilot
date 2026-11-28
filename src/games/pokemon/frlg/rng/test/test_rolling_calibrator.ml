@@ -293,7 +293,8 @@ let test_parity_lock_unit () =
   in
   check_eq ~show:string_of_bool "same-side -1 misses not parity locked" false
     (Rolling_calibrator.parity_locked same_side);
-  (* Having ever hit advance_delta = 0 in the window prevents parity lock. *)
+  (* Having ever hit advance_delta = 0 on the target seed in the window
+     prevents parity lock. *)
   let hit_zero =
     Rolling_calibrator.empty |> feed ~used:(-24) ~delta:0
     |> feed ~used:(-25) ~delta:(-1)
@@ -301,7 +302,36 @@ let test_parity_lock_unit () =
     |> feed ~used:(-25) ~delta:(-1)
   in
   check_eq ~show:string_of_bool "prior exact hit prevents parity lock" false
-    (Rolling_calibrator.parity_locked hit_zero)
+    (Rolling_calibrator.parity_locked hit_zero);
+  (* Console B Static Electrode 5217/1015: same-offset parity straddling at
+     used_ingame_offset = 3 (+1, -1, +1) triggers parity lock, and a prior
+     off-seed advance_delta = 0 hit (e.g. 7D40 hitting 1015 (+0)) does not
+     clear parity lock on the target seed. *)
+  let feed_seed cal ~used ~seed_delta ~delta =
+    Rolling_calibrator.record cal ~used_boot_offset_ms:0
+      ~used_ingame_offset:used ~seed_delta_frames:seed_delta
+      ~advance_delta:delta
+    |> expect_accepted "parity_same_offset"
+    |> fst
+  in
+  let same_offset_straddle =
+    Rolling_calibrator.empty
+    |> feed_seed ~used:3 ~seed_delta:0 ~delta:1
+    |> feed_seed ~used:3 ~seed_delta:0 ~delta:(-1)
+    |> feed_seed ~used:3 ~seed_delta:0 ~delta:1
+  in
+  check_eq ~show:string_of_bool "same-offset +1/-1/+1 triggers parity lock" true
+    (Rolling_calibrator.parity_locked same_offset_straddle);
+  let off_seed_zero_then_straddle =
+    Rolling_calibrator.empty
+    |> feed_seed ~used:3 ~seed_delta:1 ~delta:0
+    |> feed_seed ~used:3 ~seed_delta:0 ~delta:1
+    |> feed_seed ~used:3 ~seed_delta:0 ~delta:(-1)
+    |> feed_seed ~used:3 ~seed_delta:0 ~delta:1
+  in
+  check_eq ~show:string_of_bool
+    "off-seed 0 hit does not prevent parity lock on target seed" true
+    (Rolling_calibrator.parity_locked off_seed_zero_then_straddle)
 
 (* Slice 2: mGBA (1 advance/frame) never triggers parity-lock target switching
    and converges cleanly on both odd and even advances. *)

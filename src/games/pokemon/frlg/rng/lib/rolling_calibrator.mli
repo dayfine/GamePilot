@@ -90,10 +90,13 @@ val samples : t -> sample list
 
 val parity_locked : t -> bool
 (** [true] when the target advance appears unreachable on a 2-advance-per-frame
-    console: no sample in the window has hit [advance_delta = 0], at least
+    console: no sample in the window has hit the target seed and advance
+    ([seed_delta_frames = 0 && advance_delta = 0]; an off-seed
+    [advance_delta = 0] hit does not clear parity lock), at least
     {!min_parity_lock_samples} recent samples all missed by [±1] advance, and
-    the used [ingame_offset] values strictly bracket both sides (every [-1]
-    observation used a smaller [ingame_offset] than every [+1] observation). *)
+    the used [ingame_offset] values bracket both sides (every [-1] observation
+    used an [ingame_offset] less than or equal to every [+1] observation,
+    catching both adjacent-offset bracketing and same-offset straddling). *)
 
 val reset : t -> t
 (** Clears all retained samples and advance observations while keeping the
