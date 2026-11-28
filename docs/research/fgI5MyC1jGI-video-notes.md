@@ -38,9 +38,10 @@ Source [Pokémon Shining Pearl Any% Glitchless in 3:17:01](https://www.youtube.c
 | 02:25:00–02:30:00 | Reviewed |
 | 02:30:00–02:35:00 | Reviewed |
 | 02:35:00–02:40:00 | Reviewed |
-| 02:40:00–03:18:16 | Pending |
+| 02:40:00–02:45:00 | Reviewed |
+| 02:45:00–03:18:16 | Pending |
 
-Resume at **02:40:00** during Guitarist Jerry’s opening send-out in Sunyshore Gym.
+Resume at **02:45:00** during Volkner’s battle after Palkia has defeated Ambipom and Raichu.
 
 ## Review method
 
@@ -618,3 +619,17 @@ The source copy is a 640×360 video stream. The game occupies the upper-right 45
 | 2:39:36–2:40:00 | Use the upper green switch to rotate the gears, cross to the east stairs, and battle Guitarist Jerry, who leads with Luxio. |
 
 **State at 2:40:00.** Kazza is Lv. 53 at 123/123 HP with Choice Specs. Palkia is Lv. 47 with Metronome, and Monferno remains fainted with Wise Glasses. The player is in the second Sunyshore Gym room during Guitarist Jerry’s battle.
+
+## 2:40:00–2:45:00 | Sunyshore Gym and the start of Volkner
+
+| Video time | Observed action |
+| --- | --- |
+| 2:40:00–2:40:18 | Guitarist Jerry’s Luxio Lv. 44 lowers Kazza’s Attack with Intimidate. Kazza KOs it with Shadow Ball and reaches Lv. 54. |
+| 2:40:19–2:41:22 | Go up the east stairs, enter the third room, and use the red gear switches to reach Ace Trainer Destiny. Kazza KOs Kadabra and Raichu, both Lv. 44, with Dazzling Gleam. |
+| 2:41:23–2:42:13 | Climb the west stairs to Guitarist Preston. Kazza KOs Luxio and Bibarel, both Lv. 42, with Dazzling Gleam. |
+| 2:42:14–2:43:21 | Rotate the upper walkway with the green switch and cross to the right stairs to Ace Trainer Zachery. Kazza’s first Shadow Ball triggers Steelix’s Sturdy. Steelix uses Thunder Fang, leaving Kazza at 88/125 HP. The second Shadow Ball finishes Steelix, and a third KOs Medicham. Both opponents are Lv. 44. Kazza reaches Lv. 55. |
+| 2:43:22–2:43:56 | Descend to the red switch, rotate the walkways, then return up the east stairs and cross to Volkner. Put Palkia in the lead before speaking to him. |
+| 2:44:00–2:44:32 | Volkner leads with Raichu Lv. 46. Use one X Sp. Atk on Palkia. Raichu uses Volt Switch and brings in Ambipom Lv. 47. Use one X Speed as Ambipom uses Fake Out, leaving Palkia at 80/156 HP. |
+| 2:44:33–2:45:00 | Palkia KOs Ambipom with Surf and then KOs the returning Raichu with Surf. Palkia reaches Lv. 48 and declines Dragon Claw. |
+
+**State at 2:45:00.** Volkner has lost Ambipom and Raichu. Palkia is Lv. 48 with Metronome and the active X Sp. Atk and X Speed boosts. Kazza is Lv. 55 with Choice Specs, and Monferno remains fainted with Wise Glasses.
